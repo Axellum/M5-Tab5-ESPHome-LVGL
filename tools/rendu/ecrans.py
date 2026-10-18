@@ -416,8 +416,10 @@ VERS_LA_DROITE = Glisser(265, 520, 1015, 520)   # page 2 → 1 → 0 (horaires)
 # ADR-0023) : leur place dépend du nombre d'appareils, et à quatre cartes x = 265 tombe
 # sur le bouton de la première. Seuls les bords (x < 25, x > 1255) restent libres
 # quelle que soit la pièce.
-HA_VERS_LA_GAUCHE = Glisser(1265, 520, 15, 520)   # pièce suivante (page + 1)
-HA_VERS_LA_DROITE = Glisser(15, 520, 1265, 520)   # pièce précédente (page − 1)
+# Rouleau des pièces (18/10/2026) : R + 1 vers la gauche, R − 1 vers la droite, la 5
+# revient à la 1, pièces vides comprises.
+HA_VERS_LA_GAUCHE = Glisser(1265, 520, 15, 520)   # pièce suivante (R + 1)
+HA_VERS_LA_DROITE = Glisser(15, 520, 1265, 520)   # pièce précédente (R − 1)
 
 
 # Tensions lues par l'INA226 chargeur coupé : une batterie 2S (détectée) et la tablette
@@ -497,9 +499,9 @@ PREVISIONS_FRAICHES = (_previsions_recues(0),)
 
 def ecrans_des_pieces(pieces: dict) -> tuple:
     """Le mode HA sur chaque pièce de la démo (ADR-0023) : « HA » depuis l'accueil (pièce
-    0, page 2), puis un geste par pièce occupée jusqu'à la bonne (le mode HA saute les
-    pages sans appareil ; la pièce 0 doit en avoir, sinon « HA » sauterait à la plus
-    proche). Retour : « HA » (la météo de la même page), puis les gestes météo jusqu'à
+    0, page 2), puis les gestes du rouleau des pièces jusqu'à la bonne (vers_la_piece ; la
+    pièce 0 doit avoir un appareil, sinon « HA » sauterait à la plus proche qui en a).
+    Retour : « HA » (la météo de la même page), puis les gestes météo jusqu'à
     la page 2, qui passent par toutes les pages : on ne compte pas sur « Aller à
     l'écran → Accueil » pour quitter le mode HA. Nom : « accueil-ha-piece-n », n = R + 1
     comme les pièces du blueprint."""
@@ -515,17 +517,16 @@ def ecrans_des_pieces(pieces: dict) -> tuple:
 
 
 def vers_la_piece(pieces: dict, r: int) -> tuple[tuple, tuple]:
-    """(aller, retour) : « HA » puis les gestes jusqu'à la pièce R ; « HA » puis les gestes
-    météo jusqu'à la page 2 (voir ecrans_des_pieces)."""
-    occupees = sorted(PAGE_DE_LA_PIECE[k] for k, p in pieces.items() if p.tuiles)
+    """(aller, retour) : « HA » puis les gestes du rouleau des pièces jusqu'à la pièce R
+    (18/10/2026 : R + 1 vers la gauche, R − 1 vers la droite, en boucle, pièces vides
+    comprises ; par le plus court) ; « HA » puis les gestes météo jusqu'à la page 2, dans
+    l'ordre des prévisions (voir ecrans_des_pieces)."""
+    assert pieces[r].tuiles, f"pièce {r} sans appareil : rien à capturer"
+    assert pieces[0].tuiles, "la pièce de l'accueil (R = 0) doit avoir un appareil"
+    n = len(PAGE_DE_LA_PIECE)
+    aller = (HA_VERS_LA_GAUCHE,) * r if r <= n - r else (HA_VERS_LA_DROITE,) * (n - r)
     page = PAGE_DE_LA_PIECE[r]
-    assert page in occupees, f"pièce {r} sans appareil : le mode HA la saute"
-    if page >= 2:
-        aller = (HA_VERS_LA_GAUCHE,) * sum(1 for p in occupees if 2 < p <= page)
-        retour = (VERS_LA_DROITE,) * (page - 2)
-    else:
-        aller = (HA_VERS_LA_DROITE,) * sum(1 for p in occupees if page <= p < 2)
-        retour = (VERS_LA_GAUCHE,) * (2 - page)
+    retour = (VERS_LA_DROITE,) * (page - 2) if page >= 2 else (VERS_LA_GAUCHE,) * (2 - page)
     return (Toucher(*BOUTON_HA),) + aller, (Toucher(*BOUTON_HA),) + retour
 
 
@@ -1239,8 +1240,8 @@ ECRANS: tuple[Ecran, ...] = (
     # En mode HA, la clim propre du Bureau a ses réglages : le toucher ouvre sa roue
     # (ADR-0048), son « Détails » le carrousel sur elle.
     Ecran("climatisation-carrousel-mode-ha",
-          CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON), ROUE_CLIM_DETAILS),
-          (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + MAISON_DE_LA_DEMO),
+          CLIMS_DE_TUILES + ALLER_PIECE_CLIMAT + (Toucher(*SALON), ROUE_CLIM_DETAILS),
+          (Toucher(*FERMER_POPUP),) + RETOUR_PIECE_CLIMAT + MAISON_DE_LA_DEMO),
     # Roue de la clim par la température de la pièce (ADR-0048), en mode HA sur le Bureau :
     # sa clim propre (« Climatiseur du bureau », en froid) ; puis « Clims ▸ » déplié (la
     # clim du blueprint et elle, marquée). Un toucher replie, le suivant ferme.

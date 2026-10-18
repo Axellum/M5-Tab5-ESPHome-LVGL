@@ -28,7 +28,7 @@ The home page shows today and the next four days.
 
 A tap on the Home Assistant button: each card shows a device of the room, like a card of a Home Assistant dashboard: its icon in a round badge of its state's colour, its name and, under it, its state (« 71 % », « Off », « Moving », « Offline » when Home Assistant cannot reach it…). The central card gives the room, « Room 1/5 » and its name.
 
-- **Swipe**: the next or previous room that has devices. With a single room, nothing happens.
+- **Swipe** left: the next room; swipe right: the previous one. After room 5 comes room 1 again. A room without devices says « Aucun appareil ». The dots under the central card show the room (first dot = room 1).
 - **Tap the room's name** in the central card: the [House](house.md) window, every room at once.
 - Another tap on the Home Assistant button: back to the weather. Device mode never goes back by itself.
 
@@ -115,7 +115,7 @@ La page d'accueil montre aujourd'hui et les quatre jours suivants.
 
 Un tap sur le bouton Home Assistant : chaque carte montre un appareil de la pièce, comme une carte d'un tableau de bord Home Assistant : son icône dans une pastille ronde de la couleur de son état, son nom et, dessous, son état (« 71 % », « Éteint », « Mouvement », « Hors ligne » quand Home Assistant ne le joint pas…). La carte centrale donne la pièce, « Pièce 1/5 » et son nom.
 
-- **Glisser** : la pièce suivante ou précédente qui a des appareils. Avec une seule pièce, rien ne se passe.
+- **Glisser** vers la gauche : la pièce suivante ; vers la droite : la précédente. Après la pièce 5 revient la pièce 1. Une pièce sans appareil dit « Aucun appareil ». Les points sous la carte centrale montrent la pièce (premier point = pièce 1).
 - **Tap sur le nom de la pièce** dans la carte centrale : la fenêtre [Maison](house.md#version-française), toutes les pièces d'un coup.
 - Un nouveau tap sur le bouton Home Assistant : retour à la météo. Le mode appareils ne revient jamais seul à la météo.
 
