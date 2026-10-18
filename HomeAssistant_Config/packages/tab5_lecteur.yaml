@@ -45,8 +45,10 @@
 #           démarre sans OK) est apparue aux deux premiers liens de la matinée, plus ensuite
 #           (4 essais sur 4 sans) : gérée, pas supposée. Un « select » (remote.send_command)
 #           sans fenêtre ne fait qu'afficher les commandes de YouTube, la lecture continue ;
-#         - en veille, media_player.turn_on : l'état quitte off en ~10 s ; le lien envoyé
-#           aussitôt après démarre en ~3 s, sans délai de plus.
+#         - en veille, media_player.turn_on : l'état quitte off en 5 à 10 s ; le lien envoyé
+#           aussitôt après démarre en 2 à 3 s, sans délai de plus (7,8 s de l'appel à la
+#           lecture). Réveil demandé 4 s après la mise en veille : ignoré 20 s, lien
+#           refusé (« Open URL failed ») ; d'où un second turn_on après 10 s sans effet.
 # @payload_contract tab5_maj_lecteur (Tab5/paquets/tab5-api-logic.yaml, tab5_parse.h
 #       section 9) :
 #         lecteurs = « nom|genre » séparés par « ; », genre = device_class (tv, speaker,
@@ -489,7 +491,10 @@ script:
           entity_id: input_text.tab5_lecteur_actif
         data:
           value: "{{ cible }}"
-      # En veille : l'allumer. L'état quitte off en ~10 s (mesuré le 18/10/2026).
+      # En veille : l'allumer. L'état quitte off en 5 à 10 s (mesuré le 18/10/2026). Une
+      # Apple TV qui vient de s'endormir (réveil demandé 4 s après la mise en veille)
+      # ignore ce premier réveil : 20 s sans sortir de off, puis le lien est refusé
+      # (« Open URL failed »). D'où une seconde demande après 10 s sans effet.
       - if: "{{ states(cible) in ['off', 'standby'] }}"
         then:
           - action: media_player.turn_on
@@ -497,8 +502,17 @@ script:
             target:
               entity_id: "{{ cible }}"
           - wait_template: "{{ states(cible) not in ['off', 'standby'] }}"
-            timeout: "00:00:20"
+            timeout: "00:00:10"
             continue_on_timeout: true
+          - if: "{{ not wait.completed }}"
+            then:
+              - action: media_player.turn_on
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+              - wait_template: "{{ states(cible) not in ['off', 'standby'] }}"
+                timeout: "00:00:15"
+                continue_on_timeout: true
       # La playlist : paused (ce qui jouait) en ~1 s, puis playing avec le nouveau titre
       # ~2-3 s après l'envoi. last_changed change au passage paused → playing.
       - variables:

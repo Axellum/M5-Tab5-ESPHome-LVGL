@@ -195,14 +195,18 @@ def test_apple_tv_choisie():
 
 
 def test_sequence_calee_sur_l_apple_tv():
-    """La séquence mesurée le 18/10/2026 (ADR-0068) : allumer si en veille (≤ 20 s), le lien,
-    ≤ 6 s pour jouer, sinon « select » puis ≤ 5 s, sinon media_play ; tout en
+    """La séquence mesurée le 18/10/2026 (ADR-0068) : allumer si en veille (≤ 10 s, sinon un
+    second réveil et ≤ 15 s : une Apple TV qui vient de s'endormir ignore le premier), le
+    lien, ≤ 6 s pour jouer, sinon « select » puis ≤ 5 s, sinon media_play ; tout en
     continue_on_error."""
     seq = yaml.safe_load(lire(*PACKAGE))["script"]["tab5_lecteur_playlist"]["sequence"]
     actions = [e.get("action") for e in seq if "action" in e]
     assert actions.index("input_text.set_value") < actions.index("media_player.play_media")
     allumer = next(e for e in seq if "if" in e and "standby" in e["if"])
-    assert allumer["then"][0]["action"] == "media_player.turn_on" and allumer["then"][1]["timeout"] == "00:00:20"
+    assert allumer["then"][0]["action"] == "media_player.turn_on" and allumer["then"][1]["timeout"] == "00:00:10"
+    second = allumer["then"][2]
+    assert second["if"] == "{{ not wait.completed }}"
+    assert second["then"][0]["action"] == "media_player.turn_on" and second["then"][1]["timeout"] == "00:00:15"
     jouer = next(e for e in seq if e.get("action") == "media_player.play_media")
     assert jouer["data"] == {"media_content_type": "url", "media_content_id": "{{ url }}"}
     attente = seq[seq.index(jouer) + 1]
@@ -222,4 +226,5 @@ def test_sequence_calee_sur_l_apple_tv():
             for v in noeud:
                 yield from actions_de_lecteur(v)
     trouvees = list(actions_de_lecteur(seq))
-    assert len(trouvees) == 4 and all(a.get("continue_on_error") is True for a in trouvees)
+    # turn_on ×2 (le second si le premier réveil est ignoré), play_media, select, media_play.
+    assert len(trouvees) == 5 and all(a.get("continue_on_error") is True for a in trouvees)
