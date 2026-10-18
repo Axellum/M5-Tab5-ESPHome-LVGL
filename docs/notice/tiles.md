@@ -26,7 +26,7 @@ The home page shows today and the next four days.
 
 ![Device mode: the five devices of the first room](../images/notice/accueil-ha-piece-1-en.webp)
 
-A tap on the Home Assistant button: each card shows a device of the room, like a card of a Home Assistant dashboard: its icon in a round badge of its state's colour, its name and, under it, its state (« 71 % », « Off », « Moving », « Offline » when Home Assistant cannot reach it…). The central card gives the room, « Room 1/5 » and its name.
+A tap on the Home Assistant button: each card shows a device of the room, like a card of a Home Assistant dashboard: its icon in a round badge of its state's colour, its name and, under it, its state (« 71 % », « Off », « Moving », « Offline » when Home Assistant cannot reach it…). The central card gives the room's name.
 
 - **Swipe** left: the next room; swipe right: the previous one. After the last room comes room 1 again. A room without devices says « Aucun appareil ». The dots under the central card show the room (first dot = room 1).
 - **How many rooms, how many devices**: chosen in Home Assistant, in the « Tab5 — emplacements » blueprint (« Nombre de pièces · Number of rooms », up to 10 rooms; up to 20 devices per room, [ADR-0066](../decisions/0066-rooms-count-cut-tiles.md)). Beyond five devices, the last cards of the room are cut in two (top, bottom), then in four, each part its own device. A firmware that does not know this yet shows the first five rooms and their first five devices.
@@ -114,7 +114,7 @@ La page d'accueil montre aujourd'hui et les quatre jours suivants.
 
 ![Le mode appareils : les cinq appareils de la première pièce](../images/notice/accueil-ha-piece-1-fr.webp)
 
-Un tap sur le bouton Home Assistant : chaque carte montre un appareil de la pièce, comme une carte d'un tableau de bord Home Assistant : son icône dans une pastille ronde de la couleur de son état, son nom et, dessous, son état (« 71 % », « Éteint », « Mouvement », « Hors ligne » quand Home Assistant ne le joint pas…). La carte centrale donne la pièce, « Pièce 1/5 » et son nom.
+Un tap sur le bouton Home Assistant : chaque carte montre un appareil de la pièce, comme une carte d'un tableau de bord Home Assistant : son icône dans une pastille ronde de la couleur de son état, son nom et, dessous, son état (« 71 % », « Éteint », « Mouvement », « Hors ligne » quand Home Assistant ne le joint pas…). La carte centrale donne le nom de la pièce.
 
 - **Glisser** vers la gauche : la pièce suivante ; vers la droite : la précédente. Après la dernière pièce revient la pièce 1. Une pièce sans appareil dit « Aucun appareil ». Les points sous la carte centrale montrent la pièce (premier point = pièce 1).
 - **Combien de pièces, combien d'appareils** : se choisit dans Home Assistant, dans le blueprint « Tab5 — emplacements » (« Nombre de pièces · Number of rooms », jusqu'à 10 pièces ; jusqu'à 20 appareils par pièce, [ADR-0066](../decisions/0066-rooms-count-cut-tiles.md)). Au-delà de cinq appareils, les dernières cartes de la pièce sont coupées en deux (haut, bas), puis en quatre, chaque partie un appareil. Un firmware qui ne le connaît pas encore montre les cinq premières pièces et leurs cinq premiers appareils.

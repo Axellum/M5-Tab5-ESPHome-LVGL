@@ -52,7 +52,7 @@ JETONS_CPP = {"corps_w": "kCorpsW", "corps_h": "kCorpsH", "graphique_l": "kGraph
               # Accueil (lot 3 du portage).
               "acc_marge": "kAccMarge", "acc_col_l": "kAccColL", "acc_horloge_l": "kAccHorlogeL",
               "acc_horloge_h": "kAccHorlogeH", "acc_ligne_l": "kAccLigneL", "acc_centrale_y": "kAccCentraleY",
-              "acc_titre_y2": "kAccTitreY2", "acc_tuile_l": "kAccTuileL", "acc_tuile_pas": "kAccTuilePas",
+              "acc_tuile_l": "kAccTuileL", "acc_tuile_pas": "kAccTuilePas",
               "police_pct": "kPolicePct", "hor_dx": "kHorlogeDx", "hor_dy": "kHorlogeDy"}
 # Valeurs du Tab5 d'avant le lot 2 : elles ne bougent pas.
 TAB5_AVANT = {"kCorpsW": 1202, "kCorpsH": 598, "kGraphiqueL": 1166, "kDemiL": 589, "kDemiX": 637,
@@ -233,7 +233,7 @@ ACCUEIL_TAB5 = {
     "acc_lect_btn": 52, "acc_lect_lecture": 60, "central_carte_w": 1240, "central_w": 1180,
     "acc_centrale_y": 333, "acc_centrale_h": 84, "acc_centrale_bouton_h": 80, "acc_pluie_h": 50,
     "acc_pluie_5mn_l": 25, "acc_pluie_10mn_l": 55, "acc_pluie_ecart": 15,
-    "acc_pluie_pad": 15, "acc_pluie_pad_val": 10, "acc_titre_sous_y": -26, "acc_titre_y2": 13,
+    "acc_pluie_pad": 15, "acc_pluie_pad_val": 10,
     "acc_pagination_x": 480, "acc_pagination_y": 420, "acc_pagination_l": 310, "acc_perimees_x": 800,
     "acc_perimees_y": 416, "acc_perimees_l": 455, "acc_perimees_h": 26, "acc_tuiles_y": 430, "acc_tuiles_h": 290,
     "acc_tuile_l": 230, "acc_tuile_pas": 250, "acc_tuile_x0": 25, "acc_tuile_x1": 275, "acc_tuile_x2": 525,

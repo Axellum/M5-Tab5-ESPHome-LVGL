@@ -1522,14 +1522,12 @@ void tuiles_ecran_ouvrir(Ecran e) {
     else popup_volet_ouvrir(r, t);
 }
 
-// « Pièce n/N » (n = numéro de la pièce dans le blueprint, N = « pn »), puis son nom, « Pièce n »
-// sans nom, ou « Aucun appareil » pour une pièce vide.
-bool tuiles_titre_piece(std::string& chapeau, std::string& titre) {
+// Le nom de la pièce, « Pièce n » sans nom (n = numéro de la pièce dans le blueprint), ou
+// « Aucun appareil » pour une pièce vide. Plus de « Pièce n/N » au-dessus (18/10/2026).
+bool tuiles_titre_piece(std::string& titre) {
     charger();
     const int r = piece_courante();
     char buf[48];
-    snprintf(buf, sizeof(buf), tr("Pièce %d/%d"), r + 1, pieces_nombre());
-    chapeau = buf;
     if (!piece_non_vide(r)) {
         titre = tr("Aucun appareil");
     } else if (!heritage() && s_m.pieces[r][0] != '\0') {

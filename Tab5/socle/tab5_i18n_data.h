@@ -8,10 +8,9 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1251;
+static const uint16_t kI18nKeyCount = 1250;
 
 static const char* const kI18nCtx[] = {
-    "",
     "",
     "",
     "",
@@ -2026,7 +2025,6 @@ static const char* const kI18nKeys[] = {
     "Pierres offertes à Noir (Blanc commence)",
     "Pièce",
     "Pièce %d",
-    "Pièce %d/%d",
     "Pièce : %s",
     "Pièces",
     "Pièces %d à %d",
@@ -3281,7 +3279,6 @@ static const char* const kI18n_en[] = {
     "Handicap stones for Black (White starts)",  // "Pierres offertes à Noir (Blanc commence)"
     "Room",  // "Pièce"
     "Room %d",  // "Pièce %d"
-    "Room %d/%d",  // "Pièce %d/%d"
     "Room: %s",  // "Pièce : %s"
     "Rooms",  // "Pièces"
     "Rooms %d to %d",  // "Pièces %d à %d"
@@ -4536,7 +4533,6 @@ static const char* const kI18n_de[] = {
     "Vorgabesteine für Schwarz (Weiß beginnt)",  // "Pierres offertes à Noir (Blanc commence)"
     "Raum",  // "Pièce"
     "Raum %d",  // "Pièce %d"
-    "Raum %d/%d",  // "Pièce %d/%d"
     "Raum: %s",  // "Pièce : %s"
     "Räume",  // "Pièces"
     "Räume %d–%d",  // "Pièces %d à %d"
@@ -5791,7 +5787,6 @@ static const char* const kI18n_nl[] = {
     "Handicapstenen voor Zwart (Wit begint)",  // "Pierres offertes à Noir (Blanc commence)"
     "Kamer",  // "Pièce"
     "Kamer %d",  // "Pièce %d"
-    "Kamer %d/%d",  // "Pièce %d/%d"
     "Kamer: %s",  // "Pièce : %s"
     "Kamers",  // "Pièces"
     "Kamers %d–%d",  // "Pièces %d à %d"
@@ -7046,7 +7041,6 @@ static const char* const kI18n_es[] = {
     "Piedras para Negro (empieza Blanco)",  // "Pierres offertes à Noir (Blanc commence)"
     "Interior",  // "Pièce"
     "Estancia %d",  // "Pièce %d"
-    "Estancia %d/%d",  // "Pièce %d/%d"
     "Estancia: %s",  // "Pièce : %s"
     "Estancias",  // "Pièces"
     "Estancias %d–%d",  // "Pièces %d à %d"
@@ -8301,7 +8295,6 @@ static const char* const kI18n_it[] = {
     "Pietre di handicap al Nero (inizia il Bianco)",  // "Pierres offertes à Noir (Blanc commence)"
     "Stanza",  // "Pièce"
     "Stanza %d",  // "Pièce %d"
-    "Stanza %d/%d",  // "Pièce %d/%d"
     "Stanza: %s",  // "Pièce : %s"
     "Stanze",  // "Pièces"
     "Stanze %d–%d",  // "Pièces %d à %d"
@@ -9556,7 +9549,6 @@ static const char* const kI18n_tr[] = {
     "Siyaha verilen taşlar (Beyaz başlar)",  // "Pierres offertes à Noir (Blanc commence)"
     "Oda",  // "Pièce"
     "Oda %d",  // "Pièce %d"
-    "Oda %d/%d",  // "Pièce %d/%d"
     "Oda: %s",  // "Pièce : %s"
     "Odalar",  // "Pièces"
     "Odalar %d–%d",  // "Pièces %d à %d"

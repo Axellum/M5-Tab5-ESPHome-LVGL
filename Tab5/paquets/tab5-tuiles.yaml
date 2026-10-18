@@ -37,9 +37,6 @@ script:
           u.pastilles[9] = id(pbar_9);
           u.titre_cadre = id(page_title_wrapper);
           u.titre = id(lbl_page_title);
-          // Aussi posé par l'on_boot, mais seulement après l'attente de HA (30 s au plus) :
-          // le titre d'une pièce peut s'afficher avant.
-          g_central_ctx.page_title_sub = id(lbl_page_title_sub);
           u.bouton_ha = id(btn_control_ha);
           u.icone_ha = id(icon_ha);
           u.police_meteo = id(font_meteo_card);

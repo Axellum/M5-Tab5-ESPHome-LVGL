@@ -207,16 +207,13 @@ substitutions:
   acc_centrale_bouton_h: ${ (acc_centrale_h | int) - 4 }
   # Dans la carte centrale : barres de pluie (50 de haut ; 25 de large pour les tranches de
   # 5 min, 55 pour celles de 10 min, 15 px entre l'icône, les barres et le texte), air sous les
-  # textes de la pluie (15 ; 10 sous la valeur), chapeau « Pièce n/N » à y −26 et nom de la
-  # pièce à y +13 du milieu (kAccTitreY2, tab5_central.cpp).
+  # textes de la pluie (15 ; 10 sous la valeur).
   acc_pluie_h: ${ (50 * (carte_ecran_h | int) + 360) // 720 }
   acc_pluie_5mn_l: ${ (25 * (carte_ecran_l | int) + 640) // 1280 }
   acc_pluie_10mn_l: ${ (55 * (carte_ecran_l | int) + 640) // 1280 }
   acc_pluie_ecart: ${ (15 * (carte_ecran_l | int) + 640) // 1280 }
   acc_pluie_pad: ${ (15 * (carte_ecran_h | int) + 360) // 720 }
   acc_pluie_pad_val: ${ (10 * (carte_ecran_h | int) + 360) // 720 }
-  acc_titre_sous_y: ${ -((26 * (carte_ecran_h | int) + 360) // 720) }
-  acc_titre_y2: ${ (13 * (carte_ecran_h | int) + 360) // 720 }
   # Points de pagination (x 480, y 420, 310 × 30) et mention « prévisions périmées » (x 800,
   # y 416, 455 × 26).
   acc_pagination_x: ${ (480 * (carte_ecran_l | int) + 640) // 1280 }

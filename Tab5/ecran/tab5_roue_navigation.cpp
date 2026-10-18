@@ -176,7 +176,7 @@ int choix_de(const Premier& p, RoueChoix* c, int* cible) {
     if (p.genre == Genre::ECRAN) return 0;
     if (p.genre == Genre::PIECES) {
         // Maison (ADR-0037) d'abord, puis les pièces dans l'ordre du blueprint, leur numéro
-        // dans le bouton (celui du titre « Pièce n/N ») et leur nom dessous ; celle que le
+        // dans le bouton (leur rang dans le blueprint) et leur nom dessous ; celle que le
         // mode HA montre est l'état courant. Plus de sept pièces : deux pages (« Suite »).
         int pieces[kPiecesMax];
         const int n = pieces_occupees(pieces);

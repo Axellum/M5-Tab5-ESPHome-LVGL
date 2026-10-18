@@ -549,16 +549,15 @@ lvgl:
                   width: SIZE_CONTENT
                   height: 100%
                   styles: style_transparent
-                  # Ni défilement ni barre (18/10/2026, demande d'Axel) : les boîtes de ligne
-                  # des deux titres (le haut vide de « Pièce n/N », le bas des jambages du nom)
-                  # dépassent de 2 à 3 px, plus selon la police du thème, et la boîte montrait
+                  # Ni défilement ni barre (18/10/2026, demande d'Axel) : la boîte de ligne du
+                  # titre (le bas des jambages du nom ; avant, aussi le haut vide de l'ancienne
+                  # ligne « Pièce n/N ») dépasse de 2 à 3 px, plus selon la police du thème, et la boîte montrait
                   # une barre de défilement à droite du titre de la pièce (vue au rendu sur le
                   # Tab5 et la 7B). L'encre tient dans la carte. Marge nulle : style_transparent.
                   scrollable: false
                   scrollbar_mode: "OFF"
                   hidden: true
                   widgets:
-                    - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: "${acc_titre_sous_y}", styles: style_bandeau_text_dim }
                     - label: { id: lbl_page_title, text: "", align: CENTER, y: 0, styles: [style_police_date, style_bandeau_text_soft] }
                     - button:
                         id: btn_page_title_tap

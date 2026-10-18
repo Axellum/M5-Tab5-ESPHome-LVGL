@@ -195,8 +195,19 @@ def test_nombre_de_pieces_lu_et_borne():
     assert "if (heritage() || s_m.pieces_n < 1) return kPiecesDefaut;" in _fonction(_cpp(), "pieces_nombre")
     regle = _fonction(_lire("Tab5", "socle", "tab5_core.cpp"), "pieces_nombre_lire")
     assert "return v < 1 ? 1 : (v > kPiecesMax ? kPiecesMax : v);" in regle
-    # « Pièce n/N » compte les N pièces.
-    assert 'tr("Pièce %d/%d"), r + 1, pieces_nombre());' in _fonction(_cpp(), "tuiles_titre_piece")
+    # Plus de ligne « Pièce n/N » au-dessus du nom de la pièce (18/10/2026, demande d'Axel) :
+    # ni le texte, ni l'étiquette qui le portait, ni ses jetons de position.
+    titre = _fonction(_cpp(), "tuiles_titre_piece")
+    assert "Pièce %d/%d" not in titre and 'tr("Pièce %d"), r + 1);' in titre
+    for chemin in (("Tab5", "ecran", "tab5_central.cpp"), ("Tab5", "ecran", "tab5_central.h"),
+                   ("Tab5", "paquets", "tab5-lvgl.yaml"), ("Tab5", "paquets", "tab5-tuiles.yaml"),
+                   ("Tab5", "paquets", "tab5-ui-tokens.yaml"), ("Tab5", "socle", "tab5_geometrie.h"),
+                   ("tab5-ha-hmi.yaml",), ("tab5-rendu-host.yaml",)):
+        texte = _lire(*chemin)
+        for mort in ("page_title_sub", "lbl_page_title_sub", "acc_titre_sous_y", "acc_titre_y2", "kAccTitreY2"):
+            assert mort not in texte, (chemin, mort)
+    for code in ("en", "de", "nl", "es", "it", "tr"):
+        assert '"Pièce %d/%d"' not in _lire("Tab5", "lang", f"{code}.yaml"), code
 
 
 def test_pages_de_piece_de_la_meteo():

@@ -171,8 +171,8 @@ int tuiles_pages_meteo();
 // héritage) : une pièce R ≥ N n'existe nulle part à l'écran.
 int tuiles_pieces_nombre();
 // tab5_central.cpp : titre de la carte centrale en mode HA et sur une page de pièce de la
-// météo — « Pièce n/N » et le nom de la pièce affichée (« Pièce n » sans nom).
-bool tuiles_titre_piece(std::string& chapeau, std::string& titre);
+// météo — le nom de la pièce affichée (« Pièce n » sans nom, « Aucun appareil » vide).
+bool tuiles_titre_piece(std::string& titre);
 // tab5_central.cpp (handle_swipe_gesture en mode HA) : pièce suivante ou précédente, en
 // rouleau sur les N pièces, vides comprises.
 void tuiles_swipe_ha(bool gauche);

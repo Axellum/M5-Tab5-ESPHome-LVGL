@@ -546,28 +546,22 @@ void central_tout_marquer_lu(HaAlertSlotUI slots[4], lv_obj_t* lbl_info, const s
 }
 
 // Pose le titre sans rien decider de la visibilite, dans la police de la date
-// (style_police_date, tab5-lvgl.yaml). Pages de previsions : une ligne, la plage des
-// tuiles. Mode HA : chapeau discret (roboto_22 attenue, « Pièce n/N ») + nom de la
-// piece dessous ; sans nom, le chapeau prend la ligne principale et se recentre.
-// Renvoie false quand la page n'a pas de titre (accueil) : rien n'est ecrit.
+// (style_police_date, tab5-lvgl.yaml), sur une ligne : la plage des tuiles (pages de
+// previsions) ou le nom de la piece (mode HA, page de piece de la meteo). Plus de ligne
+// « Pièce n/N » au-dessus du nom (18/10/2026, demande d'Axel : mieux sans ; les pastilles
+// disent deja la piece). Renvoie false quand la page n'a pas de titre (accueil) : rien
+// n'est ecrit.
 static bool set_forecast_page_title_text(int forecast_page, lv_obj_t* lbl_page_title,
                                          CentralPanelCtx& ctx) {
-    std::string chapeau, plage;
-    // Mode HA : « Pièce n/N » et le nom de la pièce (tab5_tuiles.cpp), sur toutes les pages ;
-    // de même sur une page de pièce de la météo (5 et plus, ADR-0066).
+    std::string plage;
+    // Mode HA et page de pièce de la météo (5 et plus, ADR-0066) : le nom de la pièce
+    // (tab5_tuiles.cpp), sur toutes les pages.
     const bool piece = ctx.ha_mode || forecast_page >= kPagesMeteo;
-    const bool a_titre = piece ? tuiles_titre_piece(chapeau, plage)
-                               : forecast_page_title_parts(forecast_page, plage);
+    const bool a_titre = piece ? tuiles_titre_piece(plage) : forecast_page_title_parts(forecast_page, plage);
     if (!a_titre) return false;
 
-    const bool deux_lignes = !chapeau.empty() && !plage.empty();
-    if (ctx.page_title_sub) {
-        lv_label_set_recolor(ctx.page_title_sub, false);
-        ui_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
-    }
     lv_label_set_recolor(lbl_page_title, false);
-    ui_text(lbl_page_title, plage.empty() ? chapeau.c_str() : plage.c_str());
-    lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? kAccTitreY2 : 0);
+    ui_text(lbl_page_title, plage.c_str());
     return true;
 }
 

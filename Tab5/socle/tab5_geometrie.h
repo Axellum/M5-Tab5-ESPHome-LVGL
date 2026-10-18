@@ -146,12 +146,10 @@ constexpr int32_t kAccMarge = (20 * kEcranL + 640) / 1280;
 // Panneaux de la carte centrale de l'accueil (central_card, tab5-lvgl.yaml : x 20, y 333,
 // 20 px des bords de l'écran ; jetons central_carte_w, central_w, acc_centrale_y) : largeur
 // utile des panneaux, 1180 sur le Tab5 (1240 - 2 × 20 de marge - 2 × 1 de bordure,
-// arrondi) ; haut de la carte (sous lui, un glissement pagine les prévisions) ; y du nom de
-// la pièce sous son chapeau « Pièce n/N » (+13 du milieu, acc_titre_y2).
+// arrondi) ; haut de la carte (sous lui, un glissement pagine les prévisions).
 constexpr int32_t kCentralCarteL = kEcranL - 2 * kAccMarge;
 constexpr int32_t kPanneauCentralL = kCentralCarteL - 60;
 constexpr int32_t kAccCentraleY = (333 * kEcranH + 360) / 720;
-constexpr int32_t kAccTitreY2 = (13 * kEcranH + 360) / 720;
 
 // Largeur d'une ligne de zone (rangée sous l'horloge, panneaux Ok Nabu ; acc_ligne_l) :
 // celle de l'horloge (401 sur le Tab5), au plus l'intérieur du cadre Ok Nabu (colonne de

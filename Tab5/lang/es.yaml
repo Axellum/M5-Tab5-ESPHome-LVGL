@@ -154,7 +154,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Allumer seulement": "Solo encender"
 "Confirmer chaque commande": "Confirmar cada orden"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
-"Pièce %d/%d": "Estancia %d/%d"
 # Ten rooms (ADR-0066): pages of the Maison popup, second page of the navigation wheel
 # Onglet de 134 à 200 px : « Estancias » est long, donc tiret demi-cadratin au lieu de « a ».
 "Pièces %d à %d": "Estancias %d–%d"
