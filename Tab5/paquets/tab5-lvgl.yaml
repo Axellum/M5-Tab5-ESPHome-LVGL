@@ -35,12 +35,10 @@ lvgl:
                   lv_indev_get_point(indev, &pt);
                   lv_dir_t d = lv_indev_get_gesture_dir(indev);
 
-                  lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
                   handle_swipe_gesture(d, pt.y,
                       id(layer_forecast_daily), id(layer_forecast_hourly),
                       g_day_slots, g_hour_slots,
                       id(font_meteo_card), id(font_meteo_card_small),
-                      pbars,
                       id(page_title_wrapper), id(lbl_page_title),
                       g_central_ctx);
               }
@@ -630,6 +628,14 @@ lvgl:
               - obj: { id: pbar_2, width: 30, height: 4, radius: 2, styles: style_bg_soft, bg_opa: 100%, border_width: 0 }
               - obj: { id: pbar_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
               - obj: { id: pbar_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+              # Pages 5 à 9 (ADR-0066) : une par pièce au-delà de la cinquième (mode météo) ou
+              # une par pièce (mode HA), masquées tant qu'elles n'existent pas (pastilles_peindre,
+              # tab5_tuiles.cpp ; un objet masqué ne prend pas de place dans la rangée FLEX).
+              - obj: { id: pbar_5, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0, hidden: true }
+              - obj: { id: pbar_6, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0, hidden: true }
+              - obj: { id: pbar_7, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0, hidden: true }
+              - obj: { id: pbar_8, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0, hidden: true }
+              - obj: { id: pbar_9, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0, hidden: true }
 
         # ==================== PRÉVISIONS PÉRIMÉES ====================
         # Mention au-dessus des tuiles, à droite (08/10/2026) : masquée tant que les

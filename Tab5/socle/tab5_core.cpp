@@ -7,6 +7,7 @@
  *       différence, `time(nullptr)` passe par `tab5_time_source`.
  */
 #include "tab5_core.h"
+#include "tab5_geometrie.h"
 #include "tab5_i18n.h"
 
 #include <cmath>
@@ -273,6 +274,69 @@ int reglages_page_voisine(int page, int nb, bool gauche) {
     if (nb <= 0) return 0;
     if (page < 0 || page >= nb) return 0;
     return gauche ? (page + 1) % nb : (page + nb - 1) % nb;
+}
+
+// ─── Nombre de pièces et pages du bas (ADR-0066, lot A, 18/10/2026) ───
+
+namespace {
+// Pièce de chaque page 0 à 4 de la météo (ADR-0023) : R0 = page 2 (accueil), R1 = 3,
+// R2 = 4, R3 = 1, R4 = 0.
+constexpr int kPieceDePage[kPagesMeteo] = {4, 3, 0, 1, 2};
+}  // namespace
+
+int pieces_nombre_lire(const char* s, size_t n) {
+    if (s == nullptr || n == 0 || n > 2) return kPiecesDefaut;
+    int v = 0;
+    for (size_t i = 0; i < n; i++) {
+        if (s[i] < '0' || s[i] > '9') return kPiecesDefaut;
+        v = v * 10 + (s[i] - '0');
+    }
+    return v < 1 ? 1 : (v > kPiecesMax ? kPiecesMax : v);
+}
+
+int piece_de_page(int page) {
+    if (page < 0 || page >= kPiecesMax) return -1;
+    return page < kPagesMeteo ? kPieceDePage[page] : page;
+}
+
+int page_de_piece(int r) {
+    if (r < 0 || r >= kPiecesMax) return -1;
+    if (r >= kPagesMeteo) return r;
+    for (int p = 0; p < kPagesMeteo; p++)
+        if (kPieceDePage[p] == r) return p;
+    return -1;
+}
+
+int meteo_page_suivante(int page, bool gauche, int pages) {
+    if (pages < kPagesMeteo) pages = kPagesMeteo;
+    if (pages > kPiecesMax) pages = kPiecesMax;
+    if (page < 0 || page >= pages) return 2;
+    if (gauche) return page >= pages - 1 ? 2 : page + 1;
+    return page <= 0 ? 2 : page - 1;
+}
+
+int page_non_vide_proche(int page, int pages, uint32_t occupees) {
+    if (pages > kPiecesMax) pages = kPiecesMax;
+    int choix = -1, d_choix = 99, h_choix = 99;
+    for (int p = 0; p < pages; p++) {
+        const int r = piece_de_page(p);
+        if (r < 0 || !(occupees & (1u << r))) continue;
+        const int d = std::abs(p - page), h = std::abs(p - 2);
+        if (d < d_choix || (d == d_choix && h < h_choix)) {
+            choix = p;
+            d_choix = d;
+            h_choix = h;
+        }
+    }
+    return choix;
+}
+
+PagesRepartition pages_repartir(int n, int max) {
+    PagesRepartition r;
+    if (n <= 0 || max <= 0) return r;
+    r.pages = (n + max - 1) / max;
+    r.par_page = (n + r.pages - 1) / r.pages;
+    return r;
 }
 
 // ─── Rouleaux du popup Réveil (09/10/2026) ───

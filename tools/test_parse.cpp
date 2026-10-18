@@ -738,9 +738,13 @@ static void test_piece_climat() {
         expect(piece("p3", "||1x", lu) && !lu.temperature && !lu.clim, "pièce : clim exactement « 1 »");
     }
     {
+        // Dix pièces depuis l'ADR-0066 (lot A) : p5 à p9 lues ; « pn » (le nombre de pièces de
+        // tab5_maj_tuiles) n'est pas une pièce.
         PieceClimatLu lu;
+        expect(piece("p9", "20|50|1", lu) && lu.piece == 9 && lu.temperature && lu.clim, "pièce : p9, la dixième");
+        expect(piece("p5", "18", lu) && lu.piece == 5, "pièce : p5, la sixième");
         lu.piece = 9;
-        expect(!piece("p5", "20|50|1", lu) && lu.piece == 9, "pièce : p5 hors des cinq pièces, rien changé");
+        expect(!piece("pn", "8", lu) && lu.piece == 9, "pièce : « pn » n'est pas une pièce, rien changé");
         expect(!piece("pa", "20", lu) && !piece("p", "20", lu) && !piece("p00", "20", lu) &&
                    !piece("r0", "20", lu) && lu.piece == 9,
                "pièce : autre clé refusée");

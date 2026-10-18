@@ -65,7 +65,7 @@ struct PopupTuile {
     bool montre(int r, int t) const { return ouvert() && r == piece && t == tuile; }
 
     // Sa tuile est dans la grille, hors mode héritage (qui n'ouvre ni volet ni appareil).
-    bool en_grille() const { return piece >= 0 && piece < kPieces && tuile >= 0 && tuile < kTuiles && !heritage(); }
+    bool en_grille() const { return piece >= 0 && piece < kPiecesMax && tuile >= 0 && tuile < kTuiles && !heritage(); }
 };
 
 // Ouvre le popup `p` sur la tuile tRT : son état remis à zéro, peint, puis montré. Rien
@@ -102,7 +102,7 @@ void popup_tuile_revalider(const P&, bool valide, void (*peindre)()) {
 template <lv_obj_t* TuilesUI::* C>
 struct PopupPieces : PopupTuile<C> {
     int nb = 0;                // pages : les pièces qui ont au moins une ligne
-    int pieces[kPieces] = {};  // pièce de chaque page, dans l'ordre du blueprint
+    int pieces[kPiecesMax] = {};  // pièce de chaque page, dans l'ordre du blueprint
     int page = 0;              // page affichée : piece = pieces[page]
     int n = 0;                 // lignes de la page affichée
     int tuiles[kTuiles] = {};  // tuile de chaque ligne, dans l'ordre des tuiles
@@ -117,7 +117,7 @@ template <class P>
 bool pieces_calculer(P& p, bool (*garde)(int, int), int r, int t) {
     p.nb = p.n = p.page = p.choix = 0;
     p.piece = p.tuile = -1;
-    for (int i = 0; i < kPieces; i++) {
+    for (int i = 0; i < kPiecesMax; i++) {
         for (int j = 0; j < kTuiles; j++) {
             if (!garde(i, j)) continue;
             if (i == r) p.page = p.nb;
@@ -171,13 +171,13 @@ void ligne_de_la_tuile(const P& p, lv_obj_t* const* lignes, int t) {
 // affichée en accent. Nom : celui de la carte centrale en mode HA (tuiles_piece_titre).
 template <class P>
 void onglets_peindre(const P& p, lv_obj_t* const* onglets) {
-    char noms[kPieces][40];  // un nom de HA (kNom) ou « Pièce n » traduit
-    const char* ptr[kPieces] = {};
+    char noms[kPiecesMax][40];  // un nom de HA (kNom) ou « Pièce n » traduit
+    const char* ptr[kPiecesMax] = {};
     for (int i = 0; i < p.nb; i++) {
         if (!tuiles_piece_titre(p.pieces[i], noms[i], sizeof(noms[i]))) noms[i][0] = '\0';
         ptr[i] = noms[i];
     }
-    pages_onglets(onglets, kPieces, ptr, p.nb, p.page);
+    pages_onglets(onglets, kPiecesMax, ptr, p.nb, p.page);
 }
 
 // ─── Popup Lumières : les lumières de la maison, pièce par pièce ───────────────────

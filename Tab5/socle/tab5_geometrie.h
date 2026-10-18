@@ -176,6 +176,12 @@ constexpr int32_t police_px(int32_t v) { return v >= 0 ? (v * kPolicePct + 50) /
 constexpr int32_t kHorlogeDx = (kAccHorlogeL - 2 - (399 * kPolicePct + 50) / 100) / 2;
 constexpr int32_t kHorlogeDy = (kAccHorlogeH - (210 * kPolicePct + 50) / 100) / 2;
 
-// Pièces (pages du bas) et tuiles par pièce (ADR-0023) : le blueprint en envoie autant.
-constexpr int kPieces = 5;
+// Pièces et tuiles par pièce (ADR-0023). Depuis l'ADR-0066 (lot A, 18/10/2026), le nombre
+// de pièces est choisi dans Home Assistant (« pn|N » en tête de tab5_maj_tuiles, 1 à
+// kPiecesMax) : les tableaux sont dimensionnés sur kPiecesMax, et un blueprint sans « pn »
+// en a kPiecesDefaut, les cinq d'avant. La météo garde ses kPagesMeteo pages (0-1 heures,
+// 2-4 jours) ; les pièces 5 et plus y ont chacune une page de plus après les jours 10-14.
+constexpr int kPiecesMax = 10;
+constexpr int kPiecesDefaut = 5;
+constexpr int kPagesMeteo = 5;
 constexpr int kTuiles = 5;

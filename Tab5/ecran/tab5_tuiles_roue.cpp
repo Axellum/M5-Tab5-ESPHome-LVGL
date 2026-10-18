@@ -650,7 +650,7 @@ lv_obj_t* clim_ancre_basse(lv_obj_t* zone) {
 
 bool clim_roue_ouvrir(const ClimRef& c, lv_obj_t* ancre) {
     charger();
-    if (ancre == nullptr || c.r < -1 || c.r >= kPieces || c.t >= kTuiles) return false;
+    if (ancre == nullptr || c.r < -1 || c.r >= kPiecesMax || c.t >= kTuiles) return false;
     RoueTuile rt;
     rt.clim = c;
     rt.ancre = clim_ancre_basse(ancre);
@@ -659,7 +659,7 @@ bool clim_roue_ouvrir(const ClimRef& c, lv_obj_t* ancre) {
 
 bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison) {
     charger();
-    if (ancre == nullptr || r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return false;
+    if (ancre == nullptr || r < 0 || r >= kPiecesMax || t < 0 || t >= kTuiles) return false;
     RoueTuile rt;
     rt.r = r;
     rt.t = t;

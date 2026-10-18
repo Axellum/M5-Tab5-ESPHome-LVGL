@@ -135,6 +135,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Confirmer chaque commande": "Elke opdracht bevestigen"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Kamer %d/%d"
+# Ten rooms (ADR-0066): pages of the Maison popup, second page of the navigation wheel
+# Onglet de 134 à 200 px : tiret demi-cadratin plutôt que « t/m » pour rester court.
+"Pièces %d à %d": "Kamers %d–%d"
+"Suite": "Meer"
 "Aucun appareil": "Geen apparaat"
 "Ouvrir": "Openen"
 "Pièce %d": "Kamer %d"

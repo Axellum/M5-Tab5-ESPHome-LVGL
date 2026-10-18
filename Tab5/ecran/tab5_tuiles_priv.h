@@ -12,8 +12,10 @@
  *       (tab5-ha-hmi.yaml, tab5-rendu-host.yaml) pour être copié à côté des .cpp, donc
  *       inclus aussi dans main.cpp : rien que des types, des constantes et des
  *       déclarations, tout dans `tuiles`, aucun `using namespace`.
- *       Def, Modele et Etat sont gardés tels quels en NVS (magie « TUI1 », « RAN1 ») : ne
- *       changer ni leurs champs ni leur ordre.
+ *       Def, Modele et Etat sont gardés tels quels en NVS (magie du modèle = « TU » + sa
+ *       taille depuis l'ADR-0066, « RAN1 ») : un champ de plus ou un tableau plus grand
+ *       change la magie, les définitions gardées sont oubliées une fois (HA les renvoie à
+ *       chaque connexion).
  * @ai_instruction Une fonction d'un fichier des tuiles appelée par un autre : sa
  *       déclaration ici, sous le fichier qui la définit. Une fonction pour le reste du
  *       firmware : tab5_custom.h (lambdas YAML) ou tab5_internal.h (C++).
@@ -56,13 +58,15 @@ struct Def {
     char nom[modele_ha::kNom];
 };
 
-// Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable).
+// Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable). Dimensionné
+// sur kPiecesMax depuis l'ADR-0066 (lot A) : sa magie suit sa taille (kMagic, tab5_tuiles.cpp).
 struct Modele {
     uint32_t magic;
     uint8_t recues;       // 1 dès la première tab5_maj_tuiles : fin du mode héritage
-    uint8_t reserve[3];
-    char pieces[kPieces][modele_ha::kNom];
-    Def tuiles[kPieces][kTuiles];
+    uint8_t pieces_n;     // nombre de pièces (« pn|N », 1 à kPiecesMax ; kPiecesDefaut sans pn)
+    uint8_t reserve[2];
+    char pieces[kPiecesMax][modele_ha::kNom];
+    Def tuiles[kPiecesMax][kTuiles];
 };
 
 struct Etat {
@@ -142,13 +146,15 @@ struct ClimCible {
 // ─── tab5_tuiles.cpp ────────────────────────────────────────────────────────────────
 
 extern Modele s_m;
-extern Etat s_etats[kPieces][kTuiles];
+extern Etat s_etats[kPiecesMax][kTuiles];
 extern Heritage s_h;
 extern Minuterie s_confirmation;
 extern Minuterie s_ok;
 
 void charger();
 bool heritage();
+// Nombre de pièces à l'écran (ADR-0066) : « pn » reçu, kPiecesDefaut en mode héritage.
+int pieces_nombre();
 bool tuile_presente(int r, int t);
 int piece_courante();
 bool minuterie_sur(const Minuterie& m, int r, int t);

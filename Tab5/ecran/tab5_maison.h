@@ -26,20 +26,32 @@
 // Widgets posés par le script tab5_maison_ouvrir (tab5-maison.yaml) : id() n'existe que
 // dans une lambda YAML. Les widgets d'une ligne sont lus dans l'ordre de ses enfants
 // (maison_ligne.yaml : pastille [icône], nom, état, « ⋯ »).
+// Depuis l'ADR-0066 (dix pièces), les objets sont des PLACES d'une page : colonne C (0 à 4)
+// et ligne K (0 à 4) ; disposer() (tab5_maison.cpp) dit quelle tuile tRT chacune montre.
+// Plus de cinq pièces : des pages de cinq colonnes au plus, au glissement (ADR-0046) et par
+// les onglets « Pièces 1 à 5 » à côté du titre.
+constexpr int kMaisonColonnes = 5;
+constexpr int kMaisonLignes = 5;
+constexpr int kMaisonPagesMax = 2;  // dix pièces, cinq colonnes par page
 struct MaisonUI {
     lv_obj_t* popup = nullptr;      // maison_popup
     lv_obj_t* vide = nullptr;       // maison_vide : « Aucun appareil »
     lv_obj_t* eteindre = nullptr;   // btn_maison_eteindre : « Éteindre les lumières »
-    lv_obj_t* entete[5] = {};       // maison_entete_R : nom de la pièce R
-    lv_obj_t* ligne[5][5] = {};     // maison_ligne_RT : la tuile tRT (bouton)
+    lv_obj_t* onglet[kMaisonPagesMax] = {};                 // maison_onglet_P : la page P
+    lv_obj_t* entete[kMaisonColonnes] = {};                 // maison_entete_C : nom de la pièce de la colonne C
+    lv_obj_t* ligne[kMaisonColonnes][kMaisonLignes] = {};   // maison_ligne_CK : une tuile (bouton)
 };
 extern MaisonUI g_maison_ui;
 
-// Ouvre le popup (disposé et peint à chaque ouverture : il suit les définitions même fermé).
+// Ouvre le popup (disposé et peint à chaque ouverture : il suit les définitions même fermé),
+// sur la page de la pièce du mode HA, sinon la première.
 void maison_ouvrir();
-// Tap sur le titre de la pièce (carte centrale) : vrai en mode HA, hors d'un glissement.
+// Tap sur le titre de la pièce (carte centrale) : vrai en mode HA et sur une page de pièce
+// de la météo (ADR-0066), hors d'un glissement.
 bool maison_titre_appui_valide();
-// Toucher (long_appui faux), appui long ou « ⋯ » (vrai) de la ligne de la tuile tRT.
-void maison_ligne_appui(int r, int t, bool long_appui);
+// Toucher (long_appui faux), appui long ou « ⋯ » (vrai) de la ligne K de la colonne C.
+void maison_ligne_appui(int c, int k, bool long_appui);
+// Tap sur l'onglet d'une page (pages_onglet.yaml) ; le glissement passe par la même page.
+void maison_page(int page);
 // « Éteindre les lumières » : « Pièce : tout éteindre » de chaque pièce qui a des lumières.
 void maison_eteindre_lumieres();

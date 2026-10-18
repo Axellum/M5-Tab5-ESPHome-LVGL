@@ -154,6 +154,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Confirmer chaque commande": "Her komutu onayla"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Oda %d/%d"
+# Ten rooms (ADR-0066): pages of the Maison popup, second page of the navigation wheel
+# Onglet de 134 à 200 px : tiret demi-cadratin, pas de « ile/arası » (suffixe long).
+"Pièces %d à %d": "Odalar %d–%d"
+"Suite": "Devam"
 "Aucun appareil": "Cihaz yok"
 "Ouvrir": "Aç"
 "Pièce %d": "Oda %d"

@@ -8,9 +8,11 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1249;
+static const uint16_t kI18nKeyCount = 1251;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
     "",
     "",
     "",
@@ -2027,6 +2029,7 @@ static const char* const kI18nKeys[] = {
     "Pièce %d/%d",
     "Pièce : %s",
     "Pièces",
+    "Pièces %d à %d",
     "Plantes",
     "Pluie",
     "Pluie dans l'heure",
@@ -2233,6 +2236,7 @@ static const char* const kI18nKeys[] = {
     "Sports & Loisirs",
     "Statistiques",
     "Stop",
+    "Suite",
     "Suivant",
     "Suivi",
     "Sur USB",
@@ -3280,6 +3284,7 @@ static const char* const kI18n_en[] = {
     "Room %d/%d",  // "Pièce %d/%d"
     "Room: %s",  // "Pièce : %s"
     "Rooms",  // "Pièces"
+    "Rooms %d to %d",  // "Pièces %d à %d"
     "Plants",  // "Plantes"
     "Rain",  // "Pluie"
     "Rain in the next hour",  // "Pluie dans l'heure"
@@ -3486,6 +3491,7 @@ static const char* const kI18n_en[] = {
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
     "Stop",  // "Stop"
+    "More",  // "Suite"
     "Next",  // "Suivant"
     "Tracking",  // "Suivi"
     "On USB",  // "Sur USB"
@@ -4533,6 +4539,7 @@ static const char* const kI18n_de[] = {
     "Raum %d/%d",  // "Pièce %d/%d"
     "Raum: %s",  // "Pièce : %s"
     "Räume",  // "Pièces"
+    "Räume %d–%d",  // "Pièces %d à %d"
     "Pflanzen",  // "Plantes"
     "Regen",  // "Pluie"
     "Regen in der nächsten Stunde",  // "Pluie dans l'heure"
@@ -4739,6 +4746,7 @@ static const char* const kI18n_de[] = {
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
     "Stopp",  // "Stop"
+    "Weiter",  // "Suite"
     "Nächster",  // "Suivant"
     "Verlauf",  // "Suivi"
     "USB-Betrieb",  // "Sur USB"
@@ -5786,6 +5794,7 @@ static const char* const kI18n_nl[] = {
     "Kamer %d/%d",  // "Pièce %d/%d"
     "Kamer: %s",  // "Pièce : %s"
     "Kamers",  // "Pièces"
+    "Kamers %d–%d",  // "Pièces %d à %d"
     "Planten",  // "Plantes"
     "Regen",  // "Pluie"
     "Regen het komende uur",  // "Pluie dans l'heure"
@@ -5992,6 +6001,7 @@ static const char* const kI18n_nl[] = {
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
     "Stop",  // "Stop"
+    "Meer",  // "Suite"
     "Volgende",  // "Suivant"
     "Volgen",  // "Suivi"
     "Via USB",  // "Sur USB"
@@ -7039,6 +7049,7 @@ static const char* const kI18n_es[] = {
     "Estancia %d/%d",  // "Pièce %d/%d"
     "Estancia: %s",  // "Pièce : %s"
     "Estancias",  // "Pièces"
+    "Estancias %d–%d",  // "Pièces %d à %d"
     "Plantas",  // "Plantes"
     "Lluvia",  // "Pluie"
     "Lluvia en la próxima hora",  // "Pluie dans l'heure"
@@ -7245,6 +7256,7 @@ static const char* const kI18n_es[] = {
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
     "Parar",  // "Stop"
+    "Más",  // "Suite"
     "Siguiente",  // "Suivant"
     "Seguimiento",  // "Suivi"
     "Por USB",  // "Sur USB"
@@ -8292,6 +8304,7 @@ static const char* const kI18n_it[] = {
     "Stanza %d/%d",  // "Pièce %d/%d"
     "Stanza: %s",  // "Pièce : %s"
     "Stanze",  // "Pièces"
+    "Stanze %d–%d",  // "Pièces %d à %d"
     "Piante",  // "Plantes"
     "Pioggia",  // "Pluie"
     "Pioggia nella prossima ora",  // "Pluie dans l'heure"
@@ -8498,6 +8511,7 @@ static const char* const kI18n_it[] = {
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
     "Stop",  // "Stop"
+    "Altre",  // "Suite"
     "Successivo",  // "Suivant"
     "Monitoraggio",  // "Suivi"
     "Via USB",  // "Sur USB"
@@ -9545,6 +9559,7 @@ static const char* const kI18n_tr[] = {
     "Oda %d/%d",  // "Pièce %d/%d"
     "Oda: %s",  // "Pièce : %s"
     "Odalar",  // "Pièces"
+    "Odalar %d–%d",  // "Pièces %d à %d"
     "Bitkiler",  // "Plantes"
     "Yağmur",  // "Pluie"
     "Önümüzdeki saatte yağmur",  // "Pluie dans l'heure"
@@ -9751,6 +9766,7 @@ static const char* const kI18n_tr[] = {
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
     "Dur",  // "Stop"
+    "Devam",  // "Suite"
     "Sonraki",  // "Suivant"
     "Takip",  // "Suivi"
     "USB ile",  // "Sur USB"

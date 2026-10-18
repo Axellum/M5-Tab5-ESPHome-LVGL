@@ -39,7 +39,7 @@ def _resolu(valeur, carte="tab5"):
 # Tab5/socle/tab5_geometrie.h : constantes entières, éventuellement calculées des précédentes.
 GEOMETRIE = "tab5_geometrie.h"
 GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW", "kCorpsH",
-                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kDemiL", "kDemiX", "kPieces", "kTuiles",
+                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kDemiL", "kDemiX", "kPiecesMax", "kTuiles",
                   "kLecteurCarteL", "kLecteurCarteH", "kOngletsFin", "kCalColPas", "kCalColW", "kCalColX0",
                   "kPieceLignePas", "kPieceLigneH", "kCentralCarteL", "kPanneauCentralL",
                   "kCorpsWTab5", "kCorpsHTab5", "kPieceLigneL")
@@ -176,8 +176,9 @@ def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
     assert g["kLecteurCarteL"] < g["kCarteL"] and g["kLecteurCarteH"] < g["kCarteH"]
     popup = _lire("Tab5", "ui_components", "lecteur_popup.yaml")
     assert "width: ${lecteur_card_w}" in popup and "height: ${lecteur_card_h}" in popup
-    # Pièces et tuiles : cinq de chaque, comme le blueprint (ADR-0023).
-    assert g["kPieces"] == g["kTuiles"] == 5
+    # Pièces et tuiles : cinq de chaque, comme le blueprint (ADR-0023) ; dix pièces au plus
+    # depuis l'ADR-0066, cinq sans « pn », cinq pages de météo.
+    assert g["kPiecesMax"] == 10 and g["kPiecesDefaut"] == g["kPagesMeteo"] == g["kTuiles"] == 5
 
 
 @pytest.mark.parametrize("carte", CARTES)

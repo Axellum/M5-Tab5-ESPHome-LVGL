@@ -77,7 +77,7 @@ float s_clim_piece = NAN;
 // ne pas les renommer sans lui (tests/test_clim.py).
 constexpr char kCleReglagesTuile[] = "cr";
 constexpr char kCleEtatTuile[] = "ce";
-// kPieces et kTuiles : tab5_geometrie.h. Modes bornés à kModeMax (tab5_parse.h).
+// kPiecesMax et kTuiles : tab5_geometrie.h. Modes bornés à kModeMax (tab5_parse.h).
 
 struct ClimTuile {
     ClimReglages reglages;  // reglages.recu : crRT reçue, l'appui de la tuile ouvre le popup
@@ -86,11 +86,12 @@ struct ClimTuile {
 
 // Clims des pièces (ADR-0040) : la clim déclarée dans la section « Pièce R » du blueprint,
 // clés « crpR » / « cepR » (mêmes champs que crRT / ceRT), réglée par la tuile − / + quand
-// la zone des températures montre la pièce. Cinq cases de plus après celles des tuiles ;
-// emplacement de ses commandes « cpR » (« pR » est déjà « Pièce : tout éteindre »).
+// la zone des températures montre la pièce. Une case par pièce (dix au plus, ADR-0066) après
+// celles des tuiles ; emplacement de ses commandes « cpR » (« pR » est déjà « Pièce : tout
+// éteindre »).
 constexpr char kPrefixePiece = 'p';
-constexpr int kCasesTuiles = kPieces * kTuiles;
-constexpr int kCases = kCasesTuiles + kPieces;
+constexpr int kCasesTuiles = kPiecesMax * kTuiles;
+constexpr int kCases = kCasesTuiles + kPiecesMax;
 
 // 30 cases (≈ 5,4 Ko) en PSRAM, allouées à la première clé cr/ce : rien tant qu'aucune
 // tuile ni aucune pièce n'a sa clim, rien en RAM interne. Pas d'EXT_RAM_BSS_ATTR : ces
@@ -129,12 +130,12 @@ ClimTuile* case_clim(int i, bool creer) {
 }
 
 ClimTuile* tuile_clim(int r, int t, bool creer) {
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return nullptr;
+    if (r < 0 || r >= kPiecesMax || t < 0 || t >= kTuiles) return nullptr;
     return case_clim(r * kTuiles + t, creer);
 }
 
 ClimTuile* piece_clim(int r, bool creer) {
-    if (r < 0 || r >= kPieces) return nullptr;
+    if (r < 0 || r >= kPiecesMax) return nullptr;
     return case_clim(kCasesTuiles + r, creer);
 }
 
@@ -465,11 +466,12 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
     const bool etat = std::strncmp(cle, kCleEtatTuile, 2) == 0;
     if (!reglages && !etat) return false;
     // « crpR » / « cepR » : la clim de la pièce R (ADR-0040) ; « crRT » / « ceRT » : celle
-    // de la tuile tRT. Un firmware d'avant l'ADR-0040 ignore « p » (chiffre attendu).
+    // de la tuile tRT. Un firmware d'avant l'ADR-0040 ignore « p » (chiffre attendu). Pièce
+    // R de 0 à 9 (ADR-0066 ; modele_ha::piece_index), tuile T de 0 à 4.
     const bool piece = cle[2] == kPrefixePiece;
-    if (piece ? (cle[3] < '0' || cle[3] > '4') : (cle[2] < '0' || cle[2] > '4' || cle[3] < '0' || cle[3] > '4'))
-        return false;
-    const int r = piece ? cle[3] - '0' : cle[2] - '0';
+    int r = 0;
+    if (!modele_ha::piece_index(piece ? cle[3] : cle[2], r)) return false;
+    if (!piece && (cle[3] < '0' || cle[3] > '4')) return false;
     const int t = piece ? -1 : cle[3] - '0';
     const int i = piece ? kCasesTuiles + r : r * kTuiles + t;
     ClimTuile* c = case_clim(i, true);
@@ -667,8 +669,8 @@ std::string clim_tuile_attente_texte() { return clim_consigne_texte(s_attente.va
 namespace {
 
 // Toutes les clims possibles : celle du blueprint, une par tuile et une par pièce (la clim
-// de la section « Pièce R » du blueprint, ADR-0040).
-constexpr int kClimsConnues = 1 + kPieces * kTuiles + kPieces;
+// de la section « Pièce R » du blueprint, ADR-0040), dix pièces au plus (ADR-0066).
+constexpr int kClimsConnues = 1 + kPiecesMax * kTuiles + kPiecesMax;
 
 bool meme_nom(const char* a, const char* b) {
     return a != nullptr && b != nullptr && a[0] != '\0' && std::strcmp(a, b) == 0;
@@ -751,15 +753,17 @@ int clims_enumerer(ClimRef* out, int max) {
     };
     // 1. La clim du blueprint (la carte de l'accueil), sauf si HA l'a déclarée absente.
     if (!zone_absente(Zone::CLIM)) ajouter(-1, -1, -1, s_clim.nom);
-    // 2. Les clims des tuiles cli sans l'option m (ADR-0027), réglages reçus.
+    // 2. Les clims des tuiles cli sans l'option m (ADR-0027), réglages reçus. Une pièce
+    // R ≥ N (nombre de pièces choisi dans HA, ADR-0066) n'existe pas à l'écran.
+    const int nb_pieces = tuiles_pieces_nombre();
     if (s_ct != nullptr) {
-        for (int r = 0; r < kPieces; r++)
+        for (int r = 0; r < nb_pieces; r++)
             for (int t = 0; t < kTuiles; t++)
                 if (s_ct[r * kTuiles + t].reglages.recu) ajouter(r, t, r, s_ct[r * kTuiles + t].reglages.nom);
         // 3. La clim de chaque pièce (section « Pièce R » du blueprint, ADR-0040), réglages
         // reçus (crpR) ; t = -1. Après les tuiles : la même clim posée aussi sur une tuile de
         // la pièce (même nom) n'a qu'une page, celle de la tuile.
-        for (int r = 0; r < kPieces; r++)
+        for (int r = 0; r < nb_pieces; r++)
             if (s_ct[kCasesTuiles + r].reglages.recu) ajouter(r, -1, r, s_ct[kCasesTuiles + r].reglages.nom);
     }
     return n;

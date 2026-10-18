@@ -282,7 +282,7 @@ float emplacement_nombre(const std::string& valeur);
 float solaire_pourcent(const char* valeur, size_t n);
 
 // Climat d'une pièce « pR|température|humidité|clim » (ADR-0040, 09/10/2026) : R de 0 à
-// kPieces - 1 (tab5_geometrie.h). Pour chaque mesure, champ vide ou absent = aucune sonde
+// kPiecesMax - 1 (tab5_geometrie.h, dix pièces depuis l'ADR-0066). Pour chaque mesure, champ vide ou absent = aucune sonde
 // déclarée ; « nan » ou illisible = sonde déclarée, valeur inconnue (NAN). clim : le
 // quatrième champ vaut exactement « 1 ». Faux, et `out` intact, si la clé n'est pas « pR ».
 struct PieceClimatLu {

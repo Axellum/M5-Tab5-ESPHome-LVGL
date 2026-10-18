@@ -11,8 +11,9 @@ dans le C++ et le YAML :
 - « ⋯ » réservé aux tuiles qui ont un appui long (ni cap, ni bin, ni l'option r) ;
 - ordre des enfants d'une ligne = celui que lit tab5_maison.cpp ; géométrie = jetons des
   popups ; glyphes dans les polices de leurs widgets ;
-- colonnes dans l'ordre des pièces du blueprint (R = 0 → 4) ;
-- tap sur le titre de la pièce, en mode HA seulement."""
+- colonnes dans l'ordre des pièces du blueprint (R = 0 → N − 1), cinq au plus par page
+  (ADR-0066 : les widgets sont des places, colonne C et ligne K) ;
+- tap sur le titre de la pièce, en mode HA et sur une page de pièce de la météo."""
 import re
 import subprocess
 import sys
@@ -105,12 +106,18 @@ def test_chrome_partage():
 def test_widgets_poses_par_le_script():
     script = _lire("Tab5", "paquets", "tab5-maison.yaml")
     popup = _lire("Tab5", "ui_components", "maison_popup.yaml")
-    for r in range(5):
-        assert f"u.entete[{r}] = id(maison_entete_{r});" in script
-        assert f'file: maison_entete.yaml, vars: {{ r: "{r}" }}' in popup
-        for t in range(5):
-            assert f"u.ligne[{r}][{t}] = id(maison_ligne_{r}{t});" in script
-            assert f'file: maison_ligne.yaml, vars: {{ r: "{r}", t: "{t}" }}' in popup
+    # Places (ADR-0066) : colonne C, ligne K de la page affichée.
+    for c in range(5):
+        assert f"u.entete[{c}] = id(maison_entete_{c});" in script
+        assert f'file: maison_entete.yaml, vars: {{ c: "{c}" }}' in popup
+        for k in range(5):
+            assert f"u.ligne[{c}][{k}] = id(maison_ligne_{c}{k});" in script
+            assert f'file: maison_ligne.yaml, vars: {{ c: "{c}", k: "{k}" }}' in popup
+    # Onglets des pages (dix pièces : deux pages de cinq colonnes au plus).
+    for p in range(2):
+        assert f"u.onglet[{p}] = id(maison_onglet_{p});" in script
+        assert f"file: pages_onglet.yaml, vars: {{ id: maison_onglet_{p}, page: {p}, choisir: maison_page }}" in popup
+    assert "constexpr int kMaisonPagesMax = 2;" in _lire("Tab5", "ecran", "tab5_maison.h")
     assert script.index("u.popup = id(maison_popup);") > script.index("u.ligne[4][4]"), "popup en dernier"
     for paquet in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
         texte = _lire(paquet)
@@ -127,7 +134,7 @@ def test_ordre_des_enfants_d_une_ligne():
     enfants = re.findall(r"^    - (\w+):", ligne.split("\n  widgets:\n", 1)[1], re.M)
     assert enfants == ["obj", "label", "label", "button"]
     pastille = ligne.split("\n    - obj:", 1)[1].split("\n    - label:", 1)[0]
-    assert 'id: "maison_icone_${r}${t}"' in pastille and "text_font: mdi_font_32" in pastille
+    assert 'id: "maison_icone_${c}${k}"' in pastille and "text_font: mdi_font_32" in pastille
     assert "clickable: false" in pastille
     peindre = _fonction(_maison(), "dessiner_ligne")
     assert "lv_obj_t* pastille = enfant(ligne, 0);" in peindre
@@ -138,12 +145,14 @@ def test_ordre_des_enfants_d_une_ligne():
 def test_gestes_d_une_ligne_ceux_de_la_tuile():
     ligne = _lire("Tab5", "ui_components", "maison_ligne.yaml")
     corps, plus = ligne.split("\n    - button:", 1)
-    assert "on_short_click:\n    - lambda: 'maison_ligne_appui(${r}, ${t}, false);'" in corps
-    assert "on_long_press:\n    - lambda: 'maison_ligne_appui(${r}, ${t}, true);'" in corps
-    assert "maison_ligne_appui(${r}, ${t}, true);" in plus and "on_long_press" not in plus
-    # La roue (ADR-0036) s'ancre sur la pastille de la ligne (enfant 0).
+    assert "on_short_click:\n    - lambda: 'maison_ligne_appui(${c}, ${k}, false);'" in corps
+    assert "on_long_press:\n    - lambda: 'maison_ligne_appui(${c}, ${k}, true);'" in corps
+    assert "maison_ligne_appui(${c}, ${k}, true);" in plus and "on_long_press" not in plus
+    # La place dit quelle tuile elle montre (s_place) ; la roue (ADR-0036) s'ancre sur la
+    # pastille de la ligne (enfant 0).
     ligne_appui = _fonction(_maison(), "maison_ligne_appui")
-    assert "tuile_appui_maison(r, t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);" in ligne_appui
+    assert "const Place pl = s_place[c][k];" in ligne_appui and "if (pl.r < 0) return;" in ligne_appui
+    assert "tuile_appui_maison(pl.r, pl.t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);" in ligne_appui
     # Appui long (et « ⋯ ») : la roue de la tuile d'abord (sans son lien « Maison »), sinon
     # le répartiteur des tuiles (popup de la tuile), jamais une commande à part.
     appui = _fonction(_tuiles(), "tuile_appui_maison")
@@ -181,10 +190,13 @@ def test_eteindre_les_lumieres_piece_par_piece():
 def test_colonnes_dans_l_ordre_des_pieces_et_geometrie():
     cpp = _maison()
     disposer = _fonction(cpp, "disposer")
-    assert "for (int r = 0; r < kPieces; r++)" in disposer, "Pièce 1 → 5 (R), pas l'ordre des pages"
+    assert "for (int r = 0; r < tuiles_pieces_nombre(); r++)" in disposer, "Pièce 1 → N (R), pas l'ordre des pages"
     assert "kPieceDePage" not in cpp
-    assert "s_colonne = n > 0 ? (kCarteL - 2 * kMarge - (n - 1) * kEcart) / n : 0;" in disposer
-    assert "ui_hidden(u.vide, n > 0);" in disposer
+    # Cinq colonnes au plus par page, réparties (sept pièces : 4 + 3), même largeur partout.
+    assert "s_rep = pages_repartir(s_nb, kMaisonColonnes);" in disposer
+    assert ("s_colonne = s_rep.par_page > 0 ? (kCarteL - 2 * kMarge - (s_rep.par_page - 1) * kEcart) / s_rep.par_page : 0;"
+            in disposer)
+    assert "ui_hidden(u.vide, s_nb > 0);" in disposer
     # Carte et corps : tab5_geometrie.h, partagé (lot L5 ; tests/test_geometrie_partagee.py).
     assert '#include "tab5_geometrie.h"' in cpp and "constexpr int32_t kCarteL" not in cpp
     geometrie = geometrie_cpp()
@@ -219,7 +231,7 @@ def test_tap_du_titre_de_la_piece_en_mode_ha():
     # Appui long : la roue de navigation (ADR-0042), comme les panneaux de la carte.
     assert bouton.split("on_long_press:", 1)[1].strip().startswith("- lambda: 'roue_navigation_ouvrir();'")
     valide = _fonction(_maison(), "maison_titre_appui_valide")
-    assert "if (!g_central_ctx.ha_mode) return false;" in valide
+    assert "if (!g_central_ctx.ha_mode && g_central_ctx.forecast_page < kPagesMeteo) return false;" in valide
     # Garde commune « appui au bout d'un glissement » (lot L10) : tab5_internal.h.
     assert "return !ui_appui_glisse();" in valide
     garde = _lire("Tab5", "ecran", "tab5_internal.h").split("inline bool ui_appui_glisse()", 1)[1].split("\n}", 1)[0]
@@ -246,6 +258,24 @@ def test_textes_traduits():
 
 if __name__ == "__main__":
     sys.exit(subprocess.run([sys.executable, "-m", "pytest", "-q", __file__], check=False).returncode)
+
+
+def test_pages_de_pieces_par_la_brique():
+    """Plus de cinq pièces (ADR-0066) : des pages de cinq colonnes au plus, au glissement de la
+    brique commune (ADR-0046) et par les onglets à côté du titre, la page de la pièce du mode
+    HA d'abord ; un état repeint la place qui montre sa tuile, sur la page affichée."""
+    cpp = _maison()
+    ouvrir = _fonction(cpp, "maison_ouvrir")
+    assert "pages_brancher(&s_pages);" in ouvrir and "tuiles_piece_mode_ha()" in ouvrir
+    assert "LV_EVENT_GESTURE" not in cpp, "le geste : la brique (tab5_pages.cpp)"
+    onglets = _fonction(cpp, "peindre_onglets")
+    assert 'tr("Pièces %d à %d")' in onglets and "choix_peindre(u.onglet, n, s_page);" in onglets
+    assert "const int n = s_rep.pages >= 2 ? s_rep.pages : 0;" in onglets, "aucun onglet sous deux pages"
+    # Les onglets s'arrêtent avant « Éteindre les lumières » (320 px à 100 px du bord droit).
+    assert "constexpr int32_t kOngletsFinMaison = kCarteL - 100 - 320 - 10;" in cpp
+    assert "s_place[c][k].r != r || s_place[c][k].t != t" in _fonction(cpp, "peindre_ligne")
+    for code in ("en", "de", "nl", "es", "it", "tr"):
+        assert '"Pièces %d à %d":' in _lire("Tab5", "lang", f"{code}.yaml"), code
 
 
 def test_roue_devant_le_popup_maison():
