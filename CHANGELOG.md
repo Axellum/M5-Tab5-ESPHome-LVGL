@@ -36,7 +36,9 @@ ordre ; `custom_templates` rechargé d'abord.
 
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
-**Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.1).
+
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.0-rc.5).
 
 ### Ajouté
 
