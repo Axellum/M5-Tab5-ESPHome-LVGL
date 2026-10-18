@@ -36,9 +36,18 @@ ordre ; `custom_templates` rechargé d'abord.
 
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
-**Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0).
 
 ### Ajouté
+
+- **Musique de toute la maison, côté Home Assistant** ([ADR-0067](docs/decisions/0067-hifi-music-assistant.md)) : le nouveau package `packages/tab5_musique.yaml` et le modèle `custom_templates/tab5_musique.jinja` servent les pages « Pièces » et « Bibliothèque » du popup Musique, de la plus petite maison à la plus grande, sans rien régler :
+  - **Music Assistant facultatif** : trouvé par son intégration (`integration_entities('music_assistant')`, `config_entry_id()`), jamais écrit ; avec lui, les pièces sont ses lecteurs (huit au plus, triés par nom) ; sans lui, la liste « Tab5 · lecteurs de musique » (six) ;
+  - **une seule liste des pièces** (`tab5_musique_entites()`), lue par la poussée et par les commandes : un index est la même pièce des deux côtés ;
+  - **poussée** `tab5_maj_musique_pieces` (`script.tab5_musique_pieces_pousser`, mode `restart`, 1 s) quand le miroir `sensor.tab5_musique_signature` change, à la connexion d'une tablette et à l'ouverture des pages, avec la file et l'élément suivant du lecteur montré (`music_assistant.get_queue`) ;
+  - **commandes** de l'événement `esphome.tab5_musique` (`script.tab5_musique_commande`, lancé par `tab5_evenements.yaml`) : parcourir la bibliothèque dix par page (favoris de tous les genres, playlists, albums, artistes, radios, podcasts, récents), ouvrir un artiste / album / playlist / podcast, jouer maintenant / ensuite / à la fin / en mode radio, montrer, grouper / séparer (« Tout ici », « Tout séparer »), transférer, volume, sourdine, marche, sources ; les listes (`tab5_maj_musique_liste`) ne partent qu'à la tablette qui a demandé. Index hors liste = rien, une ref seulement de la forme `^[a-z0-9_-]+://[^|;\s]+$`, `continue_on_error` partout ;
+  - **récents** : Music Assistant ne dit pas à Home Assistant ce qu'il a joué (son tri `last_played` ne suit pas les radios, vérifié le 18/10/2026) ; `sensor.tab5_musique_recente` retient les 20 derniers éléments vus jouer ;
+  - pochettes demandées petites (proxy de Music Assistant en `size=160`, images Google en `=w160-h160`), listes sous 16 Kio au pire (`tests/test_musique_ha.py`, qui rend les vrais modèles avec une petite maison, Music Assistant avec un groupe, des noms à « | » et « ; ») ;
+  - **contrat** : deux actions et un événement de plus (`tab5_maj_musique_pieces`, `tab5_maj_musique_liste`, `esphome.tab5_musique`) ; **ordre de mise à jour : le firmware d'abord**, puis `custom_templates/tab5_musique.jinja` (rechargé), `packages/tab5_musique.yaml` et `packages/tab5_evenements.yaml`. Fichiers HA neufs avec un firmware d'avant : la poussée des pièces s'arrête sur « action introuvable », rien d'autre ; firmware neuf sans ces fichiers : pas de page Pièces ni Bibliothèque.
 
 - **Waveshare 7B montée à l'envers** : `carte_rotation: "0"` dans `Tab5/user_entities.yaml` retire la rotation logicielle de 180° ; redessiner tout l'écran prend alors ~69 ms au lieu de ~83 ms (mesuré sur la carte de l'auteur, le 16/10/2026). Le tactile suit tout seul. Documenté dans [docs/waveshare-7b.md](docs/waveshare-7b.md).
 - **Écran éteint = dalle noire, et extinction de nuit** ([ADR-0064](docs/decisions/0064-screen-really-off-night.md), audit anti-casse du 16/10/2026 : une image fixe tenue des heures marque une dalle LCD) :

@@ -1,0 +1,653 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_musique.yaml
+# @role Musique de toute la maison (ADR-0067, 18/10/2026) : les pages « Pièces » et
+#       « Bibliothèque » du popup Musique, par Music Assistant quand il est installé, de la
+#       plus petite installation à la plus complète.
+#         - Les pièces : custom_templates/tab5_musique.jinja (tab5_musique_entites), UNE
+#           liste lue par la poussée ET par la commande (un index = la même pièce) : avec
+#           Music Assistant ses media_player triés par nom (8 au plus) ; sans, la liste
+#           « Tab5 · lecteurs de musique » (packages/tab5_reglages.yaml, 6 au plus).
+#           Music Assistant est trouvé par integration_entities('music_assistant') et son
+#           config_entry_id par config_entry_id() : rien n'est écrit ici.
+#         - Poussée des pièces : script.tab5_musique_pieces_pousser (action
+#           tab5_maj_musique_pieces, mode restart, 1 s d'attente : une rafale = une
+#           poussée) quand le miroir sensor.tab5_musique_signature change (état, volume,
+#           muet, groupe, titre de chaque pièce, lecteur montré), à la connexion d'une
+#           tablette et à l'ouverture des pages (action « ouvrir »).
+#         - Commandes : la tablette émet esphome.tab5_musique (action, piece, valeur) ;
+#           packages/tab5_evenements.yaml lance script.tab5_musique_commande, une branche
+#           par action de la table de l'ADR. Les listes (parcourir, detail, sources)
+#           repartent par script.tab5_musique_liste_envoyer (action tab5_maj_musique_liste)
+#           vers la seule tablette qui a demandé.
+#         - « Récents » : sensor.tab5_musique_recente retient ce que les pièces Music
+#           Assistant jouent (20 au plus, restauré au démarrage) : Music Assistant ne
+#           donne pas à HA ce qu'il a joué (son tri last_played ne suit pas les radios,
+#           vérifié le 18/10/2026) et son API exige un jeton (ADR-0024).
+#         - Le lecteur montré reste celui de packages/tab5_lecteur.yaml
+#           (sensor.tab5_lecteur_montre) ; « montrer » et « transferer » passent par son
+#           script.tab5_lecteur_montrer.
+# @payload_contract (Tab5/paquets/tab5-api-logic.yaml, docs/decisions/0067-hifi-music-assistant.md)
+#       tab5_maj_musique_pieces(pieces, contexte) :
+#         contexte = « ma|montre|file|suivant » (ma 1/0, montre = index du lecteur montré
+#           ou -1, file = nombre d'éléments de sa file Music Assistant, suivant = « titre —
+#           artiste » du prochain, vide sinon ; dernier champ) ;
+#         pieces = 8 au plus, « ; » entre deux, « nom|genre|etat|volume|muet|groupe|
+#           fonctions|titre » (genre t/e/a/g/x, etat j/p/r/e/i, groupe = index du meneur,
+#           fonctions v/m/o/g/s/t, nom 40 et titre 60 caractères).
+#       tab5_maj_musique_liste(contexte, elements) :
+#         contexte = « vue|titre|page|suite|retour » (vue fav pl alb art rad pod rec det
+#           src ou err, titre = la phrase à montrer pour err) ;
+#         elements = 10 au plus, « nom|sous|genre|ref|image » (ref = URI Music Assistant,
+#           ou l'index d'une source ; image petite : proxy size=160, googleusercontent
+#           =w160-h160 ; dernier champ).
+#       Dans les textes « | » → « / », « ; » → « , » ; dans une adresse « ; » → %3B.
+#       Taille : 8 pièces ≈ 3 Kio, 10 éléments ≈ 10 Kio au pire (noms de 40 caractères
+#       sur 3 octets, ref 160, image 512) : sous kPayloadMax (16 Kio, tests/test_musique_ha.py).
+# @security Aucun nom d'action ni d'entité ne vient de l'événement : piece est un index de
+#       la liste des pièces (ou -1, le lecteur montré ; hors liste : rien), une ref n'est
+#       acceptée que de la forme ^[a-z0-9_-]+://[^|;\s]+$ (160 caractères au plus), un
+#       mode que parmi m / s / f / r, une source que par son index dans source_list.
+#       Chaque action a continue_on_error ; les actions de Music Assistant ne sont
+#       appelées que s'il est là (sinon « Action … not found » arrêterait le script).
+# @limits Pas de file complète ni de « jouer l'élément n » (aucune action HA pour ça) ;
+#       une pochette absente est normale (bien des logos de radio échouent en amont).
+#       Le nom d'une pièce est son friendly_name (renommer l'entité dans HA pour un nom
+#       plus court). Sans Music Assistant : pas de Bibliothèque ni de transfert ; grouper
+#       seulement entre lecteurs qui le savent (group_members).
+# @install Avec les autres packages (homeassistant.packages: !include_dir_named
+#       packages), après tab5_reglages.yaml, tab5_lecteur.yaml et les modèles
+#       custom_templates/tab5_tablette.jinja et custom_templates/tab5_musique.jinja
+#       (homeassistant.reload_custom_templates AVANT). Rien à renseigner ici. Music
+#       Assistant est facultatif.
+# ============================================================================
+
+template:
+  # Miroir : un déclencheur `state:` exige un entity_id écrit dans le YAML. Sa signature
+  # est la liste poussée elle-même (plus le lecteur montré) : elle change exactement
+  # quand la tablette doit être prévenue.
+  - sensor:
+      - name: "Tab5 · signature de la musique"
+        unique_id: tab5_musique_signature
+        default_entity_id: sensor.tab5_musique_signature
+        icon: mdi:speaker-multiple
+        state: >-
+          {%- from 'tab5_musique.jinja' import tab5_musique_entites -%}
+          {{ tab5_musique_entites().split(',') | select | list | count }}
+        attributes:
+          signature: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_ma, tab5_musique_montre, tab5_musique_pieces -%}
+            {{ tab5_musique_ma() }}|{{ tab5_musique_montre() }}|{{ tab5_musique_pieces() }}
+
+  # « Récents » de la Bibliothèque : ce que les pièces Music Assistant ont joué, le plus
+  # récent d'abord, une entrée « nom|sous|genre|ref|image » par ligne. À déclencheurs :
+  # restauré au démarrage, et `this` y est l'état précédent.
+  - triggers:
+      - trigger: state
+        entity_id: sensor.tab5_musique_signature
+    sensor:
+      - name: "Tab5 · musique récente"
+        unique_id: tab5_musique_recente
+        default_entity_id: sensor.tab5_musique_recente
+        icon: mdi:history
+        state: >-
+          {%- from 'tab5_musique.jinja' import tab5_musique_recents -%}
+          {%- set l = tab5_musique_recents(this.attributes.elements | default('', true)) -%}
+          {{ (l.split('\n') | first).split('|') | first or 'Aucun' }}
+        attributes:
+          elements: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_recents -%}
+            {{ tab5_musique_recents(this.attributes.elements | default('', true)) }}
+
+automation:
+  - id: tab5_musique
+    alias: "Tab5 — musique de la maison (poussée des pièces)"
+    description: >-
+      Pousse vers la tablette les pièces de la maison (pages Pièces et Bibliothèque du
+      popup Musique, ADR-0067) quand l'une change et à la connexion de la tablette.
+    mode: queued
+    max: 5
+    triggers:
+      - trigger: state
+        entity_id: sensor.tab5_musique_signature
+      - trigger: event
+        event_type: esphome.tab5_connected
+    conditions:
+      # Garde d'origine (comme tab5_evenements.yaml) : tab5_connected d'une tablette
+      # tab5-ha-hmi seulement ; le miroir passe toujours.
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_musique_pieces_pousser
+
+script:
+  tab5_musique_pieces_pousser:
+    alias: "Tab5 — musique de la maison : pousser les pièces"
+    description: >-
+      Pousse les pièces de la maison et le contexte (Music Assistant présent, lecteur
+      montré, sa file) : action tab5_maj_musique_pieces, envoyée même vide. Mode restart et
+      1 s d'attente : une rafale de changements part en une seule poussée.
+    mode: restart
+    sequence:
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
+      - delay:
+          seconds: 1
+      # Rendus une fois, maintenant (après l'attente) : ma est un booléen, montre un
+      # entier (HA relit le résultat d'un modèle : « 1 » deviendrait le nombre 1).
+      - variables:
+          entites: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_entites -%}
+            {{ tab5_musique_entites().split(',') | select | list }}
+          ma: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_ma -%}
+            {{ tab5_musique_ma() == '1' }}
+          montre: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_montre -%}
+            {{ tab5_musique_montre() | int(-1) }}
+          pieces: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_pieces -%}
+            {{ tab5_musique_pieces() }}
+          lecteur_file: "{{ entites[montre] if ma and 0 <= montre < entites | count else '' }}"
+          contexte: "{{ '1' if ma else '0' }}|{{ montre }}|0|"
+      # La file du lecteur montré, seulement avec Music Assistant (sans lui, l'action
+      # n'existe pas et arrêterait le script). Le `variables:` du then met à jour le
+      # contexte défini plus haut (portée des variables de HA depuis 2025.4).
+      - if: "{{ lecteur_file != '' }}"
+        then:
+          - action: music_assistant.get_queue
+            target:
+              entity_id: "{{ lecteur_file }}"
+            response_variable: file_ma
+            continue_on_error: true
+          - variables:
+              contexte: >-
+                {%- from 'tab5_musique.jinja' import tab5_musique_texte -%}
+                {%- set q = file_ma[lecteur_file] if file_ma is defined and file_ma is mapping
+                      and file_ma[lecteur_file] is defined and file_ma[lecteur_file] is mapping else {} -%}
+                {%- set n = q.get('next_item') if q.get('next_item') is mapping else {} -%}
+                {%- set mi = n.get('media_item') if n.get('media_item') is mapping else {} -%}
+                {%- set ar = mi.get('artists') if mi.get('artists') is sequence and mi.get('artists') is not string else [] -%}
+                {%- set ns = namespace(a=[]) -%}
+                {%- for x in ar if x is mapping and x.get('name') -%}
+                  {%- set ns.a = ns.a + [x.get('name') | string] -%}
+                {%- endfor -%}
+                {%- set titre = mi.get('name') or n.get('name') or '' -%}
+                {%- set suivant = (titre ~ ((' — ' ~ ns.a | join(', ')) if titre and ns.a else '')) -%}
+                {{ '1' if ma else '0' }}|{{ montre }}|{{ q.get('items') | int(0) }}|{{ tab5_musique_texte(suivant, 80) }}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_musique_pieces"
+              continue_on_error: true
+              data:
+                pieces: "{{ pieces }}"
+                contexte: "{{ contexte }}"
+
+  tab5_musique_liste_envoyer:
+    alias: "Tab5 — musique de la maison : envoyer une liste"
+    description: >-
+      Envoie une liste de la Bibliothèque ou des sources (action tab5_maj_musique_liste) à
+      la tablette qui l'a demandée. À part de la commande : un firmware qui n'a pas encore
+      cette action (« Action … not found ») n'arrête qu'ici.
+    mode: queued
+    max: 10
+    fields:
+      appareil:
+        description: "device_id de la tablette qui a demandé (vide : chaque tablette connectée)"
+      contexte:
+        description: "« vue|titre|page|suite|retour »"
+      elements:
+        description: "« nom|sous|genre|ref|image » séparés par « ; »"
+    sequence:
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_musique_liste"
+              continue_on_error: true
+              data:
+                contexte: "{{ contexte | default('') | string }}"
+                elements: "{{ elements | default('') | string }}"
+
+  tab5_musique_commande:
+    alias: "Tab5 — musique de la maison : commande de la tablette"
+    description: >-
+      Lancé par packages/tab5_evenements.yaml à l'événement esphome.tab5_musique (pages
+      Pièces et Bibliothèque, ADR-0067). N'agit que sur une pièce de la liste (son index)
+      ou sur le lecteur montré (-1).
+    mode: queued
+    max: 10
+    fields:
+      commande:
+        description: "Donnée « action » de l'événement : ouvrir, parcourir, detail, jouer, montrer, grouper, separer, tout_grouper, tout_separer, transferer, volume, muet, marche, sources ou source"
+      piece:
+        description: "Index dans la liste des pièces poussée, ou « -1 » (le lecteur montré)"
+      valeur:
+        description: "vue|page (parcourir), ref|page (detail), mode|ref (jouer), 0 à 100 (volume), page (sources), index (source)"
+      appareil:
+        description: "device_id de la tablette qui a demandé (réponse des listes)"
+    sequence:
+      # Valeurs de l'événement relues en texte à chaque usage : HA relit le résultat d'un
+      # modèle (« 50 » deviendrait le nombre 50, qui n'a pas de split).
+      - variables:
+          a: "{{ commande | default('') | string }}"
+          v: "{{ valeur | default('') | string }}"
+          d: "{{ appareil | default('', true) | string }}"
+          entites: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_entites -%}
+            {{ tab5_musique_entites().split(',') | select | list }}
+          ma: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_ma -%}
+            {{ tab5_musique_ma() == '1' }}
+          config: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_config -%}
+            {{ tab5_musique_config() }}
+          montre: >-
+            {%- from 'tab5_musique.jinja' import tab5_musique_montre -%}
+            {{ tab5_musique_montre() | int(-1) }}
+          i: "{{ (piece | default('') | string) | int(-99) }}"
+          vu: "{{ states('sensor.tab5_lecteur_montre') }}"
+          # Le lecteur montré, en pièce quand il en est une : chef des groupes, source d'un
+          # transfert, lecteur de la page Lecture.
+          meneur: >-
+            {%- if 0 <= montre < entites | count -%}{{ entites[montre] }}
+            {%- elif vu.startswith('media_player.') and states[vu] is not none -%}{{ vu }}
+            {%- endif -%}
+          cible: >-
+            {%- if 0 <= i < entites | count -%}{{ entites[i] }}
+            {%- elif i == -1 -%}{{ meneur }}
+            {%- endif -%}
+          champs: "{{ (v | string).split('|') }}"
+          page: "{{ [0, [49, ((v | string).split('|') | last) | int(0)] | min] | max }}"
+          err_absent: "err|Music Assistant n'est pas installé.|0|0|0"
+          err_muet: "err|Music Assistant ne répond pas.|0|0|0"
+      - choose:
+          # Ouverture des pages : l'état frais.
+          - conditions: "{{ a == 'ouvrir' }}"
+            sequence:
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_pieces_pousser
+
+          - conditions: "{{ a == 'parcourir' and not ma }}"
+            sequence:
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_liste_envoyer
+                data:
+                  variables:
+                    appareil: "{{ d }}"
+                    contexte: "{{ err_absent }}"
+                    elements: ""
+
+          # Une catégorie de la bibliothèque, dix par page (onze demandés : le onzième dit
+          # qu'il y a une suite).
+          - conditions: "{{ a == 'parcourir' and ma and champs[0] in ['pl', 'alb', 'art', 'rad', 'pod'] }}"
+            sequence:
+              - variables:
+                  vue: "{{ champs[0] }}"
+              - action: music_assistant.get_library
+                continue_on_error: true
+                data:
+                  config_entry_id: "{{ config }}"
+                  media_type: "{{ {'pl': 'playlist', 'alb': 'album', 'art': 'artist', 'rad': 'radio', 'pod': 'podcast'}[vue] }}"
+                  limit: 11
+                  offset: "{{ 10 * page }}"
+                response_variable: bibliotheque
+              - variables:
+                  lus: >-
+                    {{ bibliotheque['items'] if bibliotheque is defined and bibliotheque is mapping
+                       and bibliotheque['items'] is defined and bibliotheque['items'] is sequence else none }}
+                  elements: >-
+                    {%- from 'tab5_musique.jinja' import tab5_musique_item -%}
+                    {%- set ns = namespace(l=[]) -%}
+                    {%- for it in (lus or [])[:10] -%}
+                      {%- set el = tab5_musique_item(it) -%}
+                      {%- if el -%}{%- set ns.l = ns.l + [el] -%}{%- endif -%}
+                    {%- endfor -%}
+                    {{ ns.l | join(';') }}
+                  contexte: >-
+                    {%- if lus is none -%}{{ err_muet }}
+                    {%- else -%}
+                      {{ vue }}|{{ {'pl': 'Playlists', 'alb': 'Albums', 'art': 'Artistes', 'rad': 'Radios', 'pod': 'Podcasts'}[vue] }}|{{ page }}|{{ '1' if lus | count > 10 else '0' }}|0
+                    {%- endif -%}
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_liste_envoyer
+                data:
+                  variables:
+                    appareil: "{{ d }}"
+                    contexte: "{{ contexte }}"
+                    elements: "{{ '' if lus is none else elements }}"
+
+          # Favoris : chaque genre marqué favori dans Music Assistant, à la suite. Chaque
+          # genre est lu jusqu'à la fin de la page demandée (+1 pour la suite).
+          - conditions: "{{ a == 'parcourir' and ma and champs[0] == 'fav' }}"
+            sequence:
+              - variables:
+                  favoris: []
+                  reponses: 0
+              - repeat:
+                  for_each: [playlist, album, artist, track, radio, podcast, audiobook]
+                  sequence:
+                    - action: music_assistant.get_library
+                      continue_on_error: true
+                      data:
+                        config_entry_id: "{{ config }}"
+                        media_type: "{{ repeat.item }}"
+                        favorite: true
+                        limit: "{{ 10 * (page + 1) + 1 }}"
+                      response_variable: bibliotheque
+                    # Une réponse d'un autre genre est celle du tour d'avant (appel échoué).
+                    - variables:
+                        ok: >-
+                          {{ bibliotheque is defined and bibliotheque is mapping
+                             and bibliotheque.get('media_type') == repeat.item and bibliotheque['items'] is sequence }}
+                        reponses: "{{ reponses + (1 if ok else 0) }}"
+                        favoris: >-
+                          {%- from 'tab5_musique.jinja' import tab5_musique_item -%}
+                          {%- set ns = namespace(l=favoris) -%}
+                          {%- for it in (bibliotheque['items'] if ok else []) -%}
+                            {%- set el = tab5_musique_item(it) -%}
+                            {%- if el -%}{%- set ns.l = ns.l + [el] -%}{%- endif -%}
+                          {%- endfor -%}
+                          {{ ns.l }}
+              - variables:
+                  contexte: >-
+                    {%- if reponses == 0 -%}{{ err_muet }}
+                    {%- else -%}fav|Favoris|{{ page }}|{{ '1' if favoris | count > 10 * page + 10 else '0' }}|0
+                    {%- endif -%}
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_liste_envoyer
+                data:
+                  variables:
+                    appareil: "{{ d }}"
+                    contexte: "{{ contexte }}"
+                    elements: "{{ '' if reponses == 0 else favoris[10 * page:10 * page + 10] | join(';') }}"
+
+          # Récents : la mémoire de sensor.tab5_musique_recente.
+          - conditions: "{{ a == 'parcourir' and ma and champs[0] == 'rec' }}"
+            sequence:
+              - variables:
+                  recents: >-
+                    {{ ((state_attr('sensor.tab5_musique_recente', 'elements') or '') | string).split('\n') | select | list }}
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_liste_envoyer
+                data:
+                  variables:
+                    appareil: "{{ d }}"
+                    contexte: "rec|Récents|{{ page }}|{{ '1' if recents | count > 10 * page + 10 else '0' }}|0"
+                    elements: "{{ recents[10 * page:10 * page + 10] | join(';') }}"
+
+          # Contenu d'un artiste, d'un album, d'une playlist ou d'un podcast : get_library
+          # ne lit pas un contenant ; media_player.browse_media d'un lecteur Music
+          # Assistant le fait (tout d'un coup : la page est découpée ici).
+          - conditions: >-
+              {{ a == 'detail' and champs[0] | length <= 160
+                 and champs[0] is match('^[a-z0-9_-]+://(artist|album|playlist|podcast)/[^|;\\s]+$') }}
+            sequence:
+              - variables:
+                  ref: "{{ champs[0] }}"
+                  parcours: >-
+                    {%- set dispo = entites | reject('is_state', 'unavailable') | reject('is_state', 'unknown') | list -%}
+                    {%- if not ma -%}
+                    {%- elif meneur in dispo -%}{{ meneur }}
+                    {%- else -%}{{ dispo | first | default('') }}
+                    {%- endif -%}
+              - if: "{{ parcours == '' }}"
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_musique_liste_envoyer
+                    data:
+                      variables:
+                        appareil: "{{ d }}"
+                        contexte: "{{ err_muet if ma else err_absent }}"
+                        elements: ""
+                  - stop: "Aucun lecteur Music Assistant"
+              - action: media_player.browse_media
+                continue_on_error: true
+                target:
+                  entity_id: "{{ parcours }}"
+                data:
+                  media_content_id: "{{ ref }}"
+                  media_content_type: "{{ ref.split('://')[1].split('/')[0] }}"
+                response_variable: contenu
+              # La réponse est un objet BrowseMedia (attributs title, children…), pas un
+              # dictionnaire : jamais posé tel quel dans une variable (il deviendrait le
+              # texte « <BrowseMedia …> »), lu directement dans chaque modèle.
+              - variables:
+                  lu: >-
+                    {{ contenu is defined and contenu is mapping and parcours in contenu
+                       and contenu[parcours] is not none and contenu[parcours].children is defined
+                       and contenu[parcours].children is not none }}
+                  nombre: "{{ (contenu[parcours].children | count) if lu else 0 }}"
+                  titre_contenu: >-
+                    {%- from 'tab5_musique.jinja' import tab5_musique_texte -%}
+                    {{ tab5_musique_texte(contenu[parcours].title, 48) if lu else '' }}
+                  enfants: >-
+                    {%- from 'tab5_musique.jinja' import tab5_musique_enfant -%}
+                    {%- set ns = namespace(l=[]) -%}
+                    {%- for c in (contenu[parcours].children if lu else [])[10 * page:10 * page + 10] -%}
+                      {%- set el = tab5_musique_enfant(c) -%}
+                      {%- if el -%}{%- set ns.l = ns.l + [el] -%}{%- endif -%}
+                    {%- endfor -%}
+                    {{ ns.l | join(';') }}
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_liste_envoyer
+                data:
+                  variables:
+                    appareil: "{{ d }}"
+                    contexte: >-
+                      {%- if not lu -%}{{ err_muet }}
+                      {%- else -%}det|{{ titre_contenu }}|{{ page }}|{{ '1' if nombre > 10 * page + 10 else '0' }}|1
+                      {%- endif -%}
+                    elements: "{{ enfants if lu else '' }}"
+
+          # Jouer sur une pièce Music Assistant : m maintenant (remplace la file), s ensuite,
+          # f à la fin, r en mode radio (la musique continue d'elle-même).
+          - conditions: >-
+              {{ a == 'jouer' and ma and cible in entites and champs | count == 2
+                 and champs[0] in ['m', 's', 'f', 'r'] and champs[1] | length <= 160
+                 and champs[1] is match('^[a-z0-9_-]+://[^|;\\s]+$') }}
+            sequence:
+              - action: music_assistant.play_media
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  media_id: "{{ champs[1] }}"
+                  enqueue: "{{ {'m': 'replace', 's': 'next', 'f': 'add', 'r': 'replace'}[champs[0]] }}"
+                  radio_mode: "{{ champs[0] == 'r' }}"
+
+          # La pièce devient le lecteur montré (comme une pastille, ADR-0050).
+          - conditions: >-
+              {{ a == 'montrer' and 0 <= i < entites | count
+                 and states['script.tab5_lecteur_montrer'] is not none }}
+            sequence:
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_lecteur_montrer
+                data:
+                  variables:
+                    entite: "{{ cible }}"
+
+          # Une condition de HA ne vaut vrai que rendue « True » : d'où les « > 0 ».
+          - conditions: >-
+              {{ a == 'grouper' and cible != '' and meneur != '' and cible != meneur
+                 and (state_attr(cible, 'supported_features') | int(0)) | bitwise_and(524288) > 0
+                 and (state_attr(meneur, 'supported_features') | int(0)) | bitwise_and(524288) > 0 }}
+            sequence:
+              - action: media_player.join
+                continue_on_error: true
+                target:
+                  entity_id: "{{ meneur }}"
+                data:
+                  group_members:
+                    - "{{ cible }}"
+
+          - conditions: >-
+              {{ a == 'separer' and cible != ''
+                 and (state_attr(cible, 'group_members') or []) | count > 1 }}
+            sequence:
+              - action: media_player.unjoin
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+
+          # « Tout ici » : chaque pièce disponible qui sait se grouper, avec le lecteur montré.
+          - conditions: >-
+              {{ a == 'tout_grouper' and meneur != ''
+                 and (state_attr(meneur, 'supported_features') | int(0)) | bitwise_and(524288) > 0 }}
+            sequence:
+              - variables:
+                  membres: >-
+                    {%- set deja = state_attr(meneur, 'group_members') or [] -%}
+                    {%- set ns = namespace(l=[]) -%}
+                    {%- for e in entites -%}
+                      {%- if e != meneur and e not in deja and states(e) not in ['unavailable', 'unknown']
+                            and (state_attr(e, 'supported_features') | int(0)) | bitwise_and(524288) -%}
+                        {%- set ns.l = ns.l + [e] -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                    {{ ns.l }}
+              - if: "{{ membres | count > 0 }}"
+                then:
+                  - action: media_player.join
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ meneur }}"
+                    data:
+                      group_members: "{{ membres }}"
+
+          - conditions: "{{ a == 'tout_separer' }}"
+            sequence:
+              - variables:
+                  groupees: >-
+                    {%- set ns = namespace(l=[]) -%}
+                    {%- for e in entites -%}
+                      {%- if state_attr(e, 'mass_player_type') != 'group' and (state_attr(e, 'group_members') or []) | count > 1 -%}
+                        {%- set ns.l = ns.l + [e] -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                    {{ ns.l }}
+              - if: "{{ groupees | count > 0 }}"
+                then:
+                  - action: media_player.unjoin
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ groupees }}"
+
+          # La musique du lecteur montré part sur la pièce, qui devient le lecteur montré.
+          - conditions: >-
+              {{ a == 'transferer' and ma and cible in entites and meneur in entites and cible != meneur }}
+            sequence:
+              - action: music_assistant.transfer_queue
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  source_player: "{{ meneur }}"
+              - if: "{{ states['script.tab5_lecteur_montrer'] is not none }}"
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_lecteur_montrer
+                    data:
+                      variables:
+                        entite: "{{ cible }}"
+
+          - conditions: "{{ a == 'volume' and cible != '' and (v | string) | is_number }}"
+            sequence:
+              - action: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  volume_level: "{{ ([0, [100, (v | string) | float(0)] | min] | max / 100) | round(2) }}"
+
+          - conditions: "{{ a == 'muet' and cible != '' }}"
+            sequence:
+              - action: media_player.volume_mute
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  is_volume_muted: "{{ not (state_attr(cible, 'is_volume_muted') | default(false, true)) }}"
+
+          # Marche / arrêt : allumer une pièce éteinte ou en veille, sinon l'éteindre (si elle
+          # le sait : TURN_ON 128, TURN_OFF 256).
+          - conditions: "{{ a == 'marche' and cible != '' }}"
+            sequence:
+              - variables:
+                  f: "{{ state_attr(cible, 'supported_features') | int(0) }}"
+              - choose:
+                  - conditions: "{{ states(cible) in ['off', 'standby'] and f | bitwise_and(128) > 0 }}"
+                    sequence:
+                      - action: media_player.turn_on
+                        continue_on_error: true
+                        target:
+                          entity_id: "{{ cible }}"
+                  - conditions: "{{ states(cible) not in ['off', 'standby', 'unavailable', 'unknown'] and f | bitwise_and(256) > 0 }}"
+                    sequence:
+                      - action: media_player.turn_off
+                        continue_on_error: true
+                        target:
+                          entity_id: "{{ cible }}"
+
+          # Les sources d'une pièce (sa source_list), dix par page ; la ref est l'index.
+          - conditions: "{{ a == 'sources' and cible != '' }}"
+            sequence:
+              - variables:
+                  sources: >-
+                    {%- set s = state_attr(cible, 'source_list') -%}
+                    {{ s | map('string') | list if s is sequence and s is not string else [] }}
+                  elements: >-
+                    {%- from 'tab5_musique.jinja' import tab5_musique_element -%}
+                    {%- set ns = namespace(l=[]) -%}
+                    {%- for s in sources[10 * page:10 * page + 10] -%}
+                      {%- set ns.l = ns.l + [tab5_musique_element(s, '', 's', 10 * page + loop.index0, '')] -%}
+                    {%- endfor -%}
+                    {{ ns.l | join(';') }}
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_liste_envoyer
+                data:
+                  variables:
+                    appareil: "{{ d }}"
+                    contexte: >-
+                      {%- from 'tab5_musique.jinja' import tab5_musique_texte -%}
+                      src|{{ tab5_musique_texte(state_attr(cible, 'friendly_name'), 48) }}|{{ page }}|{{ '1' if sources | count > 10 * page + 10 else '0' }}|1
+                    elements: "{{ elements }}"
+
+          - conditions: >-
+              {{ a == 'source' and cible != '' and (v | string) is match('^[0-9]{1,3}$')
+                 and (v | string | int) < ((state_attr(cible, 'source_list') or []) | count) }}
+            sequence:
+              - action: media_player.select_source
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  source: "{{ state_attr(cible, 'source_list')[v | string | int] }}"
