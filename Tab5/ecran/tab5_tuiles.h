@@ -20,9 +20,11 @@ namespace esphome { namespace font { class Font; } }
 
 // =============================================================================
 // Pièces et tuiles génériques (tab5_tuiles.cpp, ADR-0023) : chaque page du bas est une
-// pièce de cinq appareils au plus, décrits par Home Assistant ; N pièces (1 à 10, « pn »,
-// ADR-0066). Pièce R ↔ page de la météo : R0 = 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0,
-// R5 … = 5 … ; tuile T = position visuelle (0 = gauche).
+// pièce de vingt appareils au plus (ADR-0066, lot B), décrits par Home Assistant ; N pièces
+// (1 à 10, « pn », ADR-0066, lot A). Pièce R ↔ page de la météo : R0 = 2 (accueil), R1 = 3,
+// R2 = 4, R3 = 1, R4 = 0, R5 … = 5 … ; élément T = son rang dans la liste du blueprint. Cinq
+// places (0 = gauche) : jusqu'à cinq éléments, une tuile chacun ; au-delà, les dernières
+// places coupées en deux puis en quatre (Tab5/socle/tab5_disposition.h).
 // Tant qu'aucune définition n'est arrivée (drapeau en NVS), la pièce 0 est construite
 // depuis les emplacements 3.x (mode héritage).
 // =============================================================================
@@ -58,14 +60,24 @@ struct TuilesUI {
     // Libellés des onglets de titre (leur parent devient cliquable : sens d'un volet).
     lv_obj_t* jour_titre[5] = {};          // j{T}_day
     lv_obj_t* heure_titre[5] = {};         // h(4−T)_time
-    // Cartes du mode HA (switches_card.yaml) : carte T = tuile T de la pièce courante.
-    // Depuis le 06/10/2026, façon carte « tile » de HA : l'icône dans une pastille ronde
-    // de la couleur de son état (carte_pastille, sw_pastille_N), le nom, l'état dessous.
+    // Cartes du mode HA (switches_card.yaml) : carte P = place P (ADR-0066 : l'élément
+    // entier de cette place ; une place coupée masque sa carte et montre ses cases,
+    // tab5_tuiles_cases.cpp). Depuis le 06/10/2026, façon carte « tile » de HA : l'icône
+    // dans une pastille ronde de la couleur de son état (carte_pastille, sw_pastille_N), le
+    // nom, l'état dessous.
     lv_obj_t* carte[5] = {};
     lv_obj_t* carte_pastille[5] = {};
     lv_obj_t* carte_icone[5] = {};
     lv_obj_t* carte_nom[5] = {};
     lv_obj_t* carte_etat[5] = {};
+    // Cases des tuiles coupées (ADR-0066), créées en C++ sur calque_ha : le style des cartes
+    // (style_meteo_card_page, qu'un thème redessine) et leurs polices — icône de 45 px et
+    // valeur de 32 px d'une moitié, icône de 32 px et textes de 22 px d'un quart.
+    lv_style_t* style_case = nullptr;                    // style_meteo_card_page
+    esphome::font::Font* police_icone_45 = nullptr;      // mdi_font_45
+    esphome::font::Font* police_icone_32 = nullptr;      // mdi_font_32
+    esphome::font::Font* police_valeur = nullptr;        // roboto_32_b
+    esphome::font::Font* police_petite = nullptr;        // roboto_22
     // Popup qu'une tuile ouvre (climatisation : celle du blueprint avec l'option m, sinon
     // celle de la tuile, ADR-0027). La télécommande s'ouvre par telecommande_ouvrir()
     // (tab5_telecommande.h, ADR-0056), sur la page de la TV.
@@ -74,14 +86,14 @@ struct TuilesUI {
     // affichée (piece_ligne.yaml, 5 au plus) et les noms des pièces (pages_onglet.yaml).
     // Popup Lumières (light_popup.yaml).
     lv_obj_t* lum_popup = nullptr;        // light_options_popup
-    lv_obj_t* lum_ligne[kTuiles] = {};    // btn_light_sel_N
+    lv_obj_t* lum_ligne[kPlacesTuiles] = {};  // btn_light_sel_N
     lv_obj_t* lum_onglet[kPiecesMax] = {};  // lum_onglet_N
     lv_obj_t* lum_arc = nullptr;          // arc_light_brightness
     lv_obj_t* lum_pct = nullptr;          // lbl_light_brightness_val
     std::string* lum_cle = nullptr;       // &id(current_light_slot) : cible des commandes
     // Popup Volets (volet_popup.yaml, 05/10/2026) : le volet choisi, dessiné, à droite.
     lv_obj_t* vol_popup = nullptr;        // volet_popup
-    lv_obj_t* vol_ligne[kTuiles] = {};    // volet_ligne_N
+    lv_obj_t* vol_ligne[kPlacesTuiles] = {};  // volet_ligne_N
     lv_obj_t* vol_onglet[kPiecesMax] = {};  // vol_onglet_N
     lv_obj_t* vol_nom = nullptr;          // volet_nom : le nom du volet choisi
     lv_obj_t* vol_position = nullptr;     // volet_position : rangée « 45 % »
@@ -115,12 +127,13 @@ struct TuilesUI {
 };
 extern TuilesUI g_tuiles_ui;
 
-// Appui sur la tuile T de la pièce de la page courante (tuile météo ou carte du mode
-// HA) : commande selon le type et les options (tableau de l'ADR-0023), popup, ou rien.
-void tuile_appui(int tuile, bool long_appui);
+// Appui sur la place P (tuile météo ou carte du mode HA) de la pièce de la page courante :
+// l'élément entier de cette place (ADR-0066 ; une place coupée a ses cases, chacune sa
+// cible) — commande selon le type et les options (tableau de l'ADR-0023), popup, ou rien.
+void tuile_appui(int place, bool long_appui);
 
-// Toucher du titre de la tuile T : bascule le sens d'un volet (flèche, puis appui).
-void tuile_titre_appui(int tuile);
+// Toucher du titre de la place P : bascule le sens d'un volet (flèche, puis appui).
+void tuile_titre_appui(int place);
 // Rend cliquables les onglets de titre (une fois, depuis tab5_tuiles_ui).
 void tuiles_brancher_titres();
 
@@ -160,7 +173,8 @@ void tuiles_heritage_volet_sens();
 
 // Popups à pages par pièce (ADR-0046, 09/10/2026) : Lumières (light_popup.yaml) et Volets
 // (volet_popup.yaml), une page par pièce qui a des lumières (des volets pilotables : vol
-// sans l'option r ni k). Ouverts par l'appui long d'une tuile (sa pièce, cette tuile), par
+// sans l'option r ni k), de cinq lignes en cinq : une pièce qui en a plus prend plusieurs
+// pages (ADR-0066). Ouverts par l'appui long d'une tuile (sa pièce, cette tuile), par
 // « Aller à l'écran », la roue de navigation et les gestes de l'accueil (Ecran::LUMIERES,
 // Ecran::VOLET, tuiles_ecran_ouvrir : la pièce affichée, sinon la première qui en a ; rien
 // sans aucune). Leurs lignes
@@ -168,15 +182,16 @@ void tuiles_heritage_volet_sens();
 //   - *_choisir : toucher d'une ligne, elle devient celle que pilotent la partie droite ;
 //   - *_ligne_appui : toucher de sa pastille (le toucher de la tuile) ou appui long (sa
 //     roue d'actions rapides, sinon le chemin de la tuile) ;
-//   - *_page : tap sur le nom d'une pièce (pages_onglet.yaml) ; le glissement passe par
-//     la même fonction (tab5_pages.cpp).
-void popup_lumiere_page(int page);
+//   - *_page : tap sur le nom `onglet` (pages_onglet.yaml) : la première page de sa pièce
+//     (une seule pièce de plusieurs pages : un nom par page) ; le glissement va de page en
+//     page (tab5_pages.cpp).
+void popup_lumiere_page(int onglet);
 void popup_lumiere_ligne_appui(int idx, bool long_appui);
 void popup_volet_choisir(int idx);
-void popup_volet_page(int page);
+void popup_volet_page(int onglet);
 void popup_volet_ligne_appui(int idx, bool long_appui);
 // Boutons Ouvrir / Stop / Fermer : la commande `action` (ouvrir, arreter, fermer) au
-// volet choisi, comme son appui. Tout ouvrir / Tout fermer : à chaque volet de la page.
+// volet choisi, comme son appui. Tout ouvrir / Tout fermer : à chaque volet de la pièce.
 void popup_volet_commande(const char* action);
 void popup_volets_tout(const char* action);
 // Construit les lames du volet dessiné et branche les événements de son cadre (glisser :

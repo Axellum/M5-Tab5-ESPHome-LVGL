@@ -650,7 +650,7 @@ lv_obj_t* clim_ancre_basse(lv_obj_t* zone) {
 
 bool clim_roue_ouvrir(const ClimRef& c, lv_obj_t* ancre) {
     charger();
-    if (ancre == nullptr || c.r < -1 || c.r >= kPiecesMax || c.t >= kTuiles) return false;
+    if (ancre == nullptr || c.r < -1 || c.r >= kPiecesMax || c.t >= kTuilesMax) return false;
     RoueTuile rt;
     rt.clim = c;
     rt.ancre = clim_ancre_basse(ancre);
@@ -659,7 +659,7 @@ bool clim_roue_ouvrir(const ClimRef& c, lv_obj_t* ancre) {
 
 bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison) {
     charger();
-    if (ancre == nullptr || r < 0 || r >= kPiecesMax || t < 0 || t >= kTuiles) return false;
+    if (ancre == nullptr || r < 0 || r >= kPiecesMax || t < 0 || t >= kTuilesMax) return false;
     RoueTuile rt;
     rt.r = r;
     rt.t = t;
@@ -668,12 +668,22 @@ bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison) {
     return roue_tuile_peindre(rt, false);
 }
 
-// Ancre de la tuile T de la page courante : la pastille de sa carte (mode HA ou page de
-// pièce de la météo, ADR-0066), le bouton au centre de sa tuile météo sinon. Appui long
-// d'une tuile (tuile_appui_piece).
+// Ancre de l'élément T de la page courante, là où il est dessiné (ADR-0066) : la pastille de
+// sa carte (mode HA ou page de pièce de la météo, place entière), l'icône de sa case (place
+// coupée), le bouton au centre de sa tuile météo sinon. Appui long d'une tuile
+// (tuile_appui_piece). Sans place à l'écran (élément d'une autre pièce, popup ouvert
+// d'ailleurs) : pas d'ancre, pas de roue.
 bool tuiles::roue_de_la_tuile(int r, int t) {
-    if (cartes_affichees()) return tuile_roue_ouvrir(r, t, g_tuiles_ui.carte_pastille[t]);
-    lv_obj_t *g, *d, *b;
-    widgets_meteo(t, g, d, b);
+    if (r != piece_courante()) return false;
+    const bool cartes = cartes_affichees();
+    const disposition::Disposition d = disposition_piece(r, !cartes);
+    const int p = (t >= 0 && t < kTuilesMax) ? d.place_de[t] : -1;
+    if (p < 0) return false;
+    const bool entiere = d.place[p].coupe == disposition::Coupe::ENTIERE;
+    if (cartes)
+        return tuile_roue_ouvrir(r, t, entiere ? g_tuiles_ui.carte_pastille[p] : case_ancre(p, d.case_de[t]));
+    if (!entiere) return false;
+    lv_obj_t *g, *dr, *b;
+    widgets_meteo(p, g, dr, b);
     return tuile_roue_ouvrir(r, t, b);
 }

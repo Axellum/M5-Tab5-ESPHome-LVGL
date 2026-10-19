@@ -1,10 +1,11 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_tuiles_priv.h
- * @role Ce que les trois fichiers des tuiles partagent (découpe du 08/10/2026, lot L7 de
+ * @role Ce que les fichiers des tuiles partagent (découpe du 08/10/2026, lot L7 de
  *       l'audit du 07/10/2026) : tab5_tuiles.cpp (modèle, NVS, dessin, gestes),
- *       tab5_tuiles_popups.cpp (popups lumière, volet et appareil) et tab5_tuiles_roue.cpp
- *       (roue d'actions rapides d'une tuile, teintes des lampes). Les types du modèle,
+ *       tab5_tuiles_popups.cpp (popups lumière, volet et appareil), tab5_tuiles_roue.cpp
+ *       (roue d'actions rapides d'une tuile, teintes des lampes) et tab5_tuiles_cases.cpp
+ *       (cases des tuiles coupées en deux ou en quatre, ADR-0066). Les types du modèle,
  *       l'état partagé et les fonctions appelées d'un fichier à l'autre, dans le namespace
  *       `tuiles`. Le reste de chaque fichier lui reste propre.
  * @architecture_constraint Privé aux tuiles : aucun autre fichier ne l'inclut (le reste du
@@ -23,6 +24,7 @@
 #pragma once
 
 #include "tab5_internal.h"
+#include "tab5_disposition.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
 #include "lvgl.h"
@@ -59,15 +61,21 @@ struct Def {
 };
 
 // Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable). Dimensionné
-// sur kPiecesMax depuis l'ADR-0066 (lot A) : sa magie suit sa taille (kMagic, tab5_tuiles.cpp).
+// sur kPiecesMax pièces (ADR-0066, lot A) de kTuilesMax éléments (lot B), 10 × 20 Def, ~12 Ko :
+// sa magie suit sa taille (kMagic, tab5_tuiles.cpp), un modèle d'une autre mise en page n'est
+// jamais relu. Son bourrage final est un champ (`fin`) : aucun octet implicite, que
+// memcmp lirait sans qu'une copie le garantisse.
+constexpr size_t kModeleUtile = 8 + kPiecesMax * modele_ha::kNom + kPiecesMax * kTuilesMax * sizeof(Def);
 struct Modele {
     uint32_t magic;
     uint8_t recues;       // 1 dès la première tab5_maj_tuiles : fin du mode héritage
     uint8_t pieces_n;     // nombre de pièces (« pn|N », 1 à kPiecesMax ; kPiecesDefaut sans pn)
     uint8_t reserve[2];
     char pieces[kPiecesMax][modele_ha::kNom];
-    Def tuiles[kPiecesMax][kTuiles];
+    Def tuiles[kPiecesMax][kTuilesMax];
+    uint8_t fin[4 - kModeleUtile % 4];  // jusqu'au multiple de 4 (alignement de magic)
 };
+static_assert(sizeof(Modele) == kModeleUtile + sizeof(Modele::fin), "Modele sans bourrage implicite");
 
 struct Etat {
     char brut[modele_ha::kEtat];  // état HA ("" tant que rien n'est reçu)
@@ -90,6 +98,9 @@ struct Heritage {
     int8_t volet_ouvert = -1;    // dernier état connu hors mouvement : 1 ouvert, 0 fermé
 };
 
+// Le mode héritage a les cinq emplacements de la 3.x (PC/TV, volet, trois lumières), jamais
+// plus : ses tableaux (lum[3], kHeritageLumieres) s'arrêtent à la tuile 4 (ADR-0066).
+constexpr int kTuilesHeritage = 5;
 // Commandes 3.x des trois lumières (tuiles 2 à 4), comme les boutons de la 3.1.
 constexpr const char* kHeritageLumieres[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
 
@@ -146,7 +157,7 @@ struct ClimCible {
 // ─── tab5_tuiles.cpp ────────────────────────────────────────────────────────────────
 
 extern Modele s_m;
-extern Etat s_etats[kPiecesMax][kTuiles];
+extern Etat s_etats[kPiecesMax][kTuilesMax];
 extern Heritage s_h;
 extern Minuterie s_confirmation;
 extern Minuterie s_ok;
@@ -165,9 +176,13 @@ Gestes gestes(const Def& d, bool clim_connue);
 ClimCible clim_cible(const Def& d, int r, int t);
 void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v);
 void vue(int r, int t, Vue& v);
-void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
+void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur, const char* suffixe = nullptr);
 void ui_fond(lv_obj_t* obj, uint32_t hex);
-void widgets_meteo(int t, lv_obj_t*& gauche, lv_obj_t*& droite, lv_obj_t*& bouton);
+void widgets_meteo(int place, lv_obj_t*& gauche, lv_obj_t*& droite, lv_obj_t*& bouton);
+// Disposition de la pièce R sur les cinq places (Tab5/socle/tab5_disposition.h, ADR-0066) :
+// ses éléments présents ; `meteo` garde l'élément T sur la place T jusqu'à cinq éléments
+// d'index < 5 (positions fixes), le mode HA les centre.
+disposition::Disposition disposition_piece(int r, bool meteo);
 void envoyer(const char* emplacement, const char* action);
 void envoyer_tuile(int r, int t, const char* action);
 void tuile_appui_piece(int r, int t, bool long_appui);
@@ -188,6 +203,18 @@ void popup_appareil_etat(int r, int t);
 void popup_volet_etat_pousse(int r, int t);
 void popups_revalider();
 void popups_rejouer_theme();
+
+// ─── tab5_tuiles_cases.cpp ──────────────────────────────────────────────────────────
+
+// Mode HA : les cases de la place `p` (calque du mode HA, x = `x`), coupée comme `pl`, aux
+// éléments de la pièce `r` ; créées à la première coupe de cette place. Les autres places
+// (entières, vides) : cases_masquer.
+void cases_peindre_place(int p, const disposition::Place& pl, int32_t x, int r);
+void cases_masquer(int p);
+// Une case `k` de la place `p` montre l'élément tRT : repeinte (un état a changé).
+void case_peindre(int p, int k, int r, int t);
+// Ancre de la roue d'actions rapides d'une case (son icône) ; nullptr si elle n'existe pas.
+lv_obj_t* case_ancre(int p, int k);
 
 // ─── tab5_tuiles_roue.cpp ───────────────────────────────────────────────────────────
 

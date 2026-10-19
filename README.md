@@ -46,7 +46,7 @@ A single page (1280×720 on the Tab5, 1024×600 on the Waveshare 7B): windows op
 
 - **Weather** — rain in the next hour, hourly and 15-day forecast, weather warnings ([below](#rain-in-the-next-hour-weather-warnings)).
 - **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant, the alerts you subscribed to; a tap dismisses a banner, a long press shows the 20 latest alerts ([home screen](docs/notice/home.md), [alerts](docs/notice/alerts.md)).
-- **Rooms** — the bottom row: up to 10 rooms of 5 devices (lights, switches, shutters, media players, scenes, sensors), their number chosen in Home Assistant, with their names and icons taken from Home Assistant ([bottom row and rooms](docs/notice/tiles.md)).
+- **Rooms** — the bottom row: up to 10 rooms of 20 devices (lights, switches, shutters, media players, scenes, sensors), their number chosen in Home Assistant, with their names and icons taken from Home Assistant ([bottom row and rooms](docs/notice/tiles.md)).
 - **House** — the whole house at a glance, one column per room: each device with its state, the same tap and long press as its card, and every light off in one tap ([house](docs/notice/house.md)).
 - **Climate** — modes, a thermostat arc, presets and airflow; the controls are dimmed, not hidden, when the unit is off ([climate](docs/notice/climate.md)).
 - **Lights** — the room's lights (up to 5): brightness arc with shortcuts, 3 whites and 12 colours ([lights](docs/notice/lights.md)).
@@ -249,7 +249,7 @@ Une seule page (1280×720 sur le Tab5, 1024×600 sur la Waveshare 7B) : les fen�
 
 - **Météo** — pluie dans l'heure, prévisions horaires et à 15 jours, vigilances ([plus bas](#pluie-dans-lheure-vigilances)).
 - **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant, les alertes auxquelles vous êtes abonné ; un appui masque un bandeau, un appui long montre les 20 dernières alertes ([écran d'accueil](docs/notice/home.md#version-française), [alertes](docs/notice/alerts.md#version-française)).
-- **Pièces** — la rangée du bas : jusqu'à 10 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs), leur nombre choisi dans Home Assistant, avec leurs noms et icônes pris dans Home Assistant ([rangée du bas et pièces](docs/notice/tiles.md#version-française)).
+- **Pièces** — la rangée du bas : jusqu'à 10 pièces de 20 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs), leur nombre choisi dans Home Assistant, avec leurs noms et icônes pris dans Home Assistant ([rangée du bas et pièces](docs/notice/tiles.md#version-française)).
 - **Maison** — toute la maison d'un coup d'œil, une colonne par pièce : chaque appareil avec son état, les mêmes appuis que sur sa carte, et toutes les lumières éteintes d'un appui ([maison](docs/notice/house.md#version-française)).
 - **Clim** — modes, arc de thermostat, préréglages et flux d'air ; les commandes sont grisées, pas masquées, quand la clim est éteinte ([clim](docs/notice/climate.md#version-française)).
 - **Lumières** — les lumières de la pièce (5 au plus) : arc de luminosité avec raccourcis, 3 blancs et 12 couleurs ([lumières](docs/notice/lights.md#version-française)).

@@ -111,7 +111,8 @@ void choix_peindre(lv_obj_t* const* boutons, int n, int actif) {
 
 int32_t pages_onglet_largeur(int n) { return onglet_echelle(largeur_tab5(n)); }
 
-void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante) {
+void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante,
+                   const char* const* suffixes) {
     const bool montres = n >= 2;
     const int32_t w5 = largeur_tab5(n);
     const int32_t w = onglet_echelle(w5);
@@ -124,7 +125,9 @@ void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, i
         // Réglages ; cinq se partagent la place (158 px sur le Tab5).
         ui_x(b, onglet_x(kOngletsFinTab5 - (n - i) * w5 - (n - 1 - i) * kOngletEcart));
         lv_obj_set_width(b, w);  // LVGL 9.5.0 compare lui-même (lv_obj_pos.c)
-        if (noms != nullptr && noms[i] != nullptr) texte_ha_coupe(lv_obj_get_child(b, 0), noms[i], w - 2 * kOngletMarge);
+        if (noms != nullptr && noms[i] != nullptr)
+            texte_ha_coupe(lv_obj_get_child(b, 0), noms[i], w - 2 * kOngletMarge,
+                           suffixes != nullptr ? suffixes[i] : nullptr);
     }
     if (montres) choix_peindre(onglets, std::min(n, max), courante);
 }

@@ -13,7 +13,10 @@
  *     décharge mesurée sur un Tab5, 15/10/2026) ;
  *   - la découpe d'une zone à redessiner autour d'une carte opaque (Tab5/socle/tab5_decoupe.h,
  *     popup Musique, 17/10/2026) : part couverte alignée, morceaux disjoints dont l'union est
- *     la zone, pixel par pixel.
+ *     la zone, pixel par pixel ;
+ *   - la disposition des éléments d'une pièce sur les cinq places (Tab5/socle/tab5_disposition.h,
+ *     ADR-0066, 18/10/2026) : table de l'ADR, n = 0 … 20, pièces à trous, positions fixes du mode
+ *     météo, rectangles des cases.
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
@@ -28,6 +31,7 @@
 #include "tab5_core.h"
 #include "tab5_decoupe.h"
 #include "tab5_demarrage.h"
+#include "tab5_disposition.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
 
@@ -74,8 +78,11 @@ static_assert(kCorpsW == 1202, "corps des popups à cartes : x 24..1226");
 static_assert(kCorpsX + kCorpsW + kCorpsX == kCarteL, "corps centré dans la carte");
 static_assert(kEcranL - kCarteL == 30 && kEcranH - kCarteH == 30, "carte à 15 px des bords");
 static_assert(kGraphiqueL == kCorpsW - 2 * 18, "zone du graphique : 18 px de marge dans sa carte");
-static_assert(kPiecesMax == 10 && kPiecesDefaut == 5 && kPagesMeteo == 5 && kTuiles == 5,
-              "dix pièces au plus, cinq sans « pn », cinq pages de météo, cinq tuiles (ADR-0023, ADR-0066)");
+static_assert(kPiecesMax == 10 && kPiecesDefaut == 5 && kPagesMeteo == 5 && kPlacesTuiles == 5,
+              "dix pièces au plus, cinq sans « pn », cinq pages de météo, cinq places (ADR-0023, ADR-0066)");
+static_assert(kTuilesMax == 20 && kTuilesMax == disposition::kElementsMax && kPlacesTuiles == disposition::kPlaces,
+              "vingt éléments par pièce sur cinq places (ADR-0066)");
+static_assert(kTuilesMax == modele_ha::kTuilesCles, "une clé « tRT » par élément (ADR-0066)");
 
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -233,6 +240,19 @@ static void test_modele_ha() {
     expect(modele_ha::kNom == 25 && modele_ha::kEtat == 16, "tailles gardées");
     expect(std::strcmp(modele_ha::tuile_cle(0, 4).s, "t04") == 0 && std::strcmp(modele_ha::tuile_cle(4, 0).s, "t40") == 0,
            "clé de tuile : tRT");
+    // ADR-0066 : T = 0 … 19, « 0 » … « 9 » puis « a » … « j » ; la lecture fait l'inverse.
+    expect(std::strcmp(modele_ha::tuile_cle(2, 10).s, "t2a") == 0 && std::strcmp(modele_ha::tuile_cle(4, 19).s, "t4j") == 0,
+           "clé de tuile : T au-delà de 9 en lettre");
+    bool aller_retour = modele_ha::kTuilesCles == 20;
+    for (int t = 0; t < modele_ha::kTuilesCles; t++) {
+        int lu = -1;
+        aller_retour = aller_retour && modele_ha::tuile_index(modele_ha::tuile_car(t), lu) && lu == t;
+    }
+    expect(aller_retour, "clé de tuile : tuile_index relit tuile_car, 0 … 19");
+    int lu = -1;
+    expect(!modele_ha::tuile_index('k', lu) && !modele_ha::tuile_index('A', lu) && !modele_ha::tuile_index('/', lu) &&
+               !modele_ha::tuile_index(':', lu) && !modele_ha::tuile_index('`', lu) && lu == -1,
+           "clé de tuile : ni « k », ni majuscule, ni voisin des chiffres et des lettres");
     expect(std::strcmp(modele_ha::piece_cle(3).s, "p3") == 0, "clé de pièce : pR");
     expect(std::strcmp(modele_ha::clim_piece_cle(0).s, "cp0") == 0 && std::strcmp(modele_ha::clim_piece_cle(4).s, "cp4") == 0,
            "clé de la clim d'une pièce : cpR (ADR-0040)");
@@ -615,6 +635,129 @@ static void test_decoupe_carte() {
     expect(part && coupes > 500, "decoupe : morceaux disjoints, union exacte, aucun vide (2 000 zones)");
 }
 
+// ── Disposition des éléments d'une pièce (tab5_disposition.h, ADR-0066) ──────
+static void test_disposition() {
+    using namespace disposition;
+    // La table de l'ADR-0066, n = 6 … 20 : entières, moitiés, quarts.
+    static const int kEntieres[] = {4, 3, 2, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0};
+    static const int kMoities[] = {1, 2, 3, 4, 5, 3, 4, 2, 3, 1, 2, 0, 1, 0, 0};
+    static const int kQuarts[] = {0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
+    bool table = true;
+    for (int n = 6; n <= 20; n++) {
+        const Compte c = compter(n);
+        table = table && c.entieres == kEntieres[n - 6] && c.moities == kMoities[n - 6] && c.quarts == kQuarts[n - 6];
+    }
+    expect(table, "disposition : la table de l'ADR-0066, n = 6 … 20");
+    bool petits = true;
+    for (int n = 0; n <= 5; n++) {
+        const Compte c = compter(n);
+        petits = petits && c.entieres == n && c.moities == 0 && c.quarts == 0;
+    }
+    expect(petits, "disposition : jusqu'à cinq éléments, des tuiles entières");
+    expect(compter(-3).entieres == 0 && compter(21).quarts == 5 && compter(99).entieres == 0, "disposition : n borné");
+
+    // Une liste sans trou de n éléments : chacun posé une fois, dans l'ordre de la liste, places
+    // de gauche à droite entières → moitiés → quarts, cases remplies dans l'ordre, une seule case
+    // vide (la dernière, à 19).
+    bool ordre = true, une_fois = true, cases_ok = true, utilisees_ok = true, vides_ok = true;
+    for (int n = 0; n <= 20; n++) {
+        const uint32_t presents = n == 0 ? 0u : ((1u << n) - 1u);
+        const Disposition d = disposer(presents, false);
+        utilisees_ok = utilisees_ok && d.n == n && d.utilisees == (n < kPlaces ? n : kPlaces) && !d.positions_fixes;
+        int suivant = 0, vides = 0, rang_coupe = 0;
+        for (int p = 0; p < kPlaces; p++) {
+            const Place& pl = d.place[p];
+            if (p >= d.utilisees) {
+                cases_ok = cases_ok && pl.coupe == Coupe::VIDE;
+                continue;
+            }
+            const int r = pl.coupe == Coupe::ENTIERE ? 0 : (pl.coupe == Coupe::MOITIES ? 1 : 2);
+            ordre = ordre && pl.coupe != Coupe::VIDE && r >= rang_coupe;
+            rang_coupe = r;
+            for (int k = 0; k < kCasesMax; k++) {
+                const int t = pl.element[k];
+                if (k >= cases_de(pl.coupe)) {
+                    cases_ok = cases_ok && t == -1;
+                    continue;
+                }
+                if (t < 0) {
+                    vides++;
+                    continue;
+                }
+                ordre = ordre && t == suivant++;
+                une_fois = une_fois && d.place_de[t] == p && d.case_de[t] == k;
+            }
+        }
+        une_fois = une_fois && suivant == n;
+        vides_ok = vides_ok && vides == (n == 19 ? 1 : 0);
+        if (n == 19) vides_ok = vides_ok && d.place[4].element[3] == -1 && d.place[4].element[2] == 18;
+        for (int t = n; t < kElementsMax; t++) une_fois = une_fois && d.place_de[t] == -1 && d.case_de[t] == -1;
+    }
+    expect(utilisees_ok, "disposition : n éléments, min(n, 5) places occupées");
+    expect(ordre, "disposition : entières, puis moitiés, puis quarts ; éléments dans l'ordre de la liste");
+    expect(une_fois, "disposition : chaque élément posé une fois, place et case relues");
+    expect(cases_ok, "disposition : aucune case au-delà de la coupe ni place au-delà des occupées");
+    expect(vides_ok, "disposition : aucune case vide, sauf le dernier quart à 19");
+
+    // Exemples de l'ADR : à 6, la cinquième place en deux ; à 11, une entière, trois moitiés, un quart.
+    const Disposition six = disposer(0x3Fu, false);
+    expect(six.place[3].coupe == Coupe::ENTIERE && six.place[4].coupe == Coupe::MOITIES &&
+               six.place[4].element[0] == 4 && six.place[4].element[1] == 5,
+           "disposition : à 6, la dernière place coupée haut (4) / bas (5)");
+    const Disposition onze = disposer(0x7FFu, false);
+    expect(onze.place[0].coupe == Coupe::ENTIERE && onze.place[3].coupe == Coupe::MOITIES &&
+               onze.place[4].coupe == Coupe::QUARTS && onze.place[4].element[0] == 7 && onze.place[4].element[3] == 10,
+           "disposition : à 11, quart haut gauche 7 … bas droite 10");
+
+    // Pièce à trous : les présents se suivent ; en positions fixes (mode météo, ≤ 5 éléments
+    // d'index < 5), l'élément T reste sur la place T.
+    const uint32_t espaces = (1u << 0) | (1u << 2) | (1u << 4);
+    const Disposition fixe = disposer(espaces, true);
+    expect(fixe.positions_fixes && fixe.place[0].element[0] == 0 && fixe.place[1].coupe == Coupe::VIDE &&
+               fixe.place[2].element[0] == 2 && fixe.place[3].coupe == Coupe::VIDE && fixe.place[4].element[0] == 4,
+           "disposition : positions fixes, trous gardés");
+    const Disposition suivis = disposer(espaces, false);
+    expect(!suivis.positions_fixes && suivis.utilisees == 3 && suivis.place[1].element[0] == 2 &&
+               suivis.place[2].element[0] == 4 && suivis.place_de[4] == 2,
+           "disposition : sans positions fixes, les présents se suivent");
+    const uint32_t loin = (1u << 1) | (1u << 7);
+    const Disposition loin_d = disposer(loin, true);
+    expect(!loin_d.positions_fixes && loin_d.place[0].element[0] == 1 && loin_d.place[1].element[0] == 7,
+           "disposition : un index ≥ 5 (« t07 ») défait les positions fixes, rien n'est perdu");
+    const Disposition six_fixes = disposer(0x3Fu, true);
+    expect(!six_fixes.positions_fixes && six_fixes.place[4].coupe == Coupe::MOITIES,
+           "disposition : au-delà de cinq, la coupe même en mode météo");
+    expect(disposer(0xFFF00000u, false).n == 0, "disposition : bits au-delà du vingtième ignorés");
+
+    // Rectangles des cases (Tab5 : place de 230 × 275, 4 px d'écart).
+    const Rect e = case_rect(Coupe::ENTIERE, 0, 230, 275, 4);
+    expect(e.x == 0 && e.y == 0 && e.w == 230 && e.h == 275, "case : une entière couvre la place");
+    const Rect haut = case_rect(Coupe::MOITIES, 0, 230, 275, 4), bas = case_rect(Coupe::MOITIES, 1, 230, 275, 4);
+    expect(haut.y == 0 && haut.w == 230 && haut.h == 135 && bas.y == 140 && bas.h == 135 && bas.y + bas.h == 275,
+           "case : moitiés de 230 × 135, haut et bas collés aux bords");
+    const Rect q0 = case_rect(Coupe::QUARTS, 0, 230, 275, 4), q3 = case_rect(Coupe::QUARTS, 3, 230, 275, 4);
+    const Rect q1 = case_rect(Coupe::QUARTS, 1, 230, 275, 4), q2 = case_rect(Coupe::QUARTS, 2, 230, 275, 4);
+    expect(q0.x == 0 && q0.y == 0 && q0.w == 113 && q0.h == 135 && q1.x == 117 && q1.y == 0 && q2.x == 0 &&
+               q2.y == 140 && q3.x == 117 && q3.y == 140 && q3.x + q3.w == 230,
+           "case : quarts de 113 × 135 en deux colonnes");
+    // Toute place, toute coupe : cases dans la place, disjointes, d'écart au moins `ecart`.
+    bool dedans = true;
+    for (int l = 150; l <= 260; l += 7)
+        for (int h = 180; h <= 300; h += 11)
+            for (Coupe c : {Coupe::MOITIES, Coupe::QUARTS})
+                for (int a = 0; a < cases_de(c); a++) {
+                    const Rect ra = case_rect(c, a, l, h, 4);
+                    dedans = dedans && ra.x >= 0 && ra.y >= 0 && ra.x + ra.w <= l && ra.y + ra.h <= h && ra.w > 0 && ra.h > 0;
+                    for (int b = a + 1; b < cases_de(c); b++) {
+                        const Rect rb = case_rect(c, b, l, h, 4);
+                        const bool a_gauche = ra.x + ra.w + 4 <= rb.x || rb.x + rb.w + 4 <= ra.x;
+                        const bool a_dessus = ra.y + ra.h + 4 <= rb.y || rb.y + rb.h + 4 <= ra.y;
+                        dedans = dedans && (a_gauche || a_dessus);
+                    }
+                }
+    expect(dedans, "case : dans la place, disjointes, 4 px d'écart au moins (places de 150 à 260 px)");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -635,6 +778,7 @@ int main() {
     test_barre_demarrage();
     test_sens_ecran();
     test_decoupe_carte();
+    test_disposition();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

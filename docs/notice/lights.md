@@ -8,7 +8,7 @@
 
 ![The lights window: the lights of the room, brightness at 70 %, whites and colours](../images/notice/lumieres-chambre-en.webp)
 
-**One page per room**: every light of the house, room by room. The names of the rooms that have lights are at the top, next to the ×; the room shown is in the accent colour. **Swipe left or right** anywhere on the window (except on the arc) to go to the next or the previous room, or **tap a room's name**. A house with lights in one room only has no names and no swipe.
+**One page per room**: every light of the house, room by room. The names of the rooms that have lights are at the top, next to the ×; the room shown is in the accent colour. **Swipe left or right** anywhere on the window (except on the arc) to go to the next or the previous room, or **tap a room's name**. A house with lights in one room only has no names and no swipe. A page holds five lights: a room with more takes several pages, its name says which one (« Living room 2/3 ») and the swipe goes through them; with one room only, one name per page.
 
 **Lights** (left)
 
@@ -37,7 +37,7 @@
 
 ![La fenêtre des lumières : les lumières de la pièce, luminosité à 70 %, blancs et couleurs](../images/notice/lumieres-chambre-fr.webp)
 
-**Une page par pièce** : toutes les lumières de la maison, pièce par pièce. Les noms des pièces qui ont des lumières sont en haut, à côté de la × ; la pièce affichée est dans la couleur d'accent. **Glissez à gauche ou à droite** n'importe où sur la fenêtre (sauf sur l'arc) pour passer à la pièce suivante ou précédente, ou **touchez le nom d'une pièce**. Une maison qui n'a de lumières que dans une pièce n'a ni noms ni glissement.
+**Une page par pièce** : toutes les lumières de la maison, pièce par pièce. Les noms des pièces qui ont des lumières sont en haut, à côté de la × ; la pièce affichée est dans la couleur d'accent. **Glissez à gauche ou à droite** n'importe où sur la fenêtre (sauf sur l'arc) pour passer à la pièce suivante ou précédente, ou **touchez le nom d'une pièce**. Une maison qui n'a de lumières que dans une pièce n'a ni noms ni glissement. Une page tient cinq lumières : une pièce qui en a plus prend plusieurs pages, son nom dit laquelle (« Salon 2/3 ») et le glissement les parcourt ; avec une seule pièce, un nom par page.
 
 **Ampoules** (à gauche)
 
