@@ -91,7 +91,7 @@ Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.
 | Touch | GT911, I2C at 0x5D, polled every 50 ms (no interrupt) |
 | Backlight | AP3032 LED driver, analog dimming from GPIO 32 (LEDC, 5 kHz, inverted) |
 | Sound out | ES8311 DAC (0x18), NS4150B amplifier enabled by GPIO 53, a two-pin speaker connector (validated with the official Waveshare pack speaker, clean playback up to 75% / 0 dB) |
-| Microphones | two, through an ES7210 ADC (0x40), 16 kHz / 16-bit like the Tab5 |
+| Microphones | two, through an ES7210 ADC (0x40), 16 kHz / 16-bit like the Tab5; the firmware reads MIC1 (left slot), like Waveshare's demo |
 | Wi-Fi and Bluetooth | ESP32-C6-MINI-1 over SDIO (ESP-Hosted), reset on GPIO 54; Wi-Fi in 2.4 GHz only |
 | ESP32-C6 serial connector | « C6-UART », 4 pins (TXD, RXD, GND, IO9; IO9 to ground = download mode), to flash the C6 directly |
 | USB | USB-C « USB » (the P4's own USB Serial/JTAG), USB-C « USB TO UART » (CH343P bridge to the P4's UART0, GPIO 37 TX / GPIO 38 RX, with automatic reset and boot), USB-A host |
@@ -226,7 +226,7 @@ Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md
 | Tactile | GT911, I2C en 0x5D, interrogé toutes les 50 ms (sans interruption) |
 | Rétroéclairage | pilote de LED AP3032, gradation analogique depuis GPIO 32 (LEDC, 5 kHz, inversé) |
 | Son | DAC ES8311 (0x18), ampli NS4150B activé par GPIO 53, un connecteur deux broches pour le haut-parleur (validé avec le haut-parleur officiel du pack Waveshare, son très propre jusqu'à 75% / 0 dB) |
-| Micros | deux, par un ADC ES7210 (0x40), 16 kHz / 16 bits comme le Tab5 |
+| Micros | deux, par un ADC ES7210 (0x40), 16 kHz / 16 bits comme le Tab5 ; le firmware lit MIC1 (slot gauche), comme la démo Waveshare |
 | Wi-Fi et Bluetooth | ESP32-C6-MINI-1 en SDIO (ESP-Hosted), reset sur GPIO 54 ; Wi-Fi en 2,4 GHz seulement |
 | Connecteur série de l'ESP32-C6 | « C6-UART », 4 broches (TXD, RXD, GND, IO9 ; IO9 à la masse = mode téléchargement), pour flasher le C6 directement |
 | USB | USB-C « USB » (l'USB Serial/JTAG du P4 lui-même), USB-C « USB TO UART » (pont CH343P vers l'UART0 du P4, GPIO 37 TX / GPIO 38 RX, avec reset et boot automatiques), USB-A hôte |

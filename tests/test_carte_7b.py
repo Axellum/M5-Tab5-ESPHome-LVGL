@@ -174,7 +174,10 @@ def test_audio_memes_reglages():
     adc_t, adc_w = _par_id(t["audio_adc"], "es7210_adc"), _par_id(w["audio_adc"], "es7210_adc")
     assert {k: v for k, v in adc_w.items()} == {k: v for k, v in adc_t.items() if k in adc_w}
     mic_t, mic_w = _par_id(t["microphone"], "tab5_microphone"), _par_id(w["microphone"], "tab5_microphone")
-    assert {k: v for k, v in mic_w.items() if k != "i2s_din_pin"} == {k: v for k, v in mic_t.items() if k != "i2s_din_pin"}
+    propres = {"i2s_din_pin", "channel"}
+    assert {k: v for k, v in mic_w.items() if k not in propres} == {k: v for k, v in mic_t.items() if k not in propres}
+    # La 7B lit MIC1 (slot gauche, comme la démo Waveshare) ; le Tab5 garde le défaut d'ESPHome.
+    assert mic_w["channel"] == "left" and "channel" not in mic_t
     assert _par_id(w["display"], "tab5_display")["dimensions"] == _par_id(t["display"], "tab5_display")["dimensions"]
 
 
