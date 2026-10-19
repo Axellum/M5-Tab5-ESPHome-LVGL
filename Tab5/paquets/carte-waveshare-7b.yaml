@@ -345,6 +345,13 @@ microphone:
     bits_per_sample: 16bit
     adc_type: external
     correct_dc_offset: true
+    # [AI-CONTEXT] Micro MIC1 (slot gauche de l'ES7210), comme la démo Waveshare : son BSP
+    # ouvre l'I2S en mono par I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG, qui lit le slot GAUCHE
+    # (ESP-IDF 5.5, i2s_std.h). ESPHome lit le slot droit par défaut (MIC2 ; l'ES7210 sort
+    # MIC1 à gauche et MIC2 à droite sur SDOUT1). Banc vocal du 19/10/2026 en MIC2 : parole à
+    # −55 dBFS, 1,2 % de l'énergie au-dessus de 3 kHz (ReSpeaker Lite −19,5 dBFS, 4 %).
+    # Seule différence avec le Tab5 (tab5-hardware.yaml), qui garde son slot droit.
+    channel: left
 
 # ES8311 (sortie mono, ampli NS4150B) à la place de l'ES8388 du Tab5 : pas de select
 # « Tab5 DAC Output » (LINE1 / LINE2, propre à l'ES8388).
