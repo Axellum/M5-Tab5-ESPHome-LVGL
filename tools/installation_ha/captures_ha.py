@@ -119,6 +119,74 @@ CAPTURES = (
 )
 
 
+# Texte d'un élément, shadow DOM compris (innerText s'arrête à la racine d'ombre des
+# composants du frontend), sans les feuilles de style ni les scripts.
+TEXTE_PROFOND = """(racine) => {
+  const morceaux = [];
+  const parcourir = (n) => {
+    if (n.nodeType === Node.TEXT_NODE) { morceaux.push(n.textContent); return; }
+    if (n.nodeName === "STYLE" || n.nodeName === "SCRIPT") return;
+    if (n.shadowRoot) parcourir(n.shadowRoot);
+    for (const enfant of n.childNodes) parcourir(enfant);
+  };
+  parcourir(racine);
+  return morceaux.join(" ");
+}"""
+
+
+async def textes(page, selecteur: str, titre: str) -> str:
+    """Le texte du premier `selecteur` qui contient `titre`, sur une ligne."""
+    element = page.locator(selecteur).filter(has_text=titre).first
+    return " ".join((await element.evaluate(TEXTE_PROFOND, timeout=5000)).split())
+
+
+async def capturer_reauth(ha, rapport, dossier: Path, *, client_id: str, titre: str) -> None:
+    """Réinstallation avec effacement (docs/troubleshooting.md) : ce que montre HA pendant
+    que son flux de réauth attend, dans chaque langue de LANGUES. Appareils et services
+    (la carte du flux), Réparations, puis la boîte du flux ouverte depuis la carte et
+    refermée sans valider. Leurs textes vont au rapport. Une capture ratée est rapportée
+    sans faire échouer le job : elles servent à écrire la page, le comportement est jugé
+    par verifier_installation.py."""
+    from playwright.async_api import async_playwright
+
+    dossier.mkdir(parents=True, exist_ok=True)
+    async with async_playwright() as p:
+        navigateur = await p.chromium.launch()
+        try:
+            for langue in LANGUES:
+                await ha.ws.commande("frontend/set_user_data", key="language",
+                                     value=preferences_de_langue(langue))
+                contexte = await navigateur.new_context(viewport={"width": LARGEUR, "height": 1000},
+                                                        locale=langue, device_scale_factor=1)
+                await contexte.add_init_script(script_de_connexion(
+                    ha.base, client_id, ha.jeton, ha.rafraichissement, langue))
+                page = await contexte.new_page()
+                etape = "Appareils et services"
+                try:
+                    await ouvrir(page, f"{ha.base}/config/integrations/dashboard")
+                    await page.screenshot(path=str(dossier / f"ha_reauth_integrations_{langue}.png"))
+                    rapport.info(f"réauth, {langue}, Appareils et services : {await textes(page, 'ha-config-flow-card', titre)!r}")
+                    etape = "Réparations"
+                    await ouvrir(page, f"{ha.base}/config/repairs")
+                    await page.screenshot(path=str(dossier / f"ha_reauth_reparations_{langue}.png"))
+                    rapport.info(f"réauth, {langue}, Réparations : {await textes(page, 'ha-config-repairs', titre)!r}")
+                    etape = "boîte du flux"
+                    await ouvrir(page, f"{ha.base}/config/integrations/dashboard")
+                    carte = page.locator("ha-config-flow-card").filter(has_text=titre).first
+                    await carte.locator("ha-button, mwc-button").first.click()
+                    await page.wait_for_timeout(POSE_MS)
+                    await page.screenshot(path=str(dossier / f"ha_reauth_boite_{langue}.png"))
+                    rapport.info(f"réauth, {langue}, boîte : {await textes(page, 'dialog-data-entry-flow', titre)!r}")
+                    await page.keyboard.press("Escape")
+                    await page.wait_for_timeout(POSE_MS)
+                except Exception as exc:  # noqa: BLE001 — rapportée, ne fait pas échouer
+                    await page.screenshot(path=str(dossier / f"echec_reauth_{langue}.png"))
+                    rapport.info(f"réauth, {langue}, capture « {etape} » ratée : {type(exc).__name__}: {exc}")
+                await contexte.close()
+        finally:
+            await navigateur.close()
+
+
 async def appareil_de(ws, entite: str) -> dict[str, Any]:
     """L'appareil (registre de HA) qui porte l'entité `entite`."""
     entree = await ws.commande("config/entity_registry/get", entity_id=entite)
