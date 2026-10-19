@@ -17,6 +17,7 @@ relevée dans .github/workflows/installation-ha.yml) ou qu'une étape du guide c
 from __future__ import annotations
 
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -134,19 +135,50 @@ TEXTE_PROFOND = """(racine) => {
 }"""
 
 
-async def textes(page, selecteur: str, titre: str) -> str:
-    """Le texte du premier `selecteur` qui contient `titre`, sur une ligne."""
-    element = page.locator(selecteur).filter(has_text=titre).first
-    return " ".join((await element.evaluate(TEXTE_PROFOND, timeout=5000)).split())
+async def textes(page, selecteur: str, titre: str | None = None) -> str:
+    """Le texte du premier `selecteur` (qui contient `titre`, s'il est donné), sur une ligne."""
+    element = page.locator(selecteur)
+    if titre:
+        element = element.filter(has_text=titre)
+    return " ".join((await element.first.evaluate(TEXTE_PROFOND, timeout=5000)).split())
+
+
+async def reauth_carte(page, base: str, titre: str) -> str:
+    """Appareils et services : la carte du flux de réauth, en tête."""
+    await ouvrir(page, f"{base}/config/integrations/dashboard")
+    return await textes(page, "ha-config-flow-card", titre)
+
+
+async def reauth_reparations(page, base: str, titre: str) -> str:
+    """Système → Réparations : la réparation qui accompagne le flux."""
+    await ouvrir(page, f"{base}/config/repairs")
+    if not await textes_visibles(page, titre):
+        raise RuntimeError(f"« {titre} » absent de la page")
+    return "réparation affichée"
+
+
+async def reauth_boite(page, base: str, titre: str) -> str:
+    """La boîte du flux, ouverte par le bouton de sa carte ; refermée sans valider."""
+    await ouvrir(page, f"{base}/config/integrations/dashboard")
+    carte = page.locator("ha-config-flow-card").filter(has_text=titre).first
+    await carte.get_by_role("button", name=re.compile("Reconfigur")).first.click()
+    await page.wait_for_timeout(POSE_MS)
+    return await textes(page, "dialog-data-entry-flow")
+
+
+# (nom du fichier, capture) ; la boîte en dernier : elle est refermée par Échap.
+CAPTURES_REAUTH = (
+    ("integrations", reauth_carte),
+    ("reparations", reauth_reparations),
+    ("boite", reauth_boite),
+)
 
 
 async def capturer_reauth(ha, rapport, dossier: Path, *, client_id: str, titre: str) -> None:
     """Réinstallation avec effacement (docs/troubleshooting.md) : ce que montre HA pendant
-    que son flux de réauth attend, dans chaque langue de LANGUES. Appareils et services
-    (la carte du flux), Réparations, puis la boîte du flux ouverte depuis la carte et
-    refermée sans valider. Leurs textes vont au rapport. Une capture ratée est rapportée
-    sans faire échouer le job : elles servent à écrire la page, le comportement est jugé
-    par verifier_installation.py."""
+    que son flux de réauth attend, dans chaque langue de LANGUES (CAPTURES_REAUTH). Leurs
+    textes vont au rapport. Une capture ratée est rapportée sans faire échouer le job :
+    elles servent à écrire la page, le comportement est jugé par verifier_installation.py."""
     from playwright.async_api import async_playwright
 
     dossier.mkdir(parents=True, exist_ok=True)
@@ -161,27 +193,16 @@ async def capturer_reauth(ha, rapport, dossier: Path, *, client_id: str, titre: 
                 await contexte.add_init_script(script_de_connexion(
                     ha.base, client_id, ha.jeton, ha.rafraichissement, langue))
                 page = await contexte.new_page()
-                etape = "Appareils et services"
-                try:
-                    await ouvrir(page, f"{ha.base}/config/integrations/dashboard")
-                    await page.screenshot(path=str(dossier / f"ha_reauth_integrations_{langue}.png"))
-                    rapport.info(f"réauth, {langue}, Appareils et services : {await textes(page, 'ha-config-flow-card', titre)!r}")
-                    etape = "Réparations"
-                    await ouvrir(page, f"{ha.base}/config/repairs")
-                    await page.screenshot(path=str(dossier / f"ha_reauth_reparations_{langue}.png"))
-                    rapport.info(f"réauth, {langue}, Réparations : {await textes(page, 'ha-config-repairs', titre)!r}")
-                    etape = "boîte du flux"
-                    await ouvrir(page, f"{ha.base}/config/integrations/dashboard")
-                    carte = page.locator("ha-config-flow-card").filter(has_text=titre).first
-                    await carte.locator("ha-button, mwc-button").first.click()
-                    await page.wait_for_timeout(POSE_MS)
-                    await page.screenshot(path=str(dossier / f"ha_reauth_boite_{langue}.png"))
-                    rapport.info(f"réauth, {langue}, boîte : {await textes(page, 'dialog-data-entry-flow', titre)!r}")
-                    await page.keyboard.press("Escape")
-                    await page.wait_for_timeout(POSE_MS)
-                except Exception as exc:  # noqa: BLE001 — rapportée, ne fait pas échouer
-                    await page.screenshot(path=str(dossier / f"echec_reauth_{langue}.png"))
-                    rapport.info(f"réauth, {langue}, capture « {etape} » ratée : {type(exc).__name__}: {exc}")
+                for nom, capture in CAPTURES_REAUTH:
+                    try:
+                        constat = await capture(page, ha.base, titre)
+                        await page.screenshot(path=str(dossier / f"ha_reauth_{nom}_{langue}.png"))
+                        rapport.info(f"réauth, {langue}, {nom} : {constat!r}")
+                    except Exception as exc:  # noqa: BLE001 — rapportée, ne fait pas échouer
+                        await page.screenshot(path=str(dossier / f"echec_reauth_{nom}_{langue}.png"))
+                        rapport.info(f"réauth, {langue}, capture « {nom} » ratée : {type(exc).__name__}: {exc}")
+                await page.keyboard.press("Escape")
+                await page.wait_for_timeout(POSE_MS)
                 await contexte.close()
         finally:
             await navigateur.close()
