@@ -96,7 +96,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ha: ["2026.9.4", "2026.8.3"]
+        ha: ["2026.10.2", "2026.9.4", "2026.8.3"]
     env:
       HA_IMAGE: ghcr.io/home-assistant/home-assistant:${{ matrix.ha }}
     runs-on: ubuntu-latest
