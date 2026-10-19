@@ -676,6 +676,21 @@ HUIT_PIECES = (
 )
 CINQ_PIECES = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),)
 assert len(PIECES_HUIT) == PIECES_HUIT_NOMBRE and all(p.tuiles for p in PIECES_HUIT.values())
+# Neuf clims (relecture de l'ADR-0066, 18/10/2026) : les huit pièces, chacune avec sa clim
+# propre (ADR-0040, « Clim <pièce> », consigne 18 + R degrés), et la clim du blueprint ; la
+# clim de l'Atelier (R = 7, consigne 25) est la neuvième de la liste, au-delà des huit pages
+# du carrousel. En mode HA sur l'Atelier : « pieces-8-clim-atelier », la tuile − / + règle sa
+# clim (25.0 °) ; « …-roue », le toucher de la température ouvre sa roue (son nom au moyeu) ;
+# « …-clims », « Clims ▸ » déplié : les six dernières de la liste, elle marquée. Avant le
+# correctif, la clim d'ici était celle du blueprint. `fermer` quitte le mode HA, oublie les
+# clims des pièces 6 à 8 (pendant que les huit pièces existent), remet le climat des cinq
+# pièces de la démo, puis la maison de la démo.
+NEUF_CLIMS = HUIT_PIECES + (Service("tab5_maj_emplacements", (("payload", "".join(
+    f"crp{r}|16|30|0.5|°C|chdfq|Clim {p.nom};p{r}|{19 + r}.4||1;cep{r}|{18 + r}.0|{19 + r}.4|cool|none|auto|stop;"
+    for r, p in sorted(PIECES_HUIT.items()))),)),)
+OUBLIER_NEUF_CLIMS = (Toucher(*BOUTON_HA), VERS_LA_GAUCHE, Service("tab5_maj_emplacements", (
+    ("payload", "".join(f"p{r}|||0;" for r in range(len(PAGE_DE_LA_PIECE), PIECES_HUIT_NOMBRE))
+     + build_climat_pieces(PIECES)),))) + CINQ_PIECES
 # Popup Maison, page suivante : un geste dans le corps (sur les lignes), arrêté au popup.
 MAISON_PAGE_SUIVANTE = Glisser(1150, 400, 450, 400, dans_popup=True)
 
@@ -1371,6 +1386,13 @@ ECRANS: tuple[Ecran, ...] = (
           (ROUE_FERMER, ROUE_FERMER) + CINQ_PIECES),
     Ecran("pieces-8-roue-suite", HUIT_PIECES + (Long(*CARTE_CENTRALE), nav(NAV_PIECES), NAV_PIECES_SUITE),
           (ROUE_FERMER, ROUE_FERMER) + CINQ_PIECES),
+    # Neuf clims, la neuvième celle de l'Atelier (voir NEUF_CLIMS).
+    Ecran("pieces-8-clim-atelier", NEUF_CLIMS + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE), OUBLIER_NEUF_CLIMS),
+    Ecran("pieces-8-clim-atelier-roue", NEUF_CLIMS + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON)),
+          (ROUE_FERMER,) + OUBLIER_NEUF_CLIMS),
+    Ecran("pieces-8-clim-atelier-clims",
+          NEUF_CLIMS + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON), ROUE_CLIM_CLIMS),
+          (ROUE_FERMER, ROUE_FERMER) + OUBLIER_NEUF_CLIMS),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
     # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,

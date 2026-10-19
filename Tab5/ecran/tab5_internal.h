@@ -578,10 +578,17 @@ struct ClimRef {
     int8_t t = -1;
     int8_t piece = -1;  // pièce où elle est (ouverture sur la pièce affichée) ; -1 : aucune
 };
-// Écrit au plus `max` clims dans `out`, dans l'ordre ci-dessus ; renvoie leur nombre.
+// Écrit au plus `max` clims dans `out`, dans l'ordre ci-dessus ; renvoie leur nombre. Les
+// `max` premières sont les mêmes quel que soit `max` : les kClimPastilles du carrousel
+// commencent toujours la liste entière.
 int clims_enumerer(ClimRef* out, int max);
+// La liste entière (toutes les clims connues, sans le plafond de kClimPastilles du
+// carrousel), dans un tampon statique de tab5_clim.cpp : `l` pointe dessus jusqu'au prochain
+// appel. Renvoie leur nombre. Pour ce qui doit voir toutes les clims : la clim d'ici et la
+// famille « Clims ▸ » de la roue ; les pages et les pastilles du carrousel restent à huit.
+int clims_toutes(const ClimRef*& l);
 // La clim « d'ici » (14/10/2026, discussion #278, décision d'Axel) : la seule de
-// clims_enumerer quand la maison n'en a qu'une, sur toutes les pièces ; avec plusieurs,
+// clims_toutes quand la maison n'en a qu'une, sur toutes les pièces ; avec plusieurs,
 // celle de la pièce affichée en mode HA (sa clim propre, ADR-0040, sinon la première de
 // ses tuiles), sinon celle du blueprint. Faux sinon (aucune clim, ou plusieurs et ni la
 // pièce ni le blueprint n'en ont). La ligne « Clim » de la tuile − / + (tab5_reglables.cpp)

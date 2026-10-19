@@ -13,7 +13,7 @@ Le contrat tient en des chaînes qu'aucun compilateur ne compare :
   rejouent."""
 import re
 
-from tests.commun import avec_jetons, jeton, lire as _lire
+from tests.commun import avec_jetons, jeton, lire as _lire, sources
 
 import ecrans  # noqa: E402 — tools/rendu, mis sur sys.path par tests/conftest.py
 
@@ -46,16 +46,40 @@ def test_une_seule_liste_des_clims():
     # Les N pièces choisies dans HA (ADR-0066) : une pièce au-delà n'existe pas à l'écran.
     assert "const int nb_pieces = tuiles_pieces_nombre();" in corps
     assert "for (int r = 0; r < nb_pieces; r++)" in corps and "for (int t = 0; t < kTuiles; t++)" in corps
-    # Un doublon (même nom non vide) n'a pas sa page.
-    assert "meme_nom(noms[i], nom)" in corps
+    # Un doublon (même nom non vide) n'a pas sa page. Les noms relus par ref_nom : aucun
+    # tableau de kClimsConnues pointeurs sur la pile de la boucle.
+    assert "meme_nom(ref_nom(out[i]), nom)" in corps and "[kClimsConnues]" not in corps
     assert "a[0] != '\\0'" in _corps(CLIM, "bool meme_nom(")
-    # Ouverture, geste et pastilles lisent cette liste, rien d'autre.
-    for f in ("void carrousel_pastilles() {", "void carrousel_geste(lv_event_t* /*e*/) {",
-              "bool clim_ref_choisir(ClimRef& out) {"):
+    # Geste et pastilles lisent cette liste, rien d'autre, coupée aux pastilles.
+    for f in ("void carrousel_pastilles() {", "void carrousel_geste(lv_event_t* /*e*/) {"):
         assert "clims_enumerer(l, kClimPastilles);" in _corps(CLIM, f), f
     # Déclarée pour les autres unités (une clim de plus, ailleurs : une ligne ici).
     assert "int clims_enumerer(ClimRef* out, int max);" in _lire("Tab5", "ecran", "tab5_internal.h")
     assert "clims_enumerer()" in _lire("AGENTS.md")
+
+
+def test_huit_pages_mais_la_clim_d_ici_les_voit_toutes():
+    """Relecture de l'ADR-0066 (18/10/2026) : les pages et les pastilles du carrousel
+    s'arrêtent à kClimPastilles, mais la clim d'ici (tuile − / +, toucher de la température)
+    et la famille « Clims ▸ » de la roue lisent toute la liste. Coupée à huit, la clim d'une
+    pièce de la fin d'une maison de plus de huit clims n'y était pas : sa tuile − / + et sa
+    roue retombaient sur la clim du blueprint, ou sur aucune."""
+    toutes = _corps(CLIM, "int clims_toutes(const ClimRef*& l) {")
+    assert "return clims_enumerer(s_toutes, kClimsConnues);" in toutes
+    # Un tampon statique, pas kClimsConnues ClimRef sur la pile de la boucle.
+    assert "\nClimRef s_toutes[kClimsConnues];" in CLIM
+    assert "int clims_toutes(const ClimRef*& l);" in _lire("Tab5", "ecran", "tab5_internal.h")
+    ici = _corps(CLIM, "bool clim_ref_ici(ClimRef& out) {")
+    assert "const int n = clims_toutes(l);" in ici and "clims_enumerer(" not in ici
+    roue = _corps(_lire("Tab5", "ecran", "tab5_tuiles_roue.cpp"), "int roue_clims(")
+    assert "const int n = clims_toutes(l);" in roue and "clims_enumerer(" not in roue
+    # Chaque appel de la liste dit ce qu'il en lit : huit pages, la première, ou toutes. Un
+    # appel de plus choisit l'une des trois (ici, et ce test).
+    appels = []
+    for chemin in sources("*.cpp", "*.h"):
+        appels += re.findall(r"clims_enumerer\((\w+), (\w+)\)", _lire(chemin))
+    assert sorted(appels) == sorted([("l", "kClimPastilles"), ("l", "kClimPastilles"), ("l", "1"),
+                                     ("s_toutes", "kClimsConnues")]), appels
 
 
 def test_geste_comme_les_pages_des_reglages():
@@ -86,7 +110,7 @@ def test_ouverture_sur_la_piece_affichee():
     # première de la liste.
     choisir = _corps(CLIM, "bool clim_ref_choisir(ClimRef& out) {")
     assert choisir.index("if (clim_ref_ici(out)) return true;") < choisir.index("out = l[0];")
-    assert "if (n == 0) return false;" in choisir
+    assert "if (clims_enumerer(l, 1) == 0) return false;" in choisir
     ici = _corps(CLIM, "bool clim_ref_ici(ClimRef& out) {")
     assert "modele_ha::clim_ici_rang(l, n, tuiles_piece_mode_ha())" in ici and "out = l[i];" in ici
     # Le carrousel ouvert sur une clim : sa page, puis le popup.

@@ -334,6 +334,23 @@ static void test_clim_ici() {
            "clim d'ici : sans clim du blueprint, celle de la pièce");
     expect(clim_ici_rang(sans_bp, 2, 1) == -1 && clim_ici_rang(sans_bp, 2, -1) == -1,
            "clim d'ici : sans clim du blueprint, aucune sur une pièce sans clim");
+    // Plus de huit clims (dix pièces, ADR-0066 ; relecture du 18/10/2026) : la clim de la
+    // dixième pièce est la douzième de la liste, au-delà des huit pastilles du carrousel.
+    // La règle voit toute la liste qu'on lui donne ; clim_ref_ici lui donne clims_toutes.
+    RefClim maison[12] = {bp, tuile_salon};
+    for (int r = 0; r < 10; r++) maison[2 + r] = {static_cast<signed char>(r), -1, static_cast<signed char>(r)};
+    expect(clim_ici_rang(maison, 12, 9) == 11 && clim_ici_rang(maison, 12, 7) == 9,
+           "clim d'ici : plus de huit clims, celle des pièces 8 et 10 (au-delà de la huitième)");
+    expect(clim_ici_rang(maison, 12, 0) == 2 && clim_ici_rang(maison, 12, -1) == 0,
+           "clim d'ici : plus de huit clims, la pièce 1 et le mode météo inchangés");
+    // Les huit premières seules (l'ancien appel, plafonné aux pastilles) : la pièce 10 tombait
+    // sur la clim du blueprint.
+    expect(clim_ici_rang(maison, 8, 9) == 0, "clim d'ici : coupée à huit, la pièce 10 perdait la sienne");
+    // Sans clim du blueprint, neuf clims de pièce : la neuvième pièce a la sienne (coupée à huit,
+    // aucune : pas de ligne « Clim », et le toucher de la température visait la pièce 1).
+    const RefClim* const pieces = maison + 2;
+    expect(clim_ici_rang(pieces, 9, 8) == 8 && clim_ici_rang(pieces, 8, 8) == -1,
+           "clim d'ici : sans clim du blueprint, la neuvième pièce, au-delà de huit");
 }
 
 // ── Chronologie du démarrage (tab5_demarrage.h, 10/10/2026) ─────────────────

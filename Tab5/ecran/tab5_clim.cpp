@@ -13,7 +13,10 @@
  *       tab5_clim_recolor, clim_recolorer()) : tout l'affichage de la clim est ici.
  *       Carrousel des clims (ADR-0038, 09/10/2026) : le popup a une page par clim de
  *       clims_enumerer() — la seule liste des clims de la tablette —, la page étant la clim
- *       affichée ; geste gauche / droite et pastilles en bas (carrousel_*).
+ *       affichée ; geste gauche / droite et pastilles en bas (carrousel_*). Le carrousel
+ *       s'arrête aux kClimPastilles premières ; la clim d'ici (clim_ref_ici) et la famille
+ *       « Clims ▸ » de la roue lisent toute la liste (clims_toutes, tampon statique) : sinon
+ *       une pièce de la fin d'une maison de plus de huit clims perd la sienne.
  * @architecture_constraint Deux clims ne se mélangent jamais. La carte de l'accueil montre
  *       la clim du blueprint (ses globals clim_*, que tab5_maj_clim écrit) ; le popup
  *       montre la « clim affichée » (s_vue) : celle du blueprint, ou une clim de tuile
@@ -673,6 +676,11 @@ namespace {
 // de la section « Pièce R » du blueprint, ADR-0040), dix pièces au plus (ADR-0066).
 constexpr int kClimsConnues = 1 + kPiecesMax * kTuiles + kPiecesMax;
 
+// La liste entière, que lisent la clim d'ici et la famille « Clims ▸ » de la roue
+// (clims_toutes) : statique, pas sur la pile de la boucle (kClimsConnues ClimRef de trois
+// int8_t, 3 octets chacun).
+ClimRef s_toutes[kClimsConnues];
+
 bool meme_nom(const char* a, const char* b) {
     return a != nullptr && b != nullptr && a[0] != '\0' && std::strcmp(a, b) == 0;
 }
@@ -742,14 +750,13 @@ void carrousel_geste(lv_event_t* /*e*/) {
 int clims_enumerer(ClimRef* out, int max) {
     if (out == nullptr || max <= 0) return 0;
     if (max > kClimsConnues) max = kClimsConnues;
-    const char* noms[kClimsConnues];
     int n = 0;
-    // Une clim du même nom qu'une clim déjà listée n'a pas sa page (même appareil).
+    // Une clim du même nom qu'une clim déjà listée n'a pas sa page (même appareil). Les noms
+    // relus par ref_nom, pas copiés : aucun tableau de kClimsConnues pointeurs sur la pile.
     auto ajouter = [&](int r, int t, int piece, const char* nom) {
         if (n >= max) return;
         for (int i = 0; i < n; i++)
-            if (meme_nom(noms[i], nom)) return;
-        noms[n] = nom;
+            if (meme_nom(ref_nom(out[i]), nom)) return;
         out[n++] = ClimRef{static_cast<int8_t>(r), static_cast<int8_t>(t), static_cast<int8_t>(piece)};
     };
     // 1. La clim du blueprint (la carte de l'accueil), sauf si HA l'a déclarée absente.
@@ -770,6 +777,11 @@ int clims_enumerer(ClimRef* out, int max) {
     return n;
 }
 
+int clims_toutes(const ClimRef*& l) {
+    l = s_toutes;
+    return clims_enumerer(s_toutes, kClimsConnues);
+}
+
 void clim_carrousel_preparer() {
     lv_obj_t* const p = g_clim_ui.popup;
     if (p == nullptr) return;
@@ -785,8 +797,11 @@ void clim_carrousel_preparer() {
 }
 
 bool clim_ref_ici(ClimRef& out) {
-    ClimRef l[kClimPastilles];
-    const int n = clims_enumerer(l, kClimPastilles);
+    // Toutes les clims, pas les kClimPastilles du carrousel : au-delà de huit, la clim d'une
+    // pièce de la fin de la liste n'y était pas, et sa tuile − / + et sa roue retombaient sur
+    // celle du blueprint ou sur aucune (relecture de l'ADR-0066, 18/10/2026).
+    const ClimRef* l = nullptr;
+    const int n = clims_toutes(l);
     // Une seule : elle ; plusieurs : celle de la pièce affichée en mode HA, sinon celle du
     // blueprint (règle pure, testée sur PC : modele_ha::clim_ici_rang).
     const int i = modele_ha::clim_ici_rang(l, n, tuiles_piece_mode_ha());
@@ -800,9 +815,8 @@ bool clim_ref_choisir(ClimRef& out) {
     // le blueprint n'en ont : la première de la liste, pour que le toucher de la
     // température ouvre quand même une roue.
     if (clim_ref_ici(out)) return true;
-    ClimRef l[kClimPastilles];
-    const int n = clims_enumerer(l, kClimPastilles);
-    if (n == 0) return false;
+    ClimRef l[1];
+    if (clims_enumerer(l, 1) == 0) return false;
     out = l[0];
     return true;
 }

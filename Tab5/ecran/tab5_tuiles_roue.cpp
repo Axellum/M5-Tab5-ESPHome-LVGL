@@ -173,12 +173,13 @@ const char* roue_clim_mode(const RoueTuile& rt) {
     return clim_mode_connu(rt.clim.r, rt.clim.t);
 }
 
-// « Clims ▸ » : les clims de clims_enumerer, au plus kRoueChoixTuile, celle de la roue comprise
+// « Clims ▸ » : les clims de clims_toutes, au plus kRoueChoixTuile, celle de la roue comprise
 // (au-delà de kRoueChoixTuile, la fenêtre qui finit sur elle). Renvoie leur nombre, `courant` le
-// rang de celle de la roue (-1 : aucune).
+// rang de celle de la roue (-1 : aucune). Toute la liste, pas les huit du carrousel : la clim
+// d'une pièce de la fin d'une maison de plus de huit clims y est, et marquée.
 int roue_clims(const RoueTuile& rt, ClimRef out[kRoueChoixTuile], int& courant) {
-    ClimRef l[kClimPastilles];
-    const int n = clims_enumerer(l, kClimPastilles);
+    const ClimRef* l = nullptr;
+    const int n = clims_toutes(l);
     int ici = -1;
     for (int k = 0; k < n && ici < 0; k++)
         if (l[k].r == rt.clim.r && l[k].t == rt.clim.t) ici = k;
