@@ -553,7 +553,7 @@ page_main (1280×720, tout le dashboard)
 │                                        de tab5-globals.yaml ; en pause hors
 │                                        de la fenêtre prévisions par défaut)
 ├── zone carte du bas — l'une des deux, basculée par `btn_control_ha` (icône maison, en haut à droite) :
-│   ├── cartes du mode HA (`layer_switches` — les 5 appareils de la pièce courante, ADR-0023)
+│   ├── cartes du mode HA (`layer_switches` — jusqu'à 20 éléments de la pièce courante sur cinq places, ADR-0023 / ADR-0066)
 │   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
 ├── climate_popup   (modale quasi plein écran, ouverte au tap sur la carte clim)
 ├── light_popup     (modale quasi plein écran, ouverte au tap sur une carte switch lumière)
