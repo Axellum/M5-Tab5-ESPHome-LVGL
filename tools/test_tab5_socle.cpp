@@ -73,7 +73,8 @@ static_assert(kCorpsW == 1202, "corps des popups à cartes : x 24..1226");
 static_assert(kCorpsX + kCorpsW + kCorpsX == kCarteL, "corps centré dans la carte");
 static_assert(kEcranL - kCarteL == 30 && kEcranH - kCarteH == 30, "carte à 15 px des bords");
 static_assert(kGraphiqueL == kCorpsW - 2 * 18, "zone du graphique : 18 px de marge dans sa carte");
-static_assert(kPieces == 5 && kTuiles == 5, "cinq pièces, cinq tuiles (ADR-0023)");
+static_assert(kPiecesMax == 10 && kPiecesDefaut == 5 && kPagesMeteo == 5 && kTuiles == 5,
+              "dix pièces au plus, cinq sans « pn », cinq pages de météo, cinq tuiles (ADR-0023, ADR-0066)");
 
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -234,6 +235,67 @@ static void test_modele_ha() {
     expect(std::strcmp(modele_ha::piece_cle(3).s, "p3") == 0, "clé de pièce : pR");
     expect(std::strcmp(modele_ha::clim_piece_cle(0).s, "cp0") == 0 && std::strcmp(modele_ha::clim_piece_cle(4).s, "cp4") == 0,
            "clé de la clim d'une pièce : cpR (ADR-0040)");
+    // Dix pièces (ADR-0066) : clés à un chiffre, de 0 à 9.
+    expect(std::strcmp(modele_ha::tuile_cle(9, 4).s, "t94") == 0 && std::strcmp(modele_ha::piece_cle(9).s, "p9") == 0 &&
+               std::strcmp(modele_ha::clim_piece_cle(7).s, "cp7") == 0,
+           "clés des pièces 5 à 9 : un chiffre");
+    int r = -1;
+    expect(modele_ha::piece_index('0', r) && r == 0 && modele_ha::piece_index('9', r) && r == 9,
+           "chiffre de pièce : 0 à 9");
+    r = 3;
+    expect(!modele_ha::piece_index('n', r) && !modele_ha::piece_index('a', r) && !modele_ha::piece_index('/', r) && r == 3,
+           "chiffre de pièce : « pn » n'est pas une pièce, r intact");
+}
+
+// ── Nombre de pièces et pages du bas (ADR-0066, lot A) ──────────────────────
+static void test_pieces_pages() {
+    expect(pieces_nombre_lire("8", 1) == 8 && pieces_nombre_lire("10", 2) == 10 && pieces_nombre_lire("1", 1) == 1,
+           "pn : 1 à 10 lus");
+    expect(pieces_nombre_lire("0", 1) == 1 && pieces_nombre_lire("12", 2) == 10, "pn : borné à 1 .. 10");
+    expect(pieces_nombre_lire("", 0) == 5 && pieces_nombre_lire("x", 1) == 5 && pieces_nombre_lire("100", 3) == 5 &&
+               pieces_nombre_lire("-3", 2) == 5 && pieces_nombre_lire(nullptr, 0) == 5,
+           "pn illisible : cinq, comme sans pn");
+    // Pages 0 à 4 : la table de l'ADR-0023 ; 5 et plus : page = pièce.
+    const int attendu[kPiecesMax] = {4, 3, 0, 1, 2, 5, 6, 7, 8, 9};
+    bool table = true;
+    for (int p = 0; p < kPiecesMax; p++) table = table && piece_de_page(p) == attendu[p] && page_de_piece(attendu[p]) == p;
+    expect(table, "pièce de chaque page et page de chaque pièce, l'une l'inverse de l'autre");
+    expect(piece_de_page(-1) == -1 && piece_de_page(10) == -1 && page_de_piece(-1) == -1 && page_de_piece(10) == -1,
+           "pièce et page hors bornes : -1");
+    // Météo à cinq pages : l'[AI-WARNING] de forecast_page_suivante, inchangé.
+    expect(meteo_page_suivante(2, true, 5) == 3 && meteo_page_suivante(3, true, 5) == 4 &&
+               meteo_page_suivante(4, true, 5) == 2,
+           "cinq pages, vers la gauche : 2 → 3 → 4 → 2");
+    expect(meteo_page_suivante(2, false, 5) == 1 && meteo_page_suivante(1, false, 5) == 0 &&
+               meteo_page_suivante(0, false, 5) == 2 && meteo_page_suivante(0, true, 5) == 1,
+           "cinq pages, vers la droite : 2 → 1 → 0 → 2 ; 0 vers la gauche : 1");
+    // Huit pièces : trois pages de plus après les jours 10-14, à gauche seulement.
+    expect(meteo_page_suivante(4, true, 8) == 5 && meteo_page_suivante(5, true, 8) == 6 &&
+               meteo_page_suivante(7, true, 8) == 2,
+           "huit pièces, vers la gauche : 4 → 5 → 6 → 7 → 2");
+    expect(meteo_page_suivante(2, false, 8) == 1 && meteo_page_suivante(0, false, 8) == 2 &&
+               meteo_page_suivante(5, false, 8) == 4 && meteo_page_suivante(7, false, 8) == 6,
+           "huit pièces, vers la droite : inchangé, et une page de pièce revient sur la précédente");
+    expect(meteo_page_suivante(7, true, 5) == 2 && meteo_page_suivante(9, false, 6) == 2 &&
+               meteo_page_suivante(4, true, 3) == 2 && meteo_page_suivante(9, true, 12) == 2,
+           "page disparue (moins de pièces) : l'accueil ; pages bornées à 5 .. 10");
+    // Mode HA : la page non vide la plus proche (pièces 0, 3 et 6 occupées).
+    const uint32_t occupees = (1u << 0) | (1u << 3) | (1u << 6);
+    expect(page_non_vide_proche(2, 7, occupees) == 2, "page de la pièce 0 occupée : elle-même");
+    expect(page_non_vide_proche(0, 7, (1u << 3) | (1u << 6)) == 1, "page 0 vide : la page 1 (pièce 3)");
+    expect(page_non_vide_proche(4, 7, (1u << 6) | (1u << 3)) == 6, "page 4 vide : la page 6 (à deux), pas la page 1 (à trois)");
+    expect(page_non_vide_proche(4, 5, 1u << 6) == -1, "la pièce 6 hors des cinq pages : aucune");
+    expect(page_non_vide_proche(4, 7, 1u << 6) == 6, "la pièce 6 sur sa page");
+    expect(page_non_vide_proche(3, 5, (1u << 2) | (1u << 0)) == 2, "à égalité (pages 2 et 4), la plus proche de l'accueil");
+    expect(page_non_vide_proche(2, 10, 0) == -1, "aucune pièce occupée : -1");
+    // Popup Maison : cinq colonnes au plus par page, réparties.
+    const int cas[][3] = {{0, 0, 0}, {1, 1, 1}, {5, 1, 5}, {6, 2, 3}, {7, 2, 4}, {8, 2, 4}, {9, 2, 5}, {10, 2, 5}};
+    bool reparti = true;
+    for (const auto& c : cas) {
+        const PagesRepartition p = pages_repartir(c[0], 5);
+        reparti = reparti && p.pages == c[1] && p.par_page == c[2];
+    }
+    expect(reparti, "Maison : 6 → 3 + 3, 7 → 4 + 3, 10 → 5 + 5");
 }
 
 // ── Clim « d'ici » de la tuile − / + (modele_ha::clim_ici_rang, 14/10/2026) ──
@@ -550,6 +612,7 @@ int main() {
     test_majuscules();
     test_hhmm();
     test_modele_ha();
+    test_pieces_pages();
     test_clim_ici();
     test_chronologie();
     test_niveau_batterie();

@@ -756,6 +756,40 @@ api:
         - script.execute: tab5_lecteur_lier
         - lambda: 'lecteur_recu(lecteurs, etat);'
 
+    # Musique de toute la maison (ADR-0067, 18/10/2026) : packages/tab5_musique.yaml pousse
+    # les pièces (lecteurs de Music Assistant, sinon la liste « Tab5 · lecteurs de musique »)
+    # et, en réponse à l'événement esphome.tab5_musique, une page de la bibliothèque. Lus
+    # par musique_pieces_lire() / musique_liste_lire() (tab5_parse.h, section 9 bis).
+    - service: tab5_maj_musique_pieces
+      description: "Musique de toute la maison : les pièces (lecteurs) et le contexte du lecteur montré."
+      variables:
+        pieces:
+          type: string
+          description: "8 pièces au plus, séparées par ; — « nom|genre|état|volume|muet|groupe|fonctions|titre » : nom 40 caractères au plus ; genre t (TV), e (enceinte), a (écran, tablette), g (groupe), x (autre) ; état j (lecture), p (pause), r (allumé), e (éteint, veille), i (indisponible) ; volume 0 à 100, vide si inconnu ; muet 1 ou 0 ; groupe = index de la pièce qui mène son groupe (le sien quand elle mène), -1 seule ; fonctions = lettres parmi v (volume), m (muet), o (marche), g (grouper), s (sources), t (reçoit un transfert) ; titre « titre — artiste » en lecture ou en pause, 60 caractères au plus. L'index d'une pièce est son rang ici : l'événement esphome.tab5_musique le renvoie. Vide : aucune pièce. Les « | » et « ; » des textes sont remplacés par « / » et « , »."
+          example: "Salon|e|j|45|0|0|vmogst|Le vent du large — Les Marées;Cuisine|e|j|30|0|0|vmgt|Le vent du large — Les Marées;TV|t|e||0|-1|o|"
+        contexte:
+          type: string
+          description: "ma|montre|file|suivant — ma 1 quand l'intégration Music Assistant est chargée, sinon 0 ; montre = index dans pieces du lecteur montré (sensor.tab5_lecteur_montre), -1 s'il n'y est pas ; file = nombre de titres de sa file (0 inconnu) ; suivant = « titre — artiste » du titre suivant, vide sans, en dernier (il prend le reste)."
+          example: "1|0|12|Sous la pluie — Les Marées"
+      then:
+        - script.execute: tab5_musique_lier
+        - lambda: 'musique_pieces_recu(pieces, contexte);'
+
+    - service: tab5_maj_musique_liste
+      description: "Musique de toute la maison : une page de la bibliothèque de Music Assistant ou les sources d'une pièce, en réponse à l'événement esphome.tab5_musique."
+      variables:
+        contexte:
+          type: string
+          description: "vue|titre|page|suite|retour — vue fav (favoris), pl (playlists), alb (albums), art (artistes), rad (radios), pod (podcasts), rec (écoutés récemment), det (contenu d'un artiste, d'un album, d'une playlist, d'un podcast), src (sources d'une pièce), rech (recherche, réservé) ou err (titre = la phrase à montrer) ; titre 48 caractères au plus ; page depuis 0 ; suite 1 s'il y a une page suivante ; retour 1 pour montrer le bouton retour."
+          example: "alb|Albums|0|1|0"
+        elements:
+          type: string
+          description: "10 éléments au plus, séparés par ; — « nom|sous|genre|ref|image » : nom et sous (2e ligne) 40 caractères au plus ; genre t (titre), a (album), r (artiste), p (playlist), d (radio), o (podcast ou épisode), l (livre audio), s (source), x (autre) ; ref = URI de Music Assistant (library://album/12, ytmusic://playlist/…, 160 caractères au plus), ou pour s le rang de la source dans source_list ; image = URL http(s) de la pochette (160 × 160 demandée par HA), vide sans, en dernier (elle prend le reste). Les « | » et « ; » des textes sont remplacés par « / » et « , », un « ; » d'URL par %3B."
+          example: "Carnets de voyage|Les Marées|a|library://album/12|http://192.0.2.10:8095/imageproxy/ab?size=160&fmt=png;Radio Jazz||d|library://radio/2|"
+      then:
+        - script.execute: tab5_musique_lier
+        - lambda: 'musique_liste_recue(contexte, elements);'
+
     # Capteurs suivis (ADR-0054, 10/10/2026) : packages/tab5_suivi.yaml pousse les capteurs de
     # « Tab5 · capteurs suivis » ; le premier est la carte de la zone à gauche de l'horloge.
     - service: tab5_maj_suivi

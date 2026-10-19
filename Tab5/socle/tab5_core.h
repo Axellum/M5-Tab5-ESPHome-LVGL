@@ -197,6 +197,35 @@ void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie p
 // Pure, testée par tools/test_alarm_clock.cpp.
 int reglages_page_voisine(int page, int nb, bool gauche);
 
+// ─── Nombre de pièces et pages du bas (ADR-0066, lot A, 18/10/2026) ───
+// Pures, testées par tools/test_tab5_socle.cpp.
+// « pn|N » de tab5_maj_tuiles : N borné à 1 .. kPiecesMax (tab5_geometrie.h) ; vide,
+// illisible ou plus de deux chiffres : kPiecesDefaut (le nombre d'avant l'ADR-0066).
+int pieces_nombre_lire(const char* s, size_t n);
+// Pièce de la page `page` de la météo, et l'inverse. Pages 0 à 4 : la table de l'ADR-0023
+// (R0 = page 2, l'accueil ; R1 = 3, R2 = 4, R3 = 1, R4 = 0, l'ordre où un geste les
+// atteint depuis l'accueil). Pages 5 et plus : page = pièce (une page par pièce après les
+// jours 10-14). Hors bornes : -1.
+int piece_de_page(int page);
+int page_de_piece(int r);
+// Page de la météo après un geste, `pages` pages en tout (kPagesMeteo, plus une par pièce
+// au-delà de la cinquième). [AI-WARNING] de forecast_page_suivante (tab5_central.cpp) :
+// vers la droite, toujours 2 → 1 → 0 → 2 ; vers la gauche, 2 → 3 → 4 → 5 … → pages − 1 → 2
+// (le côté gauche seul a changé, décision d'Axel du 18/10/2026). Page hors de 0 .. pages − 1
+// (le nombre de pièces a baissé) : l'accueil.
+int meteo_page_suivante(int page, bool gauche, int pages);
+// Page la plus proche de `page` (sur 0 .. pages − 1) dont la pièce a des appareils (bit R de
+// `occupees`) ; à égalité, la plus proche de l'accueil. -1 s'il n'y en a aucune.
+int page_non_vide_proche(int page, int pages, uint32_t occupees);
+// Popup Maison (ADR-0037, ADR-0066) : `n` colonnes, `max` au plus par page. Pages =
+// ⌈n / max⌉, colonnes par page = ⌈n / pages⌉ (sept pièces : 4 + 3, pas 5 + 2) ; 0 et 0
+// sans colonne.
+struct PagesRepartition {
+    int pages = 0;
+    int par_page = 0;
+};
+PagesRepartition pages_repartir(int n, int max);
+
 // ─── Rouleaux du popup Réveil (09/10/2026, demande d'Axel) ───
 // Un rouleau à pas propose bas, bas + pas, … jusqu'à haut (inclus s'il tombe sur le pas).
 // Une valeur hors pas venue de Home Assistant (07:03 alors que le rouleau des minutes va

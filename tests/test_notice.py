@@ -46,6 +46,10 @@ APPUIS_LONGS = {
     "forecast_day_body.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
     "switch_card.yaml": "tiles.md",
+    # Une carte de la page Pièces et un élément de la Bibliothèque du popup Musique
+    # (ADR-0067) : leur roue.
+    "musique_piece.yaml": "music.md",
+    "musique_element.yaml": "music.md",
 }
 
 # Fenêtres du rendu que la notice ne montre pas, exprès.
@@ -105,6 +109,16 @@ NON_MONTREES = {
     "maison-2-pieces": "maison montre la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
+    # Huit pièces (ADR-0066, lot A) : contrôles du rendu à plus de cinq pièces, décrits dans
+    # tiles.md et house.md ; images à tirer du rendu une fois la maison de la démo arrêtée.
+    "pieces-8-ha-atelier": "accueil-ha-piece-1 montre le même mode ; « Pièce 8/8 » est décrit dans tiles.md",
+    "pieces-8-meteo-garage": "page d'une pièce 6+ en mode météo, décrite dans tiles.md ; image à tirer du rendu",
+    "pieces-8-lumieres": "aller-lumieres montre la même fenêtre ; un onglet par pièce, décrit dans lights.md",
+    "pieces-8-volets": "aller-volet montre la même fenêtre ; un onglet par pièce, décrit dans shutters.md",
+    "pieces-8-maison": "maison montre la même fenêtre ; les pages au-delà de cinq pièces sont décrites dans house.md",
+    "pieces-8-maison-page-2": "pieces-8-maison montre la même fenêtre, page suivante (house.md)",
+    "pieces-8-roue": "roue-navigation-pieces montre la même famille ; « Suite » est décrit dans home.md",
+    "pieces-8-roue-suite": "pieces-8-roue montre la même roue, page « Retour »",
     # Lumières et Volets en pages (ADR-0046, 09/10/2026) : décrits dans lights.md et
     # shutters.md ; images à tirer du rendu de la PR, puis citées.
     "lumieres-page-suivante": "aller-lumieres montre la même fenêtre ; le glissement est décrit dans lights.md",
@@ -121,6 +135,19 @@ NON_MONTREES = {
     # de la PR, puis citées.
     "musique-vide": "musique montre la même fenêtre ; l'attente de Home Assistant est décrite dans music.md",
     "musique-eteint": "musique montre la même fenêtre ; « Lecteur éteint » et « Allumer » sont décrits dans music.md",
+    # Musique de toute la maison (ADR-0067, 18/10/2026), décrite dans music.md : images à
+    # tirer du rendu de la PR, puis citées.
+    "musique-ma": "musique montre la même fenêtre ; les noms des pages, « + n » et « À suivre » sont décrits dans music.md",
+    "musique-pieces": "page Pièces du popup Musique, décrite dans music.md ; image à tirer du rendu",
+    "musique-pieces-sans-ma": "musique-pieces montre la même page ; sans Music Assistant, décrite dans music.md",
+    "musique-bibliotheque": "page Bibliothèque du popup Musique, décrite dans music.md ; image à tirer du rendu",
+    "musique-bibliotheque-chargement": "musique-bibliotheque montre la même page ; « Chargement... » est décrit",
+    "musique-sources": "musique-bibliotheque montre la même grille ; les sources sont décrites dans music.md",
+    # Les quatre pages ensemble (ADR-0067 et ADR-0068) : écrans de vérification des noms.
+    "musique-quatre-pages": "musique-ma montre la même fenêtre ; les quatre pages sont décrites dans music.md",
+    "musique-quatre-pages-playlists": "musique-playlists montre la même page ; les quatre noms sont décrits",
+    "musique-quatre-pages-pieces": "musique-pieces montre la même page ; les quatre noms sont décrits",
+    "musique-quatre-pages-retour": "musique-playlists montre la même page ; vérification du retour depuis Pièces",
     # Popup Suivi (ADR-0054, 10/10/2026), décrit dans tracking.md : images à tirer du rendu
     # de la PR, puis citées.
     "suivi-vide": "suivi montre la même fenêtre ; l'attente de Home Assistant est décrite dans tracking.md",

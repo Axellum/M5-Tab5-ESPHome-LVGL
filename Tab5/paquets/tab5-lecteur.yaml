@@ -90,9 +90,7 @@ script:
           u.puce_nom[3] = id(lecteur_puce_nom_3);
           u.puce_nom[4] = id(lecteur_puce_nom_4);
           u.puce_nom[5] = id(lecteur_puce_nom_5);
-          // Page « Playlists » (ADR-0068) : noms des pages, grille, boutons et leurs noms.
-          u.onglet[LECTEUR_PAGE_LECTURE] = id(lecteur_onglet_0);
-          u.onglet[LECTEUR_PAGE_PLAYLISTS] = id(lecteur_onglet_1);
+          // Page « Playlists » (ADR-0068) : grille, boutons et leurs noms.
           u.playlists = id(lecteur_playlists);
           u.playlist[0] = id(lecteur_pl_0);
           u.playlist[1] = id(lecteur_pl_1);
@@ -141,6 +139,8 @@ script:
       cle: string
     then:
       - script.execute: tab5_lecteur_lier
+      # Pages Pièces et Bibliothèque (ADR-0067, tab5-musique.yaml).
+      - script.execute: tab5_musique_lier
       - lambda: |-
           lecteur_ouvrir(cle);
           animate_popup_open(id(lecteur_popup));

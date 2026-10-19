@@ -20,13 +20,13 @@ The home page shows today and the next four days.
 
 ![A tap on Wednesday's temperatures: its schedule in the central card](../images/notice/accueil-planning-du-jour-en.webp)
 
-**Your devices on the weather.** Each page of the weather is also a room. A card that holds a device shows it in its two top corners: on the left, its icon in the colour of its state; on the right, a bulb for a light, or for a shutter the arrow of its next move (pause while it moves). The large weather icon then works as the device's button: tap and long press as in the table below. To keep the weather alone, turn off the device switch « Tab5 Appareils sur la météo ».
+**Your devices on the weather.** Each page of the weather is also a room. A card that holds a device shows it in its two top corners: on the left, its icon in the colour of its state; on the right, a bulb for a light, or for a shutter the arrow of its next move (pause while it moves). The large weather icon then works as the device's button: tap and long press as in the table below. With more than five rooms, rooms 6 and beyond each get one more page after days 11 to 15, further to the left, before the home page comes back: its cards show the room's devices as in device mode, and the central card the room's name (a tap on it opens the [House](house.md) window); one dot more per room. To keep the weather alone, turn off the device switch « Tab5 Appareils sur la météo » (then no room page either).
 
 ## Your devices
 
 ![Device mode: the five devices of the first room](../images/notice/accueil-ha-piece-1-en.webp)
 
-A tap on the Home Assistant button: each card shows a device of the room, like a card of a Home Assistant dashboard: its icon in a round badge of its state's colour, its name and, under it, its state (« 71 % », « Off », « Moving », « Offline » when Home Assistant cannot reach it…). The central card gives the room, « Room 1/5 » and its name.
+A tap on the Home Assistant button: each card shows a device of the room, like a card of a Home Assistant dashboard: its icon in a round badge of its state's colour, its name and, under it, its state (« 71 % », « Off », « Moving », « Offline » when Home Assistant cannot reach it…). The central card gives the room's name.
 
 - **Swipe** left: the next room; swipe right: the previous one. After the last room comes room 1 again. A room without devices says « Aucun appareil ». The dots under the central card show the room (first dot = room 1).
 - **How many rooms, how many devices**: chosen in Home Assistant, in the « Tab5 — emplacements » blueprint (« Nombre de pièces · Number of rooms », up to 10 rooms; up to 20 devices per room, [ADR-0066](../decisions/0066-rooms-count-cut-tiles.md)). Beyond five devices, the last cards of the room are cut in two (top, bottom), then in four, each part its own device. A firmware that does not know this yet shows the first five rooms and their first five devices.
@@ -108,13 +108,13 @@ La page d'accueil montre aujourd'hui et les quatre jours suivants.
 
 ![Un tap sur les températures de mercredi : son planning dans la carte centrale](../images/notice/accueil-planning-du-jour-fr.webp)
 
-**Vos appareils sur la météo.** Chaque page de la météo est aussi une pièce. Une carte qui porte un appareil le montre dans ses deux coins du haut : à gauche, son icône dans la couleur de son état ; à droite, une ampoule pour une lumière, ou pour un volet la flèche de son prochain mouvement (pause pendant qu'il bouge). La grande icône météo sert alors de bouton à l'appareil : tap et appui long comme dans le tableau plus bas. Pour garder la météo seule, éteignez l'interrupteur « Tab5 Appareils sur la météo » de l'appareil.
+**Vos appareils sur la météo.** Chaque page de la météo est aussi une pièce. Une carte qui porte un appareil le montre dans ses deux coins du haut : à gauche, son icône dans la couleur de son état ; à droite, une ampoule pour une lumière, ou pour un volet la flèche de son prochain mouvement (pause pendant qu'il bouge). La grande icône météo sert alors de bouton à l'appareil : tap et appui long comme dans le tableau plus bas. Au-delà de cinq pièces, les pièces 6 et suivantes ont chacune une page de plus après les jours 11 à 15, plus loin vers la gauche, avant le retour à l'accueil : ses cartes montrent les appareils de la pièce comme en mode appareils, et la carte centrale le nom de la pièce (un tap dessus ouvre la fenêtre [Maison](house.md#version-française)) ; un point de plus par pièce. Pour garder la météo seule, éteignez l'interrupteur « Tab5 Appareils sur la météo » de l'appareil (plus de page de pièce non plus).
 
 ## Vos appareils
 
 ![Le mode appareils : les cinq appareils de la première pièce](../images/notice/accueil-ha-piece-1-fr.webp)
 
-Un tap sur le bouton Home Assistant : chaque carte montre un appareil de la pièce, comme une carte d'un tableau de bord Home Assistant : son icône dans une pastille ronde de la couleur de son état, son nom et, dessous, son état (« 71 % », « Éteint », « Mouvement », « Hors ligne » quand Home Assistant ne le joint pas…). La carte centrale donne la pièce, « Pièce 1/5 » et son nom.
+Un tap sur le bouton Home Assistant : chaque carte montre un appareil de la pièce, comme une carte d'un tableau de bord Home Assistant : son icône dans une pastille ronde de la couleur de son état, son nom et, dessous, son état (« 71 % », « Éteint », « Mouvement », « Hors ligne » quand Home Assistant ne le joint pas…). La carte centrale donne le nom de la pièce.
 
 - **Glisser** vers la gauche : la pièce suivante ; vers la droite : la précédente. Après la dernière pièce revient la pièce 1. Une pièce sans appareil dit « Aucun appareil ». Les points sous la carte centrale montrent la pièce (premier point = pièce 1).
 - **Combien de pièces, combien d'appareils** : se choisit dans Home Assistant, dans le blueprint « Tab5 — emplacements » (« Nombre de pièces · Number of rooms », jusqu'à 10 pièces ; jusqu'à 20 appareils par pièce, [ADR-0066](../decisions/0066-rooms-count-cut-tiles.md)). Au-delà de cinq appareils, les dernières cartes de la pièce sont coupées en deux (haut, bas), puis en quatre, chaque partie un appareil. Un firmware qui ne le connaît pas encore montre les cinq premières pièces et leurs cinq premiers appareils.

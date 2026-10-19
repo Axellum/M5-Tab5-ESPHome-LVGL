@@ -420,7 +420,7 @@ bool mesure_lire(const Champ& f, float& v) {
 }  // namespace
 
 bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out) {
-    if (cle.n != 2 || cle.p[0] != 'p' || cle.p[1] < '0' || cle.p[1] >= '0' + kPieces) return false;
+    if (cle.n != 2 || cle.p[0] != 'p' || cle.p[1] < '0' || cle.p[1] >= '0' + kPiecesMax) return false;
     Champ f[3] = {};
     const int k = champs_decouper(reste.p, reste.n, '|', f, 3);
     out.piece = cle.p[1] - '0';
@@ -775,6 +775,234 @@ bool ha_image_url(const Champ& image, const char* base, char* out, size_t n) {
     }
     if (!ok) out[0] = '\0';
     return ok;
+}
+
+// ─── 9 bis. Musique de toute la maison (ADR-0067) ───
+
+namespace {
+constexpr uint32_t kMusiqueFileMax = 100000;  // titres d'une file : au-delà, inconnu
+constexpr uint32_t kMusiquePageMax = 9999;
+
+// Rang d'une pièce (0 à kMusiquePiecesMax - 1), -1 si vide, illisible ou hors bornes
+// (« -1 » compris : champ_entier le lit comme un très grand nombre).
+int musique_rang(const Champ& c) {
+    const uint32_t v = champ_entier(c, kMusiquePiecesMax - 1, UINT32_MAX);
+    return v == UINT32_MAX ? -1 : static_cast<int>(v);
+}
+
+// La lettre seule d'un champ d'une lettre, '\0' sinon.
+char lettre(const Champ& c) { return (c.p != nullptr && c.n == 1) ? c.p[0] : '\0'; }
+
+MusiqueGenre musique_genre(const Champ& c) {
+    switch (lettre(c)) {
+        case 't': return MusiqueGenre::TV;
+        case 'e': return MusiqueGenre::ENCEINTE;
+        case 'a': return MusiqueGenre::ECRAN;
+        case 'g': return MusiqueGenre::GROUPE;
+        default: return MusiqueGenre::AUTRE;
+    }
+}
+
+MusiqueEtat musique_etat(const Champ& c) {
+    switch (lettre(c)) {
+        case 'j': return MusiqueEtat::LECTURE;
+        case 'p': return MusiqueEtat::PAUSE;
+        case 'r': return MusiqueEtat::ALLUME;
+        case 'e': return MusiqueEtat::ETEINT;
+        default: return MusiqueEtat::INDISPONIBLE;
+    }
+}
+
+MusiqueElementGenre musique_element_genre(const Champ& c) {
+    switch (lettre(c)) {
+        case 't': return MusiqueElementGenre::TITRE;
+        case 'a': return MusiqueElementGenre::ALBUM;
+        case 'r': return MusiqueElementGenre::ARTISTE;
+        case 'p': return MusiqueElementGenre::PLAYLIST;
+        case 'd': return MusiqueElementGenre::RADIO;
+        case 'o': return MusiqueElementGenre::PODCAST;
+        case 'l': return MusiqueElementGenre::LIVRE;
+        case 's': return MusiqueElementGenre::SOURCE;
+        default: return MusiqueElementGenre::AUTRE;
+    }
+}
+
+// `mot` apparaît dans le champ.
+bool contient(const Champ& c, const char* mot) {
+    const size_t m = std::strlen(mot);
+    if (c.p == nullptr || m == 0 || c.n < m) return false;
+    for (size_t i = 0; i + m <= c.n; i++)
+        if (std::memcmp(c.p + i, mot, m) == 0) return true;
+    return false;
+}
+
+// Un épisode de podcast (library://podcast_episode/…), jouable ; un podcast s'ouvre.
+bool episode(const MusiqueElementLu& e) { return e.genre == MusiqueElementGenre::PODCAST && contient(e.ref, "episode"); }
+}  // namespace
+
+uint8_t musique_fonctions_lire(const Champ& c) {
+    uint8_t f = 0;
+    for (size_t i = 0; c.p != nullptr && i < c.n; i++) {
+        switch (c.p[i]) {
+            case 'v': f |= MUSIQUE_F_VOLUME; break;
+            case 'm': f |= MUSIQUE_F_MUET; break;
+            case 'o': f |= MUSIQUE_F_MARCHE; break;
+            case 'g': f |= MUSIQUE_F_GROUPE; break;
+            case 's': f |= MUSIQUE_F_SOURCE; break;
+            case 't': f |= MUSIQUE_F_TRANSFERT; break;
+            default: break;
+        }
+    }
+    return f;
+}
+
+const MusiquePieceLue* musique_piece(const MusiquePiecesLues& p, int index) {
+    if (index < 0) return nullptr;
+    for (int i = 0; i < p.n && i < kMusiquePiecesMax; i++)
+        if (p.pieces[i].index == index) return &p.pieces[i];
+    return nullptr;
+}
+
+int musique_pieces_lire(const Champ& pieces, const Champ& contexte, MusiquePiecesLues& out) {
+    out = MusiquePiecesLues{};
+    if (contexte.p != nullptr && contexte.n > 0) {
+        Champ f[4];
+        const int n = champs_decouper_reste(contexte.p, contexte.n, '|', f, 4);
+        out.ma = champ_est(f[0], "1");
+        if (n >= 2) out.montre = musique_rang(f[1]);
+        if (n >= 3) out.file = static_cast<int>(champ_entier(f[2], kMusiqueFileMax, 0));
+        if (n >= 4) out.suivant = f[3];
+    }
+    if (pieces.p != nullptr) {
+        const char* p = pieces.p;
+        const char* fin = p + pieces.n;
+        for (int rang = 0; p < fin && rang < kMusiquePiecesMax; rang++) {
+            const Champ rec = champ_suivant(p, fin, ';');
+            if (rec.n == 0) continue;  // sauté, son rang compté
+            Champ f[8];
+            const int nf = champs_decouper_reste(rec.p, rec.n, '|', f, 8);
+            for (int i = nf; i < 8; i++) f[i] = Champ{rec.p + rec.n, 0};
+            MusiquePieceLue& d = out.pieces[out.n++];
+            d.index = rang;
+            d.nom = f[0];
+            d.genre = musique_genre(f[1]);
+            d.etat = musique_etat(f[2]);
+            const float v = champ_nombre(f[3], NAN);
+            d.volume = (std::isfinite(v) && v >= 0.0f && v <= 100.0f) ? static_cast<int>(std::lround(v)) : -1;
+            d.muet = drapeau(f[4]);
+            d.groupe = musique_rang(f[5]);
+            d.fonctions = musique_fonctions_lire(f[6]);
+            d.titre = f[7];
+        }
+    }
+    // Un index qui ne désigne aucune pièce lue : -1 (la pièce montrée, un meneur absent).
+    if (musique_piece(out, out.montre) == nullptr) out.montre = -1;
+    for (int i = 0; i < out.n; i++)
+        if (musique_piece(out, out.pieces[i].groupe) == nullptr) out.pieces[i].groupe = -1;
+    return out.n;
+}
+
+int musique_membres(const MusiquePiecesLues& p, int index) {
+    if (musique_piece(p, index) == nullptr) return 0;
+    int n = 0;
+    for (int i = 0; i < p.n && i < kMusiquePiecesMax; i++)
+        if (p.pieces[i].index != index && p.pieces[i].groupe == index) n++;
+    return n;
+}
+
+bool musique_meme_groupe(const MusiquePiecesLues& p, int a, int b) {
+    const MusiquePieceLue* pa = musique_piece(p, a);
+    const MusiquePieceLue* pb = musique_piece(p, b);
+    return a != b && pa != nullptr && pb != nullptr && pa->groupe >= 0 && pa->groupe == pb->groupe;
+}
+
+MusiqueVue musique_vue_lire(const Champ& c) {
+    for (int i = 1; i < static_cast<int>(MusiqueVue::NB); i++)
+        if (champ_est(c, kMusiqueVueCodes[i])) return static_cast<MusiqueVue>(i);
+    return MusiqueVue::INCONNUE;
+}
+
+const char* musique_vue_code(MusiqueVue v) {
+    const int i = static_cast<int>(v);
+    return (i >= 0 && i < static_cast<int>(MusiqueVue::NB)) ? kMusiqueVueCodes[i] : "";
+}
+
+bool musique_vue_categorie(MusiqueVue v) { return v >= MusiqueVue::FAVORIS && v <= MusiqueVue::RECENTS; }
+
+bool musique_ref_valide(const Champ& ref, MusiqueElementGenre g) {
+    if (ref.p == nullptr || ref.n == 0 || ref.n > kMusiqueRefMax) return false;
+    if (g == MusiqueElementGenre::SOURCE) {
+        if (ref.n > 3) return false;
+        for (size_t i = 0; i < ref.n; i++)
+            if (ref.p[i] < '0' || ref.p[i] > '9') return false;
+        return true;
+    }
+    size_t i = 0;
+    while (i < ref.n) {
+        const char c = ref.p[i];
+        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-')) break;
+        i++;
+    }
+    if (i == 0 || i + 3 >= ref.n || std::memcmp(ref.p + i, "://", 3) != 0) return false;
+    for (size_t j = i + 3; j < ref.n; j++) {
+        const unsigned char c = static_cast<unsigned char>(ref.p[j]);
+        if (c <= 0x20 || c == 0x7F || c == '|' || c == ';') return false;
+    }
+    return true;
+}
+
+int musique_liste_lire(const Champ& contexte, const Champ& elements, MusiqueListeLue& out) {
+    out = MusiqueListeLue{};
+    if (contexte.p != nullptr && contexte.n > 0) {
+        Champ f[5];
+        const int n = champs_decouper(contexte.p, contexte.n, '|', f, 5);
+        out.vue = musique_vue_lire(f[0]);
+        if (n >= 2) out.titre = f[1];
+        if (n >= 3) out.page = static_cast<int>(champ_entier(f[2], kMusiquePageMax, 0));
+        if (n >= 4) out.suite = champ_est(f[3], "1");
+        if (n >= 5) out.retour = champ_est(f[4], "1");
+    }
+    if (elements.p != nullptr) {
+        const char* p = elements.p;
+        const char* fin = p + elements.n;
+        while (p < fin && out.n < kMusiqueElementsMax) {
+            const Champ rec = champ_suivant(p, fin, ';');
+            if (rec.n == 0) continue;
+            Champ f[5];
+            const int nf = champs_decouper_reste(rec.p, rec.n, '|', f, 5);
+            for (int i = nf; i < 5; i++) f[i] = Champ{rec.p + rec.n, 0};
+            MusiqueElementLu& e = out.elements[out.n++];
+            e.nom = f[0];
+            e.sous = f[1];
+            e.genre = musique_element_genre(f[2]);
+            e.ref = musique_ref_valide(f[3], e.genre) ? f[3] : Champ{f[3].p, 0};
+            e.image = f[4];
+        }
+    }
+    return out.n;
+}
+
+bool musique_element_jouable(const MusiqueElementLu& e) {
+    if (e.ref.n == 0) return false;
+    switch (e.genre) {
+        case MusiqueElementGenre::TITRE:
+        case MusiqueElementGenre::RADIO:
+        case MusiqueElementGenre::LIVRE:
+        case MusiqueElementGenre::AUTRE: return true;
+        case MusiqueElementGenre::PODCAST: return episode(e);
+        default: return false;
+    }
+}
+
+bool musique_element_conteneur(const MusiqueElementLu& e) {
+    if (e.ref.n == 0) return false;
+    switch (e.genre) {
+        case MusiqueElementGenre::ALBUM:
+        case MusiqueElementGenre::ARTISTE:
+        case MusiqueElementGenre::PLAYLIST: return true;
+        case MusiqueElementGenre::PODCAST: return !episode(e);
+        default: return false;
+    }
 }
 
 // ─── 10. Popup Caméras (ADR-0049) ───

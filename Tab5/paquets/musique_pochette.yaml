@@ -1,0 +1,50 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file musique_pochette.yaml
+# @role Package PARAMÉTRÉ (`!include` + `vars`, règle 5 du README) : la pochette d'UN
+#       élément de la grille de la page Bibliothèque du popup Musique (ADR-0067) et le
+#       script qui la télécharge. Inclus 10 fois par tab5-musique.yaml via un `packages:`
+#       imbriqué (var `n` = 0..9, kMusiqueElements) : ESPHome concatène les listes `image:`
+#       et `script:` des packages (même recette que pot_sensors.yaml).
+# @architecture_constraint online_image comme la pochette du lecteur (tab5-lecteur.yaml :
+#       même client http_request) : décodée dans la PSRAM, 160 × 160 au plus en gardant ses
+#       proportions (HA demande des images de 160 : proxy de Music Assistant size=160,
+#       googleusercontent =w160-h160), RGB565 opaque (≈ 50 Kio chacune). tab5_musique.cpp les
+#       demande une à la fois, page Bibliothèque montrée, l'image de l'emplacement masquée
+#       ([AI-WARNING] de tab5_musique.cpp) ; un échec garde l'icône du genre.
+# @ai_instruction Un emplacement de plus = kMusiqueElements, une ligne dans les packages de
+#       tab5-musique.yaml, son `case` dans telecharger (tab5_musique_lier) et un
+#       musique_element.yaml dans musique_calques.yaml.
+# vars : n (0 à 9)
+# ============================================================================
+image:
+  - platform: online_image
+    id: musique_image_${n}
+    url: "http://127.0.0.1/pochette.png"   # remplacé au runtime par set_url
+    format: AUTO
+    # [AI-WARNING] Opaque, sans `transparency: alpha_channel` : une image avec canal
+    # alpha a planté le firmware sur le P4 (ADR-0004). Un logo de radio transparent
+    # perd son fond transparent, rien de plus.
+    type: RGB565
+    resize: 160x160
+    on_download_finished:
+      - lambda: 'musique_image_prete(${n}, id(musique_image_${n})->get_lv_image_dsc());'
+    on_error:
+      - lambda: 'musique_image_erreur(${n});'
+
+script:
+  # Une adresse la télécharge (online_image.set_url), "" la libère.
+  - id: tab5_musique_image_${n}
+    mode: restart
+    parameters:
+      url: string
+    then:
+      - if:
+          condition:
+            lambda: 'return !url.empty();'
+          then:
+            - online_image.set_url:
+                id: musique_image_${n}
+                url: !lambda 'return url;'
+          else:
+            - online_image.release: musique_image_${n}

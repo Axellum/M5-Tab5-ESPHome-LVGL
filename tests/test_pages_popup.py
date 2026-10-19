@@ -133,11 +133,15 @@ def test_reglages_par_la_brique():
 
 def test_temperature_par_la_brique():
     """Popup Température (ADR-0047) : son geste et la couleur de l'onglet affiché par la
-    brique ; la place de ses onglets (après le titre, jusqu'à sept) reste la sienne."""
+    brique ; la place de ses onglets (après le titre, jusqu'à sept) reste la sienne. Plus de
+    pages que d'onglets (dix pièces, ADR-0066) : une fenêtre de sept noms autour de la page
+    affichée, le glissement les parcourt toutes."""
     cpp = lire(TAB5 / "ecran" / "tab5_historique.cpp").replace("\r\n", "\n")
     assert "pages_brancher(&s_pages);" in cpp
     assert "PagesPopup s_pages{nullptr, nombre_pages, rang_courant, afficher_page};" in cpp
-    assert "choix_peindre(u.onglet, n, rang_courant());" in cpp
+    assert "choix_peindre(u.onglet, n, rang_courant() - s_premier_onglet);" in cpp
+    assert "constexpr int kOngletsMax = 7;" in cpp and "int s_onglets[NB_CLES] = {};" in cpp
+    assert "montrer_cle(s_onglets[page]);" in _corps(cpp, "void historique_onglet(")
     assert "void peindre_onglet(" not in cpp, "la couleur de l'onglet : choix_peindre"
 
 

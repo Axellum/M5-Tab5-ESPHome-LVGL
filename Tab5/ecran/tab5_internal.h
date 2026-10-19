@@ -82,6 +82,16 @@ inline bool ui_appui_glisse() {
     lv_indev_t* indev = lv_indev_active();
     return indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE);
 }
+// Largeur en px de `txt` sur une ligne, dans la police et l'espacement du label (0 sans
+// label, police ou texte) : la largeur naturelle d'un nom, avant texte_ha_coupe().
+inline int32_t ui_largeur_texte(lv_obj_t* lbl, const char* txt) {
+    const lv_font_t* f = lbl != nullptr ? lv_obj_get_style_text_font(lbl, LV_PART_MAIN) : nullptr;
+    if (f == nullptr || txt == nullptr) return 0;
+    lv_point_t p;
+    lv_text_get_size(&p, txt, f, lv_obj_get_style_text_letter_space(lbl, LV_PART_MAIN), 0, LV_COORD_MAX,
+                     LV_TEXT_FLAG_NONE);
+    return p.x;
+}
 
 // --- Tracés construits en C++ (tab5_anim.cpp, 09/10/2026) ---
 // Briques d'un tracé (popups Température et Météo) : un rectangle sans style (opacité,
@@ -161,13 +171,20 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
 // premier appel, zones du mode héritage, bouton « HA », cartes, titre de la pièce).
 void tuiles_appliquer_ui();
 // apply_forecast_page (tab5_central.cpp) : épaules et boutons des tuiles de la page
-// courante, en mode météo (la pièce de la page, ou rien).
+// courante, en mode météo (la pièce de la page, ou rien) ; sur une page de pièce
+// (ADR-0066, pages 5 et plus) ses cartes ; les pastilles sous la carte centrale.
 void tuiles_peindre_meteo();
-// tab5_central.cpp : titre de la carte centrale en mode HA — « Pièce n/N » et le nom de
-// la pièce de la page courante (« Pièce n » sans nom).
-bool tuiles_titre_piece(std::string& chapeau, std::string& titre);
-// tab5_central.cpp (handle_swipe_gesture en mode HA) : pièce suivante ou précédente
-// qui a des appareils, dans l'ordre des pages météo ; une seule pièce : rien.
+// Nombre de pages de la météo (ADR-0066) : kPagesMeteo, plus une par pièce au-delà de la
+// cinquième quand « Tab5 Appareils sur la météo » est allumé (handle_swipe_gesture).
+int tuiles_pages_meteo();
+// Nombre de pièces choisi dans HA (« pn|N », 1 à kPiecesMax ; 5 sans pn ni en mode
+// héritage) : une pièce R ≥ N n'existe nulle part à l'écran.
+int tuiles_pieces_nombre();
+// tab5_central.cpp : titre de la carte centrale en mode HA et sur une page de pièce de la
+// météo — le nom de la pièce affichée (« Pièce n » sans nom, « Aucun appareil » vide).
+bool tuiles_titre_piece(std::string& titre);
+// tab5_central.cpp (handle_swipe_gesture en mode HA) : pièce suivante ou précédente, en
+// rouleau sur les N pièces, vides comprises.
 void tuiles_swipe_ha(bool gauche);
 // Texte venu de HA, mêmes règles que les noms des tuiles (tab5_clim.cpp : titre du popup
 // clim, ADR-0026 ; libellés des alertes, bandeaux et historique). texte_ha_copier : UTF-8
@@ -274,6 +291,9 @@ uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 // Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille. Après
 // REGLAGES : celles de la roue de navigation (ADR-0042), familles puis destinations ;
 // METEO (popup Météo, ADR-0043) puis CAMERAS (popup Caméras, ADR-0049) en dernier.
+// Après SERVEUR_IA : les roues du popup Musique (ADR-0067), d'une pièce (SOURCE à SEPARER)
+// puis d'un élément de la bibliothèque (LIRE à LISTE). Pas de commentaire dans l'enum :
+// tests/test_roue.py le lit comme une liste.
 enum class RoueIcone : uint8_t {
     AUCUNE,
     ETEINDRE,
@@ -322,6 +342,16 @@ enum class RoueIcone : uint8_t {
     TV,
     FROID,
     SERVEUR_IA,
+    SOURCE,
+    MUET,
+    SON,
+    TRANSFERT,
+    SEPARER,
+    LIRE,
+    A_LA_SUITE,
+    EN_FIN,
+    RADIO,
+    LISTE,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -575,6 +605,10 @@ bool clim_carrousel_ouvrir_sur(const ClimRef& c);
 // tab5_tuiles.cpp : la pièce affichée en mode HA (ADR-0023), -1 en mode météo ou en mode
 // héritage (aucune pièce reçue).
 int tuiles_piece_mode_ha();
+// La pièce dont les cartes sont à l'écran : celle du mode HA, ou celle d'une page de pièce
+// de la météo (ADR-0066) ; -1 sinon. Pour ce qui marque « la pièce montrée » (Maison,
+// roue de navigation), pas pour ce qui suit le mode HA (zone des températures, clims).
+int tuiles_piece_montree();
 
 // --- Popup Météo (tab5_meteo.cpp, ADR-0043) ---
 // Les prévisions (heures, jours), la pluie dans l'heure ou sa phrase viennent de changer :
@@ -609,6 +643,45 @@ void zone_gauche_donnees_changees();
 // (tab5_roue_navigation.cpp, « Appareils ▸ ») lit la même réponse pour proposer Musique.
 void lecteur_zone_montrer(bool montre);
 bool lecteur_zone_disponible();
+// tab5_lecteur.cpp, pour tab5_musique.cpp : repeint le popup Musique (en-tête et page
+// Lecture), après un changement de page ou une poussée des pièces.
+void lecteur_popup_repeindre();
+// Nombre de playlists favorites poussées (ADR-0068) : la page Playlists n'existe qu'avec une.
+int lecteur_playlists_nb();
+
+// --- Musique de toute la maison (tab5_musique.cpp, ADR-0067), pour le popup Musique ---
+// Bord droit de la pastille de l'application sans onglet (lecteur_popup.yaml : alignée en
+// haut à droite à x -100).
+constexpr int32_t kLecteurAppFinX = kLecteurCarteL - 100;
+// lecteur_ouvrir (tab5_lecteur.cpp) : le popup s'ouvre sur sa page Lecture, le glissement
+// des pages est branché, HA est prié de pousser les pièces (événement « ouvrir »).
+void musique_ouvrir();
+// La page Lecture est-elle montrée ? Faux : le lecteur cache son morceau (pochette,
+// colonne de droite, pastilles), la page de tab5_musique.cpp prend la carte.
+bool musique_page_lecture();
+// La page Playlists (ADR-0068) est-elle montrée ? Vrai : le lecteur montre sa grille de
+// playlists à la place du morceau, la pochette et les pastilles restent.
+bool musique_page_playlists();
+// lecteur_playlists_recu : une page qui n'a plus rien à montrer (Playlists sans playlist)
+// laisse la place à la page Lecture.
+void musique_pages_revoir();
+// lecteur_playlist : la playlist touchée a été vue en accent, la page Lecture revient après
+// kRetourMs (600 ms) ; un changement de page avant l'annule.
+void musique_retour_lecture();
+// Noms des pages contre la croix, de droite à gauche, chacun à la largeur de son nom
+// (aucun sous deux pages) ; renvoie le bord droit de ce qui reste à leur gauche
+// (kLecteurAppFinX sans onglet) : la pastille de l'application et le nom s'y rangent.
+int32_t musique_onglets_peindre();
+// Place que prend la puce « + n » après le nom du lecteur montré quand il mène un groupe
+// (0 sinon) ; musique_entete_peindre() la pose derrière le texte du label `nom`.
+int32_t musique_entete_reserve();
+void musique_entete_peindre(lv_obj_t* nom);
+// Page Lecture peinte (`morceau` : un titre est montré) : la ligne « À suivre · … » et
+// « n titres » sous l'album avec Music Assistant, le morceau remonté pour elle ; rien
+// (et le morceau à sa place d'avant) sinon, ou sur une autre page.
+void musique_lecture_peindre(bool morceau);
+// theme_rejouer_ui (tab5_theme.cpp) : les pages Pièces et Bibliothèque dans la palette.
+void musique_rejouer_theme();
 // tab5_suivi.cpp, pour la zone à gauche de l'horloge (capteur suivi, ADR-0054) : montre ou
 // masque la carte (repeinte si elle a changé cachée), et dit si elle a quelque chose à
 // montrer (faux seulement quand HA a dit qu'aucun capteur n'est choisi).
@@ -631,14 +704,17 @@ bool zone_degrade_peindre(lv_obj_t* image, const lv_point_precise_t* pts, int np
                           int32_t base, void (*perdu)());
 
 // --- tab5_central.cpp, pour les pièces ---
-// Page des prévisions atteinte par un swipe depuis `page` (bouclage volontaire,
-// [AI-WARNING] de handle_swipe_gesture) : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2. Météo
-// seulement : le mode HA passe d'une pièce à l'autre en rouleau (tuiles_swipe_ha, 18/10/2026).
+// Page de la météo atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING]
+// de forecast_page_suivante) : gauche 0→1→2→3→4→2, ou →5→…→N−1→2 avec les pages de pièce
+// (ADR-0066) ; droite 4→3→2→1→0→2. Météo seulement : le mode HA passe d'une pièce à
+// l'autre en rouleau (tuiles_swipe_ha, 18/10/2026).
 int forecast_page_suivante(int page, bool gauche);
+// Retour à l'accueil de la météo (page 2) sans geste, par le chemin du retour automatique :
+// une page de pièce disparue (moins de pièces, « Appareils sur la météo » éteint).
+void meteo_page_accueil();
 // Pastilles de pagination : la page courante large et opaque, les autres étroites et
-// pâles ; n pastilles (5 pour les pages, 3 pour la rangée sous l'horloge).
+// pâles ; n pastilles (5 à 10 pour les pages, 3 pour la rangée sous l'horloge).
 void pagination_afficher(lv_obj_t* const* pbars, int n, int page);
-inline void pagination_afficher(lv_obj_t* const pbars[5], int page) { pagination_afficher(pbars, 5, page); }
 // Carte centrale au changement de mode HA (ctx.ha_mode déjà posé) : fin du planning
 // temporaire et de la réponse vocale, puis titre de la pièce ou panneaux habituels.
 void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx);

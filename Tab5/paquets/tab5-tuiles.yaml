@@ -30,11 +30,13 @@ script:
           u.pastilles[2] = id(pbar_2);
           u.pastilles[3] = id(pbar_3);
           u.pastilles[4] = id(pbar_4);
+          u.pastilles[5] = id(pbar_5);
+          u.pastilles[6] = id(pbar_6);
+          u.pastilles[7] = id(pbar_7);
+          u.pastilles[8] = id(pbar_8);
+          u.pastilles[9] = id(pbar_9);
           u.titre_cadre = id(page_title_wrapper);
           u.titre = id(lbl_page_title);
-          // Aussi posé par l'on_boot, mais seulement après l'attente de HA (30 s au plus) :
-          // le titre d'une pièce peut s'afficher avant.
-          g_central_ctx.page_title_sub = id(lbl_page_title_sub);
           u.bouton_ha = id(btn_control_ha);
           u.icone_ha = id(icon_ha);
           u.police_meteo = id(font_meteo_card);
@@ -120,6 +122,11 @@ script:
           u.lum_onglet[2] = id(lum_onglet_2);
           u.lum_onglet[3] = id(lum_onglet_3);
           u.lum_onglet[4] = id(lum_onglet_4);
+          u.lum_onglet[5] = id(lum_onglet_5);
+          u.lum_onglet[6] = id(lum_onglet_6);
+          u.lum_onglet[7] = id(lum_onglet_7);
+          u.lum_onglet[8] = id(lum_onglet_8);
+          u.lum_onglet[9] = id(lum_onglet_9);
           u.lum_arc = id(arc_light_brightness);
           u.lum_pct = id(lbl_light_brightness_val);
           u.lum_cle = &id(current_light_slot);
@@ -136,6 +143,11 @@ script:
           u.vol_onglet[2] = id(vol_onglet_2);
           u.vol_onglet[3] = id(vol_onglet_3);
           u.vol_onglet[4] = id(vol_onglet_4);
+          u.vol_onglet[5] = id(vol_onglet_5);
+          u.vol_onglet[6] = id(vol_onglet_6);
+          u.vol_onglet[7] = id(vol_onglet_7);
+          u.vol_onglet[8] = id(vol_onglet_8);
+          u.vol_onglet[9] = id(vol_onglet_9);
           u.vol_nom = id(volet_nom);
           u.vol_position = id(volet_position);
           u.vol_nombre = id(volet_nombre);
