@@ -3,14 +3,15 @@
   Page de flashage du Tab5 (lot 6c, ADR-0022), publiée sur GitHub Pages par
   .github/workflows/site.yml sous install/, à côté de versions.json et des dossiers
   stable/ et beta/ de la racine (tools/publication/pages.py). Aucune dépendance hors
-  ESP Web Tools (version figée).
+  ESP Web Tools (version figée). Un bouton radio « ecran » par variante publiée : les
+  révisions d'écran du Tab5, puis les autres cartes (Waveshare 7B, ADR-0061).
 -->
 <html lang="en" data-lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Install the M5Stack Tab5 Home Assistant firmware from the browser</title>
-<meta name="description" content="Flash the Tab5 Home Assistant screen firmware (ESPHome, LVGL) on an M5Stack Tab5 from Chrome or Edge over USB: ST7123, ST7121 or ILI9881C display, signed updates from Home Assistant.">
+<meta name="description" content="Flash the Tab5 Home Assistant screen firmware (ESPHome, LVGL) on an M5Stack Tab5 from Chrome or Edge over USB: ST7123, ST7121 or ILI9881C display, or the Waveshare ESP32-P4 7B; signed updates from Home Assistant.">
 <link rel="canonical" href="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Install the M5Stack Tab5 Home Assistant firmware from the browser">
@@ -23,7 +24,7 @@
      depuis son dossier précis de jsDelivr, peuvent s'exécuter. L'empreinte est vérifiée par tests/test_csp_installation.py :
      la modifier avec le script, pas à la main. Le script d'entrée porte aussi une empreinte SRI ; ses modules, chargés à
      l'ouverture de la fenêtre, sont limités au même dossier par la CSP (un import dynamique n'a pas de SRI). -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-vPdVkFcL5JOhW3XdH0BehuSi3TNBrOh82PqKc43XaTw=' https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-iQK8SJujq1V1SumDCUDetpUNH68rqhLUhYrWoDNTy40=' https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script type="module" src="https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/dist/web/install-button.js" integrity="sha384-9XfyvAabgkISlB/Xb3OpshGKpZx0TOt5Mmu78SeiNU3so/p4o2s9m66vy6Utdnom" crossorigin="anonymous"></script>
 <style>
   :root {
@@ -81,8 +82,8 @@
   <section class="carte">
     <h2><span lang="fr">1. Ce qu'il faut</span><span lang="en">1. What you need</span></h2>
     <ul>
-      <li lang="fr">Une Tab5 reliée à l'ordinateur par un câble USB-C qui transmet les données.</li>
-      <li lang="en">A Tab5 connected to the computer with a USB-C cable that carries data.</li>
+      <li lang="fr">Une Tab5 reliée à l'ordinateur par un câble USB-C qui transmet les données. Ou une Waveshare ESP32-P4 7B, par son port USB-C de l'ESP32-P4 (<a href="../fr/waveshare-7b/">Waveshare 7B</a>).</li>
+      <li lang="en">A Tab5 connected to the computer with a USB-C cable that carries data. Or a Waveshare ESP32-P4 7B, through the USB-C port of its ESP32-P4 (<a href="../en/waveshare-7b/">Waveshare 7B</a>).</li>
       <li lang="fr">Chrome ou Edge sur ordinateur (Web Serial) ; le bouton le signale sinon.</li>
       <li lang="en">Chrome or Edge on a computer (Web Serial); the button tells you otherwise.</li>
       <li lang="fr">Dans la liste des ports, la tablette s'appelle « USB JTAG/serial debug unit ». Si plusieurs ports portent ce nom, débranchez la tablette : celui qui disparaît est le sien.</li>
@@ -93,7 +94,7 @@
   </section>
 
   <section class="carte">
-    <h2><span lang="fr">2. Votre révision d'écran</span><span lang="en">2. Your display revision</span></h2>
+    <h2><span lang="fr">2. Votre appareil</span><span lang="en">2. Your device</span></h2>
     <p class="etat">
       <span lang="fr">La puce d'écran est écrite sur l'autocollant au dos, au-dessus du logo Espressif. Une étiquette « ST7123 » peut porter une ST7121 : dans le doute, essayez l'une puis l'autre (<a href="../fr/hardware/#révisions-matérielles">détails</a>).</span>
       <span lang="en">The display chip is printed on the sticker on the back, above the Espressif logo. A unit labelled "ST7123" may carry an ST7121: if unsure, try one then the other (<a href="../en/hardware/#hardware-revisions">details</a>).</span>
@@ -110,6 +111,10 @@
       <span><strong>ILI9881C</strong> <span class="etat">
         <span lang="fr">mai → octobre 2025 · compilée, jamais essayée</span>
         <span lang="en">May → October 2025 · built, never tested</span></span></span></label>
+    <label class="choix"><input type="radio" name="ecran" value="waveshare-7b">
+      <span><strong>Waveshare ESP32-P4 7B</strong> <span class="etat">
+        <span lang="fr">une autre carte, 7 pouces, 1024×600 · expérimentale : tourne sur celle de l'auteur depuis octobre 2026, sans les jeux (<a href="../fr/waveshare-7b/">détails</a>)</span>
+        <span lang="en">another board, 7-inch, 1024×600 · experimental: runs on the author's since October 2026, without the games (<a href="../en/waveshare-7b/">details</a>)</span></span></span></label>
   </section>
 
   <section class="carte" id="carte-canal">
@@ -125,6 +130,10 @@
         <span id="version-beta"></span> ·
         <span lang="fr">pour essayer avant la stable ; passe à la stable suivante</span>
         <span lang="en">to try before the stable one; moves on to the next stable</span></span></span></label>
+    <p id="absente" class="note" hidden>
+      <span lang="fr">Cette version n'existe pas encore pour cet appareil : choisissez l'autre.</span>
+      <span lang="en">This version does not exist for this device yet: pick the other one.</span>
+    </p>
     <p class="etat">
       <span lang="fr">La tablette suit ensuite le canal installé : ses mises à jour arrivent dans Home Assistant. Pour changer de canal, réinstallez depuis cette page, sans effacer.</span>
       <span lang="en">The tablet then follows the channel you installed: its updates arrive in Home Assistant. To switch channels, install again from this page, without erasing.</span>
@@ -218,6 +227,8 @@
     const info = canal && versions[canal];
     const dispo = info && info.ecrans.includes(ecran);
     installeur.hidden = !dispo;
+    // Une variante absente de ce canal (une carte ajoutée après sa version) : le dire.
+    document.getElementById("absente").hidden = !info || dispo;
     if (dispo) installeur.manifest = `../${canal}/${ecran}/manifest.json`;
   }
 
