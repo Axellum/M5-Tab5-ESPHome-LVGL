@@ -34,6 +34,15 @@ de bord (#506, #508), nom des capteurs dans les listes à plusieurs choix et che
 la fenêtre Froid (#507), mesures de la 7B (#499). Firmware et packages dans n'importe quel
 ordre ; `custom_templates` rechargé d'abord.
 
+[v3.9.0-rc.6](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.6)
+le 19/10/2026 : Waveshare 7B publiée avec les releases et installable depuis le navigateur (#525),
+musique de toute la maison par Music Assistant, pages Pièces et Bibliothèque (#523), playlists
+favorites lancées sur l'Apple TV (#515), de 1 à 10 pièces (#516, #518), jeux en module, absents
+par défaut de la 7B (#513), pièces en rouleau en mode appareils (#511), Waveshare 7B : accueil,
+popups et page Bilan de l'Énergie remis dans l'écran (#512, #520, #521, #522). Le firmware
+d'abord, puis les fichiers Home Assistant (nouveau package `tab5_musique.yaml`) ;
+`custom_templates` rechargé d'abord.
+
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.1).
