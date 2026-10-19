@@ -36,8 +36,8 @@ TEXTES: dict[str, dict[str, str]] = {
                          "(copie dans la sauvegarde) : {liste}.",
         "inst_differents": "Déjà là et différents (copiés à la main ?), remplacés quand même "
                            "(copie dans la sauvegarde) : {liste}.",
-        "inst_packages_absents": "Home Assistant ne charge pas encore les packages : voir Paramètres → Réparations.",
-        "inst_redemarrer": "Redémarrez Home Assistant pour finir : voir Paramètres → Réparations.",
+        "inst_packages_absents": "Home Assistant ne charge pas encore les packages : voir Paramètres → Corrections.",
+        "inst_redemarrer": "Redémarrez Home Assistant pour finir : voir Paramètres → Corrections.",
         "inst_fw_auto": "La tablette se mettra à jour toute seule dès que son entité « Firmware » "
                         "proposera la {version}.",
         "inst_fw_manuel": "Mettez ensuite la tablette à jour : Paramètres → Mises à jour, entité « Firmware ».",

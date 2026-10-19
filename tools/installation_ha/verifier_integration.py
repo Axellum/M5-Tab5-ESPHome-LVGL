@@ -599,7 +599,7 @@ async def scenario(args, rapport: Rapport) -> None:
             rapport.verifier(len(premieres) == 1 and (premieres[0] / COPIE_MAIN).is_file()
                              and (premieres[0] / COPIE_MAIN).read_bytes().endswith(MARQUE_MAIN),
                              "1. la copie à la main gardée dans la sauvegarde", str([p.name for p in premieres]))
-            # Validée comme dans Paramètres → Réparations : le formulaire cite la sauvegarde.
+            # Validée comme dans Paramètres → Corrections : le formulaire cite la sauvegarde.
             etape = await ha.post("/api/repairs/issues/fix", {"handler": "tab5", "issue_id": "fichiers_remplaces"})
             cites = json.dumps(etape.get("description_placeholders") or {}, ensure_ascii=False)
             rapport.verifier(etape.get("type") == "form" and bool(premieres) and premieres[0].name in cites
