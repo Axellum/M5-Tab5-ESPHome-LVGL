@@ -394,8 +394,11 @@ def test_ouverture_avec_ancre_pour_d_autres_vues():
     popup."""
     assert "bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison = false);" in _lire(
         "Tab5", "ecran", "tab5_internal.h")
+    # Ancrée là où l'élément est dessiné (ADR-0066) : la pastille de la carte de sa place
+    # entière, l'icône de sa case, le bouton de sa tuile météo.
     corps = _fonction(_tuiles(), "roue_de_la_tuile")
-    assert "g_tuiles_ui.carte_pastille[t]" in corps and "widgets_meteo(t, g, d, b);" in corps
+    assert "g_tuiles_ui.carte_pastille[p]" in corps and "case_ancre(p, d.case_de[t])" in corps
+    assert "widgets_meteo(p, g, dr, b);" in corps
 
 
 def test_toucher_deplie_replie_ferme():

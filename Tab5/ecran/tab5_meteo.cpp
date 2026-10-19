@@ -42,6 +42,7 @@
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
 #include "lvgl.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -231,6 +232,12 @@ void icone_peindre(Icone& i, const std::string& cond) {
 // (pluie, puis le bas de la courbe) suit le bas de la zone.
 
 constexpr int kHeuresMax = 15;                  // cal_heures_data
+// Heures montrées : autant que la zone en tient à 72 px la colonne au moins (« 08:00 » fait
+// 57 px en roboto_22, qui ne rétrécit pas) : 15 sur le Tab5 (77 px), 12 sur la 7B (75 px ;
+// à 15, 61 px, les heures se touchaient, rendu du 18/10/2026).
+constexpr int32_t kHeureColonneMin = 72;
+constexpr int kHeuresMontrees =
+    kGraphiqueL / kHeureColonneMin < kHeuresMax ? static_cast<int>(kGraphiqueL / kHeureColonneMin) : kHeuresMax;
 constexpr int kLisse = 8;                       // points de courbe par heure
 constexpr int32_t kHeureY = 0;                  // heures (roboto_22)
 constexpr int32_t kIconeY = 30;                 // icônes, boîtes de 72 × 56
@@ -823,7 +830,7 @@ void construire() {
 void peindre() {
     switch (s_page) {
         case METEO_PAGE_JOUR: {
-            const int n = previsions_heures_lisibles();
+            const int n = std::min(previsions_heures_lisibles(), kHeuresMontrees);
             peindre_maintenant(n);
             peindre_heures(n);
             break;

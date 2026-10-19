@@ -22,6 +22,8 @@ The display chip is printed on the sticker on the back of the tablet, just above
 
 A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, then the other.
 
+**A Waveshare ESP32-P4 7B** (another board, 7-inch, experimental): pick « Waveshare ESP32-P4 7B », in the **Beta** channel for now, and plug in the USB-C port of its ESP32-P4 ([Waveshare 7B](../waveshare-7b.md)).
+
 ## 3. Pick the channel
 
 **Stable** unless you want to try the next version before everyone (**Beta**, which moves on to the next stable one). The tablet then follows the channel you installed: its updates show up in Home Assistant ([updates](updates.md)). To switch channels later, install again from the page, without erasing. On Beta, also take `tab5_home_assistant.zip` from that pre-release (*Assets* on its [releases page](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)), or let the HACS integration do it with beta versions switched on: the files of the stable release do not have what the pre-release adds on the Home Assistant side.
@@ -30,7 +32,7 @@ A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, th
 
 1. *Connect and install*. The browser lists the serial ports: the tablet is « USB JTAG/serial debug unit ». If several ports have that name, unplug the tablet: the one that disappears is hers.
 2. **A new tablet** (it comes with M5Stack's demo): *Install*, then accept to erase the device.
-   **A tablet already installed**: *Update*, without erasing: it keeps its Wi-Fi, its Home Assistant key and its settings.
+   **A tablet already installed**: *Update*, without erasing: it keeps its Wi-Fi, its Home Assistant key and its settings. If the page offers *Install* instead (it does not recognise the firmware on the tablet), leave « Erase device » unticked in the box that follows: an erase also takes the Home Assistant key and the screen settings, and Home Assistant then waits for a confirmation ([reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19)).
 3. Wait for the end of the install. The same window then offers to set the Wi-Fi: that is [step 3](wifi.md).
 
 Closing the window restarts the tablet once: that is normal.
@@ -52,7 +54,7 @@ The install page and the tablet do not need this: the tablet only accepts a firm
 |---|---|
 | No port in the list | a cable that only charges shows no port: try another cable, then another USB port of the computer |
 | « Failed to initialize… holding the BOOT button » | the Tab5 has no BOOT button. Hold its reset button for about 2 s, until the internal green LED blinks fast: the tablet is in download mode. Start *Connect and install* again; at the end, a short press on reset restarts it |
-| No *Install* button | the same version is already on the tablet. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included (alarm clock, brightness…: note them in Home Assistant first), then installs again |
+| No *Install* button | the same version is already on the tablet. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included (alarm clock, brightness…: note them in Home Assistant first), then installs again; Home Assistant then asks for a confirmation ([reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19)) |
 | « This browser has no Web Serial » | Chrome or Edge, on a computer |
 | The screen is not right after the install | the wrong display chip, maybe: a sticker saying « ST7123 » may hide an ST7121. Install the other one (*Update*, without erasing) |
 
@@ -84,6 +86,8 @@ La puce d'écran est écrite sur l'autocollant au dos de la tablette, juste au-d
 
 Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, essayez l'une, puis l'autre.
 
+**Une Waveshare ESP32-P4 7B** (une autre carte, 7 pouces, expérimentale) : choisissez « Waveshare ESP32-P4 7B », dans le canal **Bêta** pour l'instant, et branchez le port USB-C de son ESP32-P4 ([Waveshare 7B](../waveshare-7b.md#version-française)).
+
 ## 3. Choisir le canal
 
 **Stable**, sauf si vous voulez essayer la prochaine version avant tout le monde (**Bêta**, qui passe à la stable suivante). La tablette suit ensuite le canal installé : ses mises à jour arrivent dans Home Assistant ([mises à jour](updates.md#version-française)). Pour changer de canal plus tard, réinstallez depuis la page, sans effacer. En Bêta, prenez aussi `tab5_home_assistant.zip` de cette pré-release (*Assets* sur la [page des releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)), ou laissez l'intégration HACS le faire avec les versions bêta activées : les fichiers de la stable n'ont pas ce que la pré-release ajoute côté Home Assistant.
@@ -92,7 +96,7 @@ Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, es
 
 1. *Connecter et installer*. Le navigateur liste les ports série : la tablette s'appelle « USB JTAG/serial debug unit ». Si plusieurs ports portent ce nom, débranchez la tablette : celui qui disparaît est le sien.
 2. **Une tablette neuve** (elle porte la démo de M5Stack) : *Install*, puis acceptez d'effacer l'appareil.
-   **Une tablette déjà installée** : *Update*, sans effacer : elle garde son Wi-Fi, sa clé de Home Assistant et ses réglages.
+   **Une tablette déjà installée** : *Update*, sans effacer : elle garde son Wi-Fi, sa clé de Home Assistant et ses réglages. Si la page propose *Install* à la place (elle ne reconnaît pas le firmware de la tablette), laissez « Erase device » décoché dans la boîte qui suit : un effacement emporte aussi la clé de Home Assistant et les réglages de l'écran, et Home Assistant attend ensuite une confirmation ([réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026)).
 3. Attendez la fin de l'installation. La même fenêtre propose ensuite de régler le Wi-Fi : c'est l'[étape 3](wifi.md#version-française).
 
 Fermer la fenêtre redémarre la tablette une fois : c'est normal.
@@ -114,7 +118,7 @@ La page d'installation et la tablette n'en ont pas besoin : la tablette n'accept
 |---|---|
 | Aucun port dans la liste | un câble qui ne fait que charger ne montre aucun port : essayez un autre câble, puis un autre port USB de l'ordinateur |
 | « Failed to initialize… holding the BOOT button » | le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite : la tablette est en mode téléchargement. Relancez *Connecter et installer* ; à la fin, un appui court sur reset la redémarre |
-| Pas de bouton *Install* | la même version est déjà sur la tablette. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris (réveil, luminosité… : notez-les d'abord dans Home Assistant), puis réinstalle |
+| Pas de bouton *Install* | la même version est déjà sur la tablette. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris (réveil, luminosité… : notez-les d'abord dans Home Assistant), puis réinstalle ; Home Assistant demande ensuite une confirmation ([réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026)) |
 | « Ce navigateur ne gère pas Web Serial » | Chrome ou Edge, sur un ordinateur |
 | L'écran n'est pas normal après l'installation | peut-être la mauvaise puce d'écran : un autocollant « ST7123 » peut cacher une ST7121. Installez l'autre (*Update*, sans effacer) |
 

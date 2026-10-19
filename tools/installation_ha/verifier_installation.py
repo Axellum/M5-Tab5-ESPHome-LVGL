@@ -41,7 +41,11 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       (discussion #278) : remplie, écrite dans les listes et suivie par la poussée, une
       liste changée à la main y revient avec une notification, vidée, les listes décident ;
       le tableau de bord de la tablette (custom_templates/tab5_dashboard.jinja) rendu par HA, ses
-      entités toutes présentes, enregistré et relu ; journal de HA sans erreur Tab5. Ce que
+      entités toutes présentes, enregistré et relu ; journal de HA sans erreur Tab5 ; puis deux
+      réinstallations AVEC effacement (préférences de la tablette supprimées, docs/
+      troubleshooting.md) : flux de réauth « reauth_encryption_removed_confirm » ouvert, HA
+      muet tant qu'il attend, flux confirmé puis même clé redonnée par HA ; « Recharger »
+      rouvre le flux ; tools/tab5_redonner_cle.py puis « Recharger » reconnectent aussi. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
       rapporté (capture 1), sans faire échouer. Avec --interface : les captures de
       l'interface de HA du guide d'installation (captures_ha.py). En dernier, la mémoire
@@ -72,6 +76,7 @@ import logging
 import os
 import re
 import secrets
+import shutil
 import subprocess
 import sys
 import time
@@ -1859,6 +1864,200 @@ async def verifier_abonnements(ha: HA, lue: str, rapport: Rapport) -> None:
                      "désabonnée de l'étiquette, l'alerte part", f"à lire = {ids_affiches(attributs)}")
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Réinstallation AVEC effacement d'une tablette que HA connaît (docs/troubleshooting.md)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Vu le 19/10/2026 sur la 7B de l'auteur : la page /install/ propose l'effacement à une
+# nouvelle installation (new_install_prompt_erase, tools/publication/preparer.py) ; NVS
+# vidée, la tablette n'a plus de clé, HA se voit refuser la sienne et ouvre ce flux de
+# réauth, qui attend l'utilisateur (homeassistant/components/esphome/config_flow.py,
+# async_step_reauth : la tablette répond en clair alors que l'entrée a une clé).
+ETAPE_CLE_RETIREE = "reauth_encryption_removed_confirm"
+# Le flux attend : HA ne doit pas se reconnecter tout seul (son ReconnectLogic est arrêté
+# par _start_reauth_and_disconnect, homeassistant/components/esphome/manager.py).
+SILENCE_S = 20.0
+# Lignes de l'intégration ESPHome (logger à info, configuration.yaml de la CI) qui disent
+# d'où vient la clé redonnée : celle que HA garde (esphome.encryption_keys) ou une neuve.
+CLE_DU_STOCKAGE = "Set encryption key from storage on device"
+CLE_NEUVE = "Generated and stored encryption key for device"
+
+
+async def flux_reauth(ha: HA, entry_id: str, sauf: frozenset[str] = frozenset(),
+                      delai: float = 120.0) -> dict | None:
+    """Le flux de réauth en cours de l'entrée `entry_id`, hors ceux de `sauf` (websocket
+    config_entries/flow/progress : le GET REST de la liste répond 405)."""
+    fin = time.monotonic() + delai
+    while True:
+        for flux in await ha.ws.commande("config_entries/flow/progress"):
+            contexte = flux.get("context") or {}
+            if (flux.get("handler") == "esphome" and contexte.get("source") == "reauth"
+                    and contexte.get("entry_id") == entry_id and flux.get("flow_id") not in sauf):
+                return flux
+        if time.monotonic() >= fin:
+            return None
+        await asyncio.sleep(1)
+
+
+async def reparation_reauth(ha: HA, entry_id: str) -> dict | None:
+    """La réparation que HA ouvre avec un flux de réauth (config_entries.py,
+    _async_init_reauth : homeassistant / config_entry_reauth_<domaine>_<entrée>)."""
+    for issue in (await ha.ws.commande("repairs/list_issues")).get("issues", []):
+        if issue.get("issue_id") == f"config_entry_reauth_esphome_{entry_id}":
+            return issue
+    return None
+
+
+async def effacer_et_relancer(tablette: Tablette) -> float:
+    """Ce que fait l'effacement de la page d'installation : la NVS vidée (clé API, Wi-Fi,
+    réglages de l'écran), puis le premier démarrage, fenêtre d'appairage ouverte."""
+    await tablette.arreter()
+    shutil.rmtree(tablette.prefs, ignore_errors=True)
+    relance = tablette.demarrer()
+    await tablette.attendre_port()
+    return relance
+
+
+async def attendre_flux_cle_retiree(ha: HA, entry_id: str, relance: float, rapport: Rapport,
+                                    sauf: frozenset[str] = frozenset()) -> dict:
+    """Le flux de réauth de la tablette effacée, à l'étape « chiffrement retiré » ; HA reste
+    déconnecté tant qu'il attend."""
+    flux = await flux_reauth(ha, entry_id, sauf)
+    if flux is None:
+        raise Echec("tablette effacée : aucun flux de réauth en 120 s (HA s'est-il reconnecté ? docker logs)")
+    rapport.verifier(flux.get("step_id") == ETAPE_CLE_RETIREE,
+                     f"tablette effacée : HA ouvre un flux de réauth « {ETAPE_CLE_RETIREE} » "
+                     f"{time.time() - relance:.0f} s après son démarrage",
+                     f"étape {flux.get('step_id')!r}")
+    evt = await ha.ws.attendre_evenement("esphome.tab5_connected", relance, SILENCE_S)
+    rapport.verifier(evt is None, f"flux en attente : HA ne se reconnecte pas tout seul ({SILENCE_S:.0f} s)",
+                     "esphome.tab5_connected reçu")
+    return flux
+
+
+async def attendre_reconnexion_chiffree(ha: HA, cle: str, apres: float, rapport: Rapport, quoi: str) -> None:
+    """La tablette a de nouveau une clé (clé nulle refusée), puis HA y est reconnecté :
+    l'entité « HA API Status » revient à on après la coupure que fait la tablette en
+    prenant sa clé (« Disconnecting all clients to reset PSK »)."""
+    from aioesphomeapi import ZERO_NOISE_PSK
+
+    fin = time.monotonic() + 120
+    while (r := await essayer_connexion(ZERO_NOISE_PSK)) != "InvalidEncryptionKeyAPIError":
+        if time.monotonic() >= fin:
+            raise Echec(f"{quoi} : la tablette n'a pas de clé 120 s après (clé nulle : {r})")
+        await asyncio.sleep(0.5)
+    rapport.ok(f"{quoi} : la tablette a de nouveau une clé, {time.time() - apres:.1f} s après")
+    await asyncio.sleep(3)
+    api = f"binary_sensor.{PREFIXE_ENTITES}_ha_api_status"
+    etat = await attendre_etat(ha, api, "on", 120)
+    rapport.verifier(etat == "on", f"{quoi} : HA reconnecté ({api} = on, {time.time() - apres:.1f} s après)",
+                     f"état {etat!r}")
+    rapport.verifier((r := await essayer_connexion(cle)) == "acceptée",
+                     f"{quoi} : la clé que garde HA ouvre la tablette", r)
+    rapport.verifier((r := await essayer_connexion(None)) == "RequiresEncryptionAPIError",
+                     f"{quoi} : connexion en clair refusée", r)
+
+
+async def verifier_cle_gardee(ha: HA, entry_id: str, cle: str, cles_avant: dict, rapport: Rapport,
+                              quoi: str) -> None:
+    """HA garde la même clé, à ses deux endroits, et n'a plus ni flux ni réparation ouverts."""
+    entree = entree_esphome(await ha.storage("core.config_entries") or {}, entry_id) or {}
+    apres = entree.get("data", {}).get("noise_psk")
+    rapport.verifier(apres == cle, f"{quoi} : même clé qu'avant l'effacement dans core.config_entries",
+                     f"clé de {longueur_cle(apres)} octets, différente")
+    cles = ((await ha.storage("esphome.encryption_keys")) or {}).get("data", {}).get("keys", {})
+    rapport.verifier(cles == cles_avant, f"{quoi} : esphome.encryption_keys inchangé", f"{len(cles)} clé(s)")
+    rapport.verifier(await flux_reauth(ha, entry_id, delai=0) is None, f"{quoi} : plus de flux de réauth",
+                     "un flux attend encore")
+    rapport.verifier(await reparation_reauth(ha, entry_id) is None, f"{quoi} : réparation de réauth fermée",
+                     "encore dans Corrections (Repairs)")
+
+
+async def textes_du_flux(ha: HA, rapport: Rapport) -> None:
+    """Les textes que montre HA, dans chaque langue du site (docs/troubleshooting.md les
+    cite) : l'étape du flux et la réparation qui l'accompagne."""
+    for langue in ("en", "fr"):
+        config = (await ha.ws.commande("frontend/get_translations", language=langue, category="config",
+                                       integration=["esphome"])).get("resources", {})
+        issues = (await ha.ws.commande("frontend/get_translations", language=langue, category="issues",
+                                       integration=["homeassistant"])).get("resources", {})
+        etape = f"component.esphome.config.step.{ETAPE_CLE_RETIREE}"
+        rapport.info(f"textes {langue} : étape « {config.get(etape + '.title', '')} » "
+                     f"{config.get(etape + '.description')!r} ; réparation "
+                     f"{issues.get('component.homeassistant.issues.config_entry_reauth.title')!r}")
+
+
+async def recharger_entree(ha: HA, entry_id: str) -> float:
+    """⋮ → Recharger sur l'entrée ESPHome de la tablette (abandonne ses flux de réauth)."""
+    debut = time.time()
+    await ha.post("/api/services/homeassistant/reload_config_entry", {"entry_id": entry_id})
+    return debut
+
+
+async def origine_de_la_cle(ha: HA, depuis: float) -> str:
+    """Ce que dit le journal de l'intégration ESPHome depuis `depuis` (epoch)."""
+    proc = await asyncio.create_subprocess_exec(
+        "docker", "logs", "--since", str(int(depuis) - 1), ha.conteneur,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    sortie = (await proc.communicate())[0].decode("utf-8", "replace")
+    if CLE_DU_STOCKAGE in sortie:
+        return "stockage"
+    return "neuve" if CLE_NEUVE in sortie else "inconnue"
+
+
+async def reinstallation_effacee(ha: HA, tablette: Tablette, entry_id: str, cle: str, args,
+                                 rapport: Rapport) -> None:
+    """Deux réinstallations avec effacement de la tablette que HA connaît : le geste de
+    l'interface (confirmer le flux), puis tools/tab5_redonner_cle.py ; entre les deux, les
+    captures de l'interface (--interface) et ce que fait « Recharger »."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from tab5_redonner_cle import redonner_cle
+
+    rapport.info("— réinstallation avec effacement (docs/troubleshooting.md)")
+    cles_avant = ((await ha.storage("esphome.encryption_keys")) or {}).get("data", {}).get("keys", {})
+
+    # 1. Le geste de l'interface : confirmer le flux (ce que fait « Valider » dans sa boîte).
+    relance = await effacer_et_relancer(tablette)
+    rapport.verifier((r := await essayer_connexion(None)) == "acceptée",
+                     "tablette effacée : plus de clé, connexion en clair acceptée (fenêtre d'appairage ouverte)", r)
+    flux = await attendre_flux_cle_retiree(ha, entry_id, relance, rapport)
+    rapport.verifier(await reparation_reauth(ha, entry_id) is not None,
+                     "une réparation accompagne le flux (Paramètres → Système → Corrections en français, Repairs en anglais)", "aucune")
+    await textes_du_flux(ha, rapport)
+    confirme = time.time()
+    resultat = await ha.post(f"/api/config/config_entries/flow/{flux['flow_id']}", {})
+    rapport.verifier(resultat.get("type") == "abort" and resultat.get("reason") == "reauth_successful",
+                     "flux confirmé (formulaire vide, comme « Valider ») : reauth_successful",
+                     f"{resultat.get('type')} / {resultat.get('reason')}")
+    await attendre_reconnexion_chiffree(ha, cle, confirme, rapport, "après confirmation")
+    rapport.info(f"après confirmation, origine de la clé dans le journal : {await origine_de_la_cle(ha, confirme)}")
+    await verifier_cle_gardee(ha, entry_id, cle, cles_avant, rapport, "après confirmation")
+
+    # 2. Sans l'interface : l'outil, puis « Recharger ». Avant, les captures et ce que
+    # fait un rechargement pendant que le flux attend.
+    relance = await effacer_et_relancer(tablette)
+    flux = await attendre_flux_cle_retiree(ha, entry_id, relance, rapport)
+    if args.interface:
+        import captures_ha
+
+        await captures_ha.capturer_reauth(ha, rapport, args.interface, client_id=CLIENT_ID,
+                                          titre=(flux.get("context", {}).get("title_placeholders") or {})
+                                          .get("name", "M5Stack Tab5"))
+        reste = await flux_reauth(ha, entry_id, delai=0)
+        rapport.info("boîte du flux fermée sans valider : le flux "
+                     + ("attend toujours" if reste and reste["flow_id"] == flux["flow_id"] else "a disparu"))
+    await recharger_entree(ha, entry_id)
+    nouveau = await flux_reauth(ha, entry_id, frozenset({flux["flow_id"]}))
+    rapport.verifier(nouveau is not None and nouveau.get("step_id") == ETAPE_CLE_RETIREE,
+                     "« Recharger » pendant la fenêtre : HA abandonne le flux et en rouvre un, même étape",
+                     f"nouveau flux : {nouveau and nouveau.get('step_id')!r}")
+    rapport.verifier((r := await redonner_cle(HOTE_TABLETTE, cle, PORT_API)) == "donnee",
+                     "tools/tab5_redonner_cle.py : clé de HA redonnée à la tablette, qui l'accepte", f"résultat : {r}")
+    recharge = await recharger_entree(ha, entry_id)
+    await attendre_reconnexion_chiffree(ha, cle, recharge, rapport, "après l'outil et « Recharger »")
+    await verifier_cle_gardee(ha, entry_id, cle, cles_avant, rapport, "après l'outil")
+
+
 async def scenario(args, rapport: Rapport) -> None:
     import aiohttp
 
@@ -1959,6 +2158,9 @@ async def scenario(args, rapport: Rapport) -> None:
                     ha, rapport, args.interface, client_id=CLIENT_ID,
                     entite_tablette=f"binary_sensor.{PREFIXE_ENTITES}_ha_api_status",
                     automatisation=ID_AUTOMATISATION, alias=ALIAS_AUTOMATISATION, modele=APPEL_TABLEAU)
+            # Réinstallation AVEC effacement (docs/troubleshooting.md), après le journal jugé :
+            # les refus de clé qu'elle provoque y sont voulus. La tablette en ressort reconnectée.
+            await reinstallation_effacee(ha, tablette, entry_id, cle, args, rapport)
             # En dernier : HA est tué puis redémarré (journal déjà jugé, captures faites).
             await verifier_alertes(ha, rapport)
     finally:

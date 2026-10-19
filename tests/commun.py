@@ -195,6 +195,9 @@ def _constexpr_evaluer(texte: str, valeurs: dict[str, int]) -> dict[str, int]:
         return f
     fonctions = {"largeur_carte": _ramene("kCorpsW", "kCorpsWTab5"), "hauteur_carte": _ramene("kCorpsH", "kCorpsHTab5")}
     fonctions["taille_carte"] = lambda v: min(fonctions["largeur_carte"](v), fonctions["hauteur_carte"](v))
+    # police_px() : une longueur qui suit les polices ramenées (kPolicePct, arrondie au plus proche).
+    fonctions["police_px"] = lambda v: ((v * valeurs["kPolicePct"] + 50) // 100 if v >= 0
+                                        else -((-v * valeurs["kPolicePct"] + 50) // 100))
     declarations = []
     for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", texte):
         # Plusieurs constantes sur une ligne (`kNomX = 12, kNomL = largeur_carte(230)`).

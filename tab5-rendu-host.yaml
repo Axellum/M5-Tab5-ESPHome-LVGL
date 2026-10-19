@@ -69,6 +69,7 @@ esphome:
     - Tab5/socle/tab5_parse.cpp
     - Tab5/socle/tab5_geometrie.h
     - Tab5/socle/tab5_decoupe.h
+    - Tab5/socle/tab5_disposition.h
     - Tab5/socle/tab5_modele_ha.h
     - Tab5/ecran/tab5_custom.h
     # Un en-tête par module (08/10/2026), inclus par tab5_custom.h dans l'ordre de leurs
@@ -125,6 +126,7 @@ esphome:
     - Tab5/ecran/tab5_tuiles.cpp
     - Tab5/ecran/tab5_tuiles_popups.cpp
     - Tab5/ecran/tab5_tuiles_roue.cpp
+    - Tab5/ecran/tab5_tuiles_cases.cpp
     - Tab5/ecran/tab5_rangee.cpp
     - Tab5/ecran/tab5_reglables.cpp
     - Tab5/ecran/tab5_roue.cpp

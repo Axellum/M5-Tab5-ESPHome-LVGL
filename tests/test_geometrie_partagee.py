@@ -39,7 +39,8 @@ def _resolu(valeur, carte="tab5"):
 # Tab5/socle/tab5_geometrie.h : constantes entières, éventuellement calculées des précédentes.
 GEOMETRIE = "tab5_geometrie.h"
 GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW", "kCorpsH",
-                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kDemiL", "kDemiX", "kPiecesMax", "kTuiles",
+                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kDemiL", "kDemiX", "kPiecesMax", "kTuilesMax",
+                  "kPlacesTuiles", "kAccCaseEcart",
                   "kLecteurCarteL", "kLecteurCarteH", "kOngletsFin", "kCalColPas", "kCalColW", "kCalColX0",
                   "kPieceLignePas", "kPieceLigneH", "kCentralCarteL", "kPanneauCentralL",
                   "kCorpsWTab5", "kCorpsHTab5", "kPieceLigneL")
@@ -53,6 +54,7 @@ JETONS_CPP = {"corps_w": "kCorpsW", "corps_h": "kCorpsH", "graphique_l": "kGraph
               "acc_marge": "kAccMarge", "acc_col_l": "kAccColL", "acc_horloge_l": "kAccHorlogeL",
               "acc_horloge_h": "kAccHorlogeH", "acc_ligne_l": "kAccLigneL", "acc_centrale_y": "kAccCentraleY",
               "acc_tuile_l": "kAccTuileL", "acc_tuile_pas": "kAccTuilePas",
+              "acc_tuile_h": "kAccTuileH", "acc_tuile_cell_y": "kAccTuileY",
               "police_pct": "kPolicePct", "hor_dx": "kHorlogeDx", "hor_dy": "kHorlogeDy"}
 # Valeurs du Tab5 d'avant le lot 2 : elles ne bougent pas.
 TAB5_AVANT = {"kCorpsW": 1202, "kCorpsH": 598, "kGraphiqueL": 1166, "kDemiL": 589, "kDemiX": 637,
@@ -61,7 +63,7 @@ TAB5_AVANT = {"kCorpsW": 1202, "kCorpsH": 598, "kGraphiqueL": 1166, "kDemiL": 58
               "kPieceLigneL": 342}
 # Fichiers qui s'en servent : aucun ne doit les redéfinir.
 GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maison.cpp", "tab5_zones.cpp",
-                          "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp",
+                          "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp", "tab5_tuiles_cases.cpp",
                           "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp", "tab5_lecteur.cpp",
                           "tab5_calendar.cpp", "tab5_central.cpp", "tab5_pages.cpp")
 
@@ -267,9 +269,14 @@ def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
     assert g["kLecteurCarteL"] < g["kCarteL"] and g["kLecteurCarteH"] < g["kCarteH"]
     popup = _lire("Tab5", "ui_components", "lecteur_popup.yaml")
     assert "width: ${lecteur_card_w}" in popup and "height: ${lecteur_card_h}" in popup
-    # Pièces et tuiles : cinq de chaque, comme le blueprint (ADR-0023) ; dix pièces au plus
-    # depuis l'ADR-0066, cinq sans « pn », cinq pages de météo.
-    assert g["kPiecesMax"] == 10 and g["kPiecesDefaut"] == g["kPagesMeteo"] == g["kTuiles"] == 5
+    # Pièces : dix au plus depuis l'ADR-0066 (lot A), cinq sans « pn », cinq pages de météo ;
+    # éléments d'une pièce : vingt (lot B), sur cinq places coupées en deux ou en quatre ;
+    # moitiés de 230 × 135 et quarts de 113 × 135 sur le Tab5 (disposition::case_rect, 4 px
+    # d'écart).
+    assert g["kPiecesMax"] == 10 and g["kPiecesDefaut"] == g["kPagesMeteo"] == g["kPlacesTuiles"] == 5
+    assert g["kTuilesMax"] == 20
+    assert g["kAccCaseEcart"] == 4
+    assert ((g["kAccTuileH"] - g["kAccCaseEcart"]) // 2, (g["kAccTuileL"] - g["kAccCaseEcart"]) // 2) == (135, 113)
 
 
 @pytest.mark.parametrize("carte", CARTES)
