@@ -17,13 +17,16 @@ name: Installation dans un HA neuf
 #     esphome.tab5_connected après la clé, traces sans erreur, zones masquées, capture
 #     d'écran demandée par HA, demandes de la tablette par événements (calendrier,
 #     « MAJ Écran », redémarrage forgé ignoré, aucune action refusée), journal de HA
-#     sans erreur Tab5. En dernier, les captures de l'interface de HA du guide, en
+#     sans erreur Tab5. Puis les captures de l'interface de HA du guide, en
 #     anglais et en français (tools/installation_ha/captures_ha.py, Chromium par
 #     Playwright) : artefact « installation-ha-<version de HA> », dossier interface/, copiées à la main
-#     dans docs/images/installation/.
+#     dans docs/images/installation/. Ensuite, la même tablette réinstallée AVEC effacement,
+#     deux fois (docs/troubleshooting.md) : flux de réauth confirmé, puis
+#     tools/tab5_redonner_cle.py et « Recharger » ; HA doit se reconnecter avec la même clé
+#     (captures ha_reauth_* du flux et de sa réparation).
 # Ne teste PAS : l'interface de HA cliquée par un humain (elle est seulement ouverte et
 # photographiée), la page de flashage, le vrai matériel (Wi-Fi, écran, audio). Check non
-# requis. ~4 min.
+# requis. ~7 min 30 (19/10/2026), dont ~1 min 20 pour les deux réinstallations avec effacement.
 #
 # Déclenché par ce qui touche au contrat entre HA et la tablette : les fichiers HA, le
 # nom et la version de l'appareil (tab5-ha-hmi.yaml), les actions et événements de
