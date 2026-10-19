@@ -11,7 +11,10 @@
   (tab5_home_assistant.zip, ADR-0024), jointe par le workflow."""
 import hashlib
 import json
+import os
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -60,16 +63,22 @@ def _build_action(dossier: Path, version="3.0.0", name="axellum.tab5-ha-hmi", pu
     return dossier
 
 
-def test_preparer_renomme_par_ecran_et_reecrit_le_manifeste(tmp_path):
+@pytest.mark.parametrize("variante", ["st7121", "waveshare-7b"])
+def test_preparer_renomme_par_variante_et_reecrit_le_manifeste(tmp_path, variante):
     source = _build_action(tmp_path / "tab5-ha-hmi-esp32p4")
-    chemin = preparer.preparer(source, "st7121", "3.0.0", tmp_path / "publie")
+    chemin = preparer.preparer(source, variante, "3.0.0", tmp_path / "publie")
     m = json.loads(chemin.read_text(encoding="utf-8"))
-    assert chemin.name == "manifest-st7121.json"
-    assert m["builds"][0]["parts"][0]["path"] == "tab5-ha-hmi-st7121.factory.bin"
-    assert m["builds"][0]["ota"]["path"] == "tab5-ha-hmi-st7121.ota.bin"
+    assert chemin.name == f"manifest-{variante}.json"
+    assert m["builds"][0]["parts"][0]["path"] == f"tab5-ha-hmi-{variante}.factory.bin"
+    assert m["builds"][0]["ota"]["path"] == f"tab5-ha-hmi-{variante}.ota.bin"
     assert m["new_install_prompt_erase"] is True
-    for f in ("tab5-ha-hmi-st7121.factory.bin", "tab5-ha-hmi-st7121.ota.bin"):
+    for f in (f"tab5-ha-hmi-{variante}.factory.bin", f"tab5-ha-hmi-{variante}.ota.bin"):
         assert (tmp_path / "publie" / f).is_file()
+
+
+def test_preparer_refuse_une_variante_inconnue(tmp_path):
+    with pytest.raises(SystemExit):
+        preparer.preparer(_build_action(tmp_path / "b"), "tab5", "3.0.0", tmp_path / "publie")
 
 
 @pytest.mark.parametrize("defaut", [{"version": "3.0.1"}, {"name": "autre.projet"}, {"puce": "ESP32-S3"}])
@@ -88,7 +97,7 @@ def test_preparer_refuse_un_binaire_modifie(tmp_path):
 
 # Fichiers qu'une release 3.x porte une fois publication.yml passé (écrits par preparer.py,
 # vérifié dans test_site_assemble_depuis_les_fichiers_des_releases).
-FICHIERS = [f for e in pages.ECRANS
+FICHIERS = [f for e in pages.VARIANTES
             for f in (f"manifest-{e}.json", f"tab5-ha-hmi-{e}.factory.bin", f"tab5-ha-hmi-{e}.ota.bin")]
 
 
@@ -129,9 +138,11 @@ def test_release_sans_ses_fichiers_ignoree():
     for cas, fichiers in incompletes.items():
         releases[1]["assets"] = fichiers
         assert pages.choisir(releases) == {"stable": "v3.0.1", "beta": "v3.0.1"}, cas
-    # Tout joint : servie. Un autre écran absent (révision ajoutée à ECRANS après la
-    # release) ne l'écarte pas, sinon ajouter un écran viderait les canaux.
-    for fichiers in (FICHIERS, [f for f in FICHIERS if "ili9881c" not in f]):
+    # Tout joint : servie. Une autre variante absente (ajoutée à VARIANTES après la
+    # release, comme la 7B après la 3.9.0-rc.5) ne l'écarte pas, sinon ajouter une
+    # variante viderait les canaux.
+    for fichiers in (FICHIERS, [f for f in FICHIERS if "ili9881c" not in f],
+                     [f for f in FICHIERS if "waveshare-7b" not in f]):
         releases[1]["assets"] = fichiers
         assert pages.choisir(releases) == {"stable": "v3.1.0", "beta": "v3.1.0"}
 
@@ -155,30 +166,41 @@ def test_site_assemble_depuis_les_fichiers_des_releases(tmp_path):
     web.mkdir()
     (web / "index.html").write_text("page", encoding="utf-8")
     for tag, version in (("v3.0.0", "3.0.0"), ("v3.1.0-rc.1", "3.1.0-rc.1")):
-        for ecran in preparer.ECRANS:
+        for ecran in preparer.VARIANTES:
             source = _build_action(tmp_path / "builds" / tag / ecran, version=version)
             preparer.preparer(source, ecran, version, tmp_path / "assets" / tag)
         # Les fichiers que choisir() attend sont ceux que preparer.py écrit.
         assert sorted(p.name for p in (tmp_path / "assets" / tag).iterdir()) == sorted(FICHIERS)
     versions = pages.assembler(web, tmp_path / "assets", "v3.0.0", "v3.1.0-rc.1", tmp_path / "site")
-    assert versions["stable"] == {"tag": "v3.0.0", "version": "3.0.0", "ecrans": list(preparer.ECRANS)}
+    assert versions["stable"] == {"tag": "v3.0.0", "version": "3.0.0", "ecrans": list(preparer.VARIANTES)}
     assert versions["beta"]["version"] == "3.1.0-rc.1"
     for canal in ("stable", "beta"):
-        for ecran in preparer.ECRANS:
+        for ecran in preparer.VARIANTES:
             m = json.loads((tmp_path / "site" / canal / ecran / "manifest.json").read_text(encoding="utf-8"))
             assert (tmp_path / "site" / canal / ecran / m["builds"][0]["ota"]["path"]).is_file()
     assert (tmp_path / "site" / "index.html").is_file()
     assert json.loads((tmp_path / "site" / "versions.json").read_text(encoding="utf-8")) == versions
 
 
-def test_memes_revisions_partout():
-    """Révisions d'écran : fichiers Tab5/paquets/ecran-*.yaml = outils = matrice = page."""
-    fichiers = sorted(p.stem.removeprefix("ecran-") for p in (REPO / "Tab5" / "paquets").glob("ecran-*.yaml"))
-    assert sorted(preparer.ECRANS) == fichiers == sorted(pages.ECRANS)
-    flux = _yaml(".github", "workflows", "publication.yml")
-    assert sorted(flux["jobs"]["firmware"]["strategy"]["matrix"]["ecran"]) == fichiers
+def test_memes_variantes_partout():
+    """Variantes publiées : révisions d'écran du Tab5 (Tab5/paquets/ecran-*.yaml), puis autres
+    cartes (Tab5/paquets/carte-*.yaml, sauf celle du Tab5) = outils = workflow = page, dans
+    le même ordre."""
+    paquets = REPO / "Tab5" / "paquets"
+    ecrans = sorted(p.stem.removeprefix("ecran-") for p in paquets.glob("ecran-*.yaml"))
+    cartes = sorted(p.stem.removeprefix("carte-") for p in paquets.glob("carte-*.yaml") if p.stem != "carte-tab5")
+    assert sorted(preparer.ECRANS) == ecrans and sorted(preparer.CARTES) == cartes
+    assert preparer.VARIANTES == preparer.ECRANS + preparer.CARTES == pages.VARIANTES
+    env = _yaml(".github", "workflows", "publication.yml")["env"]
+    assert tuple(env["ECRANS_TAB5"].split()) == preparer.ECRANS
+    assert tuple(env["CARTES"].split()) == preparer.CARTES
     page = (REPO / "web" / "install" / "index.html").read_text(encoding="utf-8")
-    assert sorted(re.findall(r'name="ecran" value="([a-z0-9]+)"', page)) == fichiers
+    assert re.findall(r'name="ecran" value="([a-z0-9-]+)"', page) == list(preparer.VARIANTES)
+
+
+def _etape_variantes() -> dict:
+    flux = yaml.safe_load((REPO / ".github" / "workflows" / "publication.yml").read_text(encoding="utf-8"))
+    return next(e for e in flux["jobs"]["preparation"]["steps"] if e.get("id") == "variantes")
 
 
 def test_workflow_signe_avec_la_cle_du_projet():
@@ -188,13 +210,20 @@ def test_workflow_signe_avec_la_cle_du_projet():
     assert "secrets.TAB5_CLE_SIGNATURE" in texte
     assert re.fullmatch(r"[0-9a-f]{64}", flux["env"]["EMPREINTE_CLE"])
     assert "verify-signature" in texte and "rm -f tab5_signature.pem" in texte
-    etapes = flux["jobs"]["firmware"]["steps"]
-    build = next(e for e in etapes if str(e.get("uses", "")).startswith("esphome/build-action"))
+    job = flux["jobs"]["firmware"]
+    assert job["strategy"]["matrix"] == "${{ fromJSON(needs.preparation.outputs.matrice) }}"
+    assert flux["jobs"]["preparation"]["outputs"]["matrice"] == "${{ steps.variantes.outputs.matrice }}"
+    build = next(e for e in job["steps"] if str(e.get("uses", "")).startswith("esphome/build-action"))
     subs = build["with"]["substitutions"]
-    for cle in ("tab5_ecran=", "tab5_publication=", "tab5_version="):
+    for cle in ("${{ matrix.subs }}", "tab5_publication=", "tab5_version="):
         assert cle in subs
     assert build["with"]["complete-manifest"] is True
-    assert build["with"]["version"] == "${{ env.ESPHOME_PUBLICATION }}"
+    assert build["with"]["version"] == "${{ matrix.esphome }}"
+    # Chaque ligne de la matrice : la révision d'écran (`tab5_ecran`) du Tab5 avec son
+    # ESPHome, ou la carte (`tab5_carte`) avec le sien.
+    run = _etape_variantes()["run"]
+    assert '"tab5_ecran=\\($v)"' in run and '"$ESPHOME_PUBLICATION"' in run
+    assert '"tab5_carte=\\($v)"' in run and '"$ESPHOME_PUBLICATION_CARTES"' in run
 
 
 def test_cle_lue_seulement_dans_l_environnement_protege():
@@ -219,6 +248,52 @@ def test_esphome_des_releases_pas_sous_le_plancher():
     fige = tuple(int(x) for x in flux["env"]["ESPHOME_PUBLICATION"].split("."))
     plancher = re.search(r"min_version:\s*([0-9.]+)", (REPO / "tab5-ha-hmi.yaml").read_text(encoding="utf-8"))
     assert fige >= tuple(int(x) for x in plancher.group(1).split("."))
+    # Les autres cartes : pas sous le plancher de la 7B (static_assert de carte_7b_version.h).
+    cartes = tuple(int(x) for x in flux["env"]["ESPHOME_PUBLICATION_CARTES"].split("."))
+    garde = re.search(r"VERSION_CODE\((\d+),\s*(\d+),\s*(\d+)\)",
+                      (REPO / "Tab5" / "ecran" / "carte_7b_version.h").read_text(encoding="utf-8"))
+    assert cartes >= tuple(int(x) for x in garde.groups()) and cartes >= fige
+
+
+def _matrice(tmp_path, tag_a_la_carte: bool, elf_seulement: bool, images: list[str]) -> list[dict]:
+    """Joue l'étape « Variantes à compiler » avec un faux `gh` : le tag a (ou n'a pas)
+    carte-waveshare-7b.yaml, la release porte `images`."""
+    faux = tmp_path / "bin"
+    faux.mkdir(parents=True)
+    gh = faux / "gh"
+    gh.write_text(
+        "#!/bin/bash\n"
+        'case "$1 $2" in\n'
+        f'  "api repos/"*) {"exit 0" if tag_a_la_carte else "exit 1"} ;;\n'
+        f"  \"release view\") echo '{json.dumps(images)}' ;;\n"
+        "esac\n", encoding="utf-8", newline="\n")
+    gh.chmod(0o755)
+    env = _yaml(".github", "workflows", "publication.yml")["env"]
+    sortie = tmp_path / "sortie"
+    variables = {**os.environ, "PATH": f"{faux}{os.pathsep}{os.environ['PATH']}", "TAG": "v9.9.9",
+                 "GITHUB_REPOSITORY": "x/y", "GITHUB_OUTPUT": str(sortie), "GITHUB_STEP_SUMMARY": os.devnull,
+                 "ELF_SEULEMENT": "true" if elf_seulement else "",
+                 **{k: str(env[k]) for k in ("ECRANS_TAB5", "CARTES", "ESPHOME_PUBLICATION", "ESPHOME_PUBLICATION_CARTES")}}
+    subprocess.run(["bash", "-e", "-c", _etape_variantes()["run"]], cwd=tmp_path, env=variables, check=True)
+    ligne = sortie.read_text(encoding="utf-8").strip()
+    return json.loads(ligne.removeprefix("matrice="))["include"]
+
+
+@pytest.mark.skipif(not shutil.which("jq") or (sys.platform == "win32" and "git" not in (shutil.which("bash") or "").lower()),
+                    reason="bash et jq (runners Ubuntu, ou Git Bash)")
+def test_matrice_des_variantes(tmp_path):
+    """Un tag qui connaît la 7B la compile avec l'ESPHome des cartes ; un tag d'avant elle
+    (v3.8.1) ne la compile pas ; `elf_seulement` ne garde que les variantes dont la release
+    a l'image (la 3.9.0-rc.5 a le fichier de la carte, pas son image)."""
+    tab5 = [f"tab5-ha-hmi-{e}.ota.bin" for e in preparer.ECRANS]
+    m = _matrice(tmp_path / "a", True, False, [])
+    assert [(x["variante"], x["subs"], x["esphome"]) for x in m] == [
+        ("st7123", "tab5_ecran=st7123", "2026.9.0"), ("st7121", "tab5_ecran=st7121", "2026.9.0"),
+        ("ili9881c", "tab5_ecran=ili9881c", "2026.9.0"), ("waveshare-7b", "tab5_carte=waveshare-7b", "2026.9.1")]
+    assert [x["variante"] for x in _matrice(tmp_path / "b", False, False, [])] == list(preparer.ECRANS)
+    assert [x["variante"] for x in _matrice(tmp_path / "c", True, True, tab5)] == list(preparer.ECRANS)
+    toutes = tab5 + ["tab5-ha-hmi-waveshare-7b.ota.bin"]
+    assert [x["variante"] for x in _matrice(tmp_path / "d", True, True, toutes)] == list(preparer.VARIANTES)
 
 
 def test_mise_a_jour_seulement_dans_les_firmwares_publies():
@@ -229,9 +304,27 @@ def test_mise_a_jour_seulement_dans_les_firmwares_publies():
     commune = _yaml("Tab5", "paquets", "publication-commune.yaml")
     source = commune["update"][0]["source"]
     assert source.startswith("https://axellum.github.io/M5-Tab5-ESPHome-LVGL/${canal}/")
-    assert source.endswith("/manifest.json") and "tab5_ecran" in source
+    assert source.endswith("/manifest.json") and "tab5_ecran" in source and "tab5_carte" in source
     point = (REPO / "tab5-ha-hmi.yaml").read_text(encoding="utf-8")
     assert "!include Tab5/paquets/publication-${ tab5_publication | default('locale') }.yaml" in point
+
+
+@pytest.mark.parametrize("substitutions, dossier", [
+    ({}, "st7123"),
+    ({"tab5_ecran": "ST7121"}, "st7121"),
+    ({"tab5_carte": "tab5", "tab5_ecran": "ili9881c"}, "ili9881c"),
+    # Une autre carte lit son dossier, jamais celui d'un écran du Tab5 : sinon la mise à
+    # jour lui installerait le firmware du Tab5 (même clé, donc accepté), fait pour un autre écran.
+    ({"tab5_carte": "waveshare-7b"}, "waveshare-7b"),
+    ({"tab5_carte": "waveshare-7b", "tab5_ecran": "st7121"}, "waveshare-7b"),
+])
+def test_mise_a_jour_lit_le_dossier_de_sa_variante(substitutions, dossier):
+    """L'expression de `source` rendue comme les substitutions Jinja d'ESPHome (`${ … }`)."""
+    jinja2 = pytest.importorskip("jinja2")
+    source = _yaml("Tab5", "paquets", "publication-commune.yaml")["update"][0]["source"]
+    expression = re.search(r"\$\{canal\}/\$\{ (.+) \}/manifest\.json$", source).group(1)
+    assert jinja2.Environment().compile_expression(expression)(**substitutions) == dossier
+    assert dossier in preparer.VARIANTES
 
 
 def test_page_suit_le_manifeste_du_site():

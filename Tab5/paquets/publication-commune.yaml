@@ -4,8 +4,11 @@
 #       ADR-0022). Inclus par publication-stable.yaml / publication-beta.yaml avec la
 #       variable `canal` ; jamais par une compilation locale (publication-locale.yaml).
 # @architecture_constraint Le manifeste est celui de la page de flashage (GitHub Pages,
-#       .github/workflows/publication.yml) : `<canal>/<révision d'écran>/manifest.json`.
-#       Chaque révision a le sien (la puce d'écran est choisie à la compilation).
+#       .github/workflows/publication.yml) : `<canal>/<variante>/manifest.json`. Chaque
+#       variante a le sien : sur le Tab5, sa révision d'écran (`tab5_ecran`) ; sur une
+#       autre carte, son nom (`tab5_carte`, ADR-0061 : `waveshare-7b`). [AI-WARNING] Ne
+#       jamais retomber sur le dossier d'un écran du Tab5 pour une autre carte : elle
+#       recevrait le firmware du Tab5 (même clé, donc accepté), fait pour un autre écran.
 # ============================================================================
 # L'entité « Firmware » compare la version du projet (`project: version`, donnée par le
 # tag de la release) à celle du manifeste, toutes les 6 h. « Installer » dans HA
@@ -33,4 +36,4 @@ update:
   - platform: http_request
     id: tab5_mise_a_jour
     name: Firmware
-    source: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/${canal}/${ tab5_ecran | default('st7123') | lower }/manifest.json
+    source: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/${canal}/${ (tab5_ecran | default('st7123') | lower) if (tab5_carte | default('tab5') | lower) == 'tab5' else (tab5_carte | lower) }/manifest.json
