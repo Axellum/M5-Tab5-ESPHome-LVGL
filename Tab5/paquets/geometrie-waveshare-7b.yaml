@@ -7,14 +7,16 @@
 #       HomeTiles et le fil HA t/945864). Le tactile suit seul : ESPHome tourne les
 #       appuis avec l'image (LvglComponent::rotate_coordinates) ; le transform du GT911
 #       (carte-waveshare-7b.yaml) ne fait que caler la dalle tactile sur l'écran, quelle
-#       que soit la rotation. Carte montée à l'envers : `carte_rotation: "0"` dans
-#       Tab5/user_entities.yaml (plus de rotation logicielle : ~69 ms au lieu de ~83 ms par
-#       écran entier, mesuré le 16/10/2026). Inclus par
+#       que soit la rotation. Carte montée à l'envers : « Retourné » dans le select « Sens
+#       de l'écran » de l'appareil (carte-waveshare-7b.yaml, ADR-0069), choisi dans Home
+#       Assistant et gardé en NVS : rotation 0 à l'exécution, plus de rotation logicielle
+#       (~69 ms au lieu de ~83 ms par écran entier, mesuré le 16/10/2026). Le firmware
+#       publié sert donc les deux montages ; `carte_rotation` reste 180. Inclus par
 #       carte-waveshare-7b.yaml (firmware) et par tab5-rendu-host.yaml
 #       (`-s tab5_carte waveshare-7b`, captures en 1024×600).
 # @architecture_constraint Mêmes clés que geometrie-tab5.yaml (voir son en-tête).
-#       `carte_rotation` sert aussi au retour au repos du flipper (kRotationRepos) et à
-#       la rotation des captures du rendu (tools/rendu/capturer.py --carte).
+#       `carte_rotation` sert aussi à la rotation des captures du rendu
+#       (tools/rendu/capturer.py --carte), qui n'a pas le select.
 # @ai_instruction EXPÉRIMENTAL : seule la taille vient d'ici. La mise en page des écrans
 #       reste au pixel pour 1280×720 (lots suivants) ; polices à 0,82 (≈ 1024 / 1280 et
 #       600 / 720), arrondies.

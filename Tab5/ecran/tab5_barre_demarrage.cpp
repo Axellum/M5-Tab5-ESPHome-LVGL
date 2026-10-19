@@ -34,6 +34,7 @@ struct EtatBarre {
     esphome::display::Display* ecran = nullptr;
     barre::Rect ui{};
     barre::Rect dalle{};
+    int rotation = 0;  // celle de LVGL au démarrage (rotation_repos())
     uint16_t* src = nullptr;  // la barre à l'endroit
     uint16_t* dst = nullptr;  // la même, tournée pour la dalle
     uint32_t fond = 0, piste = 0, plein = 0;
@@ -67,7 +68,7 @@ void dessiner(int remplis) {
     if (remplis == b.dessines) return;
     b.dessines = remplis;
     barre::peindre(b.src, b.ui.l, b.ui.h, remplis, b.fond, b.piste, b.plein);
-    barre::tourner(b.src, b.dst, b.ui.l, b.ui.h, kRotationRepos);
+    barre::tourner(b.src, b.dst, b.ui.l, b.ui.h, b.rotation);
     envoyer(b.dalle, b.dst);
 }
 
@@ -126,7 +127,9 @@ bool barre_demarrage_ouvrir(esphome::display::Display* ecran) {
     const int dalle_h = ecran->get_native_height();
     b.ecran = ecran;
     b.ui = barre::geometrie(kEcranL, kEcranH);
-    b.dalle = barre::rect_dalle(b.ui, kRotationRepos, dalle_l, dalle_h);
+    // Le sens de l'écran (ADR-0069) est déjà restauré de la NVS (select de la carte, bande 800).
+    b.rotation = rotation_repos();
+    b.dalle = barre::rect_dalle(b.ui, b.rotation, dalle_l, dalle_h);
     b.fond = UIColor.BG;
     b.piste = UIColor.ARC_TRACK;
     b.plein = UIColor.ACCENT;

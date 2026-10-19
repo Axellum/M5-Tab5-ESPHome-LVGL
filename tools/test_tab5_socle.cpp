@@ -6,7 +6,8 @@
  *     valide, « HH:MM » strict, embauche tôt ;
  *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h), dont la
  *     clim « d'ici » de la tuile − / + (clim_ici_rang, 14/10/2026) ;
- *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert ;
+ *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert, et le sens
+ *     de l'écran d'une carte montée à l'envers (rotation_sens, rotation_repos ; ADR-0069) ;
  *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026) ;
  *   - le niveau de la batterie d'après sa tension (Tab5/socle/tab5_batterie.h, courbe de
  *     décharge mesurée sur un Tab5, 15/10/2026) ;
@@ -550,6 +551,22 @@ static void test_barre_demarrage() {
     expect(barre::kEtapes == 3 && barre::kJalons[barre::kEtapes - 1].cible == 1.0f, "barre : la dernière étape va au bout");
 }
 
+// ── Sens de l'écran (tab5_geometrie.h, ADR-0069) ──────────────────────────
+static void test_sens_ecran() {
+    expect(rotation_repos() == kRotationRepos, "sens : sans choix, la rotation de repos de la carte");
+    const int repos[] = {0, 90, 180, 270};
+    bool juste = true;
+    for (int r : repos) {
+        juste = juste && rotation_sens(r, false) == r && rotation_sens(r, true) == (r + 180) % 360 &&
+                rotation_sens(rotation_sens(r, true), true) == r;
+    }
+    expect(juste, "sens : retourné = un demi-tour de plus, deux fois = le sens d'origine");
+    rotation_repos_courante() = rotation_sens(kRotationRepos, true);
+    expect(rotation_repos() == (kRotationRepos + 180) % 360, "sens : le choix posé est celui que tout le firmware lit");
+    rotation_repos_courante() = kRotationRepos;
+    expect(!rotation_tenue(), "sens : aucun jeu ne tient la rotation au démarrage");
+}
+
 // ── Découpe autour d'une carte opaque (tab5_decoupe.h, popup Musique) ──────
 static bool dans_zone(const decoupe::Zone& z, int32_t x, int32_t y) {
     return x >= z.x1 && x <= z.x2 && y >= z.y1 && y <= z.y2;
@@ -777,6 +794,7 @@ int main() {
     test_chronologie();
     test_niveau_batterie();
     test_barre_demarrage();
+    test_sens_ecran();
     test_decoupe_carte();
     test_disposition();
 

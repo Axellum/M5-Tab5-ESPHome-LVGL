@@ -51,9 +51,31 @@ constexpr int32_t kEcranH = TAB5_ECRAN_H;
 // au moins aussi grand, `static_assert(!kMiseEnPageTab5 || …)`. Toujours vraie sur le Tab5.
 constexpr bool kMiseEnPageTab5 = kEcranL >= 1280 && kEcranH >= 720;
 
-// Rotation de repos de LVGL (`lvgl: rotation:`, tab5-styles.yaml) : celle que Neon Apron
-// remet en quittant son portrait (pinball_game.cpp).
+// Rotation de repos de LVGL (`lvgl: rotation:`, tab5-styles.yaml) : celle d'une carte montée
+// dans le sens de son fabricant.
 constexpr int kRotationRepos = TAB5_ROTATION;
+
+// Sens de l'écran (ADR-0069) : une carte montée à l'envers tourne l'image de 180° de plus que
+// sa rotation de repos (7B : 180 → 0, plus de rotation à chaque image).
+constexpr int rotation_sens(int repos, bool retourne) { return retourne ? (repos + 180) % 360 : repos; }
+static_assert(rotation_sens(180, true) == 0 && rotation_sens(270, true) == 90 && rotation_sens(180, false) == 180,
+              "rotation_sens : un demi-tour de plus, entre 0 et 359");
+// La rotation de repos en vigueur : kRotationRepos, ou le sens choisi dans le select « Sens de
+// l'écran » de la carte (la 7B seule, carte-waveshare-7b.yaml ; gardé en NVS), posé par
+// dalle_sens_choisir() (tab5_dalle.cpp) dès la bande 800 du démarrage : avant la barre de
+// chargement (500), qui la lit, et le setup() de LVGL (400). Un jeu qui tourne LVGL la remet
+// en sortant. Une seule valeur pour tout le firmware (fonction inline).
+inline int& rotation_repos_courante() {
+    static int rotation = kRotationRepos;
+    return rotation;
+}
+inline int rotation_repos() { return rotation_repos_courante(); }
+// true tant qu'un jeu tient sa propre rotation (portrait) : un sens choisi pendant ce temps
+// est seulement posé, le jeu remet rotation_repos() en sortant.
+inline bool& rotation_tenue() {
+    static bool tenue = false;
+    return tenue;
+}
 
 // Carte modale (tab5-ui-tokens.yaml : modal_card_w, modal_card_h, modal_body_y) : 15 px
 // des bords de l'écran, corps sous la barre de titre de modal_header.yaml.
