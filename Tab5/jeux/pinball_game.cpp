@@ -95,7 +95,7 @@
  */
 #include "pinball_game.h"
 #include "game_common.h"
-#include "tab5_geometrie.h"  // kRotationRepos : la rotation de repos de la carte (ADR-0061)
+#include "tab5_geometrie.h"  // rotation_repos() : la rotation de repos de la carte (ADR-0061, ADR-0069)
 #include "esphome/core/preferences.h"
 #include "lvgl_private.h"  // lv_indev_t::pointer.last_raw_point (recadrer_dernier_point)
 #include <math.h>
@@ -683,7 +683,8 @@ static lv_obj_t* mk_arc(lv_obj_t* parent, float cx, float cy, float r,
 // ===========================================================================
 // [AI-CONTEXT] Voir le bloc ORIENTATION en tete de fichier. `portrait=false`
 // remet EXACTEMENT la rotation de repos du dashboard, jamais autre chose : 270 sur le
-// Tab5, celle de la carte en general (kRotationRepos, tab5_geometrie.h, ADR-0061). Sur
+// Tab5, celle de la carte en general (rotation_repos(), tab5_geometrie.h, ADR-0061 ; sur la
+// 7B, selon le select « Sens de l'ecran », ADR-0069). Sur
 // une carte paysage native (Waveshare 7B, repos 180), le portrait n'est pas encore fait.
 
 // Dernier point de chaque entree pointeur ramene dans la resolution courante (voir
@@ -703,7 +704,7 @@ static void recadrer_dernier_point() {
 
 static void screen_portrait(bool portrait) {
     if (!gs->ui.lvgl) return;
-    int angle = kRotationRepos;
+    int angle = rotation_repos();
     if (portrait) angle = gs->save.flip_screen ? 180 : 0;
     gs->ui.lvgl->set_rotation(angle);
     recadrer_dernier_point();

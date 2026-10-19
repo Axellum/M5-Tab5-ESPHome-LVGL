@@ -801,7 +801,9 @@ lvgl:
   # Depuis l'ADR-0061, la valeur vient de la carte (`carte_rotation`,
   # Tab5/paquets/geometrie-<carte>.yaml) : 270 sur le Tab5 (dalle portrait), 180 sur la
   # Waveshare 7B (dalle paysage montée à l'envers) ; le flipper revient à la même
-  # (kRotationRepos).
+  # (rotation_repos()). Sur la 7B, le select « Sens de l'écran » (carte-waveshare-7b.yaml,
+  # ADR-0069) y ajoute 180° à l'exécution, pour une carte montée à l'envers : c'est cette
+  # clé qui le permet (même [AI-WARNING] que le flipper).
   id: tab5_lvgl
   # [AI-WARNING] `rotation:` doit rester présent ici même si le jeu la surcharge
   # à chaud : ESPHome ne compile le support de rotation (rotation_type_ =

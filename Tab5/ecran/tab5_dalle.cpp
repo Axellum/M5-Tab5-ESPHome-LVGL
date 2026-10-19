@@ -43,16 +43,25 @@
  *       un essai sur la carte (lueur à 0 %, rallumage au toucher, après une OTA). Si
  *       `io_handle_` change de nom ou de type, la compilation échoue ici : relire
  *       `esphome/components/mipi_dsi/mipi_dsi.h`.
- * @ai_debug « Dalle eteinte (mode N) » / « Dalle rallumee » dans le journal (tag tab5.dalle) ;
- *       une commande refusée y est écrite avec son code.
+ * @sens Sens de l'écran (ADR-0069, 19/10/2026) : dalle_sens_choisir(), appelé par le select
+ *       « Sens de l'écran » de la 7B (restauré de la NVS à la bande 800 du démarrage, puis à
+ *       chaque choix dans Home Assistant). « Retourné » = 180° de plus que la rotation de repos :
+ *       LvglComponent::set_rotation() à chaud (ESPHome 2026.9.1, rotation logicielle compilée
+ *       parce que `lvgl: rotation:` est présent). En rotation 0, ESPHome envoie le tampon de
+ *       LVGL tel quel (pas de PPA) : ~69 ms un écran entier au lieu de ~83 ms en 180 (mesuré le
+ *       16/10/2026 avec `carte_rotation: "0"` compilé, le même chemin de code).
+ * @ai_debug « Dalle eteinte (mode N) » / « Dalle rallumee » / « Sens de l'ecran : … (rotation
+ *       N) » dans le journal (tag tab5.dalle) ; une commande refusée y est écrite avec son code.
  */
 #include "tab5_dalle.h"
 
 #include "esp_lcd_panel_io.h"
+#include "esphome/components/lvgl/lvgl_esphome.h"
 #include "esphome/components/mipi_dsi/mipi_dsi.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/log.h"
 #include "lvgl.h"
+#include "tab5_geometrie.h"  // rotation_sens(), rotation_repos() (ADR-0069)
 
 #ifndef TAB5_DALLE_EXTINCTION
 #define TAB5_DALLE_EXTINCTION 0
@@ -162,3 +171,14 @@ void dalle_rallumer(esphome::mipi_dsi::MipiDsi* ecran) {
 }
 
 bool dalle_noire_pendant_ota() { return TAB5_DALLE_NOIRE_OTA != 0; }
+
+void dalle_sens_choisir(esphome::lvgl::LvglComponent* lvgl, bool retourne) {
+    const int avant = rotation_repos();
+    const int angle = rotation_sens(kRotationRepos, retourne);
+    rotation_repos_courante() = angle;
+    // LVGL ne montre pas l'ancienne rotation de repos : un jeu l'a tournée (portrait de Neon
+    // Apron), il remettra la nouvelle en sortant. Même angle : rien à redessiner.
+    const int montree = lvgl != nullptr ? static_cast<int>(lvgl->get_rotation()) : -1;
+    if (montree == avant && montree != angle) lvgl->set_rotation(angle);
+    ESP_LOGI(TAG, "Sens de l'ecran : %s (rotation %d)", retourne ? "retourne" : "normal", angle);
+}

@@ -210,8 +210,8 @@ display:
 # GT911 : le BSP déclare RST et INT non reliés (GPIO_NUM_NC), mais le schéma relie GPIO23
 # au connecteur du tactile et les configs publiques qui marchent sur la carte
 # (agillis/esphome-modular-lvgl-buttons, Jordi1990/openamber, fil HA t/945864) le donnent
-# en reset_pin. Inversé en X et en Y pour suivre la rotation de 180° de LVGL
-# (geometrie-waveshare-7b.yaml). Essai du 14/10/2026 sur la carte : sans ces réglages,
+# en reset_pin. Inversé en X et en Y : cale la dalle tactile sur l'écran, ESPHome tourne les
+# appuis avec l'image dans les deux sens (ADR-0069). Essai du 14/10/2026 sur la carte : sans ces réglages,
 # 1 appui reconnu en 5 min ; avec, chaque appui arrive au bon endroit. Le composant
 # interroge (pas d'INT) ; résolution lue dans le contrôleur. on_touch / on_release
 # recopiés de tab5-hardware.yaml (mode économie, écran rallumé au toucher).
@@ -234,6 +234,22 @@ touchscreen:
               light.is_off: backlight
             then:
               - light.turn_on: backlight
+
+# Sens de l'écran (ADR-0069) : « Retourné » = carte montée à l'envers, 180° de plus que
+# `carte_rotation` (180 → 0, sans rotation par image), choisi dans HA, gardé en NVS, restauré
+# avant la barre et LVGL. [AI-WARNING] Jamais avec `-s carte_rotation 0` : double demi-tour.
+select:
+  - platform: template
+    id: tab5_sens_ecran
+    name: "Sens de l'écran"
+    icon: mdi:screen-rotation
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "Normal"
+    options: ["Normal", "Retourné"]
+    on_value:
+      - lambda: 'dalle_sens_choisir(id(tab5_lvgl), i == 1);'
 
 # Rétroéclairage : LEDC sur GPIO32, sortie inversée (BSP : output_invert = 1), 5 kHz.
 # backlight_plafonne et la lumière : recopiés de tab5-hardware.yaml (mode économie,
