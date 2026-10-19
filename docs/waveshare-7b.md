@@ -55,7 +55,7 @@ What happened on the author's board when it arrived (2026-10-14), in order. Ever
 | Touch almost dead: one touch recognised in 5 minutes, the brightness slider frozen | the panel is mounted upside down compared to the driver's default, and the touch controller was never reset (Waveshare's own code says its reset pin is not connected) | LVGL `rotation: 180`, the GT911 mirrored in X and Y, and its reset on GPIO 23, as in the other public configurations that work on this board: then every touch lands in the right place |
 | The first sound was only a click | the microphone kept the I2S bus the speaker shares with it; the exact cause of the click was not established | the speaker at 48 kHz like the other configurations, the shared-bus rule of the Tab5 ([ADR-0010](decisions/0010-shared-i2s-bus-mic-speaker.md)): sound works since that evening |
 | The speaker saturated completely at volume 100 % (2026-10-17) | ESPHome's ES8311 driver writes the volume as is to the DAC volume register: 0.75 is 0 dB, 1.0 is +32 dB of digital gain (the Tab5's ES8388 stops at 0 dB) | `volume_max: 75%` on the 7B's media player: 100 % on the screen or in Home Assistant is now 0 dB; by ear, 100 % and 80 % distorted, 75 % was clean |
-| The volume was only heard in the last third of its slider (2026-10-18) | the ES8311 register gives 0.5 dB per step (volume × 255, 0xBF = 0 dB): with the default `volume_min` of 0, 20 % was ≈ −76 dB, silent while the player said « playing » | `volume_min: 40%`: the bottom of the slider is ≈ −44 dB, the top stays 0 dB. Not tried by ear yet |
+| The volume was only heard in the last third of its slider (2026-10-18) | the ES8311 register gives 0.5 dB per step (volume × 255, 0xBF = 0 dB): with the default `volume_min` of 0, 20 % was ≈ −76 dB, silent while the player said « playing » | `volume_min: 40%`: the bottom of the slider is ≈ −44 dB, the top stays 0 dB. Tested by ear on 2026-10-19 with the speaker from the official pack: crystal-clear sound, no distortion, well-balanced curve |
 | Boot loop after a software reboot (2026-10-16, after a few reboots from Home Assistant), Wi-Fi never up, then safe mode; only a power cut helped | the SDIO link to the C6 failed and the bad state, on the P4 side, survived `esp_restart()`, which only resets the CPU cores | every software reboot ends with a reset of the whole digital core (`Tab5/ecran/tab5_lien_c6.cpp`, [troubleshooting](troubleshooting.md#waveshare-7b-boot-loop-after-a-software-reboot-wi-fi-link-down-2026-10-16)) |
 | The board restarted every 15 minutes before Home Assistant knew it | ESPHome's default `reboot_timeout` while no API client is connected (first trial firmware) | the full firmware waits 60 minutes, like the Tab5 |
 
@@ -68,7 +68,7 @@ Two things learnt along the way:
 
 - **Not checked on the board:** the microphone and the wake word, the cameras popup (JPEG decoding), a power cut without network, the firmware published by the project (install page, then an update from Home Assistant).
 - **Not adapted to 1024×600 yet:** in German and Turkish, « Close all » in the shutters popup (« Alle schließen », « Tümünü kapat »: 140 and 143 px in a font that does not shrink with the screen) runs past its 134-px button. The other popups follow the screen, the « Balance » page of the Energy popup included since 2026-10-18. For every screen, the render counts on each change what runs past its area: about as much as on the Tab5 itself, mostly the shutters, alarm clock and cameras popups, which do the same there.
-- Reported by others on this board, then seen here too: a faint glow with the backlight at 0 % (the screen off is now a black panel, [ADR-0064](decisions/0064-screen-really-off-night.md)), and a distorted speaker (below).
+- Reported by others on this board, then seen here too: a faint glow with the backlight at 0 % (the screen off is now a black panel, [ADR-0064](decisions/0064-screen-really-off-night.md)). The speaker distortion reported earlier was completely solved by setting `volume_max: 75%` (0 dB unitary gain).
 - The firmware version of the C6 Wi-Fi chip cannot be read on this board (« Tab5 Version du C6 » stays unknown since 2026-10-14, while the Tab5 answers 1.4.1): its factory firmware may be older than the ESP-Hosted library of the P4 (2.12.12 with ESPHome 2026.9.1). Updating it is possible, from ESPHome (`update:` with `platform: esp32_hosted`, the firmware sent over the SDIO link) or over the C6's own serial port on the H4 connector (TXD, RXD, GND, IO9 = BOOT). **Not done, by choice:** a failed update would leave the screen without Wi-Fi, and Wi-Fi works as it is. Since the request went unanswered and froze the screen for 1 s each time (3 to 4 times after every boot, measured on 2026-10-16), the 7B no longer asks: the sensor says « inconnue » straight away (`carte_c6_version: "false"` in `Tab5/paquets/carte-waveshare-7b.yaml`, to set back to `"true"` after a C6 update).
 
 ## Measured on the board (2026-10-16)
@@ -79,6 +79,7 @@ Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.
 - **One second less at every start (2026-10-17)**: the boot waited 1 s before the display, a wait made for the Tab5, whose display reset goes through an I/O expander; the 7B has none, its panel reset is a pin of the P4 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms: "0"`). Over 10 restarts from the « Redémarrage Système » button, against the 10 of the night of 2026-10-16: backlight on at 0.97 s (2.02 s), first image at 4.78-4.84 s (5.84-5.90 s), Wi-Fi at 9.38-9.44 s (10.37-10.43 s); every other step keeps its length, and the screen comes back on with its picture (seen by the author).
 - **The clock can show up late**: the board has no real-time clock, so the time is only known once the Wi-Fi is up and the time is received (10 s or more after power-up); the first image comes before it.
 - **Power at the USB input**: 1.96 W on the home screen at the usual brightness, 3.14 W at 100 %, 1.24 W with the backlight off. Popups and pages cost nothing measurable.
+- **Precise USB power measurement (2026-10-19, FNIRSI FNB-58)**: measured over USB HID at 100 samples/s on the home screen at default brightness (~60 %): **5.028 V** (5.010–5.044 V), **309.8 mA** (278.1–323.3 mA), average power **1.558 W** (p95 1.569 W, max 1.626 W). Sound playback (TTS announcement) adds about 0.1 to 0.2 W peak.
 
 ## Hardware
 
@@ -89,7 +90,7 @@ Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.
 | Display | 7 inches, 1024×600, landscape panel, EK79007 controller over MIPI-DSI (2 lanes), ESPHome model `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B` |
 | Touch | GT911, I2C at 0x5D, polled every 50 ms (no interrupt) |
 | Backlight | AP3032 LED driver, analog dimming from GPIO 32 (LEDC, 5 kHz, inverted) |
-| Sound out | ES8311 DAC (0x18), NS4150B amplifier enabled by GPIO 53, a two-pin speaker connector |
+| Sound out | ES8311 DAC (0x18), NS4150B amplifier enabled by GPIO 53, a two-pin speaker connector (validated with the official Waveshare pack speaker, clean playback up to 75% / 0 dB) |
 | Microphones | two, through an ES7210 ADC (0x40), 16 kHz / 16-bit like the Tab5 |
 | Wi-Fi and Bluetooth | ESP32-C6-MINI-1 over SDIO (ESP-Hosted), reset on GPIO 54; Wi-Fi in 2.4 GHz only |
 | ESP32-C6 serial connector | « C6-UART », 4 pins (TXD, RXD, GND, IO9; IO9 to ground = download mode), to flash the C6 directly |
@@ -98,7 +99,7 @@ Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.
 | Clock backup cell | 1220 holder on the P4's own clock, charged by the board: rechargeable ML1220 only, never a CR1220 (not used by this firmware) |
 | Free GPIO | 17, on two 12-pin PH2.0 headers: GPIO 2-5, 28-31, 34 and 36 on P3, GPIO 46-52 on P1 |
 | Not on this board | battery gauge, motion sensor, clock chip, I/O expanders, headphone jack |
-| Also on the board, not used | microSD slot, MIPI-CSI camera connector, USB-A, I2C / UART / CAN / RS485 connectors, battery input |
+| Also on the board, not used | microSD slot, MIPI-CSI camera connector, USB-A, I2C / UART / RS485 connectors, CAN bus (TJA1051T/3 transceiver on GPIO 21 RX / GPIO 22 TX with 120 Ω termination jumper H5), battery input |
 
 The Wi-Fi band, the power, USB, coin-cell and free-pin rows come from Waveshare's schematic and wiki; they were not tried on the author's board.
 
@@ -189,7 +190,7 @@ Ce qui s'est passé sur la carte de l'auteur à son arrivée (14/10/2026), dans 
 | Tactile presque mort : un appui reconnu en 5 minutes, le curseur de luminosité figé | la dalle est montée à l'envers par rapport au défaut du pilote, et le contrôleur tactile n'était jamais réinitialisé (le code de Waveshare dit que sa broche de reset n'est pas reliée) | `rotation: 180` dans LVGL, le GT911 inversé en X et en Y, et son reset sur GPIO 23, comme dans les autres configurations publiques qui marchent sur cette carte : depuis, chaque appui tombe au bon endroit |
 | Le premier son n'était qu'un claquement | le micro gardait le bus I2S que le haut-parleur partage avec lui ; la cause exacte du claquement n'a pas été établie | le haut-parleur à 48 kHz comme les autres configurations, la règle du bus partagé du Tab5 ([ADR-0010](decisions/0010-shared-i2s-bus-mic-speaker.md)) : le son marche depuis ce soir-là |
 | Le haut-parleur saturait complètement au volume 100 % (17/10/2026) | le pilote ES8311 d'ESPHome écrit le volume tel quel dans le registre de volume du DAC : 0,75 = 0 dB, 1,0 = +32 dB de gain numérique (l'ES8388 du Tab5 s'arrête à 0 dB) | `volume_max: 75%` sur le lecteur de la 7B : 100 % à l'écran ou dans Home Assistant vaut maintenant 0 dB ; à l'oreille, 100 % et 80 % saturaient, 75 % était propre |
-| Le volume ne s'entendait que dans le dernier tiers de son curseur (18/10/2026) | le registre de l'ES8311 donne 0,5 dB par pas (volume × 255, 0xBF = 0 dB) : avec le `volume_min` à 0 par défaut, 20 % valait ≈ −76 dB, muet alors que le lecteur disait « playing » | `volume_min: 40%` : le bas du curseur vaut ≈ −44 dB, le haut reste à 0 dB. Pas encore essayé à l'oreille |
+| Le volume ne s'entendait que dans le dernier tiers de son curseur (18/10/2026) | le registre de l'ES8311 donne 0,5 dB par pas (volume × 255, 0xBF = 0 dB) : avec le `volume_min` à 0 par défaut, 20 % valait ≈ −76 dB, muet alors que le lecteur disait « playing » | `volume_min: 40%` : le bas du curseur vaut ≈ −44 dB, le haut reste à 0 dB. Testé à l'oreille le 19/10/2026 avec le haut-parleur du pack officiel : son très propre, aucune distorsion, progression bien équilibrée |
 | Redémarrages en boucle après un redémarrage logiciel (16/10/2026, après quelques redémarrages depuis Home Assistant), Wi-Fi jamais revenu, puis mode sans échec ; seule une coupure débloquait | le lien SDIO avec le C6 tombait, et le mauvais état, côté P4, survivait à `esp_restart()`, qui ne remet à zéro que les CPU | chaque redémarrage logiciel finit par un reset de tout le cœur numérique (`Tab5/ecran/tab5_lien_c6.cpp`, [dépannage](troubleshooting.md#waveshare-7b--boucle-de-redémarrages-après-un-redémarrage-logiciel-lien-wi-fi-absent-16102026)) |
 | La carte redémarrait toutes les 15 minutes tant que Home Assistant ne la connaissait pas | le `reboot_timeout` par défaut d'ESPHome sans client de l'API (premier firmware d'essai) | le firmware complet attend 60 minutes, comme le Tab5 |
 
@@ -202,7 +203,7 @@ Deux choses apprises en route :
 
 - **Pas vérifié sur la carte :** le micro et le mot d'activation, le popup Caméras (décodage JPEG), une coupure de courant sans réseau, le firmware publié par le projet (page d'installation, puis une mise à jour depuis Home Assistant).
 - **Pas encore adapté au 1024×600 :** en allemand et en turc, « Tout fermer » du popup Volets (« Alle schließen », « Tümünü kapat » : 140 et 143 px dans une police qui ne rétrécit pas avec l'écran) dépasse de son bouton de 134 px. Les autres popups suivent l'écran, la page « Bilan » du popup Énergie comprise depuis le 18/10/2026. Pour chaque écran, le rendu compte à chaque changement ce qui dépasse de sa zone : à peu près autant que sur le Tab5 lui-même, surtout dans les popups Volets, Réveil et Caméras, qui font pareil là-bas.
-- Signalé par d'autres sur cette carte, puis vu ici aussi : une faible lueur avec le rétroéclairage à 0 % (l'écran éteint est désormais une dalle noire, [ADR-0064](decisions/0064-screen-really-off-night.md)), et un haut-parleur qui sature (ci-dessous).
+- Signalé par d'autres sur cette carte, puis vu ici aussi : une faible lueur avec le rétroéclairage à 0 % (l'écran éteint est désormais une dalle noire, [ADR-0064](decisions/0064-screen-really-off-night.md)). La saturation du haut-parleur rapportée au début a été totalement réglée par le `volume_max: 75%` (gain unitaire à 0 dB).
 - La version du firmware de la puce Wi-Fi C6 est illisible sur cette carte (« Tab5 Version du C6 » reste inconnue depuis le 14/10/2026, alors que le Tab5 répond 1.4.1) : son firmware d'usine est peut-être plus ancien que la bibliothèque ESP-Hosted du P4 (2.12.12 avec ESPHome 2026.9.1). Le mettre à jour est possible, depuis ESPHome (`update:` avec `platform: esp32_hosted`, le firmware envoyé par le lien SDIO) ou par le port série du C6 lui-même sur le connecteur H4 (TXD, RXD, GND, IO9 = BOOT). **Pas fait, par choix :** une mise à jour ratée laisserait l'écran sans Wi-Fi, et le Wi-Fi marche tel quel. Comme la demande restait sans réponse et figeait l'écran 1 s à chaque fois (3 à 4 fois après chaque démarrage, mesuré le 16/10/2026), la 7B ne la fait plus : le capteur dit « inconnue » tout de suite (`carte_c6_version: "false"` dans `Tab5/paquets/carte-waveshare-7b.yaml`, à remettre à `"true"` après une mise à jour du C6).
 
 ## Mesuré sur la carte (16/10/2026)
@@ -213,6 +214,7 @@ Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md
 - **Une seconde de moins à chaque démarrage (17/10/2026)** : le démarrage attendait 1 s avant l'écran, une attente faite pour le Tab5, dont le reset de l'écran passe par un expandeur ; la 7B n'en a pas, le reset de sa dalle est une broche du P4 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms: "0"`). Sur 10 redémarrages par le bouton « Redémarrage Système », contre les 10 de la nuit du 16/10/2026 : rétroéclairage allumé à 0,97 s (2,02 s), première image à 4,78-4,84 s (5,84-5,90 s), Wi-Fi à 9,38-9,44 s (10,37-10,43 s) ; les autres étapes gardent leur durée, et l'écran revient avec son image (vu par l'auteur).
 - **L'horloge peut s'afficher en retard** : la carte n'a pas d'horloge temps réel, l'heure n'est connue qu'une fois le Wi-Fi monté et l'heure reçue (10 s ou plus après la mise sous tension) ; la première image arrive avant.
 - **Puissance à l'entrée USB** : 1,96 W sur l'accueil à la luminosité habituelle, 3,14 W à 100 %, 1,24 W rétroéclairage éteint. Les popups et les pages ne coûtent rien de mesurable.
+- **Mesure précise à l'USB (19/10/2026, multimètre FNIRSI FNB-58)** : mesuré en liaison directe HID à 100 éch/s sur l'écran d'accueil à luminosité par défaut (~60 %) : **5,028 V** (5,010–5,044 V), **309,8 mA** (278,1–323,3 mA), puissance moyenne **1,558 W** (p95 1,569 W, max 1,626 W). La lecture audio (annonce TTS) ajoute environ 0,1 à 0,2 W crête.
 
 ## Matériel
 
@@ -223,7 +225,7 @@ Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md
 | Écran | 7 pouces, 1024×600, dalle en paysage, contrôleur EK79007 en MIPI-DSI (2 voies), modèle ESPHome `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B` |
 | Tactile | GT911, I2C en 0x5D, interrogé toutes les 50 ms (sans interruption) |
 | Rétroéclairage | pilote de LED AP3032, gradation analogique depuis GPIO 32 (LEDC, 5 kHz, inversé) |
-| Son | DAC ES8311 (0x18), ampli NS4150B activé par GPIO 53, un connecteur deux broches pour le haut-parleur |
+| Son | DAC ES8311 (0x18), ampli NS4150B activé par GPIO 53, un connecteur deux broches pour le haut-parleur (validé avec le haut-parleur officiel du pack Waveshare, son très propre jusqu'à 75% / 0 dB) |
 | Micros | deux, par un ADC ES7210 (0x40), 16 kHz / 16 bits comme le Tab5 |
 | Wi-Fi et Bluetooth | ESP32-C6-MINI-1 en SDIO (ESP-Hosted), reset sur GPIO 54 ; Wi-Fi en 2,4 GHz seulement |
 | Connecteur série de l'ESP32-C6 | « C6-UART », 4 broches (TXD, RXD, GND, IO9 ; IO9 à la masse = mode téléchargement), pour flasher le C6 directement |
@@ -232,7 +234,7 @@ Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md
 | Pile de l'horloge | support 1220 sur l'horloge propre du P4, rechargé par la carte : ML1220 rechargeable seulement, jamais une CR1220 (pas utilisée par ce firmware) |
 | GPIO libres | 17, sur deux connecteurs PH2.0 de 12 broches : GPIO 2-5, 28-31, 34 et 36 sur P3, GPIO 46-52 sur P1 |
 | Absent de cette carte | jauge de batterie, capteur de mouvement, puce d'horloge, expandeurs d'E/S, prise casque |
-| Présent, pas utilisé | lecteur microSD, connecteur de caméra MIPI-CSI, USB-A, connecteurs I2C / UART / CAN / RS485, entrée batterie |
+| Présent, pas utilisé | lecteur microSD, connecteur de caméra MIPI-CSI, USB-A, connecteurs I2C / UART / RS485, bus CAN (émetteur-récepteur TJA1051T/3 sur GPIO 21 RX / GPIO 22 TX avec cavalier de terminaison 120 Ω H5), entrée batterie |
 
 La bande du Wi-Fi et les lignes alimentation, USB, pile et GPIO libres viennent du schéma et du wiki de Waveshare ; elles n'ont pas été essayées sur la carte de l'auteur.
 
