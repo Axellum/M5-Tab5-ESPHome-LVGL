@@ -660,6 +660,48 @@ MAISON_LAMPE = (104, 412)
 MAISON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
                      Service("tab5_maj_emplacements", (("payload", build_etats_tuiles(RETIREES)),)))
 
+# Tuiles coupées (ADR-0066, lot B, 18/10/2026) : le Salon (pièce 0, l'accueil) avec 6, 8, 11
+# et 20 éléments, tous les types ; au-delà de cinq, les dernières places de la bande du bas
+# sont coupées en deux (haut / bas) puis en quatre (table de l'ADR, tab5_disposition.h). En
+# mode HA (cartes et cases), à 8 aussi en mode météo (une place coupée n'a pas d'épaules),
+# et dans le popup Maison (cinq lignes par colonne et par page : à 11, trois pages).
+# `fermer` : le mode météo (« HA ») s'il y était, puis le Salon de la démo (définitions et
+# états ; aucune clim du blueprint parmi ses tuiles).
+ELEMENTS_COUPES = (
+    Tuile("lum", "Plafonnier", "plafonnier", "d", etat="on", valeur="200"),
+    Tuile("lum", "Lampe d'ambiance", "canape", "dc", etat="on", valeur="180", couleur="FF8C1A"),
+    Tuile("vol", "Volet du salon", "volet", etat="open", valeur="45"),
+    Tuile("med", "Télévision", "tv", "t"),
+    Tuile("act", "Soirée cinéma", "scene", etat="2026-06-15T20:45:00+00:00"),
+    Tuile("cap", "Température", "thermometre", complement="°C", etat="21.4", valeur="21.4"),
+    Tuile("cap", "Humidité", "humidite", complement="%", etat="48", valeur="48"),
+    Tuile("bin", "Fenêtre", "fenetre", complement="window", etat="on"),
+    Tuile("int", "Prise du bureau", "prise", etat="on"),
+    Tuile("lum", "Lampadaire", "lampadaire"),
+    Tuile("cap", "Consommation", "energie", complement="W", etat="1250", valeur="1250"),
+    Tuile("bin", "Mouvement", "mouvement", complement="motion"),
+    Tuile("med", "Enceinte", "enceinte", etat="playing"),
+    Tuile("int", "Ventilateur", "ventilateur"),
+    Tuile("lum", "Guirlande", "guirlande", "dc", etat="on", valeur="255", couleur="4B0082"),
+    Tuile("vol", "Store", "store", etat="closed", valeur="0"),
+    Tuile("cap", "CO2", "co2", complement="ppm", etat="640", valeur="640"),
+    Tuile("bin", "Porte d'entrée", "porte", complement="door"),
+    Tuile("act", "Je pars", "script", "k"),
+    Tuile("cli", "Clim du salon", "clim", etat="cool", valeur="23.5"),
+)
+assert len(ELEMENTS_COUPES) == 20 and not any("m" in t.options for t in ELEMENTS_COUPES)
+NOMBRES_COUPES = (6, 8, 11, 20)
+
+
+def salon_de(n: int) -> tuple:
+    """Définitions et états d'une maison dont le Salon a les `n` premiers ELEMENTS_COUPES."""
+    maison = {**PIECES, 0: Piece(PIECES[0].nom, dict(enumerate(ELEMENTS_COUPES[:n])))}
+    return (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(maison, RANGEE, REGLABLES)),)),
+            Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({0: maison[0]})),)))
+
+
+SALON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
+                    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({0: PIECES[0]})),)))
 # Huit pièces (ADR-0066, lot A) : la maison de la démo et trois pièces de plus (Garage,
 # Buanderie, Atelier ; PIECES_HUIT), poussées avec « pn|8 », puis leurs états. Captures
 # « pieces-8-… » : le mode HA sur l'Atelier (pièce 8 : un geste vers la droite depuis la
@@ -691,6 +733,18 @@ NEUF_CLIMS = HUIT_PIECES + (Service("tab5_maj_emplacements", (("payload", "".joi
 OUBLIER_NEUF_CLIMS = (Toucher(*BOUTON_HA), VERS_LA_GAUCHE, Service("tab5_maj_emplacements", (
     ("payload", "".join(f"p{r}|||0;" for r in range(len(PAGE_DE_LA_PIECE), PIECES_HUIT_NOMBRE))
      + build_climat_pieces(PIECES)),))) + CINQ_PIECES
+# Les deux lots ensemble (ADR-0066, A et B) : après HUIT_PIECES, le Garage (pièce 6) reçoit
+# les onze premiers ELEMENTS_COUPES (places coupées en deux et en quatre). Captures
+# « pieces-8-…-garage-11-elements » : en mode HA (trois gestes vers la droite depuis le
+# Salon, en rouleau) et sur sa page de la météo, que dessinent les cartes du mode HA : ses
+# cases y paraissent aussi. `fermer` comme les autres « pieces-8-… » (CINQ_PIECES).
+GARAGE_ONZE = {**PIECES_HUIT, 5: Piece(PIECES_HUIT[5].nom, dict(enumerate(ELEMENTS_COUPES[:11])))}
+GARAGE_COUPE = (
+    Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(GARAGE_ONZE, RANGEE, REGLABLES,
+                                                                  nombre=PIECES_HUIT_NOMBRE)),)),
+    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({5: GARAGE_ONZE[5]})),)),
+)
+assert PIECES_HUIT[5].climat is None, "le Garage n'a pas de climat à garder"
 # Popup Maison, page suivante : un geste dans le corps (sur les lignes), arrêté au popup.
 MAISON_PAGE_SUIVANTE = Glisser(1150, 400, 450, 400, dans_popup=True)
 
@@ -1172,6 +1226,11 @@ ECRANS: tuple[Ecran, ...] = (
     # Mode HA : les cartes de chaque pièce (remplace « accueil-interrupteurs », les cinq
     # cartes fixes d'avant la 3.2, devenu « accueil-ha-piece-1 »).
     *ecrans_des_pieces(PIECES),
+    # Tuiles coupées (ADR-0066) : le Salon à 6, 8, 11 et 20 éléments, en mode HA ; à 8, la
+    # météo (places coupées sans épaules).
+    *(Ecran(f"accueil-ha-{n}-elements", salon_de(n) + (Toucher(*BOUTON_HA),), (Toucher(*BOUTON_HA),) + SALON_DE_LA_DEMO)
+      for n in NOMBRES_COUPES),
+    Ecran("accueil-8-elements-meteo", salon_de(8), SALON_DE_LA_DEMO),
     Ecran("accueil-mode-discussion", (Toucher(*DISCU),), (Toucher(*DOMO),)),
     Ecran("accueil-vigilance",
           (Service("tab5_maj_alerte_meteo_france", (("payload", VIGILANCE_ORANGE),)), _panneau(2)),
@@ -1373,10 +1432,20 @@ ECRANS: tuple[Ecran, ...] = (
     # Maison qui reste derrière : la lampe d'ambiance du Salon (variateur), ancrée sur la
     # pastille de sa ligne, sans le lien « Maison ». Toucher ailleurs ne ferme que la roue.
     Ecran("maison-roue", (Aller("Maison"), Long(*MAISON_LAMPE)), (ROUE_FERMER,)),
+    # Un Salon de onze éléments (ADR-0066) : trois pages de cinq lignes, « 1–5 » puis « 6–10 ».
+    Ecran("maison-11-elements", salon_de(11) + (Aller("Maison"),), SALON_DE_LA_DEMO),
+    Ecran("maison-11-elements-page-2", salon_de(11) + (Aller("Maison"), MAISON_PAGE_SUIVANTE), SALON_DE_LA_DEMO),
+
     # Huit pièces (ADR-0066) : voir HUIT_PIECES.
     Ecran("pieces-8-ha-atelier", HUIT_PIECES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE),
           (Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + CINQ_PIECES),
     Ecran("pieces-8-meteo-garage", HUIT_PIECES + (VERS_LA_GAUCHE,) * 3, (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
+    # Les deux lots ensemble : voir GARAGE_COUPE.
+    Ecran("pieces-8-ha-garage-11-elements",
+          HUIT_PIECES + GARAGE_COUPE + (Toucher(*BOUTON_HA),) + (HA_VERS_LA_DROITE,) * 3,
+          (Toucher(*BOUTON_HA),) + (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
+    Ecran("pieces-8-meteo-garage-11-elements", HUIT_PIECES + GARAGE_COUPE + (VERS_LA_GAUCHE,) * 3,
+          (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
     Ecran("pieces-8-lumieres", HUIT_PIECES + (Aller("Lumières"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
     Ecran("pieces-8-volets", HUIT_PIECES + (Aller("Volet"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
     Ecran("pieces-8-maison", HUIT_PIECES + (Aller("Maison"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),

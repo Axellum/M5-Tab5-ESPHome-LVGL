@@ -20,7 +20,8 @@
  * @architecture_constraint Deux clims ne se mélangent jamais. La carte de l'accueil montre
  *       la clim du blueprint (ses globals clim_*, que tab5_maj_clim écrit) ; le popup
  *       montre la « clim affichée » (s_vue) : celle du blueprint, ou une clim de tuile
- *       (table s_ct, en PSRAM), ou de pièce (mêmes cases, après celles des tuiles). Un
+ *       (table s_ct, une case en PSRAM par clim reçue), ou de pièce (mêmes cases, après celles
+ *       des tuiles). Un
  *       retour de HA pour l'une ne touche jamais les widgets de l'autre ; les gestes du
  *       popup écrivent l'état de la clim affichée et partent à son emplacement (« clim »,
  *       « tRT » ou « cpR »).
@@ -29,8 +30,10 @@
  *                helpers partagés entre unités sont déclarés dans tab5_internal.h.
  * @memory_constraint Pas de std::string dans une boucle de parsing : découper un char* en place.
  *       `split_fields()` (tab5_core.h) garde les champs vides ; `strtok_r` les fusionne.
- *       Les clims des tuiles et des pièces : 30 cases en PSRAM, allouées à la première clé
- *       cr/ce. Réglages et état lus par clim_reglages_lire / clim_etat_lire, avec leurs
+ *       Les clims des tuiles et des pièces : 210 cases possibles (10 pièces × 20 éléments,
+ *       ADR-0066, puis une par pièce), chacune allouée en PSRAM à sa première clé cr/ce : rien
+ *       pour un élément qui n'est pas une clim. Réglages et état lus par clim_reglages_lire /
+ *       clim_etat_lire, avec leurs
  *       structures (Tab5/socle/tab5_parse.h, lot F, testés sur PC).
  */
 #include "tab5_custom.h"
@@ -39,6 +42,7 @@
 #include "tab5_modele_ha.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <esp_attr.h>
 #include <esp_heap_caps.h>
 #include <algorithm>
 #include <cmath>
@@ -80,7 +84,7 @@ float s_clim_piece = NAN;
 // ne pas les renommer sans lui (tests/test_clim.py).
 constexpr char kCleReglagesTuile[] = "cr";
 constexpr char kCleEtatTuile[] = "ce";
-// kPiecesMax et kTuiles : tab5_geometrie.h. Modes bornés à kModeMax (tab5_parse.h).
+// kPiecesMax et kTuilesMax : tab5_geometrie.h. Modes bornés à kModeMax (tab5_parse.h).
 
 struct ClimTuile {
     ClimReglages reglages;  // reglages.recu : crRT reçue, l'appui de la tuile ouvre le popup
@@ -93,15 +97,16 @@ struct ClimTuile {
 // celles des tuiles ; emplacement de ses commandes « cpR » (« pR » est déjà « Pièce : tout
 // éteindre »).
 constexpr char kPrefixePiece = 'p';
-constexpr int kCasesTuiles = kPiecesMax * kTuiles;
+constexpr int kCasesTuiles = kPiecesMax * kTuilesMax;
 constexpr int kCases = kCasesTuiles + kPiecesMax;
 
-// kCases cases (60 depuis l'ADR-0066 : 10 pièces × 5 tuiles + 10 pièces, deux fois les
-// ≈ 5,4 Ko des 30 d'avant) en PSRAM, allouées à la première clé cr/ce : rien tant qu'aucune
-// tuile ni aucune pièce n'a sa clim, rien en RAM interne. Pas d'EXT_RAM_BSS_ATTR : ces
-// cases ont des valeurs initiales (constructeurs), et une BSS externe n'en garde aucune.
-ClimTuile* s_ct = nullptr;
-// Clim affichée par le popup : case r * kTuiles + t d'une tuile, kCasesTuiles + r d'une
+// Une case (≈ 180 octets) par clim de tuile ou de pièce, allouée en PSRAM à sa première clé
+// cr/ce (ADR-0066 : dix pièces de vingt éléments, la table entière ferait ≈ 37 Ko pour
+// quelques clims) ; rien tant qu'aucune n'en a, rien en RAM interne. La table des pointeurs
+// (≈ 840 octets) en BSS externe : remise à zéro au démarrage, nullptr partout (une case, elle,
+// a des valeurs initiales : construite à son allocation, jamais en BSS externe).
+EXT_RAM_BSS_ATTR ClimTuile* s_ct[kCases];
+// Clim affichée par le popup : case r * kTuilesMax + t d'une tuile, kCasesTuiles + r d'une
 // pièce ; -1 = celle du blueprint.
 int s_vue = -1;
 char s_vue_cle[4] = "";  // « tRT » de la tuile affichée, « cpR » de la pièce
@@ -116,26 +121,22 @@ Attente s_attente;
 
 ClimTuile* case_clim(int i, bool creer) {
     if (i < 0 || i >= kCases) return nullptr;
-    if (s_ct == nullptr) {
+    if (s_ct[i] == nullptr) {
         if (!creer) return nullptr;
-        const size_t octets = sizeof(ClimTuile) * kCases;
-        void* p = heap_caps_malloc(octets, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        if (p == nullptr) p = heap_caps_malloc(octets, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+        void* p = heap_caps_malloc(sizeof(ClimTuile), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (p == nullptr) p = heap_caps_malloc(sizeof(ClimTuile), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
         if (p == nullptr) {
-            ESP_LOGE("tab5.clim", "Clims des tuiles : %u octets introuvables", static_cast<unsigned>(octets));
+            ESP_LOGE("tab5.clim", "Clim de tuile : %u octets introuvables", static_cast<unsigned>(sizeof(ClimTuile)));
             return nullptr;
         }
-        ClimTuile* table = static_cast<ClimTuile*>(p);
-        for (int k = 0; k < kCases; k++) new (&table[k]) ClimTuile();
-        s_ct = table;
-        ESP_LOGI("tab5.clim", "Clims des tuiles : %u octets", static_cast<unsigned>(octets));
+        s_ct[i] = new (p) ClimTuile();
     }
-    return &s_ct[i];
+    return s_ct[i];
 }
 
 ClimTuile* tuile_clim(int r, int t, bool creer) {
-    if (r < 0 || r >= kPiecesMax || t < 0 || t >= kTuiles) return nullptr;
-    return case_clim(r * kTuiles + t, creer);
+    if (r < 0 || r >= kPiecesMax || t < 0 || t >= kTuilesMax) return nullptr;
+    return case_clim(r * kTuilesMax + t, creer);
 }
 
 ClimTuile* piece_clim(int r, bool creer) {
@@ -149,15 +150,15 @@ ClimTuile* ref_clim(int r, int t) { return t < 0 ? piece_clim(r, false) : tuile_
 // Emplacement des commandes de la clim de la pièce R : « cpR » (modele_ha::clim_piece_cle).
 void cle_piece(int r, char out[4]) { std::memcpy(out, modele_ha::clim_piece_cle(r).s, 4); }
 
-bool vue_tuile() { return s_vue >= 0 && s_ct != nullptr; }
-const ClimReglages& vue_reglages() { return vue_tuile() ? s_ct[s_vue].reglages : s_clim; }
+bool vue_tuile() { return s_vue >= 0 && s_vue < kCases && s_ct[s_vue] != nullptr; }
+const ClimReglages& vue_reglages() { return vue_tuile() ? s_ct[s_vue]->reglages : s_clim; }
 // Pièce de la clim affichée : celle de sa tuile, ou la pièce elle-même (ADR-0040) ; -1 pour
 // la clim du blueprint. Tuile de la clim affichée : -1 pour une clim de pièce.
 int vue_piece_index() {
     if (!vue_tuile()) return -1;
-    return s_vue >= kCasesTuiles ? s_vue - kCasesTuiles : s_vue / kTuiles;
+    return s_vue >= kCasesTuiles ? s_vue - kCasesTuiles : s_vue / kTuilesMax;
 }
-int vue_tuile_index() { return (vue_tuile() && s_vue < kCasesTuiles) ? s_vue % kTuiles : -1; }
+int vue_tuile_index() { return (vue_tuile() && s_vue < kCasesTuiles) ? s_vue % kTuilesMax : -1; }
 
 // Champs de l'état de la clim affichée : ceux du blueprint sont ses globals (pointeurs
 // posés par tab5_clim_ui), ceux d'une tuile sa case de la table.
@@ -165,7 +166,7 @@ enum class ChampClim : uint8_t { MODE, PRESET, VENTILATION, OSCILLATION };
 
 std::string& champ_vue(ChampClim c) {
     if (vue_tuile()) {
-        ClimEtat& e = s_ct[s_vue].etat;
+        ClimEtat& e = s_ct[s_vue]->etat;
         switch (c) {
             case ChampClim::MODE: return e.mode;
             case ChampClim::PRESET: return e.preset;
@@ -193,7 +194,7 @@ std::string& champ_vue(ChampClim c) {
 // Consigne sur laquelle les boutons − / + du popup comptent : clim_target_temp pour la
 // clim du blueprint (comme sa carte), la consigne reçue (ou choisie) pour une tuile.
 float vue_consigne_base() {
-    if (vue_tuile()) return s_ct[s_vue].etat.consigne;
+    if (vue_tuile()) return s_ct[s_vue]->etat.consigne;
     return g_clim_ui.consigne_bp != nullptr ? *g_clim_ui.consigne_bp : NAN;
 }
 
@@ -372,8 +373,8 @@ void carrousel_pastilles();
 // Tout le popup d'après la clim affichée (elle vient de changer) : réglages, cible,
 // pièce, couleurs, pastille du carrousel.
 void popup_peindre() {
-    const float consigne = vue_tuile() ? s_ct[s_vue].etat.consigne : s_clim_consigne;
-    const float piece = vue_tuile() ? s_ct[s_vue].etat.piece : s_clim_piece;
+    const float consigne = vue_tuile() ? s_ct[s_vue]->etat.consigne : s_clim_consigne;
+    const float piece = vue_tuile() ? s_ct[s_vue]->etat.piece : s_clim_piece;
     popup_reglages_ui(consigne);
     popup_consigne_ui(consigne, false);
     popup_piece_ui(piece);
@@ -410,7 +411,7 @@ void carte_consigne_ui(float t) {
 void consigne_geste(float t) {
     const ClimUI& u = g_clim_ui;
     if (vue_tuile()) {
-        s_ct[s_vue].etat.consigne = t;
+        s_ct[s_vue]->etat.consigne = t;
         std::memcpy(s_attente.cle, s_vue_cle, sizeof(s_attente.cle));
         s_attente.valeur = t;
         popup_consigne_ui(t, false);
@@ -471,13 +472,13 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
     if (!reglages && !etat) return false;
     // « crpR » / « cepR » : la clim de la pièce R (ADR-0040) ; « crRT » / « ceRT » : celle
     // de la tuile tRT. Un firmware d'avant l'ADR-0040 ignore « p » (chiffre attendu). Pièce
-    // R de 0 à 9 (ADR-0066 ; modele_ha::piece_index), tuile T de 0 à 4.
+    // R de 0 à 9 (ADR-0066 lot A : modele_ha::piece_index), élément T = 0 … 9 puis a … j
+    // (lot B : tuile_index) ; un firmware d'avant l'ADR-0066 ignore « a » … « j ».
     const bool piece = cle[2] == kPrefixePiece;
-    int r = 0;
+    int r = 0, t = -1;
     if (!modele_ha::piece_index(piece ? cle[3] : cle[2], r)) return false;
-    if (!piece && (cle[3] < '0' || cle[3] > '4')) return false;
-    const int t = piece ? -1 : cle[3] - '0';
-    const int i = piece ? kCasesTuiles + r : r * kTuiles + t;
+    if (!piece && (!modele_ha::tuile_index(cle[3], t) || t >= kTuilesMax)) return false;
+    const int i = piece ? kCasesTuiles + r : r * kTuilesMax + t;
     ClimTuile* c = case_clim(i, true);
     if (c == nullptr) return true;  // pas de mémoire : ignorée (journal de case_clim)
     vue_verifier();
@@ -520,7 +521,7 @@ bool clim_tuile_connue(int r, int t) {
 
 bool clim_afficher_tuile(int r, int t) {
     if (!clim_tuile_connue(r, t)) return false;
-    s_vue = r * kTuiles + t;
+    s_vue = r * kTuilesMax + t;
     std::memcpy(s_vue_cle, modele_ha::tuile_cle(r, t).s, sizeof(s_vue_cle));
     popup_peindre();
     return true;
@@ -540,7 +541,7 @@ void clim_tuile_oublier(int r, int t) {
     if (std::strcmp(s_attente.cle, modele_ha::tuile_cle(r, t).s) == 0) s_attente = Attente{};
     roue_clim_changee();
     reglables_clim_changee();  // la clim « d'ici » de la tuile − / + a pu changer
-    if (s_vue != r * kTuiles + t) {
+    if (s_vue != r * kTuilesMax + t) {
         carrousel_pastilles();  // une page de moins dans le carrousel
         return;
     }
@@ -574,7 +575,7 @@ void clim_ref_pas(const ClimRef& ref, int sens) {
     if (ref.t < 0) cle_piece(ref.r, s_attente.cle);
     else std::memcpy(s_attente.cle, modele_ha::tuile_cle(ref.r, ref.t).s, sizeof(s_attente.cle));
     s_attente.valeur = v;
-    const int i = ref.t < 0 ? kCasesTuiles + ref.r : ref.r * kTuiles + ref.t;
+    const int i = ref.t < 0 ? kCasesTuiles + ref.r : ref.r * kTuilesMax + ref.t;
     if (vue_tuile() && s_vue == i) popup_consigne_ui(v, false);
     if (g_clim_ui.debounce_tuile != nullptr) g_clim_ui.debounce_tuile();
     reglables_clim_changee();
@@ -673,8 +674,9 @@ std::string clim_tuile_attente_texte() { return clim_consigne_texte(s_attente.va
 namespace {
 
 // Toutes les clims possibles : celle du blueprint, une par tuile et une par pièce (la clim
-// de la section « Pièce R » du blueprint, ADR-0040), dix pièces au plus (ADR-0066).
-constexpr int kClimsConnues = 1 + kPiecesMax * kTuiles + kPiecesMax;
+// de la section « Pièce R » du blueprint, ADR-0040), dix pièces au plus de vingt éléments
+// (ADR-0066).
+constexpr int kClimsConnues = 1 + kPiecesMax * kTuilesMax + kPiecesMax;
 
 // La liste entière, que lisent la clim d'ici et la famille « Clims ▸ » de la roue
 // (clims_toutes) : statique, pas sur la pile de la boucle (kClimsConnues ClimRef de trois
@@ -764,15 +766,17 @@ int clims_enumerer(ClimRef* out, int max) {
     // 2. Les clims des tuiles cli sans l'option m (ADR-0027), réglages reçus. Une pièce
     // R ≥ N (nombre de pièces choisi dans HA, ADR-0066) n'existe pas à l'écran.
     const int nb_pieces = tuiles_pieces_nombre();
-    if (s_ct != nullptr) {
-        for (int r = 0; r < nb_pieces; r++)
-            for (int t = 0; t < kTuiles; t++)
-                if (s_ct[r * kTuiles + t].reglages.recu) ajouter(r, t, r, s_ct[r * kTuiles + t].reglages.nom);
-        // 3. La clim de chaque pièce (section « Pièce R » du blueprint, ADR-0040), réglages
-        // reçus (crpR) ; t = -1. Après les tuiles : la même clim posée aussi sur une tuile de
-        // la pièce (même nom) n'a qu'une page, celle de la tuile.
-        for (int r = 0; r < nb_pieces; r++)
-            if (s_ct[kCasesTuiles + r].reglages.recu) ajouter(r, -1, r, s_ct[kCasesTuiles + r].reglages.nom);
+    for (int r = 0; r < nb_pieces; r++)
+        for (int t = 0; t < kTuilesMax; t++) {
+            const ClimTuile* c = tuile_clim(r, t, false);
+            if (c != nullptr && c->reglages.recu) ajouter(r, t, r, c->reglages.nom);
+        }
+    // 3. La clim de chaque pièce (section « Pièce R » du blueprint, ADR-0040), réglages
+    // reçus (crpR) ; t = -1. Après les tuiles : la même clim posée aussi sur une tuile de
+    // la pièce (même nom) n'a qu'une page, celle de la tuile.
+    for (int r = 0; r < nb_pieces; r++) {
+        const ClimTuile* c = piece_clim(r, false);
+        if (c != nullptr && c->reglages.recu) ajouter(r, -1, r, c->reglages.nom);
     }
     return n;
 }
