@@ -132,6 +132,11 @@ NON_MONTREES = {
     "pieces-8-maison-page-2": "pieces-8-maison montre la même fenêtre, page suivante (house.md)",
     "pieces-8-roue": "roue-navigation-pieces montre la même famille ; « Suite » est décrit dans home.md",
     "pieces-8-roue-suite": "pieces-8-roue montre la même roue, page « Retour »",
+    # Neuf clims (relecture de l'ADR-0066, 18/10/2026) : contrôle du rendu, la clim d'ici au-delà
+    # des huit pages du carrousel ; la tuile − / + et la roue d'une clim sont décrites dans home.md.
+    "pieces-8-clim-atelier": "reglables-clims-n-piece-4 montre la même tuile − / + sur la clim d'une pièce",
+    "pieces-8-clim-atelier-roue": "roue-clim-temperature montre la même roue, sur la clim d'une pièce",
+    "pieces-8-clim-atelier-clims": "roue-clim-temperature-clims montre la même famille « Clims ▸ »",
     # Lumières et Volets en pages (ADR-0046, 09/10/2026) : décrits dans lights.md et
     # shutters.md ; images à tirer du rendu de la PR, puis citées.
     "lumieres-page-suivante": "aller-lumieres montre la même fenêtre ; le glissement est décrit dans lights.md",
