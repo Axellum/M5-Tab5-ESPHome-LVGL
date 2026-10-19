@@ -22,8 +22,11 @@ script:
           if (u.popup == nullptr) {
             u.vide = id(maison_vide);
             u.eteindre = id(btn_maison_eteindre);
+            // Onglets des pages (ADR-0066) : un par groupe de colonnes, ou par tranche de lignes.
             u.onglet[0] = id(maison_onglet_0);
             u.onglet[1] = id(maison_onglet_1);
+            u.onglet[2] = id(maison_onglet_2);
+            u.onglet[3] = id(maison_onglet_3);
             u.entete[0] = id(maison_entete_0);
             u.entete[1] = id(maison_entete_1);
             u.entete[2] = id(maison_entete_2);

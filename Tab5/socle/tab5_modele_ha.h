@@ -48,11 +48,27 @@ inline void copier_icone(char* dst, const char* src, size_t n) {
     std::memcpy(dst, src, n);
 }
 
-// Clé d'emplacement d'une tuile de pièce, « tRT » (R pièce, T tuile, de 0 à 4), ou d'une
-// pièce entière, « pR » (« Tout éteindre ») : l'emplacement que reçoit l'événement
-// esphome.tab5_action (ADR-0023) ; les clims des tuiles gardent la même (ADR-0027). Rendue
-// par valeur, le texte dans `s` : `envoyer(tuile_cle(r, t).s, action)`. Audit du
-// 07/10/2026 (lot L7) : elle était écrite à la main six fois.
+// Caractère T d'une clé de tuile (« tRT », « crRT », « ceRT », ADR-0066) : l'élément T de sa
+// pièce, 0 … 19, écrit « 0 » … « 9 » puis « a » … « j ». Les clés d'avant (« t00 » … « t44 »)
+// gardent leur sens. tuile_index() le relit ; faux pour tout autre caractère (une clé qu'un
+// firmware plus ancien ignorait, « tRa » … « tRj », il la lit maintenant).
+constexpr char kCarsTuile[] = "0123456789abcdefghij";
+constexpr int kTuilesCles = sizeof(kCarsTuile) - 1;
+
+inline char tuile_car(int t) { return (t >= 0 && t < kTuilesCles) ? kCarsTuile[t] : '?'; }
+
+inline bool tuile_index(char c, int& t) {
+    if (c >= '0' && c <= '9') t = c - '0';
+    else if (c >= 'a' && c < 'a' + (kTuilesCles - 10)) t = 10 + (c - 'a');
+    else return false;
+    return true;
+}
+
+// Clé d'emplacement d'une tuile de pièce, « tRT » (R pièce, un chiffre ; T élément,
+// tuile_car), ou d'une pièce entière, « pR » (« Tout éteindre ») : l'emplacement que reçoit
+// l'événement esphome.tab5_action (ADR-0023) ; les clims des tuiles gardent la même
+// (ADR-0027). Rendue par valeur, le texte dans `s` : `envoyer(tuile_cle(r, t).s, action)`.
+// Audit du 07/10/2026 (lot L7) : elle était écrite à la main six fois.
 struct CleTuile {
     char s[4] = "";
 };
@@ -61,7 +77,7 @@ inline CleTuile tuile_cle(int r, int t) {
     CleTuile c;
     c.s[0] = 't';
     c.s[1] = static_cast<char>('0' + r);
-    c.s[2] = static_cast<char>('0' + t);
+    c.s[2] = tuile_car(t);
     return c;
 }
 

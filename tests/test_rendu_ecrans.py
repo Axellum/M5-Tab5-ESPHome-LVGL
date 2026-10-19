@@ -165,10 +165,12 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
         # n'est pas l'écran d'une pièce. De même les fenêtres du climat d'une pièce
         # (ADR-0040), ouvertes en mode HA sur elle, et la roue de sa clim (ADR-0048).
         # La pièce choisie dans la roue de navigation (ADR-0042) l'est aussi par un swipe.
-        # La tuile − / + pièce par pièce (« reglables-… », 14/10/2026) a ses propres maisons.
-        # Les huit pièces (« pieces-8-… », ADR-0066) ont leurs propres captures.
+        # La tuile − / + pièce par pièce (« reglables-… », 14/10/2026) a ses propres maisons,
+        # comme les tuiles coupées (« accueil-ha-<n>-elements », ADR-0066 lot B : le Salon
+        # chargé) ; les huit pièces (« pieces-8-… », ADR-0066 lot A) ont leurs propres captures.
         if ha and not ecran.nom.startswith(("maison-", "climatisation-", "roue-clim-temperature",
                                             "roue-navigation-", "reglables-", "pieces-8-")) \
+                and not re.fullmatch(r"accueil-ha-\d+-elements", ecran.nom) \
                 and ecran.nom not in POPUPS_EN_MODE_HA:
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom
@@ -192,6 +194,15 @@ def test_huit_pieces():
     _, page, ha = _jouer(next(e for e in huit if e.nom == "pieces-8-meteo-garage").etapes)
     assert not ha and page == 5 and _piece_de_la_page(page) == 5
     assert ecrans.PIECES_HUIT[5].nom == "Garage" and ecrans.PIECES_HUIT[7].nom == "Atelier"
+    # Les deux lots ensemble (A et B) : le Garage de onze éléments, en mode HA et sur sa page
+    # de la météo (pièce 6, au-delà des cinq pages de la météo).
+    for nom, en_ha in (("pieces-8-ha-garage-11-elements", True), ("pieces-8-meteo-garage-11-elements", False)):
+        ecran = next(e for e in huit if e.nom == nom)
+        assert ecran.etapes[len(ecrans.HUIT_PIECES):][:len(ecrans.GARAGE_COUPE)] == ecrans.GARAGE_COUPE, nom
+        _, page, ha = _jouer(ecran.etapes)
+        assert ha is en_ha and page == 5 and _piece_de_la_page(page) == 5, nom
+    assert len(ecrans.GARAGE_ONZE[5].tuiles) == 11 > 5
+    assert dict(ecrans.GARAGE_COUPE[0].donnees)["payload"].startswith("pn|8;")
 
 
 def test_la_tuile_moins_plus_piece_par_piece():

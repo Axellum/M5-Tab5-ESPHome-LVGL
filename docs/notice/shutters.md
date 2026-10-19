@@ -8,14 +8,14 @@
 
 ![The shutter window: the drawn shutter at 45 %, moving, Open, Stop and Close](../images/notice/volet-en.webp)
 
-**One page per room**: every shutter of the house, room by room, like the [lights](lights.md). The names of the rooms are at the top, next to the ×: **swipe left or right** (except on the drawn shutter) or **tap a room's name**. One room only: no names, no swipe.
+**One page per room**: every shutter of the house, room by room, like the [lights](lights.md). The names of the rooms are at the top, next to the ×: **swipe left or right** (except on the drawn shutter) or **tap a room's name**. One room only: no names, no swipe. Five shutters per page: a room with more takes several pages (« Living room 2/3 »).
 
 **Shutters** (left)
 
 - The shutters of the room, up to five, each with its icon, its name and its state, like its card. The selected one is framed: the right side shows it. A tap on another one: the window now shows it.
 - **Tap the round icon** of a shutter: what a tap on its card does (stop, close or open).
 - **Long press** a shutter: its [quick actions](tiles.md#quick-actions), around its icon.
-- **Open all**, **Close all**: every shutter of the room shown.
+- **Open all**, **Close all**: every shutter of the room shown, on all its pages.
 
 **Position** (right), for the selected shutter
 
@@ -43,14 +43,14 @@ A shutter card set to *confirm* or *read-only* in the blueprint is not in this w
 
 ![La fenêtre du volet : le volet dessiné à 45 %, en mouvement, Ouvrir, Stop et Fermer](../images/notice/volet-fr.webp)
 
-**Une page par pièce** : tous les volets de la maison, pièce par pièce, comme les [lumières](lights.md#version-française). Les noms des pièces sont en haut, à côté de la × : **glissez à gauche ou à droite** (sauf sur le volet dessiné) ou **touchez le nom d'une pièce**. Une seule pièce : ni noms ni glissement.
+**Une page par pièce** : tous les volets de la maison, pièce par pièce, comme les [lumières](lights.md#version-française). Les noms des pièces sont en haut, à côté de la × : **glissez à gauche ou à droite** (sauf sur le volet dessiné) ou **touchez le nom d'une pièce**. Une seule pièce : ni noms ni glissement. Cinq volets par page : une pièce qui en a plus prend plusieurs pages (« Salon 2/3 »).
 
 **Volets** (à gauche)
 
 - Les volets de la pièce, cinq au plus, chacun avec son icône, son nom et son état, comme sa carte. Celui qui est choisi est encadré : la partie droite le montre. Un tap sur un autre : la fenêtre le montre désormais.
 - **Touchez l'icône ronde** d'un volet : ce que fait un tap sur sa carte (arrêter, fermer ou ouvrir).
 - **Appui long** sur un volet : ses [actions rapides](tiles.md#actions-rapides), autour de son icône.
-- **Tout ouvrir**, **Tout fermer** : tous les volets de la pièce affichée.
+- **Tout ouvrir**, **Tout fermer** : tous les volets de la pièce affichée, sur toutes ses pages.
 
 **Position** (à droite), du volet choisi
 
