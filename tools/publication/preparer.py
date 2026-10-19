@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-"""tools/publication/preparer.py — Binaires d'une révision d'écran, prêts à publier (lot 6c).
+"""tools/publication/preparer.py — Binaires d'une variante, prêts à publier (lot 6c).
 
-`esphome/build-action` (complete-manifest) range sa sortie dans un dossier
-`tab5-ha-hmi-esp32p4/` : `<nom>.factory.bin`, `<nom>.ota.bin` et un manifeste ESP Web
-Tools dont les chemins sont ces noms. Les trois révisions d'écran portent les mêmes :
-ce script les renomme par révision (les fichiers d'une release sont à plat) et réécrit le
-manifeste en conséquence, en `manifest-<révision>.json`.
+Une variante est une révision d'écran du Tab5 (ECRANS, `tab5_ecran`) ou une autre carte
+(CARTES, `tab5_carte`, ADR-0061). `esphome/build-action` (complete-manifest) range sa
+sortie dans un dossier `tab5-ha-hmi-esp32p4/` : `<nom>.factory.bin`, `<nom>.ota.bin` et un
+manifeste ESP Web Tools dont les chemins sont ces noms. Toutes les variantes portent les
+mêmes : ce script les renomme par variante (les fichiers d'une release sont à plat) et
+réécrit le manifeste en conséquence, en `manifest-<variante>.json`.
 
 Contrôles, car une page de flashage fausse se voit trop tard :
 - nom du projet et puce attendus, version = celle de la release ;
@@ -14,7 +15,7 @@ Contrôles, car une page de flashage fausse se voit trop tard :
   installation (un Tab5 neuf porte la démo de M5Stack et sa NVS).
 
 Usage (dans .github/workflows/publication.yml) :
-    python tools/publication/preparer.py --source tab5-ha-hmi-esp32p4 --ecran st7121 \\
+    python tools/publication/preparer.py --source tab5-ha-hmi-esp32p4 --variante st7121 \\
         --version 3.0.0 --sortie publie
 """
 from __future__ import annotations
@@ -28,7 +29,9 @@ from pathlib import Path
 
 PROJET = "axellum.tab5-ha-hmi"
 PUCE = "ESP32-P4"
-ECRANS = ("st7123", "st7121", "ili9881c")
+ECRANS = ("st7123", "st7121", "ili9881c")  # révisions d'écran du Tab5 (Tab5/paquets/ecran-*.yaml)
+CARTES = ("waveshare-7b",)  # autres cartes (Tab5/paquets/carte-*.yaml, ADR-0061)
+VARIANTES = ECRANS + CARTES  # = ECRANS_TAB5 puis CARTES de .github/workflows/publication.yml
 BASE = "tab5-ha-hmi"
 
 
@@ -44,10 +47,10 @@ def _unique(dossier: Path, motif: str) -> Path:
     return trouves[0]
 
 
-def preparer(source: Path, ecran: str, version: str, sortie: Path) -> Path:
-    """Copie et renomme les binaires, écrit `manifest-<écran>.json` ; renvoie son chemin."""
-    if ecran not in ECRANS:
-        raise SystemExit(f"révision d'écran inconnue : {ecran} (attendu : {', '.join(ECRANS)})")
+def preparer(source: Path, variante: str, version: str, sortie: Path) -> Path:
+    """Copie et renomme les binaires, écrit `manifest-<variante>.json` ; renvoie son chemin."""
+    if variante not in VARIANTES:
+        raise SystemExit(f"variante inconnue : {variante} (attendu : {', '.join(VARIANTES)})")
     manifeste = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
     if manifeste.get("name") != PROJET:
         raise SystemExit(f"manifeste : name = {manifeste.get('name')!r}, {PROJET!r} attendu")
@@ -58,8 +61,8 @@ def preparer(source: Path, ecran: str, version: str, sortie: Path) -> Path:
         raise SystemExit(f"manifeste : une seule build {PUCE} attendue, trouvé {builds!r}")
 
     sortie.mkdir(parents=True, exist_ok=True)
-    usine = sortie / f"{BASE}-{ecran}.factory.bin"
-    ota = sortie / f"{BASE}-{ecran}.ota.bin"
+    usine = sortie / f"{BASE}-{variante}.factory.bin"
+    ota = sortie / f"{BASE}-{variante}.ota.bin"
     shutil.copyfile(_unique(source, "*.factory.bin"), usine)
     shutil.copyfile(_unique(source, "*.ota.bin"), ota)
 
@@ -73,7 +76,7 @@ def preparer(source: Path, ecran: str, version: str, sortie: Path) -> Path:
         raise SystemExit("manifeste : une seule partie à l'offset 0 attendue (factory.bin)")
     manifeste["new_install_prompt_erase"] = True
 
-    chemin = sortie / f"manifest-{ecran}.json"
+    chemin = sortie / f"manifest-{variante}.json"
     chemin.write_text(json.dumps(manifeste, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return chemin
 
@@ -81,11 +84,11 @@ def preparer(source: Path, ecran: str, version: str, sortie: Path) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", type=Path, required=True, help="dossier de sortie de build-action")
-    parser.add_argument("--ecran", required=True, choices=ECRANS)
+    parser.add_argument("--variante", required=True, choices=VARIANTES)
     parser.add_argument("--version", required=True, help="version de la release (tag sans « v »)")
     parser.add_argument("--sortie", type=Path, required=True)
     args = parser.parse_args()
-    chemin = preparer(args.source, args.ecran, args.version, args.sortie)
+    chemin = preparer(args.source, args.variante, args.version, args.sortie)
     print(f"écrit {chemin} et ses deux binaires")
     return 0
 

@@ -22,6 +22,8 @@ The display chip is printed on the sticker on the back of the tablet, just above
 
 A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, then the other.
 
+**A Waveshare ESP32-P4 7B** (another board, 7-inch, experimental): pick « Waveshare ESP32-P4 7B », in the **Beta** channel for now, and plug in the USB-C port of its ESP32-P4 ([Waveshare 7B](../waveshare-7b.md)).
+
 ## 3. Pick the channel
 
 **Stable** unless you want to try the next version before everyone (**Beta**, which moves on to the next stable one). The tablet then follows the channel you installed: its updates show up in Home Assistant ([updates](updates.md)). To switch channels later, install again from the page, without erasing. On Beta, also take `tab5_home_assistant.zip` from that pre-release (*Assets* on its [releases page](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)), or let the HACS integration do it with beta versions switched on: the files of the stable release do not have what the pre-release adds on the Home Assistant side.
@@ -83,6 +85,8 @@ La puce d'écran est écrite sur l'autocollant au dos de la tablette, juste au-d
 | ILI9881C | mai → octobre 2025 | compilée, jamais essayée |
 
 Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, essayez l'une, puis l'autre.
+
+**Une Waveshare ESP32-P4 7B** (une autre carte, 7 pouces, expérimentale) : choisissez « Waveshare ESP32-P4 7B », dans le canal **Bêta** pour l'instant, et branchez le port USB-C de son ESP32-P4 ([Waveshare 7B](../waveshare-7b.md#version-française)).
 
 ## 3. Choisir le canal
 

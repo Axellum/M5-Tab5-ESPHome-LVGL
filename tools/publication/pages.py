@@ -12,12 +12,13 @@ remplace donc jamais la version stable.
     <site>/images/                    image de partage, sous un nom parlant (IMAGES)
     <site>/sitemap.xml                pages et images, pour les moteurs de recherche
     <site>/versions.json              ce que la page de flashage affiche
-    <site>/stable/<écran>/            dernière release 3.x non « pre-release »
-    <site>/beta/<écran>/              release 3.x la plus récente, pre-release ou non
+    <site>/stable/<variante>/         dernière release 3.x non « pre-release »
+    <site>/beta/<variante>/           release 3.x la plus récente, pre-release ou non
         manifest.json                 lu par ESP Web Tools ET par l'entité de mise à jour
-        tab5-ha-hmi-<écran>.factory.bin, .ota.bin
+        tab5-ha-hmi-<variante>.factory.bin, .ota.bin
 
-Les firmwares publiés lisent `<canal>/<écran>/manifest.json` (Tab5/paquets/publication-*.yaml) :
+Une variante est une révision d'écran du Tab5 ou une autre carte (preparer.py, VARIANTES).
+Les firmwares publiés lisent `<canal>/<variante>/manifest.json` (Tab5/paquets/publication-*.yaml) :
 une tablette du canal bêta passe ainsi à la stable qui suit sa bêta. Les releases
 d'avant la 3.0 n'ont pas de binaires : ignorées.
 
@@ -42,8 +43,9 @@ from pathlib import Path
 from urllib.parse import urljoin
 from xml.sax.saxutils import escape
 
-ECRANS = ("st7123", "st7121", "ili9881c")
-TAG = re.compile(r"^v(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.]+))?$")
+# Révisions d'écran du Tab5, puis autres cartes (ADR-0061) : les VARIANTES de preparer.py.
+VARIANTES = ("st7123", "st7121", "ili9881c", "waveshare-7b")
+TAG =re.compile(r"^v(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.]+))?$")
 MAJEURE_MINI = 3  # premières releases avec des binaires (lot 6c)
 SITE = "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/"
 
@@ -61,14 +63,15 @@ LANGUES_DOC = ("en", "fr")
 
 
 def fichiers_joints(fichiers: set[str]) -> bool:
-    """Le site peut servir la release : le manifeste de l'écran de référence (ECRANS[0], le
-    seul essayé sur une tablette) et, pour chaque manifeste, ses deux binaires (noms de
+    """Le site peut servir la release : le manifeste de la variante de référence (VARIANTES[0],
+    l'écran du Tab5 de l'auteur) et, pour chaque manifeste, ses deux binaires (noms de
     preparer.py). gh release upload envoie les fichiers en parallèle : un manifeste peut
-    être joint avant ses binaires, et _canal() échoue alors. Un autre écran absent ne
-    l'écarte pas : une révision ajoutée à ECRANS après une release n'a pas de fichiers
-    dans celle-ci, et les exiger tous viderait les canaux jusqu'à la release suivante."""
-    ecrans = [e for e in ECRANS if f"manifest-{e}.json" in fichiers]
-    return ECRANS[0] in ecrans and all(
+    être joint avant ses binaires, et _canal() échoue alors. Une autre variante absente ne
+    l'écarte pas : une variante ajoutée à VARIANTES après une release (la 7B après la
+    3.9.0-rc.5) n'a pas de fichiers dans celle-ci, et les exiger toutes viderait les canaux
+    jusqu'à la release suivante."""
+    ecrans = [e for e in VARIANTES if f"manifest-{e}.json" in fichiers]
+    return VARIANTES[0] in ecrans and all(
         f"tab5-ha-hmi-{e}.{image}.bin" in fichiers for e in ecrans for image in ("factory", "ota"))
 
 
@@ -95,10 +98,11 @@ def choisir(releases: list[dict]) -> dict[str, str | None]:
 
 
 def _canal(assets: Path, tag: str, dest: Path) -> dict:
-    """Copie les manifestes et binaires d'une release ; renvoie ce qu'en dit versions.json."""
+    """Copie les manifestes et binaires d'une release ; renvoie ce qu'en dit versions.json
+    (`ecrans` : les variantes de cette release, lues par la page de flashage)."""
     source = assets / tag
     ecrans, version = [], None
-    for ecran in ECRANS:
+    for ecran in VARIANTES:
         manifeste_src = source / f"manifest-{ecran}.json"
         if not manifeste_src.is_file():
             continue

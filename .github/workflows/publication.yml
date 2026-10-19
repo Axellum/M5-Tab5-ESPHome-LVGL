@@ -1,10 +1,11 @@
 name: Publication (release, page de flashage)
 
 # Lot 6c, ADR-0022. À la publication d'une release (ou relancé à la main pour un tag) :
-#   1. les trois révisions d'écran sont compilées, SIGNÉES par la clé du projet (secret
-#      TAB5_CLE_SIGNATURE de l'environnement protégé `publication`, posé par Axel : lu
-#      seulement depuis `main` ou un tag `v*`, après son accord dans Actions) — jamais
-#      une clé jetable comme en PR ;
+#   1. les trois révisions d'écran du Tab5, puis les autres cartes que le tag connaît (la
+#      Waveshare 7B, ADR-0061 ; job `preparation`, `matrice`), sont compilées, SIGNÉES par
+#      la clé du projet (secret TAB5_CLE_SIGNATURE de l'environnement protégé
+#      `publication`, posé par Axel : lu seulement depuis `main` ou un tag `v*`, après son
+#      accord dans Actions) — jamais une clé jetable comme en PR ;
 #   2. leurs binaires et manifestes sont joints à la release, avec l'archive Home
 #      Assistant tab5_home_assistant.zip (job home-assistant, ADR-0024) et l'intégration
 #      pour HACS tab5_hacs.zip (même job, ADR-0035) ;
@@ -12,7 +13,7 @@ name: Publication (release, page de flashage)
 #      releases : `stable/` = dernière release 3.x non « pre-release », `beta/` = la plus
 #      récente. Les firmwares publiés y lisent leur mise à jour (Tab5/paquets/publication-*.yaml).
 # Une pre-release compile en canal `beta` (son entité de mise à jour lit `beta/`).
-# L'ELF de chaque révision est gardé 90 jours (artefact `elf-<révision>`) : c'est lui qui
+# L'ELF de chaque variante est gardé 90 jours (artefact `elf-<variante>`) : c'est lui qui
 # décode la pile d'appels d'un plantage de ce firmware (tools/capture_serie.py --elf).
 # `elf_seulement` recompile une version déjà publiée pour retrouver son ELF, sans rien
 # publier ni remplacer, et vérifie que le code est le même que l'image publiée
@@ -47,6 +48,15 @@ env:
   # des PR suit `latest` et `min_version`, esphome-tab5.yml). À relever volontairement,
   # après un essai sur la tablette ; jamais sous `min_version` (test_publication.py).
   ESPHOME_PUBLICATION: "2026.9.0"
+  # Les autres cartes (ADR-0061) : la 7B exige 2026.9.1 (static_assert de
+  # Tab5/ecran/carte_7b_version.h), la version qui tourne sur la carte de l'auteur. Le
+  # Tab5 garde ESPHOME_PUBLICATION : ses binaires ne changent pas.
+  ESPHOME_PUBLICATION_CARTES: "2026.9.1"
+  # Variantes publiées (tools/publication/preparer.py, VARIANTES) : les révisions d'écran
+  # du Tab5 (`tab5_ecran`, Tab5/paquets/ecran-*.yaml), puis les autres cartes
+  # (`tab5_carte`, Tab5/paquets/carte-*.yaml).
+  ECRANS_TAB5: st7123 st7121 ili9881c
+  CARTES: waveshare-7b
 
 jobs:
   preparation:
@@ -56,6 +66,7 @@ jobs:
       canal: ${{ steps.release.outputs.canal }}
       nom: ${{ steps.release.outputs.nom }}
       url: ${{ steps.release.outputs.url }}
+      matrice: ${{ steps.variantes.outputs.matrice }}
     steps:
       - name: Release, version et canal
         id: release
@@ -75,6 +86,37 @@ jobs:
             echo "url=$(jq -r .url <<<"$infos")"
           } >> "$GITHUB_OUTPUT"
           echo "### $TAG : version ${TAG#v}, canal $canal" >> "$GITHUB_STEP_SUMMARY"
+      # Une ligne de la matrice `firmware` par variante : chaque révision d'écran du Tab5,
+      # puis chaque autre carte que le tag connaît (un tag d'avant la 7B n'a pas son
+      # carte-*.yaml : sans elle, rien ne casse). `elf_seulement` : seulement les variantes
+      # dont la release porte l'image, que meme_code.py compare.
+      - name: Variantes à compiler
+        id: variantes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ELF_SEULEMENT: ${{ inputs.elf_seulement }}
+        run: |
+          {
+            for ecran in $ECRANS_TAB5; do
+              jq -nc --arg v "$ecran" --arg esphome "$ESPHOME_PUBLICATION" \
+                '{variante: $v, subs: "tab5_ecran=\($v)", esphome: $esphome}'
+            done
+            for carte in $CARTES; do
+              gh api "repos/$GITHUB_REPOSITORY/contents/Tab5/paquets/carte-$carte.yaml?ref=$TAG" --silent 2>/dev/null || continue
+              jq -nc --arg v "$carte" --arg esphome "$ESPHOME_PUBLICATION_CARTES" \
+                '{variante: $v, subs: "tab5_carte=\($v)", esphome: $esphome}'
+            done
+          } > variantes.jsonl
+          if [[ "$ELF_SEULEMENT" == true ]]; then
+            images=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '[.assets[].name]')
+            jq -c --argjson images "$images" \
+              'select(.variante as $v | $images | any(. == "tab5-ha-hmi-\($v).ota.bin"))' variantes.jsonl > choisies.jsonl
+            mv choisies.jsonl variantes.jsonl
+          fi
+          matrice=$(jq -sc '{include: .}' variantes.jsonl)
+          [[ $(jq '.include | length' <<<"$matrice") -gt 0 ]] || { echo "::error::$TAG : aucune variante à compiler"; exit 1; }
+          echo "matrice=$matrice" >> "$GITHUB_OUTPUT"
+          echo "Variantes : $(jq -r '[.include[].variante] | join(", ")' <<<"$matrice")" >> "$GITHUB_STEP_SUMMARY"
 
   # Archive Home Assistant (ADR-0024) : packages, custom_templates, blueprint et packages
   # optionnels du tag, sans placeholder, dans l'arborescence de config/ : ce que
@@ -147,8 +189,8 @@ jobs:
     environment: publication
     strategy:
       fail-fast: true
-      matrix:
-        ecran: [st7123, st7121, ili9881c]
+      # {variante, subs, esphome} par ligne : job `preparation`, étape « Variantes à compiler ».
+      matrix: ${{ fromJSON(needs.preparation.outputs.matrice) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -189,17 +231,17 @@ jobs:
           rm -f empreinte.bin
           [[ "$empreinte" == "$EMPREINTE_CLE" ]] || { echo "::error::le secret n'est pas la clé du projet (empreinte $empreinte)"; exit 1; }
           cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
-      - name: Compilation (${{ matrix.ecran }}, canal ${{ needs.preparation.outputs.canal }})
+      - name: Compilation (${{ matrix.variante }}, canal ${{ needs.preparation.outputs.canal }})
         id: esphome-build
         uses: esphome/build-action@ae5408cdbc4f70692bf8e345c4982bca05a93667 # v8.1.0
         with:
           yaml-file: tab5-ha-hmi.yaml
-          version: ${{ env.ESPHOME_PUBLICATION }}
+          version: ${{ matrix.esphome }}
           complete-manifest: true
           release-summary: ${{ needs.preparation.outputs.nom }}
           release-url: ${{ needs.preparation.outputs.url }}
           substitutions: |
-            tab5_ecran=${{ matrix.ecran }}
+            ${{ matrix.subs }}
             tab5_publication=${{ needs.preparation.outputs.canal }}
             tab5_version=${{ needs.preparation.outputs.version }}
       - name: Signature vérifiée, puis clé effacée
@@ -211,7 +253,7 @@ jobs:
       - name: ELF gardé (décoder un plantage de ce firmware)
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: elf-${{ matrix.ecran }}
+          name: elf-${{ matrix.variante }}
           path: ${{ steps.esphome-build.outputs.name }}/*.elf
           if-no-files-found: error
           retention-days: 90
@@ -224,19 +266,21 @@ jobs:
         run: |
           ota=$(ls "${{ steps.esphome-build.outputs.name }}"/*.ota.bin)
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --pattern "tab5-ha-hmi-${{ matrix.ecran }}.ota.bin" --output publie.ota.bin
+            --pattern "tab5-ha-hmi-${{ matrix.variante }}.ota.bin" --output publie.ota.bin
           python outils-workflow/tools/publication/meme_code.py publie.ota.bin "$ota" \
             | tee -a "$GITHUB_STEP_SUMMARY"
-      - name: Binaires et manifeste de la révision
+      # preparer.py du commit du workflow, comme meme_code.py : celui d'un ancien tag ne
+      # connaît pas les variantes ajoutées après lui.
+      - name: Binaires et manifeste de la variante
         if: ${{ !inputs.elf_seulement }}
         run: |
-          python tools/publication/preparer.py --source "${{ steps.esphome-build.outputs.name }}" \
-            --ecran ${{ matrix.ecran }} --version ${{ needs.preparation.outputs.version }} --sortie publie
+          python outils-workflow/tools/publication/preparer.py --source "${{ steps.esphome-build.outputs.name }}" \
+            --variante ${{ matrix.variante }} --version ${{ needs.preparation.outputs.version }} --sortie publie
           ls -l publie
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !inputs.elf_seulement }}
         with:
-          name: publie-${{ matrix.ecran }}
+          name: publie-${{ matrix.variante }}
           path: publie
           if-no-files-found: error
           retention-days: 7

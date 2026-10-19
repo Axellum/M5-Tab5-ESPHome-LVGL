@@ -29,7 +29,9 @@ What the board does not have, and what it means on screen:
 
 ## Install it
 
-There is no install page for this board yet: you build the firmware yourself. It is the [Build your own firmware](installation/build.md) page with three differences, and the [Home Assistant steps](installation/README.md) stay the same (files, adding the device, sources, the blueprint).
+**From the browser**, since 3.9.0-rc.6 (in the beta channel until the next stable one): on the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), pick « Waveshare ESP32-P4 7B » and plug in the USB-C port of the ESP32-P4; the steps are those of a Tab5 ([install the firmware](installation/flash.md)). This firmware is built and signed by the project with ESPHome 2026.9.1, for a board mounted the usual way (picture turned by 180°) and without the games; its updates then come from Home Assistant, from this board's own folder of the site, never from the Tab5's. Not tried from the install page on a real board yet: the author's board runs a firmware built on a PC. The [Home Assistant steps](installation/README.md) stay the same (files, adding the device, sources, the blueprint).
+
+**Or build it yourself**, to mount the board the other way round or to add the games: the [Build your own firmware](installation/build.md) page with three differences.
 
 1. **ESPHome 2026.9.1 or newer.** 2026.9.0 crashes while starting the display of this board's ESP32-P4 revision 3 ([esphome#18984](https://github.com/esphome/esphome/pull/18984)); the build stops with a clear message under 2026.9.1. The Tab5 itself still builds from 2026.9.0.
 2. **One line** in `Tab5/user_entities.yaml`: `tab5_carte: waveshare-7b` (or `-s tab5_carte waveshare-7b` on the command line).
@@ -64,8 +66,8 @@ Two things learnt along the way:
 
 ## What is not done yet
 
-- **Not checked on the board:** the microphone and the wake word, the cameras popup (JPEG decoding), a power cut without network.
-- **Not adapted to 1024×600 yet:** the « Balance » page of the Energy popup, which came after the popups were adapted and runs past the bottom edge. For every other screen, the render counts on each change what runs past its area: about as much as on the Tab5 itself, mostly the shutters, alarm clock and cameras popups, which do the same there.
+- **Not checked on the board:** the microphone and the wake word, the cameras popup (JPEG decoding), a power cut without network, the firmware published by the project (install page, then an update from Home Assistant).
+- **Not adapted to 1024×600 yet:** in German and Turkish, « Close all » in the shutters popup (« Alle schließen », « Tümünü kapat »: 140 and 143 px in a font that does not shrink with the screen) runs past its 134-px button. The other popups follow the screen, the « Balance » page of the Energy popup included since 2026-10-18. For every screen, the render counts on each change what runs past its area: about as much as on the Tab5 itself, mostly the shutters, alarm clock and cameras popups, which do the same there.
 - Reported by others on this board, then seen here too: a faint glow with the backlight at 0 % (the screen off is now a black panel, [ADR-0064](decisions/0064-screen-really-off-night.md)), and a distorted speaker (below).
 - The firmware version of the C6 Wi-Fi chip cannot be read on this board (« Tab5 Version du C6 » stays unknown since 2026-10-14, while the Tab5 answers 1.4.1): its factory firmware may be older than the ESP-Hosted library of the P4 (2.12.12 with ESPHome 2026.9.1). Updating it is possible, from ESPHome (`update:` with `platform: esp32_hosted`, the firmware sent over the SDIO link) or over the C6's own serial port on the H4 connector (TXD, RXD, GND, IO9 = BOOT). **Not done, by choice:** a failed update would leave the screen without Wi-Fi, and Wi-Fi works as it is. Since the request went unanswered and froze the screen for 1 s each time (3 to 4 times after every boot, measured on 2026-10-16), the 7B no longer asks: the sensor says « inconnue » straight away (`carte_c6_version: "false"` in `Tab5/paquets/carte-waveshare-7b.yaml`, to set back to `"true"` after a C6 update).
 
@@ -161,7 +163,9 @@ Ce que la carte n'a pas, et ce que ça donne à l'écran :
 
 ## L'installer
 
-Pas encore de page d'installation pour cette carte : on compile le firmware soi-même. C'est la page [Compiler son propre firmware](installation/build.md#version-française) avec trois différences, et les [étapes Home Assistant](installation/README.md#version-française) restent les mêmes (fichiers, ajout de l'appareil, sources, blueprint).
+**Depuis le navigateur**, depuis la 3.9.0-rc.6 (dans le canal bêta jusqu'à la prochaine stable) : sur la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), choisissez « Waveshare ESP32-P4 7B » et branchez le port USB-C de l'ESP32-P4 ; les étapes sont celles d'un Tab5 ([installer le firmware](installation/flash.md#version-française)). Ce firmware est compilé et signé par le projet avec ESPHome 2026.9.1, pour une carte montée dans le sens habituel (image tournée de 180°) et sans les jeux ; ses mises à jour arrivent ensuite par Home Assistant, depuis le dossier de cette carte sur le site, jamais depuis celui du Tab5. Pas encore essayé depuis la page d'installation sur une vraie carte : celle de l'auteur tourne avec un firmware compilé sur un PC. Les [étapes Home Assistant](installation/README.md#version-française) restent les mêmes (fichiers, ajout de l'appareil, sources, blueprint).
+
+**Ou compilez-le vous-même**, pour monter la carte dans l'autre sens ou ajouter les jeux : la page [Compiler son propre firmware](installation/build.md#version-française) avec trois différences.
 
 1. **ESPHome 2026.9.1 ou plus récent.** La 2026.9.0 plante au démarrage de l'écran de l'ESP32-P4 révision 3 de cette carte ([esphome#18984](https://github.com/esphome/esphome/pull/18984)) ; en dessous de 2026.9.1, la compilation s'arrête avec un message clair. Le Tab5, lui, se compile toujours à partir de 2026.9.0.
 2. **Une ligne** dans `Tab5/user_entities.yaml` : `tab5_carte: waveshare-7b` (ou `-s tab5_carte waveshare-7b` en ligne de commande).
@@ -196,8 +200,8 @@ Deux choses apprises en route :
 
 ## Ce qui reste à faire
 
-- **Pas vérifié sur la carte :** le micro et le mot d'activation, le popup Caméras (décodage JPEG), une coupure de courant sans réseau.
-- **Pas encore adapté au 1024×600 :** la page « Bilan » du popup Énergie, arrivée après l'adaptation des popups, qui dépasse du bas. Pour tous les autres écrans, le rendu compte à chaque changement ce qui dépasse de sa zone : à peu près autant que sur le Tab5 lui-même, surtout dans les popups Volets, Réveil et Caméras, qui font pareil là-bas.
+- **Pas vérifié sur la carte :** le micro et le mot d'activation, le popup Caméras (décodage JPEG), une coupure de courant sans réseau, le firmware publié par le projet (page d'installation, puis une mise à jour depuis Home Assistant).
+- **Pas encore adapté au 1024×600 :** en allemand et en turc, « Tout fermer » du popup Volets (« Alle schließen », « Tümünü kapat » : 140 et 143 px dans une police qui ne rétrécit pas avec l'écran) dépasse de son bouton de 134 px. Les autres popups suivent l'écran, la page « Bilan » du popup Énergie comprise depuis le 18/10/2026. Pour chaque écran, le rendu compte à chaque changement ce qui dépasse de sa zone : à peu près autant que sur le Tab5 lui-même, surtout dans les popups Volets, Réveil et Caméras, qui font pareil là-bas.
 - Signalé par d'autres sur cette carte, puis vu ici aussi : une faible lueur avec le rétroéclairage à 0 % (l'écran éteint est désormais une dalle noire, [ADR-0064](decisions/0064-screen-really-off-night.md)), et un haut-parleur qui sature (ci-dessous).
 - La version du firmware de la puce Wi-Fi C6 est illisible sur cette carte (« Tab5 Version du C6 » reste inconnue depuis le 14/10/2026, alors que le Tab5 répond 1.4.1) : son firmware d'usine est peut-être plus ancien que la bibliothèque ESP-Hosted du P4 (2.12.12 avec ESPHome 2026.9.1). Le mettre à jour est possible, depuis ESPHome (`update:` avec `platform: esp32_hosted`, le firmware envoyé par le lien SDIO) ou par le port série du C6 lui-même sur le connecteur H4 (TXD, RXD, GND, IO9 = BOOT). **Pas fait, par choix :** une mise à jour ratée laisserait l'écran sans Wi-Fi, et le Wi-Fi marche tel quel. Comme la demande restait sans réponse et figeait l'écran 1 s à chaque fois (3 à 4 fois après chaque démarrage, mesuré le 16/10/2026), la 7B ne la fait plus : le capteur dit « inconnue » tout de suite (`carte_c6_version: "false"` dans `Tab5/paquets/carte-waveshare-7b.yaml`, à remettre à `"true"` après une mise à jour du C6).
 
