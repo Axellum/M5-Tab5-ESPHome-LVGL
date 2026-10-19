@@ -12,8 +12,10 @@
 #         TAB5_ECRAN_H), les constantes kEcranL / kEcranH du C++ (Tab5/socle/tab5_geometrie.h) ;
 #       - carte_dalle_l / carte_dalle_h : la dalle telle que le pilote la voit (le Tab5
 #         est une dalle PORTRAIT 720×1280 tournée par LVGL) ;
-#       - carte_rotation : `lvgl: rotation:` (tab5-styles.yaml) et le retour au repos du
-#         flipper (TAB5_ROTATION, kRotationRepos) ;
+#       - carte_rotation : `lvgl: rotation:` (tab5-styles.yaml), celle d'une carte montée
+#         dans le sens de son fabricant (TAB5_ROTATION, kRotationRepos ; une carte qui peut
+#         être montée à l'envers y ajoute 180° à l'exécution, select « Sens de l'écran »,
+#         ADR-0069 : la 7B) ;
 #       - carte_police_echelle : facteur des grosses polices (horloge, date, températures,
 #         titres ; tab5-styles.yaml et les polices des thèmes de tab5-themes.yaml).
 #       tests/test_geometrie_partagee.py tient le C++ égal à ces valeurs, carte par carte.
