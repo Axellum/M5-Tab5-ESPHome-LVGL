@@ -138,7 +138,7 @@ le confronte à la matrice) :
 
 ### Modifié
 
-- **Waveshare 7B : le micro MIC1 (slot gauche de l'ES7210) au lieu de MIC2** (banc vocal du 19/10/2026) : ESPHome lit par défaut le slot droit, la démo Waveshare le gauche. En MIC2, la 7B envoyait une parole à −55 dBFS avec 1,2 % de l'énergie au-dessus de 3 kHz (ReSpeaker Lite : −19,5 dBFS, 4 %), et HA Cloud y faisait 22 % d'erreurs de mots. Le Tab5 ne change pas. Firmware seul. Pas encore mesuré sur la carte.
+- **Waveshare 7B : le micro MIC1 (slot gauche de l'ES7210) au lieu de MIC2** (banc vocal du 19/10/2026) : ESPHome lit par défaut le slot droit, la démo Waveshare le gauche. En MIC2, la 7B envoyait une parole à −55 dBFS avec 1,2 % de l'énergie au-dessus de 3 kHz (ReSpeaker Lite : −19,5 dBFS, 4 %), et HA Cloud y faisait 22 % d'erreurs de mots. Mesuré sur la 7B de l'auteur le 19/10/2026, même banc : le son n'est guère plus fort (+1,2 dB, pas plus d'aigus), mais avec HA Cloud 22,1 → 9,0 % d'erreurs, 8 → 14 commandes comprises sur 19 et 20 réveils sur 20 au lieu de 16 (20 essais, écarts non significatifs un par un) ; rien ne change avec le petit modèle Whisper local. Le Tab5 ne change pas. Firmware seul.
 
 - **Carte centrale du mode appareils : le nom de la pièce seul** (demande d'Axel, 18/10/2026) : plus de petite ligne « Pièce n/N » au-dessus du nom ; les pastilles sous la carte disent déjà la pièce. Une pièce sans nom reste « Pièce n », une pièce vide « Aucun appareil ». L'étiquette qui portait la ligne, ses deux jetons de position (`acc_titre_sous_y`, `acc_titre_y2` / `kAccTitreY2`) et le texte à traduire sont retirés. Firmware seul.
 
