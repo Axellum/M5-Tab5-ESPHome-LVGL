@@ -51,7 +51,7 @@ Tous les réglages de la tablette dans un tableau de bord Home Assistant, écrit
 
 - Une vue **Tab5** pour l'usage courant : luminosité, volume, écran affiché, réveil, rendez-vous, assistant vocal ; des pastilles d'alerte seulement quand quelque chose cloche.
 - Une vue **Réglages** : comment régler la tablette, avec des liens vers la page de son appareil, sa connexion ESPHome, l'automatisation des emplacements et ce guide ; un tableau « En bref » de ce qui est choisi ; ce que montre chaque section des emplacements et comment régler des panneaux solaires ; puis la langue de l'écran, la météo, les agendas, la maison, la voix et le réveil, chacun avec une courte explication.
-- Une vue **Santé** : que vérifier quand quelque chose cloche, avec des liens vers la page de la tablette, le journal et les réparations de Home Assistant et la page de dépannage ; un tableau « En bref » de la liaison, des poussées, du dernier démarrage, du firmware, des fichiers Home Assistant et des alertes de santé ; puis les courbes de performances, le réseau, les poussées et les alertes de santé, chacun avec une courte explication.
+- Une vue **Santé** : que vérifier quand quelque chose cloche, avec des liens vers la page de la tablette, le journal et la page Corrections de Home Assistant et la page de dépannage ; un tableau « En bref » de la liaison, des poussées, du dernier démarrage, du firmware, des fichiers Home Assistant et des alertes de santé ; puis les courbes de performances, le réseau, les poussées et les alertes de santé, chacun avec une courte explication.
 
 ![Vue Tab5 du tableau de bord : luminosité, volume et écran de la tablette, réveil, rendez-vous et assistant vocal](../images/ha_tableau_tab5.png)
 
