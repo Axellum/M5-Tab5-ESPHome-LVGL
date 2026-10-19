@@ -41,7 +41,11 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       (discussion #278) : remplie, écrite dans les listes et suivie par la poussée, une
       liste changée à la main y revient avec une notification, vidée, les listes décident ;
       le tableau de bord de la tablette (custom_templates/tab5_dashboard.jinja) rendu par HA, ses
-      entités toutes présentes, enregistré et relu ; journal de HA sans erreur Tab5. Ce que
+      entités toutes présentes, enregistré et relu ; journal de HA sans erreur Tab5 ; puis deux
+      réinstallations AVEC effacement (préférences de la tablette supprimées, docs/
+      troubleshooting.md) : flux de réauth « reauth_encryption_removed_confirm » ouvert, HA
+      muet tant qu'il attend, flux confirmé puis même clé redonnée par HA ; « Recharger »
+      rouvre le flux ; tools/tab5_redonner_cle.py puis « Recharger » reconnectent aussi. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
       rapporté (capture 1), sans faire échouer. Avec --interface : les captures de
       l'interface de HA du guide d'installation (captures_ha.py). En dernier, la mémoire
@@ -1966,7 +1970,7 @@ async def verifier_cle_gardee(ha: HA, entry_id: str, cle: str, cles_avant: dict,
     rapport.verifier(await flux_reauth(ha, entry_id, delai=0) is None, f"{quoi} : plus de flux de réauth",
                      "un flux attend encore")
     rapport.verifier(await reparation_reauth(ha, entry_id) is None, f"{quoi} : réparation de réauth fermée",
-                     "encore dans Réparations")
+                     "encore dans Corrections (Repairs)")
 
 
 async def textes_du_flux(ha: HA, rapport: Rapport) -> None:
@@ -2018,7 +2022,7 @@ async def reinstallation_effacee(ha: HA, tablette: Tablette, entry_id: str, cle:
                      "tablette effacée : plus de clé, connexion en clair acceptée (fenêtre d'appairage ouverte)", r)
     flux = await attendre_flux_cle_retiree(ha, entry_id, relance, rapport)
     rapport.verifier(await reparation_reauth(ha, entry_id) is not None,
-                     "une réparation accompagne le flux (Paramètres → Système → Réparations)", "aucune")
+                     "une réparation accompagne le flux (Paramètres → Système → Corrections en français, Repairs en anglais)", "aucune")
     await textes_du_flux(ha, rapport)
     confirme = time.time()
     resultat = await ha.post(f"/api/config/config_entries/flow/{flux['flow_id']}", {})

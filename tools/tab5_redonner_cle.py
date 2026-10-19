@@ -35,6 +35,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tab5_cle_api import ajouter_options, trouver_cle  # noqa: E402
 
 PORT_API = 6053
+# La tablette coupe ses connexions pour passer à la nouvelle clé (tools/demo/demo_pusher.py).
+PAUSE_NOUVELLE_CLE_S = 2.0
 
 RECHARGER = ("rechargez maintenant son entrée dans Home Assistant : Paramètres → Appareils et "
              "services → ESPHome → la tablette → ⋮ → Recharger.")
@@ -106,8 +108,7 @@ async def redonner_cle(hote: str, cle: str, port: int = PORT_API) -> str:
         await client.disconnect(force=True)
     if not acceptee:
         return "refusee"
-    # La tablette coupe ses connexions pour passer à la nouvelle clé (tools/demo/demo_pusher.py).
-    await asyncio.sleep(2)
+    await asyncio.sleep(PAUSE_NOUVELLE_CLE_S)
     return "donnee" if await _ouvre(hote, port, cle) else "pas_ouverte"
 
 

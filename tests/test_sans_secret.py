@@ -7,7 +7,8 @@ le monde : rien de personnel ne doit revenir dans le YAML du firmware.
 - OTA sans chiffrement ni mot de passe, mais images signées (clé hors git) ;
 - Wi-Fi sans identifiants, Improv par USB, AP de secours ouvert ;
 - fuseau venu de HA (plus de `tab5_fuseau`), identité de projet déclarée ;
-- les outils du PC trouvent la clé gardée par HA sans jamais l'afficher."""
+- les outils du PC trouvent la clé gardée par HA sans jamais l'afficher, et la redonnent
+  à une tablette réinstallée avec effacement (tools/tab5_redonner_cle.py)."""
 import json
 import os
 import re
@@ -207,3 +208,91 @@ def test_migration_lit_l_ancienne_cle(tmp_path):
     assert lire_ancienne_cle(secrets) == "QUJD+/w="
     secrets.write_text("wifi_ssid: Maison\n", encoding="utf-8")
     assert lire_ancienne_cle(secrets) is None
+
+
+class _FausseTablette:
+    """Une tablette pour tools/tab5_redonner_cle.py : sans clé (effacée) ou avec, fenêtre
+    d'appairage ouverte ou fermée, comme l'API d'ESPHome 2026.9 (api_connection.cpp)."""
+
+    def __init__(self, cle=None, fenetre=True):
+        self.cle, self.fenetre, self.cles_recues = cle, fenetre, []
+
+    def client(self):
+        from aioesphomeapi import (ZERO_NOISE_PSK, APIConnectionError, ConnectionClosedEvent,
+                                   DisconnectReason, InvalidEncryptionKeyAPIError)
+        tablette = self
+
+        class Client:
+            def __init__(self, hote, port, mot_de_passe, noise_psk=None, client_info=""):
+                self.psk, self.rappels = noise_psk, []
+
+            def add_connection_closed_callback(self, rappel):
+                self.rappels.append(rappel)
+
+            async def connect(self, login=True):
+                if tablette.cle is not None:
+                    if self.psk != tablette.cle:
+                        raise InvalidEncryptionKeyAPIError("Handshake MAC failure")
+                    return
+                if self.psk not in (None, ZERO_NOISE_PSK):
+                    raise InvalidEncryptionKeyAPIError("Handshake MAC failure")
+                if not tablette.fenetre:
+                    for rappel in self.rappels:
+                        rappel(ConnectionClosedEvent(reason=DisconnectReason.PROVISIONING_CLOSED))
+                    raise APIConnectionError("Disconnect request")
+
+            async def device_info(self):
+                from types import SimpleNamespace
+                return SimpleNamespace(api_encryption_provisionable=tablette.cle is None)
+
+            async def noise_encryption_set_key(self, cle):
+                tablette.cles_recues.append(cle)
+                tablette.cle = cle.decode()
+                return True
+
+            async def disconnect(self, force=False):
+                pass
+
+        return Client
+
+
+def _redonner(monkeypatch, tablette, cle):
+    import asyncio
+
+    import aioesphomeapi
+    import tab5_redonner_cle as outil
+
+    monkeypatch.setattr(aioesphomeapi, "APIClient", tablette.client())
+    monkeypatch.setattr(outil, "PAUSE_NOUVELLE_CLE_S", 0)
+    return asyncio.run(outil.redonner_cle("192.168.1.42", cle))
+
+
+def test_cle_de_ha_redonnee_a_une_tablette_effacee(monkeypatch):
+    """tools/tab5_redonner_cle.py : la clé de HA, par la clé nulle, seulement à une
+    tablette sans clé et dans sa fenêtre ; rien de changé sinon."""
+    cle = "QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI="
+    effacee = _FausseTablette()
+    assert _redonner(monkeypatch, effacee, cle) == "donnee"
+    assert effacee.cles_recues == [cle.encode()]
+    # Relancé : la tablette a déjà la clé de HA, rien n'est renvoyé.
+    assert _redonner(monkeypatch, effacee, cle) == "deja" and len(effacee.cles_recues) == 1
+    autre = _FausseTablette(cle="AUTRE")
+    assert _redonner(monkeypatch, autre, cle) == "autre_cle" and autre.cle == "AUTRE"
+    fermee = _FausseTablette(fenetre=False)
+    assert _redonner(monkeypatch, fermee, cle) == "fenetre_fermee" and fermee.cle is None
+
+
+def test_redonner_la_cle_ne_l_affiche_jamais(monkeypatch, capsys):
+    import tab5_redonner_cle as outil
+
+    cle = "QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI="
+
+    async def faux(hote, c, port):
+        return "donnee"
+
+    monkeypatch.setattr(outil, "redonner_cle", faux)
+    monkeypatch.setattr("sys.argv", ["tab5_redonner_cle.py", "--host", "192.168.1.42", "--cle", cle])
+    assert outil.main() == 0
+    sortie = capsys.readouterr()
+    assert cle not in sortie.out + sortie.err and "Recharger" in sortie.out
+    assert all(cle not in message for _, message in outil.MESSAGES.values())

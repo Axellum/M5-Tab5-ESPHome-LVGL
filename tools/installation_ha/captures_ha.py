@@ -150,10 +150,11 @@ async def reauth_carte(page, base: str, titre: str) -> str:
 
 
 async def reauth_reparations(page, base: str, titre: str) -> str:
-    """Système → Réparations : la réparation qui accompagne le flux."""
+    """Système → Corrections (Repairs) : la réparation qui accompagne le flux."""
     await ouvrir(page, f"{base}/config/repairs")
-    if not await textes_visibles(page, titre):
-        raise RuntimeError(f"« {titre} » absent de la page")
+    nom = titre.split(" (")[0]  # la réparation nomme l'entrée, sans « (nom de l'appareil) »
+    if not await textes_visibles(page, nom):
+        raise RuntimeError(f"« {nom} » absent de la page")
     return "réparation affichée"
 
 
