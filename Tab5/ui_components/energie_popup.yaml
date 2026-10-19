@@ -236,11 +236,13 @@ obj:
                     styles: style_glass_card
                     scrollable: false
                     widgets:
-                      # « Octobre », « Aujourd'hui », « 2026 » (coupé avant les boutons).
+                      # « Octobre », « Aujourd'hui », « 2026 » (coupé avant les boutons). Boutons de
+                      # vue de ${bil_vue_l} px (150 sur le Tab5, plus étroits sur une carte où le
+                      # titre n'aurait plus sa place : kBilVueL de tab5_energie.cpp).
                       - label: { id: energie_bilan_titre, text: "", align: TOP_LEFT, x: 22, y: "${ 18 * (corps_h | int) // 598 }", text_font: roboto_32_b }
-                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "0", x_pos: "-338", label_text: "Heures" } }
-                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "1", x_pos: "-178", label_text: "Jours" } }
-                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "2", x_pos: "-18", label_text: "Mois" } }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "0", l: "${bil_vue_l}", x_pos: "${ 0 - 38 - 2 * (bil_vue_l | int) }", label_text: "Heures" } }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "1", l: "${bil_vue_l}", x_pos: "${ 0 - 28 - (bil_vue_l | int) }", label_text: "Jours" } }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "2", l: "${bil_vue_l}", x_pos: "-18", label_text: "Mois" } }
                       # Graduations, barres, courbe, bulle, axe, légende : tab5_energie.cpp.
                       - obj:
                           id: energie_bilan_zone
