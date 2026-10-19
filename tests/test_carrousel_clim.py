@@ -45,7 +45,7 @@ def test_une_seule_liste_des_clims():
     assert corps.index("zone_absente(Zone::CLIM)") < corps.index("reglages.recu")
     # Les N pièces choisies dans HA (ADR-0066) : une pièce au-delà n'existe pas à l'écran.
     assert "const int nb_pieces = tuiles_pieces_nombre();" in corps
-    assert "for (int r = 0; r < nb_pieces; r++)" in corps and "for (int t = 0; t < kTuiles; t++)" in corps
+    assert "for (int r = 0; r < nb_pieces; r++)" in corps and "for (int t = 0; t < kTuilesMax; t++)" in corps
     # Un doublon (même nom non vide) n'a pas sa page.
     assert "meme_nom(noms[i], nom)" in corps
     assert "a[0] != '\\0'" in _corps(CLIM, "bool meme_nom(")

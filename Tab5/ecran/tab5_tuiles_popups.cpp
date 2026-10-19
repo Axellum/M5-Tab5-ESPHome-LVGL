@@ -65,7 +65,7 @@ struct PopupTuile {
     bool montre(int r, int t) const { return ouvert() && r == piece && t == tuile; }
 
     // Sa tuile est dans la grille, hors mode héritage (qui n'ouvre ni volet ni appareil).
-    bool en_grille() const { return piece >= 0 && piece < kPiecesMax && tuile >= 0 && tuile < kTuiles && !heritage(); }
+    bool en_grille() const { return piece >= 0 && piece < kPiecesMax && tuile >= 0 && tuile < kTuilesMax && !heritage(); }
 };
 
 // Ouvre le popup `p` sur la tuile tRT : son état remis à zéro, peint, puis montré. Rien
@@ -94,41 +94,60 @@ void popup_tuile_revalider(const P&, bool valide, void (*peindre)()) {
 // Demande d'Axel du 09/10/2026 : les popups Lumières et Volets montrent toutes les
 // lumières (tous les volets) de la maison, une page par pièce qui en a ; on passe de l'une
 // à l'autre d'un glissement ou d'un tap sur son nom, en haut (la brique des popups à
-// pages, tab5_pages.cpp). PopupPieces<C> garde les pages, les lignes de la page affichée
-// et la ligne choisie (piece, tuile : celles que pilote la partie droite du popup) ; chaque
-// popup dit quelle tuile en est une ligne (`garde`) et peint sa partie droite. Les lignes
-// sont la carte du mode HA couchée (tuile_peindre_ligne), comme celles du popup Maison.
+// pages, tab5_pages.cpp). Depuis l'ADR-0066 (vingt éléments par pièce), une pièce qui a plus
+// de lignes qu'une page n'en tient (kPlacesTuiles) prend plusieurs pages, de cinq lignes en
+// cinq : rien n'est coupé, tout élément s'atteint. PopupPieces<C> garde les pages, les
+// lignes de la page affichée et la ligne choisie (piece, tuile : celles que pilote la partie
+// droite du popup) ; chaque popup dit quelle tuile en est une ligne (`garde`) et peint sa
+// partie droite. Les lignes sont la carte du mode HA couchée (tuile_peindre_ligne), comme
+// celles du popup Maison.
+
+// Pages au plus : chaque pièce, de cinq lignes en cinq (vingt éléments = quatre pages).
+constexpr int kPagesParPiece = (kTuilesMax + kPlacesTuiles - 1) / kPlacesTuiles;
+constexpr int kPagesMax = kPiecesMax * kPagesParPiece;
 
 template <lv_obj_t* TuilesUI::* C>
 struct PopupPieces : PopupTuile<C> {
-    int nb = 0;                // pages : les pièces qui ont au moins une ligne
-    int pieces[kPiecesMax] = {};  // pièce de chaque page, dans l'ordre du blueprint
-    int page = 0;              // page affichée : piece = pieces[page]
-    int n = 0;                 // lignes de la page affichée
-    int tuiles[kTuiles] = {};  // tuile de chaque ligne, dans l'ordre des tuiles
-    int choix = 0;             // ligne choisie : tuile = tuiles[choix]
+    int nb = 0;                       // pages : les pièces qui ont au moins une ligne, de cinq en cinq
+    int pieces[kPagesMax] = {};       // pièce de chaque page, dans l'ordre du blueprint
+    int debuts[kPagesMax] = {};       // rang, parmi les lignes de sa pièce, de la première de la page
+    int page = 0;                     // page affichée : piece = pieces[page]
+    int n = 0;                        // lignes de la page affichée
+    int tuiles[kPlacesTuiles] = {};   // tuile de chaque ligne, dans l'ordre des tuiles
+    int choix = 0;                    // ligne choisie : tuile = tuiles[choix]
+    int nb_onglets = 0;               // noms en haut (onglets_peindre)
+    int page_onglet[kPiecesMax] = {};  // page qu'ouvre le tap sur chaque nom
 };
 
-// Pages et lignes de `p` : les pièces qui ont au moins une tuile `garde`, la page de la
-// pièce `r` (sinon la première), ses lignes, celle de la tuile `t` choisie (sinon la
-// première). Faux, et `p` sans page, si aucune pièce n'en a. Ne touche qu'aux champs de
-// PopupPieces : ce que le popup garde en plus (le doigt sur le volet) reste.
+// Pages et lignes de `p` : les pièces qui ont au moins une tuile `garde`, de cinq lignes en
+// cinq ; la page de la tuile `t` de la pièce `r` (sinon la première page de la pièce, sinon
+// la première), ses lignes, celle de `t` choisie (sinon la première). Faux, et `p` sans page,
+// si aucune pièce n'en a. Ne touche qu'aux champs de PopupPieces : ce que le popup garde en
+// plus (le doigt sur le volet) reste.
 template <class P>
 bool pieces_calculer(P& p, bool (*garde)(int, int), int r, int t) {
     p.nb = p.n = p.page = p.choix = 0;
     p.piece = p.tuile = -1;
+    int page_r = -1, page_t = -1;
     for (int i = 0; i < kPiecesMax; i++) {
-        for (int j = 0; j < kTuiles; j++) {
+        int k = 0;  // lignes de la pièce i
+        for (int j = 0; j < kTuilesMax; j++) {
             if (!garde(i, j)) continue;
-            if (i == r) p.page = p.nb;
-            p.pieces[p.nb++] = i;
-            break;
+            if (k % kPlacesTuiles == 0 && p.nb < kPagesMax) {
+                p.pieces[p.nb] = i;
+                p.debuts[p.nb] = k;
+                p.nb++;
+            }
+            if (i == r && page_r < 0) page_r = p.nb - 1;
+            if (i == r && j == t) page_t = p.nb - 1;
+            k++;
         }
     }
     if (p.nb == 0) return false;
+    p.page = page_t >= 0 ? page_t : (page_r >= 0 ? page_r : 0);
     p.piece = p.pieces[p.page];
-    for (int j = 0; j < kTuiles; j++) {
-        if (!garde(p.piece, j)) continue;
+    for (int j = 0, k = 0; j < kTuilesMax && p.n < kPlacesTuiles; j++) {
+        if (!garde(p.piece, j) || k++ < p.debuts[p.page]) continue;
         if (j == t) p.choix = p.n;
         p.tuiles[p.n++] = j;
     }
@@ -153,7 +172,7 @@ void ligne_peindre(lv_obj_t* b, int r, int t, bool choisie) {
 // Les lignes de la page affichée ; celles d'au-delà masquées.
 template <class P>
 void lignes_peindre(const P& p, lv_obj_t* const* lignes) {
-    for (int i = 0; i < kTuiles; i++) {
+    for (int i = 0; i < kPlacesTuiles; i++) {
         const bool visible = i < p.n;
         ui_hidden(lignes[i], !visible);
         if (visible) ligne_peindre(lignes[i], p.piece, p.tuiles[i], i == p.choix);
@@ -167,17 +186,63 @@ void ligne_de_la_tuile(const P& p, lv_obj_t* const* lignes, int t) {
         if (p.tuiles[i] == t) ligne_peindre(lignes[i], p.piece, t, i == p.choix);
 }
 
-// Les noms des pièces en haut (pages_onglets : aucun sous deux pages), celui de la page
-// affichée en accent. Nom : celui de la carte centrale en mode HA (tuiles_piece_titre).
+// Les noms en haut (pages_onglets : aucun sous deux), celui de la page affichée en accent.
+// Un nom par pièce (celui de la carte centrale en mode HA, tuiles_piece_titre) ; une pièce
+// de plusieurs pages ajoute « n/m » au sien quand elle est affichée, et le tap sur un nom
+// ouvre la première page de sa pièce. Une seule pièce, de plusieurs pages : un nom par page
+// (« Salon 1/2 », « Salon 2/2 »), sinon il n'y aurait rien en haut.
 template <class P>
-void onglets_peindre(const P& p, lv_obj_t* const* onglets) {
-    char noms[kPiecesMax][40];  // un nom de HA (kNom) ou « Pièce n » traduit
+void onglets_peindre(P& p, lv_obj_t* const* onglets) {
+    char noms[kPiecesMax][48];   // un nom de HA (kNom) ou « Pièce n » traduit
+    char pages[kPiecesMax][25];  // « n/m », gardé entier quand le nom se coupe (25 : deux int au pire)
     const char* ptr[kPiecesMax] = {};
-    for (int i = 0; i < p.nb; i++) {
-        if (!tuiles_piece_titre(p.pieces[i], noms[i], sizeof(noms[i]))) noms[i][0] = '\0';
-        ptr[i] = noms[i];
+    const char* sfx[kPiecesMax] = {};
+    int pieces = 0;
+    for (int i = 0; i < p.nb; i++)
+        if (i == 0 || p.pieces[i] != p.pieces[i - 1]) pieces++;
+    const bool par_page = pieces == 1 && p.nb > 1;
+    int courant = 0;
+    p.nb_onglets = 0;
+    for (int i = 0; i < p.nb && p.nb_onglets < kPiecesMax; i++) {
+        const int r = p.pieces[i];
+        const bool premiere = i == 0 || r != p.pieces[i - 1];
+        if (!par_page && !premiere) continue;
+        int debut = i, fin = i;  // pages de la pièce r : de debut à fin
+        while (debut > 0 && p.pieces[debut - 1] == r) debut--;
+        while (fin + 1 < p.nb && p.pieces[fin + 1] == r) fin++;
+        const int o = p.nb_onglets++;
+        char* nom = noms[o];
+        if (!tuiles_piece_titre(r, nom, sizeof(noms[o]))) nom[0] = '\0';
+        // La page dont le nom dit « n/m » : la sienne (un nom par page), sinon celle affichée.
+        const int montree = par_page ? i : (r == p.piece ? p.page : -1);
+        if (fin > debut && montree >= 0) {
+            snprintf(pages[o], sizeof(pages[o]), " %d/%d", montree - debut + 1, fin - debut + 1);
+            sfx[o] = pages[o];
+        }
+        if (par_page ? i == p.page : r == p.piece) courant = o;
+        p.page_onglet[o] = par_page ? i : debut;
+        ptr[o] = nom;
     }
-    pages_onglets(onglets, kPiecesMax, ptr, p.nb, p.page);
+    pages_onglets(onglets, kPiecesMax, ptr, p.nb_onglets, courant, sfx);
+}
+
+// La page qu'ouvre le tap sur le nom `onglet` ; -1 s'il n'y en a pas.
+template <class P>
+int page_de_onglet(const P& p, int onglet) {
+    return onglet >= 0 && onglet < p.nb_onglets ? p.page_onglet[onglet] : -1;
+}
+
+// La première tuile de la page `page` de `p` (pieces_calculer retrouve la page par elle) ;
+// -1 si les définitions ont changé et qu'elle n'existe plus.
+template <class P>
+int premiere_tuile(const P& p, bool (*garde)(int, int), int page) {
+    if (page < 0 || page >= p.nb) return -1;
+    const int r = p.pieces[page];
+    for (int j = 0, k = 0; j < kTuilesMax; j++) {
+        if (!garde(r, j)) continue;
+        if (k++ == p.debuts[page]) return j;
+    }
+    return -1;
 }
 
 // ─── Popup Lumières : les lumières de la maison, pièce par pièce ───────────────────
@@ -282,10 +347,22 @@ void popup_lumiere_etat(int r, int t) {
     if (t == s_pl.tuile) popup_lumiere_arc();
 }
 
-// Brique des popups à pages (tab5_pages.cpp) : le glissement de pièce en pièce.
+// La page `page` (glissement, tap sur un nom) : sa pièce, ses lignes, la première choisie.
+// Plus aucune lumière (définitions changées entre deux appels) : refermé.
+void lumieres_afficher(int page) {
+    charger();
+    if (!s_pl.ouvert() || page < 0 || page >= s_pl.nb || page == s_pl.page) return;
+    if (!popup_lumiere_lignes(s_pl.pieces[page], premiere_tuile(s_pl, est_lumiere, page))) {
+        animate_popup_close(PopupLumiere::conteneur());
+        return;
+    }
+    popup_lumiere_peindre();
+}
+
+// Brique des popups à pages (tab5_pages.cpp) : le glissement de page en page.
 int lumieres_nombre() { return s_pl.nb; }
 int lumieres_page() { return s_pl.ouvert() && s_pl.nb > 0 ? s_pl.page : -1; }
-PagesPopup s_pages_lumieres{nullptr, lumieres_nombre, lumieres_page, popup_lumiere_page};
+PagesPopup s_pages_lumieres{nullptr, lumieres_nombre, lumieres_page, lumieres_afficher};
 
 // ─── Popup Volets (05/10/2026, discussion #278 ; à pages par pièce, ADR-0046) ───────
 //
@@ -524,12 +601,20 @@ void popup_volet_etat(int r, int t) {
     if (s_pv.montre(r, t)) popup_volet_peindre();
 }
 
-// Brique des popups à pages (tab5_pages.cpp) : le glissement de pièce en pièce. Un
+// La page `page` (glissement, tap sur un nom). Plus aucun volet : refermé.
+void volets_afficher(int page) {
+    charger();
+    if (!s_pv.ouvert() || page < 0 || page >= s_pv.nb || page == s_pv.page) return;
+    if (!popup_volet_montrer(s_pv.pieces[page], premiere_tuile(s_pv, est_volet, page)))
+        animate_popup_close(PopupVolet::conteneur());
+}
+
+// Brique des popups à pages (tab5_pages.cpp) : le glissement de page en page. Un
 // glissement sur le volet dessiné le règle et ne remonte pas jusque-là (son cadre garde
 // le geste, tuiles_brancher_popup_volet).
 int volets_nombre() { return s_pv.nb; }
 int volets_page() { return s_pv.ouvert() && s_pv.nb > 0 ? s_pv.page : -1; }
-PagesPopup s_pages_volets{nullptr, volets_nombre, volets_page, popup_volet_page};
+PagesPopup s_pages_volets{nullptr, volets_nombre, volets_page, volets_afficher};
 
 // Relâcher après un glissement : « position » + 0-100 à la tuile du popup (événement
 // esphome.tab5_action ; le blueprint la passe à cover / valve.set_…_position de l'entité
@@ -736,16 +821,7 @@ void popup_lumiere_choisir(int idx) {
     popup_lumiere_arc();
 }
 
-void popup_lumiere_page(int page) {
-    charger();
-    if (!s_pl.ouvert() || page < 0 || page >= s_pl.nb || page == s_pl.page) return;
-    // Plus aucune lumière (définitions changées entre deux appels) : refermé.
-    if (!popup_lumiere_lignes(s_pl.pieces[page], -1)) {
-        animate_popup_close(PopupLumiere::conteneur());
-        return;
-    }
-    popup_lumiere_peindre();
-}
+void popup_lumiere_page(int onglet) { lumieres_afficher(page_de_onglet(s_pl, onglet)); }
 
 // Toucher de la pastille d'une ligne : le toucher de sa tuile (allumer / éteindre, avec la
 // confirmation de l'option k) ; appui long : sa roue, ancrée sur la pastille, sinon le
@@ -767,12 +843,7 @@ void popup_volet_choisir(int idx) {
     popup_volet_peindre();
 }
 
-void popup_volet_page(int page) {
-    charger();
-    if (!s_pv.ouvert() || page < 0 || page >= s_pv.nb || page == s_pv.page) return;
-    // Plus aucun volet (définitions changées entre deux appels) : refermé.
-    if (!popup_volet_montrer(s_pv.pieces[page], -1)) animate_popup_close(PopupVolet::conteneur());
-}
+void popup_volet_page(int onglet) { volets_afficher(page_de_onglet(s_pv, onglet)); }
 
 // Toucher de la pastille : le toucher de la tuile (le sens du volet : ouvrir, fermer, ou
 // arrêter un volet en route) ; appui long : sa roue, sinon le chemin de sa tuile.
@@ -789,13 +860,13 @@ void popup_volet_commande(const char* action) {
     envoyer_tuile(s_pv.piece, s_pv.tuile, action);
 }
 
-// « Tout ouvrir » / « Tout fermer » : la commande à chaque volet de la page, une action
-// par volet (esphome.tab5_action), comme son bouton.
+// « Tout ouvrir » / « Tout fermer » : la commande à chaque volet de la pièce affichée (toutes
+// ses pages, ADR-0066), une action par volet (esphome.tab5_action), comme son bouton.
 void popup_volets_tout(const char* action) {
     charger();
     if (action == nullptr || !s_pv.ouvert()) return;
-    for (int i = 0; i < s_pv.n; i++)
-        if (est_volet(s_pv.piece, s_pv.tuiles[i])) envoyer_tuile(s_pv.piece, s_pv.tuiles[i], action);
+    for (int t = 0; t < kTuilesMax; t++)
+        if (est_volet(s_pv.piece, t)) envoyer_tuile(s_pv.piece, t, action);
 }
 
 // Grand bouton du popup d'un appareil : le toucher de SA tuile, par le même chemin.

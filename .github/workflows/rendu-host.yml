@@ -140,7 +140,10 @@ jobs:
     # 38122146609, 38142719679, 38442520187 sur main) : clair 44 min, galerie 30 min, une langue
     # 27 min, à une minute de leur plafond. Plafonds = durée mesurée + ~50 % : clair 70, galerie 45,
     # langue 45 (les écrans ajoutés, comme les trois du Bilan en kWh, allongent chaque tâche).
-    timeout-minutes: ${{ matrix.langue == 'clair' && 70 || 45 }}
+    # Remesuré le 2026-10-18 (runs 39155417393 sur main et 39158496347, PR #517 : dix pièces de
+    # vingt éléments, ADR-0066) : clair 68 min, puis 70 = annulé à la limite ; une langue 38-39 min,
+    # galerie 30 min. Plafonds : clair 105, galerie et langue 60.
+    timeout-minutes: ${{ matrix.langue == 'clair' && 105 || 60 }}
     strategy:
       fail-fast: false
       matrix:

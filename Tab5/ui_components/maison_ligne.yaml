@@ -1,9 +1,10 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 25x par maison_popup.yaml :
 # une ligne du popup « Maison » (ADR-0037) = la place (colonne C, ligne K) de la page affichée,
-# qui montre une tuile tRT (s_place, tab5_maison.cpp, ADR-0066), dessinée comme sa carte du mode
-# HA couchée (carte « tile » de HA) : pastille ronde de l'icône (couleur de l'état à 20 %,
-# icône pleine), nom, ligne d'état, et « ⋯ » quand la tuile a un appui long.
+# qui montre une tuile tRT (s_place, tab5_maison.cpp, ADR-0066 : une page = un groupe de cinq
+# colonnes × une tranche de cinq lignes), dessinée comme sa carte du mode HA couchée (carte
+# « tile » de HA) : pastille ronde de l'icône (couleur de l'état à 20 %, icône pleine), nom,
+# ligne d'état, et « ⋯ » quand la tuile a un appui long.
 # Vars : c (colonne 0 à 4), k (ligne 0 à 4), nombres NON quotés dans les lambdas.
 # @architecture_constraint L'ORDRE des enfants est lu par tab5_maison.cpp (enfant()) :
 #   0 pastille (son enfant 0 : l'icône), 1 nom, 2 état, 3 « ⋯ ». Position, largeur,

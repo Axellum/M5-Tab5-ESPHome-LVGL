@@ -113,11 +113,16 @@ def test_widgets_poses_par_le_script():
         for k in range(5):
             assert f"u.ligne[{c}][{k}] = id(maison_ligne_{c}{k});" in script
             assert f'file: maison_ligne.yaml, vars: {{ c: "{c}", k: "{k}" }}' in popup
-    # Onglets des pages (dix pièces : deux pages de cinq colonnes au plus).
-    for p in range(2):
+    # Onglets des pages (ADR-0066) : un par groupe de colonnes (dix pièces : deux groupes de cinq
+    # au plus, lot A) ou, avec un seul groupe, un par tranche de cinq lignes (vingt éléments :
+    # quatre tranches, lot B) ; quatre boutons au plus.
+    for p in range(4):
         assert f"u.onglet[{p}] = id(maison_onglet_{p});" in script
         assert f"file: pages_onglet.yaml, vars: {{ id: maison_onglet_{p}, page: {p}, choisir: maison_page }}" in popup
-    assert "constexpr int kMaisonPagesMax = 2;" in _lire("Tab5", "ecran", "tab5_maison.h")
+    entete = _lire("Tab5", "ecran", "tab5_maison.h")
+    assert "constexpr int kMaisonGroupesMax = 2;" in entete and "constexpr int kMaisonTranchesMax = 4;" in entete
+    assert "constexpr int kMaisonPagesMax = kMaisonGroupesMax * kMaisonTranchesMax;" in entete
+    assert "lv_obj_t* onglet[kMaisonOngletsMax] = {};" in entete
     assert script.index("u.popup = id(maison_popup);") > script.index("u.ligne[4][4]"), "popup en dernier"
     for paquet in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
         texte = _lire(paquet)
@@ -151,6 +156,8 @@ def test_gestes_d_une_ligne_ceux_de_la_tuile():
     # La place dit quelle tuile elle montre (s_place) ; la roue (ADR-0036) s'ancre sur la
     # pastille de la ligne (enfant 0).
     ligne_appui = _fonction(_maison(), "maison_ligne_appui")
+    # La place [C][K] de la page affichée montre la tuile s_place[C][K] (ADR-0066 : une page =
+    # un groupe de colonnes × une tranche de cinq lignes).
     assert "const Place pl = s_place[c][k];" in ligne_appui and "if (pl.r < 0) return;" in ligne_appui
     assert "tuile_appui_maison(pl.r, pl.t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);" in ligne_appui
     # Appui long (et « ⋯ ») : la roue de la tuile d'abord (sans son lien « Maison »), sinon
@@ -256,10 +263,6 @@ def test_textes_traduits():
     assert 'tr("Pièce %d")' in _fonction(_tuiles(), "tuiles_piece_titre")
 
 
-if __name__ == "__main__":
-    sys.exit(subprocess.run([sys.executable, "-m", "pytest", "-q", __file__], check=False).returncode)
-
-
 def test_pages_de_pieces_par_la_brique():
     """Plus de cinq pièces (ADR-0066) : des pages de cinq colonnes au plus, au glissement de la
     brique commune (ADR-0046) et par les onglets à côté du titre, la page de la pièce du mode
@@ -269,8 +272,17 @@ def test_pages_de_pieces_par_la_brique():
     assert "pages_brancher(&s_pages);" in ouvrir and "tuiles_piece_montree()" in ouvrir
     assert "LV_EVENT_GESTURE" not in cpp, "le geste : la brique (tab5_pages.cpp)"
     onglets = _fonction(cpp, "peindre_onglets")
-    assert 'tr("Pièces %d à %d")' in onglets and "choix_peindre(u.onglet, n, s_page);" in onglets
-    assert "const int n = s_rep.pages >= 2 ? s_rep.pages : 0;" in onglets, "aucun onglet sous deux pages"
+    # Une page = un groupe de colonnes (lot A) × une tranche de cinq lignes (lot B) : onglets
+    # par groupe (« Pièces a à b », « n/m » gardé entier sur le groupe affiché), ou, avec un
+    # seul groupe, par tranche (« 1–5 ») ; aucun sous deux pages.
+    assert 'tr("Pièces %d à %d")' in onglets and '"%d\\xE2\\x80\\x93%d"' in onglets
+    assert "choix_peindre(u.onglet, n, par_tranche ? s_page : g_affiche);" in onglets
+    assert "const int voulus = s_nb_pages >= 2 ? (par_tranche ? s_nb_pages : s_rep.pages) : 0;" in onglets
+    assert "texte_ha_coupe(lv_obj_get_child(b, 0), nom, w - 2 * kOngletMarge, sfx);" in onglets
+    disposer = _fonction(cpp, "disposer")
+    assert "s_tranches[g] = std::max(1, std::min(kMaisonTranchesMax, (lignes + kMaisonLignes - 1) / kMaisonLignes));" \
+        in disposer
+    assert "for (int i = premiere_ligne; occupee && i < nb_lues[col] && k < kMaisonLignes; i++, k++) {" in disposer
     # Les onglets s'arrêtent avant « Éteindre les lumières » (320 px à 100 px du bord droit).
     assert "constexpr int32_t kOngletsFinMaison = kCarteL - 100 - 320 - 10;" in cpp
     # Le bouton garde ses 320 px : sur une carte plus étroite, les onglets commencent plus tôt
@@ -299,3 +311,7 @@ def test_roue_devant_le_popup_maison():
     assert "const bool repeinte = garder && ouverte();" in ouvrir
     assert "if (!repeinte) lv_obj_move_to_index(u.fond, -1);" in ouvrir
     assert ouvrir.index("lv_obj_move_to_index(u.fond, -1);") < ouvrir.index("ui_hidden(u.fond, false);")
+
+
+if __name__ == "__main__":
+    sys.exit(subprocess.run([sys.executable, "-m", "pytest", "-q", __file__], check=False).returncode)
