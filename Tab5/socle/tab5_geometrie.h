@@ -63,13 +63,19 @@ static_assert(rotation_sens(180, true) == 0 && rotation_sens(270, true) == 90 &&
 // La rotation de repos en vigueur : kRotationRepos, ou le sens choisi dans le select « Sens de
 // l'écran » de la carte (la 7B seule, carte-waveshare-7b.yaml ; gardé en NVS), posé par
 // dalle_sens_choisir() (tab5_dalle.cpp) dès la bande 800 du démarrage : avant la barre de
-// chargement (500), qui la lit, et le setup() de LVGL (400). Neon Apron la remet en quittant
-// son portrait (pinball_game.cpp). Une seule valeur pour tout le firmware (fonction inline).
+// chargement (500), qui la lit, et le setup() de LVGL (400). Un jeu qui tourne LVGL la remet
+// en sortant. Une seule valeur pour tout le firmware (fonction inline).
 inline int& rotation_repos_courante() {
     static int rotation = kRotationRepos;
     return rotation;
 }
 inline int rotation_repos() { return rotation_repos_courante(); }
+// true tant qu'un jeu tient sa propre rotation (portrait) : un sens choisi pendant ce temps
+// est seulement posé, le jeu remet rotation_repos() en sortant.
+inline bool& rotation_tenue() {
+    static bool tenue = false;
+    return tenue;
+}
 
 // Carte modale (tab5-ui-tokens.yaml : modal_card_w, modal_card_h, modal_body_y) : 15 px
 // des bords de l'écran, corps sous la barre de titre de modal_header.yaml.

@@ -38,6 +38,7 @@ void dalle_rallumer(esphome::mipi_dsi::MipiDsi* ecran);
 bool dalle_noire_pendant_ota();
 // Sens de l'écran (ADR-0069, select « Sens de l'écran » de la 7B) : `retourne` = carte montée à
 // l'envers, l'image tourne de 180° de plus que kRotationRepos. Pose rotation_repos()
-// (tab5_geometrie.h) et tourne LVGL s'il montre l'ancienne ; le tactile suit (ESPHome tourne
-// les appuis avec l'image). Avant le setup() de LVGL, celui-ci part dans le bon sens.
+// (tab5_geometrie.h) et tourne LVGL, sauf si un jeu tient sa rotation (rotation_tenue()) ; le
+// tactile suit (ESPHome tourne les appuis avec l'image). Avant le setup() de LVGL, celui-ci
+// part dans le bon sens.
 void dalle_sens_choisir(esphome::lvgl::LvglComponent* lvgl, bool retourne);

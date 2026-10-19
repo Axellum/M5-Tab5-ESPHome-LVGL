@@ -173,12 +173,11 @@ void dalle_rallumer(esphome::mipi_dsi::MipiDsi* ecran) {
 bool dalle_noire_pendant_ota() { return TAB5_DALLE_NOIRE_OTA != 0; }
 
 void dalle_sens_choisir(esphome::lvgl::LvglComponent* lvgl, bool retourne) {
-    const int avant = rotation_repos();
     const int angle = rotation_sens(kRotationRepos, retourne);
     rotation_repos_courante() = angle;
-    // LVGL ne montre pas l'ancienne rotation de repos : un jeu l'a tournée (portrait de Neon
-    // Apron), il remettra la nouvelle en sortant. Même angle : rien à redessiner.
-    const int montree = lvgl != nullptr ? static_cast<int>(lvgl->get_rotation()) : -1;
-    if (montree == avant && montree != angle) lvgl->set_rotation(angle);
+    // Un jeu tient sa rotation (portrait) : il remettra la nouvelle en sortant. Même angle :
+    // rien à redessiner.
+    if (lvgl != nullptr && !rotation_tenue() && static_cast<int>(lvgl->get_rotation()) != angle)
+        lvgl->set_rotation(angle);
     ESP_LOGI(TAG, "Sens de l'ecran : %s (rotation %d)", retourne ? "retourne" : "normal", angle);
 }

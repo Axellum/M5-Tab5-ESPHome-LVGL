@@ -81,6 +81,10 @@ def test_rotation_lue_a_l_execution():
         assert "rotation_repos()" in texte, nom
     dalle = lire("Tab5", "ecran", "tab5_dalle.cpp")
     assert "rotation_sens(kRotationRepos, retourne)" in dalle and "set_rotation(angle)" in dalle
+    # Un sens choisi pendant une partie n'est que posé : le jeu qui tient sa rotation le dit,
+    # et remet rotation_repos() en sortant.
+    assert "!rotation_tenue()" in dalle
+    assert "rotation_tenue() = portrait;" in source("pinball_game.cpp").read_text(encoding="utf-8")
 
 
 def test_le_firmware_publie_garde_la_rotation_de_la_carte():

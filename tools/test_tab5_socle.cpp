@@ -547,6 +547,7 @@ static void test_sens_ecran() {
     rotation_repos_courante() = rotation_sens(kRotationRepos, true);
     expect(rotation_repos() == (kRotationRepos + 180) % 360, "sens : le choix posé est celui que tout le firmware lit");
     rotation_repos_courante() = kRotationRepos;
+    expect(!rotation_tenue(), "sens : aucun jeu ne tient la rotation au démarrage");
 }
 
 // ── Découpe autour d'une carte opaque (tab5_decoupe.h, popup Musique) ──────

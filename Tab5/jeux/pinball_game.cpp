@@ -704,6 +704,7 @@ static void recadrer_dernier_point() {
 
 static void screen_portrait(bool portrait) {
     if (!gs->ui.lvgl) return;
+    rotation_tenue() = portrait;  // un sens choisi pendant la partie attend la sortie (ADR-0069)
     int angle = rotation_repos();
     if (portrait) angle = gs->save.flip_screen ? 180 : 0;
     gs->ui.lvgl->set_rotation(angle);
