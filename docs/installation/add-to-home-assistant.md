@@ -11,7 +11,7 @@ Home Assistant gives the tablet its encryption key, and keeps it: nothing to cop
 1. *Settings → Devices & services*: the tablet shows up as discovered, ESPHome integration.
 2. *Configure*, then *Submit*.
 
-That is all. Home Assistant creates the key, gives it to the tablet and keeps it. A tablet Home Assistant already knows (after « Erase User Data », for instance) gets a new key by itself, nothing to confirm (checked on 2026-09-28).
+That is all. Home Assistant creates the key, gives it to the tablet and keeps it. A tablet Home Assistant already knows, installed again with an erase (« Erase device » ticked, or « Erase User Data »), shows up under « Discovered » with a *Reconfigure* button: Home Assistant waits for that confirmation before it gives the tablet back its key ([reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19)).
 
 **It worked if** the tablet is listed under *Settings → Devices & services → ESPHome*, and its device page shows its controls, sensors and configuration. That page is where every [tablet setting](settings.md) lives.
 
@@ -22,6 +22,7 @@ That is all. Home Assistant creates the key, gives it to the tablet and keeps it
 | What you see | What to do |
 |---|---|
 | The 30 minutes are over | restart the tablet (a short press on its reset button, or unplug it): the window opens again for 30 minutes. Once the tablet has its key, it never opens again |
+| The tablet was already in Home Assistant, and was erased | Home Assistant waits for a confirmation and no longer connects: [reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19) |
 | The tablet is not discovered | *Settings → Devices & services → Add integration → ESPHome*, then type the tablet's IP address ([step 3](wifi.md#good-to-know)) and port 6053. Same result: Home Assistant gives it its key. The fresh-install test of the project adds the tablet this way |
 
 ## Nothing else to allow
@@ -45,7 +46,7 @@ Home Assistant donne sa clé de chiffrement à la tablette, et la garde : rien �
 1. *Paramètres → Appareils et services* : la tablette apparaît comme découverte, intégration ESPHome.
 2. *Configurer*, puis *Valider*.
 
-C'est tout. Home Assistant crée la clé, la donne à la tablette et la garde. Une tablette que Home Assistant connaît déjà (après « Erase User Data », par exemple) reçoit une nouvelle clé toute seule, rien à confirmer (vérifié le 28/09/2026).
+C'est tout. Home Assistant crée la clé, la donne à la tablette et la garde. Une tablette que Home Assistant connaît déjà, réinstallée avec effacement (« Erase device » coché, ou « Erase User Data »), apparaît sous « Découvertes » avec un bouton *Reconfigurer* : Home Assistant attend cette confirmation avant de lui redonner sa clé ([réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026)).
 
 **C'est bon si** la tablette est listée dans *Paramètres → Appareils et services → ESPHome*, et que la page de son appareil montre ses contrôles, ses capteurs et sa configuration. C'est sur cette page que vivent tous les [réglages de la tablette](settings.md#version-française).
 
@@ -56,6 +57,7 @@ C'est tout. Home Assistant crée la clé, la donne à la tablette et la garde. U
 | Ce que vous voyez | Que faire |
 |---|---|
 | Les 30 minutes sont passées | redémarrez la tablette (un appui court sur son bouton reset, ou débranchez-la) : la fenêtre se rouvre pour 30 minutes. Une fois sa clé reçue, elle ne s'ouvre plus |
+| La tablette était déjà dans Home Assistant, et a été effacée | Home Assistant attend une confirmation et ne se connecte plus : [réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026) |
 | La tablette n'est pas découverte | *Paramètres → Appareils et services → Ajouter une intégration → ESPHome*, puis tapez l'adresse IP de la tablette ([étape 3](wifi.md#bon-à-savoir)) et le port 6053. Même résultat : Home Assistant lui donne sa clé. Le test d'installation à neuf du projet ajoute la tablette de cette façon |
 
 ## Rien d'autre à autoriser
