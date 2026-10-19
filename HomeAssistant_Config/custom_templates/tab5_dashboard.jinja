@@ -77,6 +77,7 @@
   ('aller_a', 'select', 'aller_a_l_ecran'), ('haut_parleur', 'switch', 'speaker_enable'),
   ('calendrier', 'button', 'recharger_le_calendrier'), ('langue', 'select', 'langue'),
   ('theme', 'select', 'theme'), ('theme_mode', 'select', 'clair_ou_sombre'),
+  ('sens_ecran', 'select', 'sens_de_l_ecran'),
   ('theme_nuit', 'switch', 'nuit_theme_auto'),
   ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
   ('appareils_meteo', 'switch', 'tab5_appareils_sur_la_meteo'),
@@ -754,6 +755,20 @@ views:
 {%- if T.appareils_meteo %}
           - type: heading
             heading: "{{ t('Éteint, les prévisions montrent la météo seule ; le bouton HA garde les appareils', 'Off: the forecast cards show the weather only; the HA button still shows the devices') }}"
+            heading_style: subtitle
+{%- endif %}
+{#- Sens de l'écran (ADR-0069, 19/10/2026) : la Waveshare 7B seule (le Tab5 n'a pas l'entité). #}
+{%- if T.sens_ecran %}
+          - type: tile
+            entity: {{ T.sens_ecran }}
+            name: "{{ t("Sens de l'écran", 'Screen direction') }}"
+            icon: mdi:screen-rotation
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+          - type: heading
+            heading: "{{ t("Retourné : carte montée à l'envers ; l'image et le tactile tournent aussitôt", 'Retourné: board mounted upside down; the picture and the touch turn at once') }}"
             heading_style: subtitle
 {%- endif %}
 {#- Économie d'énergie (firmware du 06/10/2026) : « Sur batterie » d'après le courant de l'INA226. #}
@@ -2199,6 +2214,18 @@ views:
     'es': 'Claro u oscuro',
     'it': 'Chiaro o scuro',
     'tr': 'Açık veya koyu'},
+  "Sens de l'écran": {
+    'de': 'Bildschirmausrichtung',
+    'nl': 'Schermrichting',
+    'es': 'Orientación de la pantalla',
+    'it': 'Orientamento dello schermo',
+    'tr': 'Ekran yönü'},
+  "Retourné : carte montée à l'envers ; l'image et le tactile tournent aussitôt": {
+    'de': 'Retourné: Platine kopfüber montiert; Bild und Touch drehen sich sofort',
+    'nl': 'Retourné: bord ondersteboven gemonteerd; beeld en aanraking draaien meteen',
+    'es': 'Retourné: placa montada al revés; la imagen y el táctil giran al instante',
+    'it': 'Retourné: scheda montata capovolta; immagine e tocco ruotano subito',
+    'tr': 'Retourné: kart ters monte edilmiş; görüntü ve dokunma hemen döner'},
   "Extinction auto de l'écran": {
     'de': 'Bildschirm automatisch aus',
     'nl': 'Scherm automatisch uit',

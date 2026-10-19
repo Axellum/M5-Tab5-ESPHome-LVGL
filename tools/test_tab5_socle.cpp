@@ -6,7 +6,8 @@
  *     valide, « HH:MM » strict, embauche tôt ;
  *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h), dont la
  *     clim « d'ici » de la tuile − / + (clim_ici_rang, 14/10/2026) ;
- *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert ;
+ *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert, et le sens
+ *     de l'écran d'une carte montée à l'envers (rotation_sens, rotation_repos ; ADR-0069) ;
  *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026) ;
  *   - le niveau de la batterie d'après sa tension (Tab5/socle/tab5_batterie.h, courbe de
  *     décharge mesurée sur un Tab5, 15/10/2026) ;
@@ -354,6 +355,23 @@ static void test_clim_ici() {
            "clim d'ici : sans clim du blueprint, celle de la pièce");
     expect(clim_ici_rang(sans_bp, 2, 1) == -1 && clim_ici_rang(sans_bp, 2, -1) == -1,
            "clim d'ici : sans clim du blueprint, aucune sur une pièce sans clim");
+    // Plus de huit clims (dix pièces, ADR-0066 ; relecture du 18/10/2026) : la clim de la
+    // dixième pièce est la douzième de la liste, au-delà des huit pastilles du carrousel.
+    // La règle voit toute la liste qu'on lui donne ; clim_ref_ici lui donne clims_toutes.
+    RefClim maison[12] = {bp, tuile_salon};
+    for (int r = 0; r < 10; r++) maison[2 + r] = {static_cast<signed char>(r), -1, static_cast<signed char>(r)};
+    expect(clim_ici_rang(maison, 12, 9) == 11 && clim_ici_rang(maison, 12, 7) == 9,
+           "clim d'ici : plus de huit clims, celle des pièces 8 et 10 (au-delà de la huitième)");
+    expect(clim_ici_rang(maison, 12, 0) == 2 && clim_ici_rang(maison, 12, -1) == 0,
+           "clim d'ici : plus de huit clims, la pièce 1 et le mode météo inchangés");
+    // Les huit premières seules (l'ancien appel, plafonné aux pastilles) : la pièce 10 tombait
+    // sur la clim du blueprint.
+    expect(clim_ici_rang(maison, 8, 9) == 0, "clim d'ici : coupée à huit, la pièce 10 perdait la sienne");
+    // Sans clim du blueprint, neuf clims de pièce : la neuvième pièce a la sienne (coupée à huit,
+    // aucune : pas de ligne « Clim », et le toucher de la température visait la pièce 1).
+    const RefClim* const pieces = maison + 2;
+    expect(clim_ici_rang(pieces, 9, 8) == 8 && clim_ici_rang(pieces, 8, 8) == -1,
+           "clim d'ici : sans clim du blueprint, la neuvième pièce, au-delà de huit");
 }
 
 // ── Chronologie du démarrage (tab5_demarrage.h, 10/10/2026) ─────────────────
@@ -531,6 +549,22 @@ static void test_barre_demarrage() {
     expect(barre::progression(0.0f, 1.0f, 6000, 6000) > 0.85f, "barre : 86 % du chemin à la durée typique");
     expect(barre::progression(0.6f, 0.5f, 1000, 6000) == 0.6f, "barre : ne recule jamais");
     expect(barre::kEtapes == 3 && barre::kJalons[barre::kEtapes - 1].cible == 1.0f, "barre : la dernière étape va au bout");
+}
+
+// ── Sens de l'écran (tab5_geometrie.h, ADR-0069) ──────────────────────────
+static void test_sens_ecran() {
+    expect(rotation_repos() == kRotationRepos, "sens : sans choix, la rotation de repos de la carte");
+    const int repos[] = {0, 90, 180, 270};
+    bool juste = true;
+    for (int r : repos) {
+        juste = juste && rotation_sens(r, false) == r && rotation_sens(r, true) == (r + 180) % 360 &&
+                rotation_sens(rotation_sens(r, true), true) == r;
+    }
+    expect(juste, "sens : retourné = un demi-tour de plus, deux fois = le sens d'origine");
+    rotation_repos_courante() = rotation_sens(kRotationRepos, true);
+    expect(rotation_repos() == (kRotationRepos + 180) % 360, "sens : le choix posé est celui que tout le firmware lit");
+    rotation_repos_courante() = kRotationRepos;
+    expect(!rotation_tenue(), "sens : aucun jeu ne tient la rotation au démarrage");
 }
 
 // ── Découpe autour d'une carte opaque (tab5_decoupe.h, popup Musique) ──────
@@ -760,6 +794,7 @@ int main() {
     test_chronologie();
     test_niveau_batterie();
     test_barre_demarrage();
+    test_sens_ecran();
     test_decoupe_carte();
     test_disposition();
 

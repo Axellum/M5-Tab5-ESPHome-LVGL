@@ -206,6 +206,28 @@ To go back to older files by hand: [putting older files back](installation/updat
 
 ---
 
+### Home Assistant no longer connects after a reinstall with erase (2026-10-19)
+
+**Symptom:** a tablet or a Waveshare 7B that Home Assistant already knew is installed again from the [install page](installation/flash.md) with an erase (« Erase device » ticked after *Install*, or « Erase User Data »). It starts and joins the Wi-Fi once you set it again, but stays unavailable in Home Assistant, even after a restart of the tablet. *Settings → Devices & services* shows it at the top, under « Discovered », with a red border and a *Reconfigure* button; *Settings → System → Repairs* says « Authentication expired for M5Stack Tab5 Home Assistant HMI ». Seen on the author's 7B on 2026-10-19 (3.9.0-rc.6 installed from the page).
+
+**Root cause:** the erase empties the tablet's memory (NVS): the API key Home Assistant gave it, its Wi-Fi and its screen settings (theme, alarm clock, brightness…). Home Assistant still holds the key and tries it; the tablet, without a key, refuses it. Home Assistant then opens a re-authentication at the step `reauth_encryption_removed_confirm` (the tablet answers without encryption while its entry has a key: `homeassistant/components/esphome/config_flow.py`, `async_step_reauth`) and stops reconnecting while it waits. The install page offers the erase on every *Install*: its manifest sets `new_install_prompt_erase: true`, and ESP Web Tools 10.4.0 then asks « Erase device » (box unticked); *Update* never erases. Until now, the installation guide said that a tablet Home Assistant knows gets a new key by itself (one try, on 2026-09-28): the fresh-install test shows that Home Assistant waits for a confirmation, the same with Home Assistant 2026.8.3, 2026.9.4 and 2026.10.2.
+
+**Fix, in Home Assistant** (what the fresh-install test does, `tools/installation_ha/verifier_installation.py`):
+
+1. Within 30 minutes of the tablet's start (its pairing window): *Settings → Devices & services*, the tablet's card under « Discovered » → *Reconfigure*. The box says the device « disabled transport encryption » and asks to confirm that you want to « remove the encryption key and allow unencrypted connections »: *Submit*. Despite these words, the tablet does not stay unencrypted. Closing the box without *Submit* changes nothing: the card stays.
+2. Home Assistant gives the tablet back the key it kept, the same one, and reconnects with it, in a few seconds (under 7 s in the test). Entities, automations and history do not change; the repair goes away.
+3. Put the screen settings back from the tablet's device page ([settings](installation/settings.md)): their former values are in the history of each entity.
+
+More than 30 minutes since the tablet's start: restart it first (a short press on reset, or unplug it), then *Reconfigure*.
+
+*Reload* (*Settings → Devices & services → ESPHome* → the tablet → ⋮ → *Reload*) drops the waiting re-authentication, and Home Assistant opens a new one, at the same step, while the window is open (checked by the test). It is the way out if the box asks for an encryption key instead, which happens, from Home Assistant's code (not tried), when Home Assistant opened the re-authentication while the tablet's window was closed: restart the tablet, then *Reload*, then *Reconfigure*.
+
+**Without the interface**, from a PC that reaches Home Assistant's `config` share: within the window, `python tools/tab5_redonner_cle.py --host <tablet IP> --config-ha \\<HA IP>\config` gives the tablet the key Home Assistant keeps (read in `.storage/core.config_entries`, never printed); then *Reload* the tablet's ESPHome entry, and Home Assistant reconnects (under 3 s in the test). That is how the author's 7B was repaired on 2026-10-19.
+
+**To avoid it:** on a tablet Home Assistant knows, *Update*; if the page offers *Install*, leave « Erase device » unticked.
+
+---
+
 ### Faint continuous hiss, on a tablet without a battery (2026-10-08)
 
 **Symptom:** a very faint, continuous hiss from the tablet. Muting the microphone or turning the volume down changes nothing. Heard on the author's tablet, which has no battery and runs on a PC's USB port.
@@ -399,6 +421,26 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 - **« Tab5 : la tablette n'est pas passée en X »** : avec « Mettre ensuite la tablette à jour » coché, l'intégration a lancé la mise à jour du firmware 3 fois, à 15 minutes d'écart, et la tablette tourne toujours une autre version (mise à jour ratée sur la tablette, ou tablette éteinte ou déconnectée). Installez-la à la main : *Paramètres → Mises à jour*, ou l'entité « Firmware » de la tablette → *Installer*, tablette allumée et connectée. Le message disparaît dès que la tablette tourne cette version.
 
 Pour revenir à la main à des fichiers plus anciens : [remettre des fichiers plus anciens](installation/updates.md#remettre-à-la-main-des-fichiers-plus-anciens).
+
+### Home Assistant ne se reconnecte plus après une réinstallation avec effacement (19/10/2026)
+
+**Symptôme :** une tablette ou une Waveshare 7B que Home Assistant connaissait déjà est réinstallée depuis la [page d'installation](installation/flash.md#version-française) avec effacement (« Erase device » coché après *Install*, ou « Erase User Data »). Elle démarre et rejoint le Wi-Fi une fois celui-ci redonné, mais reste indisponible dans Home Assistant, même après un redémarrage de la tablette. *Paramètres → Appareils et services* la montre en haut, sous « Découvertes », cadre rouge et bouton *Reconfigurer* ; *Paramètres → Système → Corrections* dit « L'authentification a expiré pour M5Stack Tab5 Home Assistant HMI ». Vu sur la 7B de l'auteur le 19/10/2026 (3.9.0-rc.6 installée depuis la page).
+
+**Cause racine :** l'effacement vide la mémoire de la tablette (NVS) : la clé API que Home Assistant lui avait donnée, son Wi-Fi et les réglages de l'écran (thème, réveil, luminosité…). Home Assistant garde la clé et l'essaie ; la tablette, sans clé, la refuse. Home Assistant ouvre alors une réauthentification à l'étape `reauth_encryption_removed_confirm` (la tablette répond sans chiffrement alors que son entrée a une clé : `homeassistant/components/esphome/config_flow.py`, `async_step_reauth`) et ne se reconnecte plus tant qu'elle attend. La page d'installation propose l'effacement à toute *Install* : son manifeste porte `new_install_prompt_erase: true`, et ESP Web Tools 10.4.0 demande alors « Erase device » (case décochée) ; *Update* n'efface jamais. Le guide d'installation disait jusqu'ici qu'une tablette que Home Assistant connaît reçoit une nouvelle clé toute seule (un essai, le 28/09/2026) : le test d'installation à neuf montre que Home Assistant attend une confirmation, pareil avec Home Assistant 2026.8.3, 2026.9.4 et 2026.10.2.
+
+**Correctif, dans Home Assistant** (ce que fait le test d'installation à neuf, `tools/installation_ha/verifier_installation.py`) :
+
+1. Dans les 30 minutes qui suivent le démarrage de la tablette (sa fenêtre d'appairage) : *Paramètres → Appareils et services*, la carte de la tablette sous « Découvertes » → *Reconfigurer*. La boîte dit que l'appareil « a désactivé le chiffrement du transport » et demande de confirmer la suppression de « la clé de chiffrement » pour « autoriser les connexions non chiffrées » : *Valider*. Malgré ces mots, la tablette ne reste pas sans chiffrement. Fermer la boîte sans *Valider* ne change rien : la carte reste.
+2. Home Assistant redonne à la tablette la clé qu'il gardait, la même, et se reconnecte avec, en quelques secondes (moins de 7 s dans le test). Entités, automatisations et historique ne changent pas ; la correction disparaît.
+3. Remettez les réglages de l'écran depuis la page de l'appareil de la tablette ([réglages](installation/settings.md#version-française)) : leurs anciennes valeurs sont dans l'historique de chaque entité.
+
+Plus de 30 minutes depuis le démarrage de la tablette : redémarrez-la d'abord (un appui court sur reset, ou débranchez-la), puis *Reconfigurer*.
+
+*Recharger* (*Paramètres → Appareils et services → ESPHome* → la tablette → ⋮ → *Recharger*) abandonne la réauthentification qui attend, et Home Assistant en ouvre une nouvelle, à la même étape, tant que la fenêtre est ouverte (vérifié par le test). C'est le recours si la boîte demande une clé de chiffrement à la place, ce qui arrive, d'après le code de Home Assistant (pas essayé), quand il a ouvert la réauthentification pendant que la fenêtre de la tablette était fermée : redémarrez la tablette, puis *Recharger*, puis *Reconfigurer*.
+
+**Sans l'interface**, depuis un PC qui voit le partage `config` de Home Assistant : dans la fenêtre, `python tools/tab5_redonner_cle.py --host <IP de la tablette> --config-ha \\<IP de HA>\config` redonne à la tablette la clé que garde Home Assistant (lue dans `.storage/core.config_entries`, jamais affichée) ; puis *Recharger* l'entrée ESPHome de la tablette, et Home Assistant se reconnecte (moins de 3 s dans le test). C'est ainsi que la 7B de l'auteur a été réparée le 19/10/2026.
+
+**Pour l'éviter :** sur une tablette que Home Assistant connaît, *Update* ; si la page propose *Install*, laissez « Erase device » décoché.
 
 ### Léger souffle continu, sur une tablette sans batterie (08/10/2026)
 
