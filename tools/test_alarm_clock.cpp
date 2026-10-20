@@ -497,6 +497,24 @@ static uint32_t tic_jusqua(EtatChargeur& c, uint8_t limite, bool montee, uint32_
     return a;
 }
 
+// Une batterie qui charge : sa tension au repos monte de `pente` V par minute de charge.
+struct BatterieSimulee {
+    float v0;          // tension au départ (V)
+    float pente;       // V gagnés par minute de charge
+    int charge_s;      // secondes de charge
+    float tension() const { return v0 + pente * static_cast<float>(charge_s) / 60.0f; }
+};
+
+// La tablette seconde par seconde, sondes du chargeur comprises : une lecture de l'INA226
+// à chaque demande (fin du repos d'une sonde) et toutes les 60 s (update_interval).
+static void simuler_charge(EtatChargeur& c, BatterieSimulee& b, uint8_t limite, uint32_t de, uint32_t a) {
+    for (uint32_t ms = de; ms <= a; ms += 1000) {
+        const ActionChargeur act = chargeur_tick(c, limite, false, ms);
+        if (act.allumer) b.charge_s++;
+        if (act.lire || ms % 60000u == 0) chargeur_lecture(c, b.tension(), ms);
+    }
+}
+
 static void test_chargeur() {
     constexpr uint32_t S = 1000u;
     constexpr uint32_t MIN = 60u * S;
@@ -699,6 +717,41 @@ static void test_chargeur() {
         expect(chargeur_voulu(r, 9, 40 * MIN), "index inconnu : 100 %");
         r.presence = P::INCONNUE;
         expect(!chargeur_voulu(r, 0, 40 * MIN), "présence inconnue : jamais de charge");
+
+        // Avec les sondes périodiques (discussion #278, 20/10/2026 : « la limite de 80 %
+        // arrête la charge là où est le niveau ») : une sonde n'est pas un arrêt de la limite.
+        // 75 % en charge (limite 100 %, puis 80 % choisie) : la charge continue après chaque
+        // sonde et s'arrête à 80 %.
+        EtatChargeur e;
+        BatterieSimulee b{8.035f, 0.0005f, 0};  // ≈ 75 %, 80 % après ≈ 25 min de charge
+        chargeur_demarrer(e, VUE, false, false, false, 0);
+        simuler_charge(e, b, 0, 0, 2 * MIN);
+        expect(e.allume && e.niveau > 74.0f && e.niveau < 77.0f, "75 %, limite 100 % : en charge");
+        simuler_charge(e, b, L80, 2 * MIN + S, 10 * MIN + 30 * S);
+        expect(e.sonde_fin_ms > 10 * MIN && e.allume, "80 % choisie à 75 % : la charge continue après la sonde");
+        simuler_charge(e, b, L80, 10 * MIN + 31 * S, 30 * MIN);
+        expect(!e.allume && e.niveau >= 80.0f, "puis la charge s'arrête à 80 %");
+        expect(b.charge_s > 24 * 60, "jusque-là, coupée seulement 8 s par sonde (≈ 25 min de charge)");
+        const int charge_80 = b.charge_s;
+        simuler_charge(e, b, L80, 30 * MIN + S, 90 * MIN);
+        expect(b.charge_s == charge_80, "80 % atteint : à l'arrêt (reprise à 70 %)");
+        // Sous 70 % (59 %) : 10 min d'arrêt au démarrage, puis la charge tient entre deux
+        // sondes (avant le 20/10/2026 : quelques secondes toutes les 10 min).
+        EtatChargeur f;
+        BatterieSimulee g{7.97f, 0.0002f, 0};  // ≈ 59 %, reste sous 70 %
+        chargeur_demarrer(f, VUE, false, false, false, 0);
+        simuler_charge(f, g, L80, 0, 10 * MIN - S);
+        expect(g.charge_s == 0, "59 %, limite 80 % : 10 min d'arrêt au démarrage");
+        simuler_charge(f, g, L80, 10 * MIN, 60 * MIN);
+        expect(g.charge_s > 48 * 60, "59 % : en charge au moins 48 min sur 50 (8 s de coupure par sonde)");
+        // Une coupure de sécurité, elle, reste un arrêt pour la limite (comme avant).
+        EtatChargeur h;
+        BatterieSimulee hb{8.035f, 0.0f, 0};
+        chargeur_demarrer(h, VUE, false, false, false, 0);
+        simuler_charge(h, hb, 0, 0, 2 * MIN);
+        chargeur_lecture(h, 8.6f, 2 * MIN + 30 * S);  // tension trop haute : sonde de sécurité
+        simuler_charge(h, hb, L80, 2 * MIN + 31 * S, 20 * MIN);
+        expect(h.electrique_vu && !h.allume, "80 %, coupure de sécurité à 75 % : arrêt (reprise à 70 %)");
     }
     {
         // Batterie posée tablette éteinte, après un démarrage sans : vue par la sonde.

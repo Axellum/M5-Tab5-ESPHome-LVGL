@@ -28,7 +28,9 @@
  *         - batterie : chargeur selon « Tab5 Limite de charge » (100 % ou 80 % : arrêt à
  *           80 %, reprise à 70 %) ; une sonde toutes les kChargeurSondeMs chargeur
  *           allumé, et tout de suite après une lecture sous kBatterieBasseV (la batterie
- *           a pu être retirée : sans elle, le chargeur lit 4,2 ou 5,7 V) ;
+ *           a pu être retirée : sans elle, le chargeur lit 4,2 ou 5,7 V). Cette sonde
+ *           n'est pas un arrêt de la limite 80 % : la charge reprend après elle
+ *           (charge_avant_sonde, 20/10/2026, discussion #278) ;
  *         - verrous (16/10/2026) : thermique (CPU ≥ 55 °C, gardé en NVS), électrique
  *           (chargeur allumé : tension > kChargeurTensionMaxV ou courant nul pendant
  *           kChargeurCourantFaibleMs, la signature d'une charge dans le vide ; deux fois
@@ -211,6 +213,12 @@ constexpr float kBatteriePleineV = kBatterieElements * kCourbeDecharge[kCourbePo
 // chargeur coupé (7,96 / 7,84 V avec la table Samsung, 7,78 / 7,56 V avec la droite).
 // Les deux sont sur le plateau, 26 mV d'écart : kChargePauseMinMs évite le va-et-vient.
 // Non mesuré sur une tablette.
+// [AI-WARNING] La sonde périodique coupe CHG_EN kChargeurReposMs sans être un arrêt de la
+// limite : après elle, la décision reprend l'état d'avant (charge_avant_sonde). Jusqu'au
+// 20/10/2026 elle comptait comme un arrêt (discussion #278, husyildiz : « la limite de
+// 80 % arrête la charge là où est le niveau ») : entre 70 et 80 %, la charge s'arrêtait
+// à la première sonde ; sous 70 %, elle reprenait 10 min plus tard pour quelques secondes,
+// jusqu'à la sonde suivante.
 constexpr float kChargeArretPct = 80.0f;
 constexpr float kChargeReprisePct = 70.0f;
 constexpr uint32_t kChargePauseMinMs = 10u * 60u * 1000u;   // arrêt d'au moins 10 min
@@ -276,6 +284,7 @@ struct EtatChargeur {
     bool lecture_demandee = false;
     bool sonde_vite = false;       // lecture basse chargeur allumé : sonder sans attendre
     uint32_t sonde_fin_ms = 0;     // fin de la dernière sonde (0 : aucune encore)
+    bool charge_avant_sonde = false;  // sonde périodique d'une charge : la limite 80 % la reprend
     float tension = NAN;           // dernière lecture (V)
     float niveau = NAN;            // %, batterie présente seulement
     bool verrou_thermique = false; // sécurité anti-surchauffe active (coupure totale de charge)
@@ -320,6 +329,7 @@ inline void chargeur_securite_declencher(EtatChargeur& c, CauseSecurite cause, f
     c.sonde = true;
     c.sonde_vite = false;
     c.lecture_demandee = false;
+    c.charge_avant_sonde = false;  // un vrai arrêt pour la limite 80 %, comme avant
     chargeur_commander(c, false, maintenant_ms);
 }
 
@@ -453,12 +463,15 @@ inline SignalSecurite chargeur_signal_prendre(EtatChargeur& c) {
 
 // Chargeur voulu hors réveil et hors sonde. Présence inconnue (aucune lecture chargeur
 // coupé n'a abouti, INA226 muet) : coupé depuis le 16/10/2026, jamais allumé à l'aveugle.
+// Limite 80 % : une charge coupée par la sonde périodique compte encore comme une charge
+// (charge_avant_sonde) ; seul un arrêt de la limite attend 70 % et kChargePauseMinMs.
 inline bool chargeur_voulu(const EtatChargeur& c, uint8_t limite, uint32_t maintenant_ms) {
     if (chargeur_securite_posee(c)) return false;
     if (c.presence != PresenceBatterie::PRESENTE) return false;
     if (static_cast<LimiteCharge>(limite) != LimiteCharge::QUATRE_VINGTS) return true;
-    if (!std::isfinite(c.niveau)) return c.allume;
-    if (c.allume) return c.niveau < kChargeArretPct;
+    const bool en_charge = c.allume || c.charge_avant_sonde;
+    if (!std::isfinite(c.niveau)) return en_charge;
+    if (en_charge) return c.niveau < kChargeArretPct;
     return c.niveau <= kChargeReprisePct && maintenant_ms - c.change_ms >= kChargePauseMinMs;
 }
 
@@ -481,6 +494,7 @@ inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee
             c.reveil_apres_sonde = false;
             c.courant_faible = false;
             c.securite_sonde = CauseSecurite::AUCUNE;  // sonde interrompue : le verrou thermique prime
+            c.charge_avant_sonde = false;  // un vrai arrêt pour la limite 80 %
             a.allumer = false;
             a.lire = false;
             return a;
@@ -526,6 +540,7 @@ inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee
         }
     }
     bool sonder = false;
+    bool sonde_de_charge = false;  // sonde périodique d'une charge (pas la fin d'un réveil)
     if (c.reveil) {
         c.reveil_demande = false;  // ce réveil vaut celui demandé
         chargeur_commander(c, true, maintenant_ms);
@@ -538,6 +553,7 @@ inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee
     } else if (c.allume && c.presence != PresenceBatterie::ABSENTE) {
         // Batterie : retirée depuis ?
         sonder = c.sonde_vite || maintenant_ms - c.sonde_fin_ms >= kChargeurSondeMs;
+        sonde_de_charge = true;
     } else if (c.presence == PresenceBatterie::ABSENTE && montee && !c.allume && !chargeur_securite_posee(c) &&
                (c.reveil_demande || maintenant_ms - c.change_ms >= kChargeurReveilMs)) {
         c.reveil = true;
@@ -551,11 +567,13 @@ inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee
         c.sonde_vite = false;
         c.lecture_demandee = false;
         c.courant_faible = false;
+        c.charge_avant_sonde = sonde_de_charge;  // après la sonde, la limite 80 % la reprend
         chargeur_commander(c, false, maintenant_ms);
         a.allumer = false;
         return a;
     }
     chargeur_commander(c, chargeur_voulu(c, limite, maintenant_ms), maintenant_ms);
+    c.charge_avant_sonde = false;  // décidée : CHG_EN dit la suite
     a.allumer = c.allume;
     if (!c.allume) {
         c.courant_faible = false;
@@ -584,6 +602,7 @@ inline void chargeur_demarrer(EtatChargeur& c, uint8_t memoire, bool montee, boo
     c.lecture_demandee = false;
     c.reveil = false;
     c.sonde = true;
+    c.charge_avant_sonde = false;  // démarrage : chargeur arrêté, la pause de 10 min compte
     c.reveil_apres_sonde = static_cast<MemoireBatterie>(memoire) == MemoireBatterie::VUE && !anormal;
     if (verrou_thermique) {
         c.verrou_thermique = true;
