@@ -941,14 +941,33 @@ script:
                 condition:
                   lambda: 'return journal_has_report();'
                 then:
-                  - homeassistant.event:
-                      event: esphome.tab5_journal
-                      data:
-                        raison: !lambda 'return journal_reset_reason();'
-                        demarrages: !lambda 'return journal_boot_count();'
-                        grave: !lambda 'return journal_is_serious() ? std::string("oui") : std::string("non");'
-                        lignes: !lambda 'return journal_report_text();'
+                  - lambda: |-
+                      id(tab5_journal_evenement).execute(journal_reset_reason(), journal_boot_count(),
+                          journal_is_serious() ? std::string("oui") : std::string("non"),
+                          journal_report_text());
             - lambda: 'journal_mark_delivered();'
+
+  # [AI-WARNING] L'événement du journal reçoit ses valeurs en paramètres, calculées par la
+  # `lambda:` de tab5_journal_envoi : depuis ESPHome 2026.10.0, les champs `data:` d'un
+  # événement HA sont écrits avant les `includes:` et ne voient pas nos fonctions C++
+  # (journal_*). Un paramètre du script, lui, est toujours visible
+  # (tests/test_includes_esphome.py).
+  - id: tab5_journal_evenement
+    mode: queued
+    max_runs: 2
+    parameters:
+      raison: string
+      demarrages: string
+      grave: string
+      lignes: string
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_journal
+          data:
+            raison: !lambda 'return raison;'
+            demarrages: !lambda 'return demarrages;'
+            grave: !lambda 'return grave;'
+            lignes: !lambda 'return lignes;'
 
 # Chronométrage des images LVGL pour « Tab5 Draw Max » (plus haut). Fusionné avec les
 # blocs lvgl: de tab5-styles.yaml et tab5-lvgl.yaml. Deux lectures de micros() par
