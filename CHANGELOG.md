@@ -43,6 +43,14 @@ popups et page Bilan de l'Énergie remis dans l'écran (#512, #520, #521, #522).
 d'abord, puis les fichiers Home Assistant (nouveau package `tab5_musique.yaml`) ;
 `custom_templates` rechargé d'abord.
 
+[v3.9.0-rc.7](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.7)
+le 21/10/2026 : jusqu'à vingt éléments par pièce, tuiles coupées en 2 ou 4 (#517), plus de huit
+clims, chaque pièce retrouve la sienne (#528), limite de charge à 80 % qui ne s'arrête plus à
+chaque sonde du chargeur (#533), Waveshare 7B : sens de l'écran choisi dans Home Assistant
+(#530) et micro sur l'entrée MIC1 (#532), page « Corrections » de HA nommée juste par
+l'intégration (#531). Firmware et fichiers Home Assistant dans n'importe quel ordre ;
+`custom_templates` rechargé d'abord.
+
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.1).
