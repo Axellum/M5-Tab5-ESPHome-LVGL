@@ -246,6 +246,23 @@ More than 30 minutes since the tablet's start: restart it first (a short press o
 
 ---
 
+### The build fails with ESPHome 2026.10.0: « was not declared in this scope » (2026-10-21)
+
+**Symptom:** you compile the firmware yourself with ESPHome 2026.10.0 and the build stops on `main.cpp` with errors such as `'journal_reset_reason' was not declared in this scope`, `'tr' was not declared in this scope` or `'g_alarm_cfg' was not declared in this scope` (13 errors on `main`, 2026-10-21). The same commit builds with 2026.9.x. The published firmware is not affected: it is built with a fixed ESPHome version (`ESPHOME_PUBLICATION` in `.github/workflows/publication.yml`), not with the latest one.
+
+**Root cause:** an ESPHome 2026.10.0 change, reported as [esphome/esphome#21303](https://github.com/esphome/esphome/issues/21303). Two kinds of `!lambda` values are now written into `main.cpp` *before* the `#include` lines of the files listed under `esphome: includes:`, so they cannot see this firmware's C++ functions, constants and globals:
+
+- the `data:` fields of a `homeassistant.event`, now kept in a table in flash ([esphome/esphome#20237](https://github.com/esphome/esphome/pull/20237));
+- the value of an "apply" action or condition (`select.set_index`, `rtttl.play`, `media_player.volume_set`, `globals.set`…), now a static function.
+
+A plain `lambda:` action is still written inside `setup()`, after the includes, and is not affected. Proof: the same `main.cpp` generated with 2026.9.0 and 2026.10.0 (`esphome compile --only-generate`), on this firmware and on a minimal config outside the repository.
+
+**Fix (next version, [#535](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/535)):** those values only name parameters, `id(…)` and the standard library. The startup journal and the « Volet arrêté. » announcement send their event from a script with parameters, called from a `lambda:`; the alarm clock picks its melody, plays its ringtone and sets its volume from a `lambda:`. Same events, same fields; the firmware builds with 2026.9 and 2026.10. `tests/test_includes_esphome.py` fails if such a value names our C++ again (code rule 10, [`Tab5/README.md`](../Tab5/README.md)).
+
+**Workaround before that version:** compile with ESPHome 2026.9.x (`pip install esphome==2026.9.1`), or with the Device Builder on 2026.9.x.
+
+---
+
 ### False positives worth knowing about (don't "fix" these again)
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
@@ -457,6 +474,21 @@ Plus de 30 minutes depuis le démarrage de la tablette : redémarrez-la d'abord 
 **Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Depuis le 10/10/2026, il ne l'allume même plus pendant le démarrage quand le démarrage précédent n'a vu aucune batterie. Comment il décide : [batterie](hardware.md#alimentation).
 
 **Contournement de la 3.6.0 à la dernière version publiée :** aucun de simple, désolé. Ces versions n'ont pas d'entité pour couper le chargeur, et le haut-parleur, le micro ou le volume n'y sont pour rien. Une batterie montée donne au chargeur quelque chose à charger (on n'a pas vérifié si une tablette avec batterie souffle aussi). Sinon, attendre la prochaine version.
+
+### La compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » (21/10/2026)
+
+**Symptôme :** vous compilez le firmware vous-même avec ESPHome 2026.10.0, et la compilation s'arrête sur `main.cpp` avec des erreurs comme `'journal_reset_reason' was not declared in this scope`, `'tr' was not declared in this scope` ou `'g_alarm_cfg' was not declared in this scope` (13 erreurs sur `main`, le 21/10/2026). Le même commit compile avec la 2026.9.x. Le firmware publié n'est pas touché : il est compilé avec une version d'ESPHome figée (`ESPHOME_PUBLICATION` dans `.github/workflows/publication.yml`), pas avec la dernière.
+
+**Cause racine :** un changement d'ESPHome 2026.10.0, signalé dans [esphome/esphome#21303](https://github.com/esphome/esphome/issues/21303). Deux sortes de valeurs `!lambda` sont maintenant écrites dans `main.cpp` *avant* les `#include` des fichiers de `esphome: includes:`, et ne voient donc ni les fonctions, ni les constantes, ni les variables globales C++ du firmware :
+
+- les champs `data:` d'un `homeassistant.event`, rangés désormais dans une table en flash ([esphome/esphome#20237](https://github.com/esphome/esphome/pull/20237)) ;
+- la valeur d'une action ou d'une condition « apply » (`select.set_index`, `rtttl.play`, `media_player.volume_set`, `globals.set`…), devenue une fonction statique.
+
+Une action `lambda:` ordinaire reste écrite dans `setup()`, après les inclusions, et n'est pas touchée. Preuve : le même `main.cpp` généré avec la 2026.9.0 et la 2026.10.0 (`esphome compile --only-generate`), sur ce firmware et sur une config minimale hors du dépôt.
+
+**Correctif (prochaine version, [#535](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/535)) :** ces valeurs ne nomment plus que des paramètres, des `id(…)` et la bibliothèque standard. Le journal de démarrage et l'annonce « Volet arrêté. » envoient leur événement depuis un script à paramètres, appelé par une `lambda:` ; le réveil choisit sa mélodie, joue sa sonnerie et règle son volume depuis une `lambda:`. Mêmes événements, mêmes champs ; le firmware compile avec la 2026.9 et la 2026.10. `tests/test_includes_esphome.py` échoue si une telle valeur nomme de nouveau notre C++ (règle de code 10, [`Tab5/README.md`](../Tab5/README.md)).
+
+**Contournement avant cette version :** compiler avec ESPHome 2026.9.x (`pip install esphome==2026.9.1`), ou avec le Device Builder en 2026.9.x.
 
 ### Faux positifs à connaître (ne pas re-"corriger")
 

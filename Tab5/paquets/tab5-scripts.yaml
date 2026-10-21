@@ -68,11 +68,23 @@ script:
           id: va
       # Événement (ADR-0025) : HA l'annonce sur le satellite de cette tablette
       # (packages/tab5_evenements.yaml).
+      # Phrase dite par la tablette : dans la langue de l'écran (lot 4).
+      - lambda: 'id(tab5_annonce_dire).execute(std::string(tr("Volet arrêté.")));'
+
+  # [AI-WARNING] Une annonce reçoit sa phrase en paramètre : depuis ESPHome 2026.10.0, les
+  # champs `data:` d'un événement HA sont écrits avant les `includes:` et ne voient pas
+  # tr() ; la phrase est donc traduite dans la `lambda:` qui appelle ce script
+  # (tests/test_includes_esphome.py).
+  - id: tab5_annonce_dire
+    mode: queued
+    max_runs: 2
+    parameters:
+      message: string
+    then:
       - homeassistant.event:
           event: esphome.tab5_annonce
           data:
-            # Phrase dite par la tablette : dans la langue de l'écran (lot 4).
-            message: !lambda 'return std::string(tr("Volet arrêté."));'
+            message: !lambda 'return message;'
 
   # Tap sur la carte volet — même geste sur les deux vues (btn_j1_action de
   # forecast_daily.yaml, btn_sw1_action de switches_card.yaml), recopié à

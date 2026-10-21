@@ -4,6 +4,8 @@
 // compile et se dessine telle quelle. Jamais dans le firmware de la tablette.
 #pragma once
 
+#include <string>
+
 #include "esphome/core/automation.h"
 #include "esphome/core/component.h"
 #include "esphome/core/defines.h"
@@ -39,10 +41,12 @@ class HautParleurMuet : public Component {
 
 class MicroMuet : public Component {};
 
-// rtttl : le réveil règle le volume de sa sonnerie avant de la jouer.
+// rtttl : le réveil règle le volume de sa sonnerie avant de la jouer, puis la joue depuis
+// une lambda (ESPHome 2026.10.0, tests/test_includes_esphome.py).
 class SonnerieMuette : public Component {
  public:
   void set_gain(float gain) {}
+  void play(const std::string& rtttl) {}
 };
 
 #ifdef USE_MEDIA_PLAYER

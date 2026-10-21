@@ -585,9 +585,14 @@ script:
     parameters:
       index: int
     then:
-      - select.set_index:
-          id: tab5_alarm_melody
-          index: !lambda 'return (size_t) ((index % ALARM_MELODY_COUNT + ALARM_MELODY_COUNT) % ALARM_MELODY_COUNT);'
+      # [AI-WARNING] Une `lambda:` et non `select.set_index: index: !lambda` : depuis ESPHome
+      # 2026.10.0, la valeur d'une action « apply » est écrite avant les `includes:` et ne
+      # voit pas ALARM_MELODY_COUNT (même piège : rtttl.play et media_player.volume_set
+      # plus bas, champs `data:` des événements HA ; tests/test_includes_esphome.py).
+      - lambda: |-
+          auto call = id(tab5_alarm_melody).make_call();
+          call.set_index((size_t) ((index % ALARM_MELODY_COUNT + ALARM_MELODY_COUNT) % ALARM_MELODY_COUNT));
+          call.perform();
       # Écoute immédiate du choix : régler une sonnerie sans l'entendre n'a
       # aucun sens. Sans effet si le réveil est déjà en train de sonner.
       - if:
@@ -611,9 +616,9 @@ script:
               microphone.is_capturing: tab5_microphone
           timeout: 2s
       - delay: 250ms
-      - rtttl.play:
-          id: alarm_rtttl
-          rtttl: !lambda 'return std::string(alarm_melody_rtttl(g_alarm_cfg.melody));'
+      # Une `lambda:` : rtttl.play avec `rtttl: !lambda` ne voit pas nos en-têtes depuis
+      # ESPHome 2026.10.0 (voir tab5_alarm_melodie plus haut).
+      - lambda: 'id(alarm_rtttl).play(std::string(alarm_melody_rtttl(g_alarm_cfg.melody)));'
       - wait_until:
           condition:
             not:
@@ -717,11 +722,13 @@ script:
                   # Sonnerie personnalisée servie par HA. Le volume passe par le
                   # media_player (qui pilote le même étage que rtttl), donc le
                   # volume progressif s'applique aussi à ce chemin.
-                  - media_player.volume_set:
-                      id: speaker_player
-                      volume: !lambda |-
-                        return alarm_ring_gain(g_alarm_cfg.volume, id(alarm_ring_cycle) - 1,
-                                               id(tab5_alarm_crescendo).state);
+                  # Une `lambda:` et non media_player.volume_set (ESPHome 2026.10.0, voir
+                  # tab5_alarm_melodie plus haut).
+                  - lambda: |-
+                      id(speaker_player).make_call()
+                          .set_volume(alarm_ring_gain(g_alarm_cfg.volume, id(alarm_ring_cycle) - 1,
+                                                      id(tab5_alarm_crescendo).state))
+                          .perform();
                   - media_player.play_media:
                       id: speaker_player
                       media_url: !lambda 'return id(tab5_alarm_media_url).state;'
@@ -761,9 +768,7 @@ script:
                   # millisecondes AVANT que `stop_driver_()` ne rende le mutex :
                   # cette respiration couvre l'écart.
                   - delay: 250ms
-                  - rtttl.play:
-                      id: alarm_rtttl
-                      rtttl: !lambda 'return std::string(alarm_melody_rtttl(g_alarm_cfg.melody));'
+                  - lambda: 'id(alarm_rtttl).play(std::string(alarm_melody_rtttl(g_alarm_cfg.melody)));'
                   # Le délai de garde couvre le cas où le haut-parleur reste pris
                   # par une annonce : rtttl attendrait indéfiniment en état INIT.
                   - wait_until:
