@@ -8,6 +8,7 @@
 # couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
 # texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
 nom: Capsule
+nom_ha: Capsule   # option lue par Home Assistant (ADR-0070)
 ordre: 17
 herite: ardoise
 zones_sombres: [bandeau]

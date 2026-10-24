@@ -118,8 +118,9 @@ def test_select_mode_de_charge_et_charge_rapide_par_le_seul_interval():
     diag = _yaml(DIAG)
     s = next(s for s in diag["select"] if s.get("id") == "tab5_mode_charge")
     assert s["name"] == "Tab5 Mode de charge"
-    assert s["options"] == ["Classique", "Rapide"]
-    assert s["initial_option"] == "Classique", "défaut : le comportement d'avant"
+    # En anglais, lues par HA (ADR-0070 ; « Classique », « Rapide » avant le 24/10/2026).
+    assert s["options"] == ["Classic", "Fast"]
+    assert s["initial_option"] == "Classic", "défaut : le comportement d'avant"
     assert s["restore_value"] is True and s["optimistic"] is True
     assert s["entity_category"] == "config"
     enum = re.search(r"enum class ModeCharge[^{]*\{([^}]*)\}", _entete())
@@ -145,8 +146,8 @@ def test_wifi_eco_select_et_script():
     diag = _yaml(DIAG)
     s = next(s for s in diag["select"] if s.get("id") == "tab5_wifi_eco")
     assert s["name"] == "Tab5 Wi-Fi éco"
-    assert s["options"] == ["Jamais", "Sur batterie", "Toujours"], "l'ordre de ChoixEconomie"
-    assert s["initial_option"] == "Jamais"
+    assert s["options"] == ["Never", "On battery", "Always"], "l'ordre de ChoixEconomie"
+    assert s["initial_option"] == "Never"
     assert s["restore_value"] is True and s["optimistic"] is True
     assert {"script.execute": "tab5_wifi_eco_appliquer"} in s["on_value"]
     assert diag["wifi"]["power_save_mode"] == "NONE", "au démarrage : le comportement d'avant"

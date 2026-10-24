@@ -322,7 +322,9 @@ def test_rendu_complet(langue):
     assert reglages.index("_assistent\n") < reglages.index("_aktivierungswort\n") < reglages.index("_assistent_2\n")
     # Rien n'est resté du Jinja du modèle (hors Markdown « En bref », rendu par la carte).
     sans_markdown = re.sub(r"content: \|-\n(?:\s{14}.*\n|\n)*", "", sortie)
-    assert "{{" not in sans_markdown and "{%" not in sans_markdown and "None" not in sortie
+    # « None » entre guillemets : l'option de « Tab5 Animations » nommée par son aide (ADR-0070).
+    assert "{{" not in sans_markdown and "{%" not in sans_markdown
+    assert "None" not in sortie.replace("« None »", "")
     chemins = re.findall(r"navigation_path: (\S+)", sortie) + re.findall(r"back_path: (\S+)", sortie)
     assert chemins and all(c.startswith(("/ma-tablette/", "/config/")) for c in chemins), chemins
     titres = [v["title"] for v in tableau["views"]]

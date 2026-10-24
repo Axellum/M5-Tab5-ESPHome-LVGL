@@ -115,9 +115,9 @@ script:
             zones: "lumiere_1,lumiere_2,lumiere_3,pc,tv,telephone,salon,serre,pot_1,pot_2,pot_3,pot_4,pot_5"
 
 text_sensor:
-  # Diagnostic : les zones que HA a déclarées absentes (« aucune » sinon). Une faute de
-  # frappe dans user_entities.yaml fait disparaître une zone ; c'est ici qu'on le voit.
-  # Clés fixes, jamais traduites (lues par HA).
+  # Diagnostic : les zones que HA a déclarées absentes (« none » sinon, « aucune » avant le
+  # 24/10/2026, ADR-0070). Une faute de frappe dans user_entities.yaml fait disparaître une
+  # zone ; c'est ici qu'on le voit. Clés fixes, jamais traduites (lues par HA).
   - platform: template
     id: tab5_zones_masquees
     name: "Zones masquées"

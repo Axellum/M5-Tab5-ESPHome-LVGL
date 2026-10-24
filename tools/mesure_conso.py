@@ -214,8 +214,11 @@ def main() -> int:
                     "consommation_w", "courant_a", "tension_v", "niveau_pct", "core_temp_c",
                     "sur_batterie", "retenue"])
         try:
-            ha.service("select", "select_option", {"entity_id": ent["economie"], "option": "Jamais"})
-            ha.service("select", "select_option", {"entity_id": ent["extinction"], "option": "Jamais"})
+            # « Never » (« Jamais » avant le firmware du 24/10/2026 : options en anglais,
+            # ADR-0070) : la première option du select, lue sur la tablette.
+            for cle in ("economie", "extinction"):
+                options = (ha.etat(ent[cle]).get("attributes") or {}).get("options") or ["Never"]
+                ha.service("select", "select_option", {"entity_id": ent[cle], "option": options[0]})
             for nom, ecran_pct, micro, hp in SCENARIOS:
                 appliquer(ha, ent, ecran_pct, micro, hp)
                 debut = time.monotonic()

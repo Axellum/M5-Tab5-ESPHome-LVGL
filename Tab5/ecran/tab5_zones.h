@@ -244,7 +244,8 @@ void boutons_haut_apply_ui();
 bool zone_tuile_absente(int tuile);
 // Nombre de pots présents (0 à 5).
 int zones_pots_presents();
-// « aucune » ou « clim, pot_4, pot_5 » (capteur « Zones masquées » dans HA).
+// « none » ou « clim, pot_4, pot_5 » (capteur « Zones masquées » dans HA ; « aucune »
+// avant le 24/10/2026, ADR-0070).
 std::string zones_texte_masquees();
 // Demande à HA une fois par connexion : remis à zéro à chaque connexion de HA,
 // consommé par la première poussée des prévisions.

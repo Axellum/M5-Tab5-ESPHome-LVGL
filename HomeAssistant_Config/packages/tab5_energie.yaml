@@ -142,7 +142,8 @@ script:
       c: "{{ capteurs if capteurs is mapping else {} }}"
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
       # « Écran courant » de LA tablette qui a demandé : fin de la boucle quand il quitte
-      # « Énergie ». Sans lui (entité désactivée), un seul passage.
+      # « Energy » (« Énergie » pour un firmware d'avant le 24/10/2026 : états en anglais,
+      # ADR-0070 ; les deux sont acceptés). Sans lui (entité désactivée), un seul passage.
       ecran: >-
         {{ (device_entities(appareil) | select('match', 'sensor[.].*_ecran_courant(_[0-9]+)?$') | first | default(''))
            if appareil is string and appareil else '' }}
@@ -992,8 +993,8 @@ script:
                   {%- set ns.vu = true -%}
                 {%- endfor -%}
                 {{ ns.vu or not ecran
-                   or (now().timestamp() - debut > grace and states(ecran) != 'Énergie') }}
+                   or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie']) }}
               timeout: 60
           until: >-
             {{ not ecran or now().timestamp() - debut > duree_max
-               or (now().timestamp() - debut > grace and states(ecran) != 'Énergie') }}
+               or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie']) }}

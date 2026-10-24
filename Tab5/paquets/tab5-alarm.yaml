@@ -219,43 +219,51 @@ select:
   # Les options sont construites à la main mais leur ORDRE est contractuel :
   # l'index du select est l'entier stocké dans g_alarm_cfg.mode (AlarmMode::*).
   # Les libellés suivent l'ordre des constantes AlarmMode (alarm_clock.h).
+  # Options en anglais, lues par HA (ADR-0070, 24/10/2026 ; « Heure fixe », « Jours
+  # travaillés », « Avant l'ouverture » avant) : la tablette garde l'INDEX, l'ordre ne
+  # change jamais. Le popup a ses propres libellés, traduits par tr().
   - <<: *reglage_valeur
     id: tab5_alarm_mode
     name: "Réveil : mode"
     icon: mdi:tune
     options:
-      - "Heure fixe"
-      - "Jours travaillés"
-      - "Avant l'ouverture"
-    initial_option: "Heure fixe"
+      - "Fixed time"
+      - "Work days"
+      - "Before shift start"
+    initial_option: "Fixed time"
 
+  # Index = g_alarm_cfg.melody = la ligne de kMelodies (alarm_clock.cpp) : « Douce »,
+  # « Classique », « Insistante », « Carillon » avant le 24/10/2026 (ADR-0070).
   - <<: *reglage_valeur
     id: tab5_alarm_melody
     name: "Réveil : sonnerie"
     icon: mdi:music-note
     options:
-      - "Douce"
-      - "Classique"
-      - "Insistante"
-      - "Carillon"
-    initial_option: "Classique"
+      - "Gentle"
+      - "Classic"
+      - "Insistent"
+      - "Chime"
+    initial_option: "Classic"
 
   # Préréglages de jours : Home Assistant reçoit un choix lisible plutôt que sept
   # interrupteurs ; le détail jour par jour se règle sur la dalle (7 pastilles).
   # Les deux écrivent le même `alarm_days_mask`, et ce select retombe sur
-  # « Personnalisé » dès que le masque ne correspond à aucun préréglage.
+  # « Custom » dès que le masque ne correspond à aucun préréglage. Index = la ligne de
+  # kPresets (alarm_clock.cpp), « Custom » la dernière ; « Tous les jours »,
+  # « Lundi-Vendredi », « Lundi-Samedi », « Week-end », « Personnalisé » avant le
+  # 24/10/2026 (ADR-0070).
   - <<: *reglage
     id: tab5_alarm_days
     name: "Réveil : jours"
     icon: mdi:calendar-week
     restore_value: true
     options:
-      - "Tous les jours"
-      - "Lundi-Vendredi"
-      - "Lundi-Samedi"
-      - "Week-end"
-      - "Personnalisé"
-    initial_option: "Lundi-Vendredi"
+      - "Every day"
+      - "Monday-Friday"
+      - "Monday-Saturday"
+      - "Weekend"
+      - "Custom"
+    initial_option: "Monday-Friday"
     on_value:
       # [AI-WARNING] Le garde DOIT être une `condition:`, pas un `return` en
       # lambda. `publish_state()` d'un select rappelle toujours on_value, même
@@ -303,10 +311,16 @@ text_sensor:
     update_interval: 60s
     # Recalculé chaque minute, publié seulement s'il change : un text_sensor
     # republie sinon la même valeur à HA (audit du 26/09/2026, lot 3).
+    # En anglais pour HA quelle que soit la langue de l'écran (ADR-0070, 24/10/2026 :
+    # « Today 07:00 », « Off »…) ; le popup du réveil garde la langue de l'écran.
     lambda: |-
       static std::string last;
       auto t = id(sntp_time).now();
-      std::string s = t.is_valid() ? alarm_next_label(t.timestamp) : std::string(tr("Heure non synchronisée"));
+      std::string s;
+      {
+        const I18nPourHa en;
+        s = t.is_valid() ? alarm_next_label(t.timestamp) : std::string(tr("Heure non synchronisée"));
+      }
       if (s == last) return {};
       last = s;
       return {s};
@@ -428,8 +442,9 @@ script:
             g_alarm_cfg.latest_min = g_alarm_cfg.earliest_min;
 
           alarm_invalidate();
-      # Le select des jours reflète le masque courant (ou « Personnalisé »).
-      - lambda: 'id(tab5_alarm_days).publish_state(alarm_days_preset_name(alarm_days_preset_index(id(alarm_days_mask))));'
+      # Le select des jours reflète le masque courant (ou « Custom »), par son INDEX :
+      # le texte de l'option est celui de HA (ADR-0070), le firmware ne le lit jamais.
+      - lambda: 'id(tab5_alarm_days).publish_state((size_t) alarm_days_preset_index(id(alarm_days_mask)));'
       - lambda: |-
           id(tab5_alarm_next_sensor).update();
           id(alarm_skip_before) = alarm_skip_floor();
