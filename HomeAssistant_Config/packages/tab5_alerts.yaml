@@ -1,7 +1,7 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file packages/tab5_alerts.yaml
-# @role Les alertes de la carte centrale du Tab5 : le capteur « Tab5 Alertes »
+# @role Les alertes de la carte centrale du Tab5 : le capteur « Tab5 Alerts »
 #       (sensor.tab5_alertes) tient ce qui est en cours, ce qui a été lu et
 #       l'historique ; packages/tab5_push.yaml (script tab5_push_alertes) en tire les
 #       4 bandeaux d'alertes (panneaux 4-7) et le bandeau info (vigilance).
@@ -9,7 +9,7 @@
 #       du fichier, testées par tests/test_alertes_ha.py) : une alerte = une source +
 #       une révision ; lue, elle ne revient que si elle change ou si elle s'arrête
 #       vraiment puis recommence (plan des alertes du 06/10/2026). Les listes
-#       « Tab5 · alertes … » (abonnements, ci-dessous) choisissent ce qui s'affiche.
+#       « Tab5 · alerts: … » (abonnements, ci-dessous) choisissent ce qui s'affiche.
 # @ai_instruction Le tap sur un bandeau émet esphome.tab5_alerte_lue (alert_id =
 #       « id#révision » reçu de HA), que packages/tab5_evenements.yaml traduit en
 #       script.tab5_dismiss_alert, qui relaie l'événement interne tab5_alertes_lue au
@@ -36,49 +36,52 @@ input_select:
   # interrupteurs : sans `initial`, une liste démarre sur sa PREMIÈRE option (le choix
   # par défaut) puis HA restaure le choix à chaque redémarrage ; un input_boolean sans
   # `initial` démarrerait éteint, et avec `initial` il oublierait le choix (lot 0).
-  # Options en français : lues par custom_templates/tab5_alertes.jinja.
+  # Options en anglais depuis le 24/10/2026, lues par custom_templates/tab5_alertes.jinja,
+  # qui lit aussi les françaises d'avant (« Toutes », « Jaune », « Non »…) ; l'intégration
+  # traduit l'option choisie (custom_components/tab5/renommage.py, OPTIONS_PAQUETS : même
+  # table, tests/test_renommage.py).
   tab5_alertes_maj:
-    name: "Tab5 · alertes : mises à jour · alerts: updates"
+    name: "Tab5 · alerts: updates"
     icon: mdi:package-up
     options:
-      - "Toutes"
-      - "Home Assistant seulement"
-      - "Aucune"
+      - "All"
+      - "Home Assistant only"
+      - "None"
   tab5_alertes_vigilance:
-    name: "Tab5 · alertes : vigilance à partir de · alerts: weather warnings from"
+    name: "Tab5 · alerts: weather warnings from"
     icon: mdi:alert-outline
     options:
-      - "Jaune"
+      - "Yellow"
       - "Orange"
-      - "Rouge"
-      - "Aucune"
+      - "Red"
+      - "None"
   tab5_alertes_problemes:
-    name: "Tab5 · alertes : capteurs « problème » · alerts: problem sensors"
+    name: "Tab5 · alerts: problem sensors"
     icon: mdi:alert-circle-outline
     options:
-      - "Oui"
-      - "Non"
+      - "Yes"
+      - "No"
   tab5_alertes_indisponibles:
-    name: "Tab5 · alertes : entités indisponibles · alerts: unavailable entities"
+    name: "Tab5 · alerts: unavailable entities"
     icon: mdi:help-network-outline
     options:
-      - "Oui"
-      - "Non"
+      - "Yes"
+      - "No"
   tab5_alertes_etiquette:
-    name: "Tab5 · alertes : étiquette « Tab5 · alerte » · alerts: « Tab5 · alerte » label"
+    name: "Tab5 · alerts: « Tab5 · alerte » label"
     icon: mdi:label-outline
     options:
-      - "Oui"
-      - "Non"
+      - "Yes"
+      - "No"
   # Réfrigérateurs et congélateurs (packages/tab5_froid.yaml, ADR-0055).
   tab5_alertes_froid:
-    name: "Tab5 · alertes : réfrigérateurs et congélateurs · alerts: fridges and freezers"
+    name: "Tab5 · alerts: fridges and freezers"
     icon: mdi:fridge-alert-outline
     options:
-      - "Oui"
-      - "Non"
+      - "Yes"
+      - "No"
   tab5_alertes_piles:
-    name: "Tab5 · alertes : piles sous · alerts: batteries below"
+    name: "Tab5 · alerts: batteries below"
     icon: mdi:battery-alert-variant-outline
     options:
       - "20 %"
@@ -86,20 +89,20 @@ input_select:
       - "15 %"
       - "25 %"
       - "30 %"
-      - "Aucune"
+      - "None"
 
 input_text:
   # Ancienne liste des alertes lues (avant le 06/10/2026) : lue une seule fois, quand le
-  # capteur « Tab5 Alertes » démarre sans mémoire, puis plus jamais écrite.
+  # capteur « Tab5 Alerts » démarre sans mémoire, puis plus jamais écrite.
   tab5_alerts_dismissed:
-    name: "Tab5 alertes HA ignorées"
+    name: "Tab5 dismissed HA alerts"
     # Sans `initial` : HA la restaure au redémarrage.
     max: 255
     icon: mdi:bell-check
 
 script:
   tab5_dismiss_alert:
-    alias: "Tab5 — marquer une alerte HA comme lue"
+    alias: "Tab5 — mark an HA alert as read"
     mode: queued
     fields:
       alert_id:
@@ -114,7 +117,7 @@ script:
 
 template:
   # ==========================================================================
-  # « Tab5 Alertes » : état = nombre d'alertes à lire ; attributs = la mémoire
+  # « Tab5 Alerts » : état = nombre d'alertes à lire ; attributs = la mémoire
   # (custom_templates/tab5_alertes.jinja). Chaque minute, au démarrage de HA (début de
   # la grâce de 15 min), à chaque vigilance, à chaque tap et à la demande
   # (événement tab5_alertes_recalculer, dont les réglages de test delai_fin et grace,
@@ -156,7 +159,7 @@ template:
         {% from 'tab5_alertes.jinja' import tab5_alertes_memoire %}
         {{ tab5_alertes_memoire(trigger.id, trigger.event.data if trigger.platform == 'event' else {}) | from_json }}
     sensor:
-      - name: "Tab5 Alertes"
+      - name: "Tab5 Alerts"
         unique_id: tab5_alertes
         default_entity_id: sensor.tab5_alertes
         icon: mdi:bell-alert-outline
@@ -185,6 +188,7 @@ template:
     sensor:
       - name: "Tab5 Unavailable Count"
         unique_id: tab5_unavailable_count
+        default_entity_id: sensor.tab5_unavailable_count
         icon: mdi:help-network-outline
         state: >-
           {{ states | selectattr('state', 'eq', 'unavailable')
@@ -194,7 +198,7 @@ automation:
   # Une alerte lue est écrite sur le disque tout de suite : après un plantage de HA,
   # elle ne revient pas (voir @ai_warning en tête).
   - id: tab5_alertes_sauvegarde
-    alias: "Tab5 — sauvegarder les alertes lues"
+    alias: "Tab5 — save read alerts"
     mode: queued
     max: 3
     max_exceeded: silent

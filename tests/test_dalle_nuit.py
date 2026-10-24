@@ -10,8 +10,8 @@ Rien ne compile ces règles hors tablette : ce fichier relit le YAML et le Jinja
 - la lumière dessine le voile et envoie les commandes AVANT de figer LVGL, et chaque `ota:`
   (esphome des deux cartes, http_request des firmwares publiés) passe par le script de la
   carte ;
-- « Tab5 · extinction de nuit » propose 00:00-06:00 sans rien changer pour qui a choisi un
-  capteur de présence, et le miroir « Tab5 · nuit de l'écran » dit « dans la plage » comme un
+- « Tab5 · night screen off » propose 00:00-06:00 sans rien changer pour qui a choisi un
+  capteur de présence, et le miroir « Tab5 · screen night » dit « dans la plage » comme un
   calcul refait ici en Python (plage à cheval sur minuit comprise).
 """
 import datetime as dt
@@ -108,21 +108,22 @@ def _rendre(texte, etats, maintenant=None):
 
 @pytest.mark.parametrize("memoire, presence, attendu", [
     ("unknown", "unknown", "00:00-06:00"),           # jamais réglée : proposée
-    ("", "Aucun", "00:00-06:00"),
-    ("unknown", "binary_sensor.salon", "Aucune"),    # capteur de présence choisi : comme avant
-    ("Aucune", "unknown", "Aucune"),                 # choix gardé
+    ("", "none", "00:00-06:00"),
+    ("unknown", "binary_sensor.salon", "none"),      # capteur de présence choisi : comme avant
+    ("none", "unknown", "none"),                     # choix gardé
+    ("Aucune", "unknown", "none"),                   # choix d'avant le 24/10/2026, gardé
     ("23:00-07:00", "binary_sensor.salon", "23:00-07:00"),
     ("21:30-05:45", "unknown", "21:30-05:45"),       # plage écrite à la main
     ("25:00-06:00", "unknown", "00:00-06:00"),       # illisible : défaut
 ])
 def test_liste_extinction_de_nuit(memoire, presence, attendu):
-    liste = _modele("select", "Tab5 · extinction de nuit · night screen off")
+    liste = _modele("select", "Tab5 · night screen off")
     assert liste["default_entity_id"] == "select.tab5_extinction_de_nuit"
     etats = {"input_text.tab5_choix_extinction_nuit": memoire, "input_text.tab5_choix_presence": presence}
     assert _rendre(liste["state"], etats) == attendu
     options = yaml.safe_load(_rendre(liste["options"], etats))
-    assert attendu in options and options[-1] == "Aucune"
-    assert all(o == "Aucune" or PLAGE.match(o) for o in options)
+    assert attendu in options and options[-1] == "none"
+    assert all(o == "none" or PLAGE.match(o) for o in options)
 
 
 def _dans_la_plage(plage, h):
@@ -134,9 +135,9 @@ def _dans_la_plage(plage, h):
     return d <= m < f if d < f else (m >= d or m < f) if d > f else False
 
 
-@pytest.mark.parametrize("plage", ["00:00-06:00", "23:00-07:00", "22:00-06:00", "06:00-06:00", "12:15-13:45", "Aucune"])
+@pytest.mark.parametrize("plage", ["00:00-06:00", "23:00-07:00", "22:00-06:00", "06:00-06:00", "12:15-13:45", "none"])
 def test_miroir_nuit_de_l_ecran(plage):
-    miroir = _modele("binary_sensor", "Tab5 · nuit de l'écran")
+    miroir = _modele("binary_sensor", "Tab5 · screen night")
     etats = {"select.tab5_extinction_de_nuit": plage}
     for minutes in range(0, 24 * 60, 5):
         h = dt.datetime(2026, 10, 16, minutes // 60, minutes % 60)
@@ -161,7 +162,7 @@ def test_automatisation_tient_l_interrupteur():
     assert action["action"] == "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
     assert action["target"] == {"entity_id": "{{ state_attr('sensor.tab5_tablette', 'nuit_ecran') }}"}
     assert action["continue_on_error"] is True
-    attribut = _modele("sensor", "Tab5 · tablette")["attributes"]["nuit_ecran"]
+    attribut = _modele("sensor", "Tab5 · tablet")["attributes"]["nuit_ecran"]
     # « (_[0-9]+)? » : le « _2 » de HA (tests/test_entites_suffixees.py).
     assert "_(nuit_ecran_eteint|night_screen_off)(_[0-9]+)?$" in attribut, "fin de l'entity_id de « Tab5 Nuit (écran éteint) »"
 

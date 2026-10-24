@@ -13,7 +13,7 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
            plus aucun placeholder à remplir, ADR-0024) et ce qu'en déduisent les
            packages ; chaque source de vigilances (VIGILANCES : DWD et CAP Alerts par
            la macro de custom_templates/, Aucune, puis Météo-France) et ce qu'en tire
-           « Tab5 Vigilance » ; la pluie dans l'heure d'Open-Meteo, service sans clé
+           « Tab5 Weather warnings » ; la pluie dans l'heure d'Open-Meteo, service sans clé
            appelé par rest_command (PLUIE_SANS_CLE), puis retour à Météo-France ; le
            blueprint est déjà dans config/ (preparer_config.py) ;
         2. ajouter la tablette (ESPHome, hôte + port). L'option « Autoriser l'appareil
@@ -98,13 +98,13 @@ FUSEAU = "Europe/Paris"
 PREFIXE_ACTIONS = "tab5_ha_hmi"
 PREFIXE_ENTITES = "m5stack_tab5_home_assistant_hmi"
 
-# Agenda de travail (Calendrier local), choisi dans « Tab5 · agenda de travail » (SOURCES).
+# Agenda de travail (Calendrier local), choisi dans « Tab5 · work calendar » (SOURCES).
 NOM_AGENDA = "Travail CI"
 AGENDA = "calendar.travail_ci"
 
 # Sources choisies dans les listes « Tab5 · … » (ADR-0024 : plus de placeholder, tout se
 # règle à la souris), comme le fait docs/installation.md, étape 4. Le reste (téléphone,
-# présence, TV, autres agendas) reste sur « Aucun » : un HA neuf doit marcher sans.
+# présence, TV, autres agendas) reste sur « none » : un HA neuf doit marcher sans.
 SOURCES = {
     "select.tab5_source_des_previsions": "weather.ville_ci",
     "select.tab5_agenda_de_travail": AGENDA,
@@ -117,8 +117,7 @@ DEDUITS = {
     ("sensor.tab5_sources_meteo", "mf_vigilance"): "sensor.99_weather_alert",
 }
 # Vigilances DWD et CAP Alerts (listes : l'ordre des états n'est pas garanti, comparées
-# triées) puis ce que « Tab5 Vigilance » en tire pour chaque source de la liste « Tab5 ·
-# source des vigilances » (packages/tab5_meteo_sources.yaml et la macro de
+# triées) puis ce que « Tab5 Weather warnings » en tire pour chaque source de la liste « Tab5 · weather warnings source » (packages/tab5_meteo_sources.yaml et la macro de
 # custom_templates/tab5_vigilance.jinja), sur les données de donnees_test.yaml. La
 # dernière remet la source par défaut, avant l'ajout de la tablette.
 DEDUITS_LISTES = {
@@ -135,7 +134,7 @@ VIGILANCES = (
     #  neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard, feux)
     ("DWD", "Orange", "Orange|Vert|Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert"),
     ("CAP Alerts", "Orange", "Orange|Jaune|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Jaune|Vert"),
-    ("Aucune", "Vert", "|".join(["Vert"] * 11)),
+    ("None", "Vert", "|".join(["Vert"] * 11)),
     ("Météo-France", "Jaune", "Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert"),
 )
 # Pluie dans l'heure par un service sans clé (rest_command.tab5_pluie) : Open-Meteo, le
@@ -263,7 +262,7 @@ TUILES_DETAILS = {
 CLIM_DE_TUILE = "t24"
 # Texte du capteur « Zones masquées » attendu (zones_texte_masquees(), tab5_zones.cpp :
 # ordre de kCles, séparateur « , »). « discussion » : un HA neuf n'a choisi aucun pipeline
-# de discussion (« Tab5 · pipeline de discussion » = « Aucun », ADR-0026).
+# de discussion (« Tab5 · chat pipeline » = « none », ADR-0026).
 ZONES_ABSENTES = "pot_4, pot_5, discussion"
 ZONES_ENTITE = f"sensor.{PREFIXE_ENTITES}_zones_masquees"
 
@@ -918,7 +917,7 @@ async def choisir_sources(ha: HA, rapport: Rapport) -> None:
 
 async def verifier_vigilances(ha: HA, rapport: Rapport) -> None:
     """Les vigilances DWD et CAP Alerts trouvées (DEDUITS_LISTES), puis chaque source de
-    VIGILANCES choisie comme à la souris et ce qu'en tire « Tab5 Vigilance » (état et
+    VIGILANCES choisie comme à la souris et ce qu'en tire « Tab5 Weather warnings » (état et
     `phenomenes`). DWD et CAP Alerts passent par la macro importée de custom_templates/ :
     c'est aussi la preuve que l'import marche dans un HA neuf."""
     for (entity_id, attribut), attendu in DEDUITS_LISTES.items():
@@ -950,7 +949,7 @@ async def verifier_vigilances(ha: HA, rapport: Rapport) -> None:
 
 
 async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport) -> None:
-    """« Tab5 · source de la pluie dans l'heure » sur PLUIE_SANS_CLE : le capteur à
+    """« Tab5 · next-hour rain source » sur PLUIE_SANS_CLE : le capteur à
     déclencheurs appelle rest_command.tab5_pluie aux coordonnées de zone.home et en tire
     un relevé et 9 barres ; puis retour à Météo-France (données de test), avant l'ajout
     de la tablette."""
@@ -1569,7 +1568,7 @@ async def verifier_tableau_de_bord(ha: HA, ws: WS, rapport: Rapport) -> None:
 async def verifier_meteo_du_blueprint(ha: HA, rapport: Rapport) -> None:
     """Section « Météo » du blueprint (discussion #278) : remplie, son choix est écrit
     dans les listes du package et la poussée le suit ; une liste changée à la main (select
-    « Tab5 · source des prévisions », input_select des vigilances) y revient, avec une
+    « Tab5 · forecast source », input_select des vigilances) y revient, avec une
     notification ; vidée, les listes décident de nouveau. Finit sur l'état d'avant
     (météo SOURCES, vigilances Météo-France)."""
     ville = SOURCES["select.tab5_source_des_previsions"]
@@ -1590,8 +1589,9 @@ async def verifier_meteo_du_blueprint(ha: HA, rapport: Rapport) -> None:
                      f"état {valeur!r} (trace de {ID_AUTOMATISATION}, déclencheur automation_reloaded)")
     entite = await attendre_attribut(ha, "sensor.tab5_meteo", "entite", autre)
     rapport.verifier(entite == autre, f"sensor.tab5_meteo suit le blueprint ({autre})", f"entite {entite!r}")
-    vigilance = await attendre_attribut(ha, LISTE_VIGILANCES, None, "Aucune")
-    rapport.verifier(vigilance == "Aucune", f"blueprint « Vigilances » = Aucune : écrit dans {LISTE_VIGILANCES}",
+    # L'entrée du blueprint garde la valeur « Aucune » ; la liste dit « None » (24/10/2026).
+    vigilance = await attendre_attribut(ha, LISTE_VIGILANCES, None, "None")
+    rapport.verifier(vigilance == "None", f"blueprint « Vigilances » = Aucune : « None » écrit dans {LISTE_VIGILANCES}",
                      f"état {vigilance!r}")
     fin = time.monotonic() + 60
     meteo_poussee = None
@@ -1611,7 +1611,7 @@ async def verifier_meteo_du_blueprint(ha: HA, rapport: Rapport) -> None:
     for liste, service, champ, a_la_main, attendu in (
             (liste_meteo, "select/select_option", {"entity_id": select_meteo, "option": ville}, ville, autre),
             (LISTE_VIGILANCES, "input_select/select_option", {"entity_id": LISTE_VIGILANCES, "option": "Météo-France"},
-             "Météo-France", "Aucune")):
+             "Météo-France", "None")):
         avant = time.time()
         await ha.post(f"/api/services/{service}", champ)
         trace = await attendre_passage(ha, ID_AUTOMATISATION, liste, avant)
@@ -1830,15 +1830,15 @@ async def choisir(ha: HA, liste: str, option: str) -> None:
 
 
 async def verifier_abonnements(ha: HA, lue: str, rapport: Rapport) -> None:
-    """Abonnements (listes « Tab5 · alertes … ») : désabonnées, les alertes partent tout de
+    """Abonnements (listes « Tab5 · alerts: … ») : désabonnées, les alertes partent tout de
     suite ; réabonnées, ce qui était lu le reste. Étiquette « Tab5 · alerte » posée sur un
     capteur allumé de la démo : il devient une alerte."""
-    await choisir(ha, LISTE_MAJ, "Aucune")
+    await choisir(ha, LISTE_MAJ, "None")
     attributs = await attendre_alertes(ha, lambda a: "maj" not in sources_affichees(a), 20)
     rapport.verifier("maj" not in sources_affichees(attributs),
-                     "désabonnée des mises à jour (« Aucune »), leurs alertes partent tout de suite",
+                     "désabonnée des mises à jour (« None »), leurs alertes partent tout de suite",
                      f"à lire = {ids_affiches(attributs)}")
-    await choisir(ha, LISTE_MAJ, "Toutes")
+    await choisir(ha, LISTE_MAJ, "All")
     attributs = await attendre_alertes(ha, lambda a: "maj" in sources_affichees(a), 20)
     rapport.verifier("maj" in sources_affichees(attributs) and lue not in ids_affiches(attributs),
                      f"réabonnée, les mises à jour reviennent, sauf {lue} déjà lue",
@@ -1858,7 +1858,7 @@ async def verifier_abonnements(ha: HA, lue: str, rapport: Rapport) -> None:
     rapport.verifier(allume in ids_affiches(attributs) and "etiquette" in sources_affichees(attributs),
                      f"l'étiquette « {ETIQUETTE_ALERTE} » fait de {allume} une alerte",
                      f"à lire = {ids_affiches(attributs)}")
-    await choisir(ha, LISTE_ETIQUETTE, "Non")
+    await choisir(ha, LISTE_ETIQUETTE, "No")
     attributs = await attendre_alertes(ha, lambda a: allume not in ids_affiches(a), 20)
     rapport.verifier(allume not in ids_affiches(attributs),
                      "désabonnée de l'étiquette, l'alerte part", f"à lire = {ids_affiches(attributs)}")

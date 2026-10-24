@@ -1154,11 +1154,11 @@ blueprint:
           description: >-
             Pour les touches de la télécommande à l'écran. Les boutons d'applications
             (Netflix, YouTube…) demandent en plus une TV Samsung, choisie dans la liste
-            « Tab5 · TV Samsung » de Home Assistant.
+            « Tab5 · Samsung TV » de Home Assistant.
 
 
             For the keys of the on-screen remote. The app buttons (Netflix, YouTube…) also
-            need a Samsung TV, picked in Home Assistant's « Tab5 · TV Samsung » list.
+            need a Samsung TV, picked in Home Assistant's « Tab5 · Samsung TV » list.
           default: []
           selector:
             entity:
@@ -1191,7 +1191,7 @@ blueprint:
             doit contenir « list= ». Le popup Musique gagne une page « Playlists » : un
             bouton par ligne, qui lance la playlist sur votre Apple TV (appli YouTube),
             celle que montre le popup si c'en est une, sinon la première de la liste
-            « Tab5 · lecteurs de musique ». Vide : pas de page Playlists. Exemple :
+            « Tab5 · music players ». Vide : pas de page Playlists. Exemple :
             « Jazz du dimanche | https://music.youtube.com/playlist?list=… ».
 
 
@@ -1199,7 +1199,7 @@ blueprint:
             Copy the link in YouTube or YouTube Music (Share → Copy link); it must contain
             « list= ». The Music popup gets a « Playlists » page: one button per line, which
             starts the playlist on your Apple TV (YouTube app), the one the popup shows if
-            it is one, otherwise the first one of the « Tab5 · lecteurs de musique » list.
+            it is one, otherwise the first one of the « Tab5 · music players » list.
             Empty: no Playlists page. Example:
             « Sunday jazz | https://music.youtube.com/playlist?list=… ».
           default: ""
@@ -1761,9 +1761,9 @@ blueprint:
     # Zone à gauche de l'horloge (ADR-0051, 10/10/2026) : au-dessus du cadre Ok Nabu, le
     # micro et les boutons Domo / Discu (« vocal », l'écran d'avant), les prévisions des
     # heures qui viennent en graphique (« graphique ») ou le lecteur de musique compact
-    # (« lecteur », lot 2 : les lecteurs de la liste « Tab5 · lecteurs de musique », le
+    # (« lecteur », lot 2 : les lecteurs de la liste « Tab5 · music players », le
     # firmware le saute quand elle est vide) ou le premier capteur suivi en courbe
-    # (« capteur », ADR-0054 : la liste « Tab5 · capteurs suivis », sautée vide aussi).
+    # (« capteur », ADR-0054 : la liste « Tab5 · tracked sensors », sautée vide aussi).
     # Clé « gauche|départ|c1|… » de
     # tab5_maj_emplacements (variable gauche), poussée avec les gestes ; un firmware plus
     # ancien l'ignore. Codes = kZoneGaucheCodes de Tab5/socle/tab5_parse.h
@@ -1780,8 +1780,7 @@ blueprint:
         précédent, lecture / pause, suivant ; un tap ailleurs ouvre le popup Musique ; la
         barre « en lecture » sur Ok Nabu se masque pendant ce temps), ou un capteur suivi
         (sa valeur, sa variation et sa courbe des 24 dernières heures ; un tap ouvre le
-        popup Suivi). Le lecteur montre les lecteurs choisis dans « Tab5 · lecteurs de
-        musique », le capteur le premier de « Tab5 · capteurs suivis » ; sans aucun, la
+        popup Suivi). Le lecteur montre les lecteurs choisis dans « Tab5 · music players », le capteur le premier de « Tab5 · tracked sensors » ; sans aucun, la
         tablette les saute. Un tap sur la seconde température (à droite de l'accueil) passe au contenu
         suivant, comme un geste « Zone à gauche de l'horloge : contenu suivant » (section
         « Horloge et boutons du haut »). La tablette garde le contenu affiché quand elle
@@ -1794,9 +1793,7 @@ blueprint:
         compact music player (cover, title, artist, previous, play / pause, next; a tap
         elsewhere opens the Music popup; the « now playing » bar on Ok Nabu hides meanwhile),
         or a tracked sensor (its value, its change and its curve over the last 24 hours; a
-        tap opens the Tracking popup). The player shows the players chosen in « Tab5 ·
-        lecteurs de musique · music players », the sensor the first one of « Tab5 ·
-        capteurs suivis · tracked sensors »; with none, the tablet skips them. A tap on the second temperature (on the
+        tap opens the Tracking popup). The player shows the players chosen in « Tab5 · music players », the sensor the first one of « Tab5 · tracked sensors »; with none, the tablet skips them. A tap on the second temperature (on the
         right of the home page) shows the next content, as does a « Left of the clock: next
         content » gesture (« Clock and top buttons » section). The tablet keeps the content
         shown when it restarts.
@@ -2096,12 +2093,12 @@ blueprint:
         agenda_travail:
           name: Agenda de travail · Work calendar
           description: >-
-            Laissé vide : celui de la liste « Tab5 · agenda de travail » de Home Assistant,
+            Laissé vide : celui de la liste « Tab5 · work calendar » de Home Assistant,
             qui donne aussi les horaires et l'heure du réveil. Sans agenda du tout, le
             panneau planning sort de la carte centrale.
 
 
-            Left empty: the one of Home Assistant's « Tab5 · agenda de travail · work
+            Left empty: the one of Home Assistant's « Tab5 · work calendar · work
             calendar » list, which also gives the hours and the alarm time. With no calendar
             at all, the planning panel leaves the central card.
           default: []
@@ -2137,12 +2134,12 @@ blueprint:
           name: Météo des prévisions · Forecast weather
           description: >-
             Les pages des jours et des heures et la météo du moment : n'importe quelle entité
-            météo. Vide : celle de la liste « Tab5 · source des prévisions » (par défaut la
+            météo. Vide : celle de la liste « Tab5 · forecast source » (par défaut la
             ville Météo-France, sinon la première entité météo).
 
 
             The day and hour pages and the current weather: any weather entity. Empty: the one
-            of the « Tab5 · source des prévisions · forecast source » list (by default the
+            of the « Tab5 · forecast source » list (by default the
             Météo-France city, otherwise the first weather entity).
           default: []
           selector:
@@ -2163,7 +2160,7 @@ blueprint:
             select:
               mode: dropdown
               options:
-                - label: Celle de la liste « Tab5 · source de la pluie dans l'heure » · The one of the HA list
+                - label: Celle de la liste « Tab5 · next-hour rain source » · The one of the HA list
                   value: liste
                 - label: Météo-France
                   value: Météo-France
@@ -2193,7 +2190,7 @@ blueprint:
             select:
               mode: dropdown
               options:
-                - label: Celle de la liste « Tab5 · source des vigilances » · The one of the HA list
+                - label: Celle de la liste « Tab5 · weather warnings source » · The one of the HA list
                   value: liste
                 - label: Météo-France
                   value: Météo-France
@@ -2743,14 +2740,12 @@ blueprint:
           name: Volet · Shutter
           description: >-
             La deuxième place. Un volet qui ne dit pas quand il s'ouvre ou se ferme peut être
-            suivi par le réglage facultatif « volet à course simulée » (liste « Tab5 · volet à
-            course simulée ») : laissez alors ici ce même volet, même s'il est aussi dans une
+            suivi par le réglage facultatif « volet à course simulée » (liste « Tab5 · shutter with simulated travel ») : laissez alors ici ce même volet, même s'il est aussi dans une
             pièce ; ses commandes et son état passent par ce réglage.
 
 
             The second place. A shutter that does not say when it is opening or closing can
-            be followed by the optional « simulated travel » setting (list « Tab5 · volet à
-            course simulée »): then keep that same shutter here, even if it is also in a
+            be followed by the optional « simulated travel » setting (list « Tab5 · shutter with simulated travel »): then keep that same shutter here, even if it is also in a
             room; its commands and its state go through that setting.
           default: []
           selector:
@@ -3299,7 +3294,7 @@ variables:
         {%- set ns.d = dict(ns.d, **{'pot_' ~ n ~ '_' ~ suffixe: e}) -%}
       {%- endfor -%}
     {%- endfor -%}
-    {#- Agenda de travail laissé vide ici : celui de la liste « Tab5 · agenda de travail »
+    {#- Agenda de travail laissé vide ici : celui de la liste « Tab5 · work calendar »
         (packages/tab5_reglages.yaml, ADR-0024), pour ne le choisir qu'une fois. -#}
     {%- set liste = states('select.tab5_agenda_de_travail') -%}
     {%- if not ns.d.get('planning') and liste.startswith('calendar.') and states[liste] is not none -%}
@@ -3431,9 +3426,9 @@ variables:
     {%- endfor -%}
     {{ ns.l }}
   # Le volet que suit le package volet_serre_tracking.yaml : celui que nomme sa liste
-  # « Tab5 · volet à course simulée », s'il existe. Sa tuile montre l'état tenu par le
+  # « Tab5 · shutter with simulated travel », s'il existe. Sa tuile montre l'état tenu par le
   # package (input_text.volet_serre_etat), ses commandes passent par
-  # script.tab5_volet_action. Liste sur « Aucun » (son défaut) ou package absent : '',
+  # script.tab5_volet_action. Liste sur « none » (son défaut) ou package absent : '',
   # chaque volet est commandé directement. Avant le 06/10/2026, la seule présence du
   # script suffisait : un package copié sans choisir le volet rendait muet celui de
   # l'entrée Volet, le script s'arrêtant sur « Aucun » (discussion #278).
@@ -3535,7 +3530,7 @@ variables:
     - pot_4
     - pot_5
   # Clés des zones de l'écran (kCles de Tab5/ecran/tab5_zones.cpp). « discussion » n'est pas une
-  # entrée : absente quand la liste « Tab5 · pipeline de discussion » vaut « Aucun »
+  # entrée : absente quand la liste « Tab5 · chat pipeline » vaut « none »
   # (variable absentes, plus bas).
   cles_zones:
     - lumiere_1
@@ -3761,8 +3756,7 @@ variables:
   #   - rechargement des automatisations (enregistrement du blueprint) et démarrage de HA :
   #     toujours ;
   #   - changement d'une liste : seulement s'il vient d'une personne (context.user_id de
-  #     l'état, renseigné pour l'interface, l'API et le select « Tab5 · source des
-  #     prévisions », qui écrit l'input_text dans le contexte de son appel). L'écriture
+  #     l'état, renseigné pour l'interface, l'API et le select « Tab5 · forecast source », qui écrit l'input_text dans le contexte de son appel). L'écriture
   #     d'une automatisation (celle-ci, ou celle d'une autre tablette réglée autrement) n'en
   #     a pas : jamais de ping-pong entre deux automatisations.
   # Météo choisie qui n'existe pas (encore) : rien d'écrit, la liste et son repli restent.
@@ -3780,6 +3774,9 @@ variables:
       {%- endif -%}
       {%- for cle, liste in [('pluie', 'input_select.tab5_source_pluie'), ('vigilance', 'input_select.tab5_source_vigilance')] -%}
         {%- set v = meteo_choisie[cle] if meteo_choisie[cle] is string else '' -%}
+        {#- « Aucune » reste la valeur de l'entrée (automatisations déjà enregistrées) ; la
+            liste du package dit « None » depuis le 24/10/2026, « Aucune » avant. -#}
+        {%- set v = 'None' if v == 'Aucune' and 'None' in (state_attr(liste, 'options') or []) else v -%}
         {%- if v not in ['', 'liste'] and states[liste] is not none
               and v in (state_attr(liste, 'options') or []) and states(liste) != v -%}
           {%- set ns.l = ns.l + [{'entite': liste, 'valeur': v}] -%}
@@ -4674,14 +4671,14 @@ triggers:
   - trigger: state
     entity_id: input_text.volet_serre_etat
     id: volet_suivi
-  # Volet choisi (ou remis à « Aucun ») dans la liste « Tab5 · volet à course simulée » :
+  # Volet choisi (ou remis à « none ») dans la liste « Tab5 · shutter with simulated travel » :
   # volet_suivi change, les tuiles concernées et le volet de l'entrée Volet repartent
   # avec la bonne source d'état. Sans le package, ne se déclenche jamais.
   - trigger: state
     entity_id: select.tab5_volet_a_course_simulee
     to: ~
     id: volet_choisi
-  # Pipeline de discussion choisi, ou remis à « Aucun » (liste du package) : la réponse
+  # Pipeline de discussion choisi, ou remis à « none » (liste du package) : la réponse
   # des zones repart, sans attendre que la tablette la redemande (boutons Domo / Discu).
   # Sans la liste (package plus ancien), ne se déclenche jamais.
   - trigger: state
@@ -4820,9 +4817,9 @@ actions:
         {%- set ns = namespace(l=[]) -%}
         {%- for c in cles_zones -%}
           {%- if c == 'discussion' -%}
-            {#- Pas une entrée : la liste « Tab5 · pipeline de discussion ». « Aucun » masque
+            {#- Pas une entrée : la liste « Tab5 · chat pipeline ». « none » masque
                 les boutons Domo / Discu ; sans la liste (package plus ancien), ils restent. -#}
-            {%- if states('select.tab5_pipeline_de_discussion') == 'Aucun' -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
+            {%- if states('select.tab5_pipeline_de_discussion') in ['none', 'None', 'Aucun', 'Aucune'] -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
           {%- else -%}
             {%- set x = sources.get(c, '') -%}
             {%- if not x or states[x] is none -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
@@ -4913,11 +4910,20 @@ actions:
                       data:
                         value: "{{ repeat.item.valeur }}"
                   else:
-                    - action: input_select.select_option
-                      target:
-                        entity_id: "{{ repeat.item.entite }}"
-                      data:
-                        option: "{{ repeat.item.valeur }}"
+                    # « None » (options anglaises du 24/10/2026), la dernière option des deux
+                    # listes : « {{ … }} » rendu « None » serait relu par HA comme le None de
+                    # Python (Template._parse_result) et l'action refuserait l'option.
+                    - if: "{{ repeat.item.valeur == 'None' }}"
+                      then:
+                        - action: input_select.select_last
+                          target:
+                            entity_id: "{{ repeat.item.entite }}"
+                      else:
+                        - action: input_select.select_option
+                          target:
+                            entity_id: "{{ repeat.item.entite }}"
+                          data:
+                            option: "{{ repeat.item.valeur }}"
           - if: "{{ trigger.id == 'meteo_liste' }}"
             then:
               - action: persistent_notification.create
@@ -4925,9 +4931,9 @@ actions:
                   notification_id: tab5_meteo_blueprint
                   title: "Tab5 — météo choisie dans le blueprint · weather picked in the blueprint"
                   message: |-
-                    {%- set noms = {'input_text.tab5_meteo_previsions': 'Tab5 · source des prévisions',
-                                    'input_select.tab5_source_pluie': "Tab5 · source de la pluie dans l'heure",
-                                    'input_select.tab5_source_vigilance': 'Tab5 · source des vigilances'} -%}
+                    {%- set noms = {'input_text.tab5_meteo_previsions': 'Tab5 · forecast source',
+                                    'input_select.tab5_source_pluie': 'Tab5 · next-hour rain source',
+                                    'input_select.tab5_source_vigilance': 'Tab5 · weather warnings source'} -%}
                     {%- set auto = this.attributes.friendly_name | default('Tab5 — emplacements', true) %}
                     {% for e in meteo_a_ecrire -%}
                     - « {{ noms.get(e.entite, e.entite) }} » → {{ e.valeur }}
@@ -5412,7 +5418,7 @@ actions:
                         data:
                           command: "{{ tc_commande }}"
                         continue_on_error: true
-              # Les applications de la TV choisie dans « Tab5 · TV Samsung » (une seule TV),
+              # Les applications de la TV choisie dans « Tab5 · Samsung TV » (une seule TV),
               # depuis la page d'une télécommande « tv ».
               - alias: "Télécommande : application (script tab5_tv_app, package tab5_tv.yaml)"
                 conditions: "{{ tc_rang >= 0 and commande == 'appli' and states['script.tab5_tv_app'] is not none }}"

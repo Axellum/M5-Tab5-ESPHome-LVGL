@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Pluie dans l'heure sans Météo-France (02/10/2026, discussion #278 : un utilisateur en
 Turquie n'avait rien sur la carte pluie). Météo-France est le premier choix de la liste
-« Tab5 · source de la pluie dans l'heure », donc celui d'une installation neuve ; sans
+« Tab5 · next-hour rain source », donc celui d'une installation neuve ; sans
 capteur de pluie Météo-France, la source effective devient Open-Meteo, seul service qui
 répond partout.
 
@@ -22,7 +22,7 @@ MAINTENANT = dt.datetime(2026, 10, 2, 12, 0, 0, tzinfo=dt.timezone.utc)
 
 
 def _capteur_pluie():
-    """(variables, capteur) du modèle à déclencheurs « Tab5 Pluie dans l'heure »."""
+    """(variables, capteur) du modèle à déclencheurs « Tab5 Rain in the next hour »."""
     with open(PAQUET, encoding="utf-8") as f:
         paquet = yaml.safe_load(f)
     for bloc in paquet["template"]:
@@ -56,8 +56,18 @@ def test_meteo_france_avec_capteur_reste_meteo_france():
 
 
 def test_les_autres_choix_ne_changent_pas():
-    for choix in ["OpenWeatherMap", "Buienradar", "DWD", "Met.no", "Open-Meteo", "Aucune"]:
+    for choix in ["OpenWeatherMap", "Buienradar", "DWD", "Met.no", "Open-Meteo"]:
         assert _source(choix, "") == choix, choix
+
+
+def test_aucune_source_jamais_rendue_none():
+    """« None » (24/10/2026) et « Aucune » d'avant donnent « none » : un rendu « None » serait
+    relu par HA comme le None de Python (Template._parse_result de HA 2026.10), la source
+    vaudrait None et la carte prendrait la branche Météo-France ; « none » masque la carte."""
+    _, capteur = _capteur_pluie()
+    for choix in ["None", "Aucune"]:
+        assert _source(choix, "sensor.paris_next_rain") == "none", choix
+    assert _rendre(capteur["state"], source="none", mf_pluie="sensor.paris_next_rain", serie=None) == "@-"
 
 
 def test_les_modeles_lisent_la_source_effective_pas_la_liste():

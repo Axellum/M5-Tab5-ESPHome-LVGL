@@ -256,7 +256,7 @@ def test_capteurs_visibles():
 
 
 def test_capteurs_proposes_au_suivi():
-    """La liste « Tab5 · capteurs suivis » ne propose que les capteurs à state_class
+    """La liste « Tab5 · tracked sensors » ne propose que les capteurs à state_class
     measurement (tab5_reglages.yaml) : les trois mesures en ont un, les textes non."""
     bloc = _bloc_visibles()
     mesures = {e["default_entity_id"] for e in bloc["sensor"] if e.get("state_class") == "measurement"}
@@ -271,7 +271,7 @@ def test_structure():
     panne (continue_on_error) ; le relevé n'a pas d'horodatage (une ligne du recorder par
     changement, pas toutes les 30 s) ; aucune adresse écrite dans le package."""
     paquet = _paquet()
-    assert paquet["input_select"]["tab5_serveur_ia_type"]["options"] == ["Aucun"] + TYPES
+    assert paquet["input_select"]["tab5_serveur_ia_type"]["options"] == ["None"] + TYPES
     assert "initial" not in paquet["input_text"]["tab5_serveur_ia_adresse"]
     assert paquet["rest_command"]["tab5_serveur_ia"]["timeout"] <= 7
     bloc = _bloc_releve()

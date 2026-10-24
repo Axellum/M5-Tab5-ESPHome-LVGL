@@ -34,12 +34,12 @@ input_boolean:
   # après un redémarrage de HA (pas d'`initial:`), comme l'interrupteur côté
   # tablette.
   tab5_micro_coupe_absence:
-    name: "Tab5 — micro coupé pour absence"
+    name: "Tab5 — mic off while away"
     icon: mdi:microphone-off
 
 automation:
   - id: tab5_micro_absence
-    alias: "Tab5 — couper le micro en absence"
+    alias: "Tab5 — mute the mic when away"
     description: >-
       Coupe « Ok Nabu » quand la maison est vide depuis 10 min, le rallume dès le
       retour s'il avait été coupé par cette automation. Rattrape un départ ou un

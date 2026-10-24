@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistant · agendas et personnes",
-        "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Aucun » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
+        "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « none » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
         "data": {
           "agenda_travail": "Agenda de travail",
           "agenda_rdv": "Agenda des rendez-vous",
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistant · agendas et personnes",
-            "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Aucun » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
+            "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « none » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
             "data": {
               "agenda_travail": "Agenda de travail",
               "agenda_rdv": "Agenda des rendez-vous",

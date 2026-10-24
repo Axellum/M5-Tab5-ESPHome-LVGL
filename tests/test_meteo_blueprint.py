@@ -13,7 +13,7 @@ test_meteo_sans_meteo_france.py) :
 - champ vide : rien n'est écrit, à aucun déclencheur, et le passage s'arrête aux
   conditions ; la poussée lit le choix de la liste, comme avant ;
 - champ rempli : à l'enregistrement et au démarrage de HA, le blueprint écrit son choix
-  dans la liste ; la chaîne du package (sources météo → Tab5 Météo → poussée complète,
+  dans la liste ; la chaîne du package (sources météo → Tab5 Weather → poussée complète,
   pluie, vigilances) suit ce choix sans autre réglage ;
 - une liste changée à la main revient au choix du blueprint (avec une notification) ;
   changée par une automatisation, elle n'est pas reprise : jamais de ping-pong.
@@ -97,7 +97,7 @@ def _ecrire(p):
 
 
 def _chaine(etats_bp):
-    """La chaîne du package rendue sur ces états : « Tab5 · sources météo », « Tab5 Météo »,
+    """La chaîne du package rendue sur ces états : « Tab5 · weather sources », « Tab5 Weather »,
     la source effective de la pluie et celle des vigilances, puis les variables de la
     poussée complète (packages/tab5_push.yaml)."""
     etats = EtatsPaquet([EtatPaquet(e.entity_id, e.state, **e.attributes) for e in etats_bp.d.values()
@@ -148,7 +148,9 @@ def test_section_meteo_et_options_egales_aux_listes_du_package():
         e = section["input"][entree]
         assert " · " in e["name"], entree
         options = e["selector"]["select"]["options"]
-        assert [o["value"] for o in options] == ["liste"] + _options(liste), entree
+        # « Aucune » reste la valeur de l'entrée (automatisations déjà enregistrées) : le
+        # blueprint l'écrit « None » dans la liste, aux options anglaises depuis le 24/10/2026.
+        assert [{"Aucune": "None"}.get(o["value"], o["value"]) for o in options] == ["liste"] + _options(liste), entree
         assert e["default"] == "liste", entree
         # « Celle de la liste » nomme la liste du package qu'elle laisse décider.
         assert _paquet("tab5_meteo_sources.yaml")["input_select"][liste]["name"].split(" · ")[1] in options[0]["label"]
@@ -214,7 +216,7 @@ def test_champ_rempli_ecrit_a_l_enregistrement_et_au_demarrage():
         p = Passage(REMPLI, _maison_meteo(), declencheur)
         assert p["meteo_a_ecrire"] == [{"entite": LISTE_METEO, "valeur": AUTRE},
                                        {"entite": LISTE_PLUIE, "valeur": "Open-Meteo"},
-                                       {"entite": LISTE_VIGILANCE, "valeur": "Aucune"}], declencheur["id"]
+                                       {"entite": LISTE_VIGILANCE, "valeur": "None"}], declencheur["id"]
         assert p.conditions(), declencheur["id"]
         assert _branche(p) == "Météo choisie dans le blueprint : l'écrire dans les listes « Tab5 · … »"
 
@@ -238,11 +240,12 @@ def test_champ_rempli_la_poussee_suit_le_choix():
     assert chaine["meteo"] == AUTRE
     assert chaine["cibles"] and set(chaine["cibles"]) == {AUTRE}
     assert chaine["actuelle"] == {"condition": "rainy", "temperature": 12.5, "humidite": 88.0}
-    assert (chaine["pluie"], chaine["vigilance"]) == ("Open-Meteo", "Aucune")
+    # « none » : l'attribut ne rend jamais « None », que HA relirait comme le None de Python.
+    assert (chaine["pluie"], chaine["vigilance"]) == ("Open-Meteo", "none")
 
 
 def test_deja_a_jour_rien_a_ecrire():
-    p = Passage(REMPLI, _maison_meteo(meteo=AUTRE, pluie="Open-Meteo", vigilance="Aucune"), RECHARGEMENT)
+    p = Passage(REMPLI, _maison_meteo(meteo=AUTRE, pluie="Open-Meteo", vigilance="None"), RECHARGEMENT)
     assert p["meteo_a_ecrire"] == []
     assert not p.conditions()
 
@@ -250,6 +253,18 @@ def test_deja_a_jour_rien_a_ecrire():
 def test_seulement_les_champs_remplis():
     p = Passage({"meteo_vigilance": "DWD"}, _maison_meteo(), DEMARRAGE)
     assert p["meteo_a_ecrire"] == [{"entite": LISTE_VIGILANCE, "valeur": "DWD"}]
+
+
+def test_aucune_du_blueprint_suit_les_options_de_la_liste():
+    """L'entrée garde « Aucune » ; la liste dit « None » depuis le 24/10/2026, « Aucune »
+    avant : le blueprint écrit l'option que la liste a."""
+    p = Passage({"meteo_vigilance": "Aucune"}, _maison_meteo(), DEMARRAGE)
+    assert p["meteo_a_ecrire"] == [{"entite": LISTE_VIGILANCE, "valeur": "None"}]
+    etats = _maison_meteo()
+    ancienne = next(e for e in etats if e.entity_id == LISTE_VIGILANCE)
+    ancienne.attributes["options"] = ["Météo-France", "MeteoAlarm", "DWD", "CAP Alerts", "Aucune"]
+    p = Passage({"meteo_vigilance": "Aucune"}, etats, DEMARRAGE)
+    assert p["meteo_a_ecrire"] == [{"entite": LISTE_VIGILANCE, "valeur": "Aucune"}]
 
 
 def test_meteo_absente_ou_package_absent_rien_d_ecrit():
@@ -273,7 +288,7 @@ def test_meteo_absente_ou_package_absent_rien_d_ecrit():
 
 def test_liste_changee_a_la_main_revient_au_blueprint_avec_une_notification():
     declencheur = _liste_changee(LISTE_METEO, AUTRE, VILLE, par_une_personne=True)
-    p = Passage(REMPLI, _maison_meteo(meteo=VILLE, pluie="Open-Meteo", vigilance="Aucune"), declencheur)
+    p = Passage(REMPLI, _maison_meteo(meteo=VILLE, pluie="Open-Meteo", vigilance="None"), declencheur)
     assert p["meteo_a_ecrire"] == [{"entite": LISTE_METEO, "valeur": AUTRE}]
     assert p.conditions()
     assert _branche(p) == "Météo choisie dans le blueprint : l'écrire dans les listes « Tab5 · … »"
@@ -295,12 +310,12 @@ def test_pas_de_ping_pong_entre_deux_automatisations():
     """L'écriture d'une automatisation (celle-ci, ou celle d'une autre tablette réglée
     autrement) n'a pas de user_id : elle n'est jamais reprise."""
     declencheur = _liste_changee(LISTE_METEO, AUTRE, VILLE, par_une_personne=False)
-    p = Passage(REMPLI, _maison_meteo(meteo=VILLE, pluie="Open-Meteo", vigilance="Aucune"), declencheur)
+    p = Passage(REMPLI, _maison_meteo(meteo=VILLE, pluie="Open-Meteo", vigilance="None"), declencheur)
     assert p["meteo_a_ecrire"] == []
     assert not p.conditions()
     # Sa propre écriture, relue : déjà à jour, rien non plus.
     declencheur = _liste_changee(LISTE_METEO, VILLE, AUTRE, par_une_personne=True)
-    p = Passage(REMPLI, _maison_meteo(meteo=AUTRE, pluie="Open-Meteo", vigilance="Aucune"), declencheur)
+    p = Passage(REMPLI, _maison_meteo(meteo=AUTRE, pluie="Open-Meteo", vigilance="None"), declencheur)
     assert p["meteo_a_ecrire"] == []
 
 
@@ -309,3 +324,18 @@ def test_liste_supprimee_rien():
     declencheur["to_state"] = None
     p = Passage(REMPLI, _maison_meteo(), declencheur)
     assert p["meteo_a_ecrire"] == []
+
+
+def test_none_ecrit_par_select_last():
+    """« None », dernière option des deux listes : écrit par input_select.select_last, jamais
+    par un « option: {{ … }} » que HA relirait comme le None de Python (HA 2026.10,
+    Template._parse_result ; l'action refuserait l'option)."""
+    for liste in ("tab5_source_pluie", "tab5_source_vigilance"):
+        assert _options(liste)[-1] == "None", liste
+    bp = _blueprint()
+    branche = _chercher(bp["actions"], lambda d: (d.get("alias") or "").startswith("Météo choisie"))
+    ecrire = branche["sequence"][0]["repeat"]["sequence"][0]["else"][0]
+    assert ecrire["if"] == "{{ repeat.item.valeur == 'None' }}"
+    assert [a["action"] for a in ecrire["then"]] == ["input_select.select_last"]
+    assert ecrire["else"][0]["action"] == "input_select.select_option"
+

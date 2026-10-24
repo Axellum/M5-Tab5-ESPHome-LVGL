@@ -286,7 +286,12 @@ def entrees_maison(valeurs: dict[str, Any], anciennes: dict[str, Any] | None = N
 
 # ─── Listes « Tab5 · … » (packages/tab5_reglages.yaml) ──────────────────────
 
-AUCUN = "Aucun"
+# « none » depuis le 24/10/2026 (décision d'Axel : options des packages en anglais), en
+# minuscules : un modèle qui rend « None » est relu par HA comme le None de Python
+# (Template._parse_result), la liste serait « unknown ». « None » (les input_select),
+# « Aucun » et « Aucune » d'avant restent reconnus tant que les fichiers HA n'ont pas suivi.
+AUCUN = "none"
+AUCUNS = (AUCUN, "None", "Aucun", "Aucune")
 
 
 @dataclass(frozen=True)
@@ -371,14 +376,15 @@ def _propose(cle: str, options: list[str], infos: Infos) -> list[str]:
 
 def proposer_liste(liste: Liste, options: list[str], actuel: str | None, infos: Infos) -> tuple[str, bool]:
     """(valeur proposée, est-ce une proposition de l'assistant ?). Un choix déjà fait reste ;
-    sinon la seule candidate des règles ; sinon « Aucun »."""
-    if actuel and actuel != AUCUN and actuel in options:
+    sinon la seule candidate des règles ; sinon « none » (« Aucun » d'un package d'avant)."""
+    if actuel and actuel not in AUCUNS and actuel in options:
         return actuel, False
     candidates = [c for c in (_auto if liste.devinee else _propose)(liste.cle, options, infos)
                   if c in options and c not in infos.internes]
     if len(candidates) == 1:
         return candidates[0], True
-    return (AUCUN if AUCUN in options else (actuel or AUCUN)), False
+    aucun = next((a for a in AUCUNS if a in options), None)
+    return (aucun or actuel or AUCUN), False
 
 
 def changements(choix: dict[str, str], actuels: dict[str, str]) -> dict[str, str]:

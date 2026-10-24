@@ -36,7 +36,7 @@ HA_DIR = REPO / "HomeAssistant_Config"
 SANS_CARTE = {
     ("number", "volume"): "doublon du volume du lecteur multimédia (« inconnu » tant qu'il n'a pas bougé)",
     ("sensor", "tab5_prefixe_des_actions"): "lu par les poussées de HA (ADR-0063), rien à régler ni à surveiller",
-    ("switch", "tab5_nuit_ecran_eteint"): "tenu par HA d'après « Tab5 · extinction de nuit », qui a sa carte",
+    ("switch", "tab5_nuit_ecran_eteint"): "tenu par HA d'après « Tab5 · night screen off », qui a sa carte",
 }
 # Aides de l'auteur hors packages : une carte seulement si elles existent.
 HORS_PACKAGES = {"input_text.tab5_annonce_vocale", "script.tab5_annonce_vocale"}

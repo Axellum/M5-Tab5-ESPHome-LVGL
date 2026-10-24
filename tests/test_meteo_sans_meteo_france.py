@@ -3,8 +3,8 @@
 en Turquie, avec la seule météo que HA installe d'office, Met.no).
 
 La chaîne est rendue ici avec les vrais modèles des packages et de fausses entités :
-« Tab5 · sources météo » choisit l'entité météo (packages/tab5_meteo_sources.yaml),
-« Tab5 Météo » dit ce qu'elle sait fournir, puis la poussée complète
+« Tab5 · weather sources » choisit l'entité météo (packages/tab5_meteo_sources.yaml),
+« Tab5 Weather » dit ce qu'elle sait fournir, puis la poussée complète
 (packages/tab5_push.yaml) demande les prévisions et compose les payloads des 15 jours,
 des 10 heures, de la météo du moment et des probabilités.
 
@@ -180,8 +180,7 @@ def _rendre(env, valeur, contexte=None):
 
 def _maison(choix="", uv_index=0.0, maintenant=MAINTENANT):
     """Une installation neuve : Met.no (état et attributs de la réponse réelle), les
-    listes des packages sur leur premier choix, rien dans « Tab5 · entité météo
-    choisie ». Puis « Tab5 · sources météo » et « Tab5 Météo » rendus dans l'ordre où
+    listes des packages sur leur premier choix, rien dans « Tab5 · chosen weather entity ». Puis « Tab5 · weather sources » et « Tab5 Weather » rendus dans l'ordre où
     HA les calcule, chacun lisant le précédent."""
     etats = Etats([
         Etat(MET_NO, "rainy", temperature=16.5, humidity=76, uv_index=uv_index,
@@ -230,7 +229,7 @@ def _entrees(payload):
 
 def test_l_entite_met_no_est_prise_toute_seule():
     """Rien de choisi (ou une entité disparue) et pas de Météo-France : l'entité Met.no
-    est prise, et « Tab5 · source des prévisions » la montre choisie."""
+    est prise, et « Tab5 · forecast source » la montre choisie."""
     for choix in ["", "unknown", "weather.disparue"]:
         etats, env, liste = _maison(choix)
         assert etats.attr("sensor.tab5_sources_meteo", "meteo") == MET_NO, choix

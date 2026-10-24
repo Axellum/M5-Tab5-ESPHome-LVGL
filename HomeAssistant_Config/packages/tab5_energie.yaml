@@ -111,7 +111,7 @@
 
 script:
   tab5_energie:
-    alias: "Tab5 — popup Énergie (instantané et historique)"
+    alias: "Tab5 — Energy popup (live and history)"
     description: >-
       Appelé par le blueprint « Tab5 — emplacements » quand la tablette ouvre son popup
       Énergie ou change de vue. Pousse l'historique de la vue demandée, puis l'instantané

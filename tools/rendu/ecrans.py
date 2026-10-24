@@ -899,7 +899,7 @@ MUSIQUE_PIECES_MA = Service("tab5_maj_musique_pieces", (
     ("contexte", "1|0|12|Sous la pluie — Clara Lune"),
 ))
 # La plus petite installation à plusieurs lecteurs, sans Music Assistant : trois lecteurs de
-# « Tab5 · lecteurs de musique », aucun groupe, ni transfert ni bibliothèque.
+# « Tab5 · music players », aucun groupe, ni transfert ni bibliothèque.
 MUSIQUE_PIECES_SANS_MA = Service("tab5_maj_musique_pieces", (
     ("pieces", "Salon|e|j|45|0|-1|vmos|Le vent du large — Les Marées;Apple TV|t|r|30|0|-1|vmo|;Freebox|x|e||0|-1|o|"),
     ("contexte", "0|0|0|"),

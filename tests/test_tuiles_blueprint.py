@@ -911,7 +911,7 @@ def test_volet_suivi_par_le_package():
 
 
 def _liste_du_package(choix):
-    """La maison de test, la liste « Tab5 · volet à course simulée » sur `choix`."""
+    """La maison de test, la liste « Tab5 · shutter with simulated travel » sur `choix`."""
     return _maison_avec(Etat("select.tab5_volet_a_course_simulee", choix))
 
 

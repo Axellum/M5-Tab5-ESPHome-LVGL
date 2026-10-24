@@ -21,16 +21,15 @@
 #       lu en base 10), titres débarrassés de `|`, `~` et `;`. Contrat côté
 #       firmware : `rdv_store()` dans Tab5/socle/alarm_clock.cpp.
 # @data_sources Les agendas choisis dans HA (ADR-0024, packages/tab5_reglages.yaml) :
-#       « Tab5 · agenda des rendez-vous » + « Tab5 · agenda de travail », dont on
-#       EXCLUT les événements de travail (titre contenant un des mots de « Tab5 · mot
-#       des événements de travail », ou tous si la liste est vide) : ce ne sont pas des
+#       « Tab5 · appointments calendar » + « Tab5 · work calendar », dont on
+#       EXCLUT les événements de travail (titre contenant un des mots de « Tab5 · work event keyword », ou tous si la liste est vide) : ce ne sont pas des
 #       rendez-vous, et leurs horaires servent déjà au calcul de l'heure de réveil.
 #       Seuls les événements
 #       HORODATÉS sont retenus — un événement journée entière n'a pas d'heure à
 #       annoncer. Aucun agenda choisi : liste vide poussée (aucun rappel).
 # @ai_warning L'HEURE du réveil vient des horaires de l'agenda de travail, poussés
 #       par packages/tab5_push.yaml (prévisions jours) et gardés par la tablette.
-#       « Tab5 · agenda de travail » sur « Aucun » = tous les jours en repos : le
+#       « Tab5 · work calendar » sur « none » = tous les jours en repos : le
 #       réveil ne sonne plus que les jours de repos si « Réveil : sonner les jours
 #       de repos » est actif. À régler AVANT de recharger les automatisations lors
 #       d'une migration depuis les placeholders.
@@ -52,7 +51,7 @@
 
 script:
   tab5_rdv_prochains:
-    alias: "Tab5 — prochains rendez-vous (réveil / annonces)"
+    alias: "Tab5 — upcoming appointments (alarm / announcements)"
     description: >-
       Pousse vers le Tab5 les rendez-vous horodatés des 24 prochaines heures.
       Le firmware garde la liste et déclenche l'annonce lui-même, N minutes
@@ -144,7 +143,7 @@ script:
                   {{ (ns.rows | sort | unique | list)[:8] | join('~') }}
 
   tab5_reveil_annonce:
-    alias: "Tab5 — briefing parlé du réveil"
+    alias: "Tab5 — spoken alarm briefing"
     description: >-
       Prononcé sur le Tab5 quelques secondes après le début de la sonnerie,
       si switch.tab5_alarm_tts est actif. Appelé PAR LE FIRMWARE
@@ -239,7 +238,7 @@ script:
 
 automation:
   - id: tab5_rdv_push
-    alias: "Tab5 — pousser les prochains rendez-vous"
+    alias: "Tab5 — push the upcoming appointments"
     description: >-
       Entretient la liste embarquée dans le Tab5. Cadence de 5 minutes : le
       firmware tient le compte à rebours à la seconde, la poussée ne sert donc

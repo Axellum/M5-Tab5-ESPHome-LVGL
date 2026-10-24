@@ -581,7 +581,7 @@ views:
 {%- raw %}
               {%- macro choix(e) -%}
               {%- set v = states(e) -%}
-              {%- if v in ['Aucun', 'Aucune', 'unknown', 'unavailable', ''] -%}<font color="#ff9800">{% endraw %}{{ t('non choisi', 'not set') }}{% raw %}</font>
+              {%- if v | lower in ['none', 'aucun', 'aucune', 'unknown', 'unavailable', ''] -%}<font color="#ff9800">{% endraw %}{{ t('non choisi', 'not set') }}{% raw %}</font>
               {%- elif v.startswith('weather.') and expand(v) | count > 0 -%}
               {%- set n = state_attr(v, 'friendly_name') or v -%}
               {{ device_attr(device_id(v), 'manufacturer') or '' }} · {{ n.split('for city ')[1].split(' - ')[0] if 'for city ' in n else n }}
@@ -728,7 +728,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « Aucune »: never') }}"
+            heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « none » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « none »: never') }}"
             heading_style: subtitle
 {%- endif %}
 {%- for cle, fr_, en_, icone in [('extinction_batterie', 'Extinction sur batterie seulement', 'Auto-off on battery only', 'mdi:battery-clock'),
@@ -1080,7 +1080,7 @@ views:
             grid_options:
               columns: 12
 {%- for cle, e, fr_, en_, icone, ligne in [('pipeline', '', 'Mode en cours', 'Current mode', 'mdi:robot', false),
-                                           ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (Aucun = boutons masqués)', 'Discu mode pipeline (Aucun = buttons hidden)', 'mdi:chat-processing-outline', false),
+                                           ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (none = boutons masqués)', 'Discu mode pipeline (none = buttons hidden)', 'mdi:chat-processing-outline', false),
                                            ('mot', '', "Mot d'activation", 'Wake word', 'mdi:account-voice', false),
                                            ('mot_2', '', "2ᵉ mot d'activation", 'Second wake word', 'mdi:account-voice', false),
                                            ('pipeline_2', '', 'Pipeline du 2ᵉ mot', 'Second wake word pipeline', 'mdi:robot-outline', false),
@@ -2244,12 +2244,12 @@ views:
     'es': 'Apagado nocturno',
     'it': 'Spegnimento notturno',
     'tr': 'Gece ekran kapatma'},
-  'Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais': {
-    'de': 'Im Zeitfenster: aus nach 1 Min. ohne Berührung, am Ende wieder an; « Aucune »: nie',
-    'nl': 'Tijdens het venster: uit na 1 min zonder aanraking, aan het einde weer aan; « Aucune »: nooit',
-    'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « Aucune »: nunca',
-    'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « Aucune »: mai',
-    'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « Aucune »: asla'},
+  'Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « none » : jamais': {
+    'de': 'Im Zeitfenster: aus nach 1 Min. ohne Berührung, am Ende wieder an; « none »: nie',
+    'nl': 'Tijdens het venster: uit na 1 min zonder aanraking, aan het einde weer aan; « none »: nooit',
+    'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « none »: nunca',
+    'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « none »: mai',
+    'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « none »: asla'},
   'Extinction sur batterie seulement': {
     'de': 'Automatisch aus nur im Akkubetrieb',
     'nl': 'Automatisch uit alleen op batterij',
@@ -2622,12 +2622,12 @@ views:
     'es': 'Modo actual',
     'it': 'Modalità attuale',
     'tr': 'Geçerli mod'},
-  'Pipeline du mode « Discu » (Aucun = boutons masqués)': {
-    'de': 'Pipeline des Modus „Discu“ (Aucun = Tasten ausgeblendet)',
-    'nl': 'Pipeline van de modus “Discu” (Aucun = knoppen verborgen)',
-    'es': 'Pipeline del modo «Discu» (Aucun = botones ocultos)',
-    'it': 'Pipeline della modalità «Discu» (Aucun = pulsanti nascosti)',
-    'tr': '“Discu” modu pipeline’ı (Aucun = düğmeler gizli)'},
+  'Pipeline du mode « Discu » (none = boutons masqués)': {
+    'de': 'Pipeline des Modus „Discu“ (none = Tasten ausgeblendet)',
+    'nl': 'Pipeline van de modus “Discu” (none = knoppen verborgen)',
+    'es': 'Pipeline del modo «Discu» (none = botones ocultos)',
+    'it': 'Pipeline della modalità «Discu» (none = pulsanti nascosti)',
+    'tr': '“Discu” modu pipeline’ı (none = düğmeler gizli)'},
   "Mot d'activation": {
     'de': 'Aktivierungswort',
     'nl': 'Activeringswoord',

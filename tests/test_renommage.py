@@ -10,7 +10,7 @@ import importlib.util
 import re
 import sys
 
-from tests.commun import REPO
+from tests.commun import REPO, ChargeurSansBalises, charger
 
 INTEGRATION = REPO / "custom_components" / "tab5"
 
@@ -127,3 +127,32 @@ def test_fichiers_ha_acceptent_les_deux_identifiants():
                               r"|'" + re.escape(domaine) + r"', '" + re.escape(fin) + r"'\))")
             for p, t in textes.items():
                 assert not seul.search(t), f"{p.name} : « {fin} » sans « {n} »"
+
+
+def _listes_des_packages() -> dict[str, list[str]]:
+    """{input_select.x : options} des packages et des optionnels."""
+    listes = {}
+    for dossier in ("packages", "optionnel"):
+        for f in sorted((REPO / "HomeAssistant_Config" / dossier).glob("*.yaml")):
+            paquet = charger("HomeAssistant_Config", dossier, f.name, chargeur=ChargeurSansBalises) or {}
+            for cle, conf in (paquet.get("input_select") or {}).items():
+                listes[f"input_select.{cle}"] = list((conf or {}).get("options") or [])
+    return listes
+
+
+def test_options_des_packages_sont_celles_de_la_table():
+    """Chaque liste de OPTIONS_PAQUETS existe dans les packages et y propose les options
+    anglaises de la table, jamais celles d'avant : l'intégration ne traduit l'option choisie
+    que vers une option qui existe (Gestionnaire._options_gardees). Et une liste des packages
+    qui propose encore « Oui », « Aucune »… a sa ligne dans la table."""
+    listes = _listes_des_packages()
+    for eid, table in renommage.OPTIONS_PAQUETS.items():
+        assert eid in listes, f"{eid} : absente des packages"
+        options = listes[eid]
+        for avant, apres in table.items():
+            assert apres in options, f"{eid} : « {apres} » absente ({options})"
+            assert avant not in options, f"{eid} : « {avant} » encore proposée"
+        assert len(set(options)) == len(options), eid
+    francais = {"Oui", "Non", "Aucun", "Aucune", "Toutes", "Jaune", "Rouge", "Home Assistant seulement"}
+    for eid, options in listes.items():
+        assert not francais & set(options), f"{eid} : {sorted(francais & set(options))} sans traduction"
