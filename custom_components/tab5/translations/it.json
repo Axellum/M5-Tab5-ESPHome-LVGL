@@ -281,6 +281,17 @@
           "trop_de_tuiles": "Al massimo venti riquadri."
         }
       }
+    },
+    "migrer_entites": {
+      "title": "Tab5: passare le entità ai nomi inglesi",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Migrare le entità Tab5",
+            "description": "Le entità del tablet hanno ora nomi inglesi in Home Assistant, e {nombre} entità hanno ancora il vecchio nome o ID francese. Confermare per rinominarle: mantengono la loro cronologia, e il tablet le sue impostazioni. Le proprie plance e automazioni che le indicano con il vecchio ID entità vanno aggiornate."
+          }
+        }
+      }
     }
   }
 }

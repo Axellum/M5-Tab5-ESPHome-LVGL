@@ -63,10 +63,12 @@ def _texte():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _table_entites():
-    """(clé, domaine, fin) de la table ENTITES du modèle."""
+    """(clé, domaine, fin) de la table ENTITES du modèle. Une fin « (avant|anglais) »
+    (custom_components/tab5/renommage.py) donne celle d'avant : le nom du firmware."""
     bloc = re.search(r"set ENTITES = \[(.*?)\] -%\}", _texte(), re.S)
     assert bloc, "table ENTITES introuvable"
-    return re.findall(r"\('(\w+)', '(\w+)', '(\w*)'\)", bloc.group(1))
+    return [(cle, domaine, fin.strip("()").split("|")[0])
+            for cle, domaine, fin in re.findall(r"\('(\w+)', '(\w+)', '(\(?[\w|]*\)?)'\)", bloc.group(1))]
 
 
 # Domaine ESPHome → domaine HA (`datetime` : selon son `type`).

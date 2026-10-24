@@ -281,6 +281,17 @@
           "trop_de_tuiles": "Vingt tuiles au plus."
         }
       }
+    },
+    "migrer_entites": {
+      "title": "Tab5 : passer les entités à leurs noms anglais",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Migrer les entités Tab5",
+            "description": "Les entités de la tablette ont maintenant des noms anglais dans Home Assistant, et {nombre} entités portent encore leur ancien nom ou identifiant français. Validez pour les renommer : elles gardent leur historique, et la tablette ses réglages. Vos propres tableaux de bord et automatisations qui les nomment par leur ancien identifiant sont à mettre à jour."
+          }
+        }
+      }
     }
   }
 }

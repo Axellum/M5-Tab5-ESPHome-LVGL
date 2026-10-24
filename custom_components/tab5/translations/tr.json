@@ -281,6 +281,17 @@
           "trop_de_tuiles": "En fazla yirmi kutucuk."
         }
       }
+    },
+    "migrer_entites": {
+      "title": "Tab5: varlıkları İngilizce adlarına geçir",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5 varlıklarını taşı",
+            "description": "Tabletin varlıkları artık Home Assistant'ta İngilizce adlara sahip ve {nombre} varlık hâlâ eski Fransızca adını veya kimliğini taşıyor. Yeniden adlandırmak için onaylayın: geçmişleri korunur, tablet de ayarlarını korur. Onları eski varlık kimliğiyle kullanan kendi panolarınızın ve otomasyonlarınızın güncellenmesi gerekir."
+          }
+        }
+      }
     }
   }
 }
