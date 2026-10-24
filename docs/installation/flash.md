@@ -52,7 +52,7 @@ The install page and the tablet do not need this: the tablet only accepts a firm
 
 | What you see | What to do |
 |---|---|
-| No port in the list | a cable that only charges shows no port: try another cable, then another USB port of the computer |
+| No port in the list | a cable that only charges shows no port: try another cable, then another USB port of the computer. Still nothing: put the tablet in download mode (next row). One user got there by unplugging the cable, pressing that button, then plugging the cable back in |
 | « Failed to initialize… holding the BOOT button » | the Tab5 has no BOOT button. Hold its reset button for about 2 s, until the internal green LED blinks fast: the tablet is in download mode. Start *Connect and install* again; at the end, a short press on reset restarts it |
 | No *Install* button | the same version is already on the tablet. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included (alarm clock, brightness…: note them in Home Assistant first), then installs again; Home Assistant then asks for a confirmation ([reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19)) |
 | « This browser has no Web Serial » | Chrome or Edge, on a computer |
@@ -116,7 +116,7 @@ La page d'installation et la tablette n'en ont pas besoin : la tablette n'accept
 
 | Ce que vous voyez | Que faire |
 |---|---|
-| Aucun port dans la liste | un câble qui ne fait que charger ne montre aucun port : essayez un autre câble, puis un autre port USB de l'ordinateur |
+| Aucun port dans la liste | un câble qui ne fait que charger ne montre aucun port : essayez un autre câble, puis un autre port USB de l'ordinateur. Toujours rien : mettez la tablette en mode téléchargement (ligne suivante). Un utilisateur y est arrivé en débranchant le câble, en appuyant sur ce bouton, puis en rebranchant le câble |
 | « Failed to initialize… holding the BOOT button » | le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite : la tablette est en mode téléchargement. Relancez *Connecter et installer* ; à la fin, un appui court sur reset la redémarre |
 | Pas de bouton *Install* | la même version est déjà sur la tablette. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris (réveil, luminosité… : notez-les d'abord dans Home Assistant), puis réinstalle ; Home Assistant demande ensuite une confirmation ([réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026)) |
 | « Ce navigateur ne gère pas Web Serial » | Chrome ou Edge, sur un ordinateur |
