@@ -113,6 +113,32 @@ ESPHOME: dict[tuple[str, str], str] = {
     ("switch", "Nuit (thème auto)"): "Night (auto theme)",
 }
 
+# Options des listes des packages passées en anglais (décision d'Axel du 24/10/2026 : pour
+# les entités des packages, noms et options en anglais, identifiants gardés). Home Assistant
+# ne garde l'option choisie que si elle existe encore : l'intégration la traduit au
+# rechargement des fichiers et au démarrage (option_anglaise, Gestionnaire._options_gardees).
+_OUI_NON = {"Oui": "Yes", "Non": "No"}
+OPTIONS_PAQUETS: dict[str, dict[str, str]] = {
+    "input_select.tab5_alertes_maj": {"Toutes": "All", "Home Assistant seulement": "Home Assistant only",
+                                      "Aucune": "None"},
+    "input_select.tab5_alertes_vigilance": {"Jaune": "Yellow", "Rouge": "Red", "Aucune": "None"},
+    "input_select.tab5_alertes_problemes": _OUI_NON,
+    "input_select.tab5_alertes_indisponibles": _OUI_NON,
+    "input_select.tab5_alertes_etiquette": _OUI_NON,
+    "input_select.tab5_alertes_froid": _OUI_NON,
+    "input_select.tab5_alertes_piles": {"Aucune": "None"},
+    "input_select.tab5_serveur_ia_type": {"Aucun": "None"},
+    "input_select.tab5_source_pluie": {"Aucune": "None"},
+    "input_select.tab5_source_vigilance": {"Aucune": "None"},
+}
+
+
+def option_anglaise(entity_id: str, option: str) -> str | None:
+    """Option anglaise d'une option d'avant d'une liste des packages, ou None (déjà
+    anglaise, nom propre, liste hors table)."""
+    return OPTIONS_PAQUETS.get(entity_id, {}).get(option)
+
+
 # Domaine HA → type d'entité d'aioesphomeapi dans l'identifiant unique (_TYPE_TO_NAME) :
 # seuls les domaines de la table. Un capteur texte est un « sensor » dans HA mais un
 # « text_sensor » dans l'identifiant ; un texte, « text_info » (lu dans le registre de

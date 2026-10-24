@@ -64,6 +64,7 @@ from homeassistant.helpers import check_config
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import restore_state
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.storage import Store
@@ -111,6 +112,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: Tab5ConfigEntry) -> bool
     entry.async_on_unload(gestionnaire.arreter)
 
     async def _au_demarrage(_hass: HomeAssistant) -> None:
+        await gestionnaire.async_options_au_demarrage()
         await gestionnaire.async_installer()
         gestionnaire.proposer_migration()
 
@@ -284,7 +286,9 @@ class Gestionnaire:
         # Configuration déjà invalide avant (erreur bloquante) : reload_all refuserait.
         redemarrer = bloquant
         if not packages_absents and not bloquant:
+            choisies = self._options_choisies()
             redemarrer = await self._recharger(installation.domaines(plan.contenus), config_yaml)
+            await self._options_gardees(choisies)
 
         # 4. L'effet : HA lit la nouvelle version des fichiers.
         if not packages_absents and not await self._attendre_version():
@@ -392,6 +396,34 @@ class Gestionnaire:
         registre = er.async_get(self.hass)
         return [r for r in renommage.planifier(entrees)
                 if r.nom or any(registre.async_get(c) is None for c in r.nouveaux_entity_ids)]
+
+    def _options_choisies(self) -> dict[str, str]:
+        """Option choisie de chaque liste des packages dont les options ont changé de langue."""
+        return {eid: etat.state for eid in renommage.OPTIONS_PAQUETS
+                if (etat := self.hass.states.get(eid)) is not None}
+
+    async def _options_gardees(self, choisies: dict[str, str]) -> None:
+        """Remet l'option choisie avant, traduite : sans elle, Home Assistant reprend la
+        première option d'une liste dont l'option choisie n'existe plus."""
+        for eid, avant in choisies.items():
+            apres = renommage.option_anglaise(eid, avant)
+            etat = self.hass.states.get(eid)
+            if not apres or etat is None or etat.state == apres or apres not in (etat.attributes.get("options") or []):
+                continue
+            await self.hass.services.async_call("input_select", "select_option",
+                                                {"entity_id": eid, "option": apres}, blocking=True)
+            _LOGGER.info("Tab5 : %s gardé « %s » → « %s »", eid, avant, apres)
+
+    async def async_options_au_demarrage(self) -> None:
+        """Fichiers posés puis Home Assistant redémarré (ou installés à la main) : l'option
+        d'avant n'existait plus, la liste a repris la première. La dernière option connue
+        avant l'arrêt est dans les états restaurés de HA."""
+        try:
+            restaures = restore_state.async_get(self.hass).last_states
+        except Exception:  # noqa: BLE001 — sans états restaurés, rien à garder
+            return
+        await self._options_gardees({eid: r.state.state for eid in renommage.OPTIONS_PAQUETS
+                                     if (r := restaures.get(eid)) is not None})
 
     @callback
     def proposer_migration(self) -> None:
