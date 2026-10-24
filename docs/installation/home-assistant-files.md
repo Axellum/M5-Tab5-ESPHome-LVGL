@@ -14,7 +14,7 @@ From release 3.7.0, the files also come with a small integration, « Tab5 », th
 
 1. Add the `packages:` line of [part B](#b-one-line-in-configurationyaml) to `configuration.yaml`, if it is not there yet.
 2. **[Open Tab5 in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=Axellum&repository=M5-Tab5-ESPHome-LVGL&category=integration)**: the link goes through My Home Assistant, which asks for your Home Assistant address the first time, then HACS offers to add the repository: *Add* (a box with a title only: reload the page, [troubleshooting](../troubleshooting.md#adding-tab5-to-hacs--repository-not-found--or-an-empty-box-2026-10-07)). Without the link: *⋮ (top right) → Custom repositories*, repository `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*, then search for **Tab5** in HACS and open it.
-3. On the Tab5 page of HACS, *Download*.
+3. On the Tab5 page of HACS, *Download*. « Got more than 8190 bytes » in the log: a fault of HACS 2.0.5 with GitHub since 23 October 2026, put the files in by hand (parts A to C) until HACS is fixed ([troubleshooting](../troubleshooting.md#hacs--download-failed---400---got-more-than-8190-bytes-when-reading--2026-10-24)).
 4. **Restart** Home Assistant.
 5. *Settings → Devices & services → Add integration → Tab5*. Leave « Then update the tablet » ticked to have the firmware of the same version installed after the files, at each release ([updates](updates.md#home-assistant-files)).
 
@@ -84,7 +84,7 @@ Depuis la release 3.7.0, les fichiers viennent aussi avec une petite intégratio
 
 1. Ajoutez la ligne `packages:` de la [partie B](#b-une-ligne-dans-configurationyaml) à `configuration.yaml`, si elle n'y est pas déjà.
 2. **[Ouvrir Tab5 dans HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=Axellum&repository=M5-Tab5-ESPHome-LVGL&category=integration)** : le lien passe par My Home Assistant, qui demande l'adresse de votre Home Assistant la première fois, puis HACS propose d'ajouter le dépôt : *Add* (ajouter ; une boîte avec un titre seul : rechargez la page, [incidents connus](../troubleshooting.md#ajout-de-tab5-dans-hacs---dépôt-introuvable--ou-une-boîte-vide-07102026)). Sans le lien : *⋮ (en haut à droite) → Custom repositories* (dépôts personnalisés), dépôt `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*, puis cherchez **Tab5** dans HACS et ouvrez-le.
-3. Sur la page de Tab5 dans HACS, *Download* (télécharger).
+3. Sur la page de Tab5 dans HACS, *Download* (télécharger). « Got more than 8190 bytes » dans le journal : un défaut de HACS 2.0.5 avec GitHub depuis le 23 octobre 2026, posez les fichiers à la main (parties A à C) jusqu'à ce que HACS soit corrigé ([incidents connus](../troubleshooting.md#hacs---download-failed---400---got-more-than-8190-bytes-when-reading--24102026)).
 4. **Redémarrez** Home Assistant.
 5. *Paramètres → Appareils et services → Ajouter une intégration → Tab5*. Laissez « Mettre ensuite la tablette à jour » coché pour que le firmware de la même version s'installe après les fichiers, à chaque release ([mises à jour](updates.md#fichiers-home-assistant)).
 
