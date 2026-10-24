@@ -197,10 +197,13 @@ def nouveaux_entity_ids(entity_id: str, ancien: str, neuf: str) -> tuple[str, ..
     l'identifiant sans lui est libre (la 7B de l'auteur en avait 19, hérités d'un écran
     retiré), sinon il reste (un second écran)."""
     domaine, objet = entity_id.split(".", 1)
-    m = re.fullmatch(r"(.*?_)?" + re.escape(slug(ancien)) + r"(_[0-9]+)?", objet)
+    # Le préfixe de l'appareil n'est jamais vide (has_entity_name) : sans lui,
+    # « sensor.tab5_uptime » déjà migré finirait par « tab5_uptime », le nom d'avant de
+    # « Tab5 Uptime », et partirait vers « sensor.uptime » (vu par le banc de HA, 24/10/2026).
+    m = re.fullmatch(r"(.+?_)" + re.escape(slug(ancien)) + r"(_[0-9]+)?", objet)
     if not m:
         return ()
-    base = f"{domaine}.{m.group(1) or ''}{slug(neuf)}"
+    base = f"{domaine}.{m.group(1)}{slug(neuf)}"
     candidats = (base, base + m.group(2)) if m.group(2) else (base,)
     return () if entity_id in candidats else candidats
 

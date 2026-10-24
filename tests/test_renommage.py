@@ -58,6 +58,9 @@ def test_entity_id():
                                        "Alarm: time") == "time.tab5_ha_hmi_alarm_time")
     # choisi par l'utilisateur : gardé
     assert renommage.nouvel_entity_id("switch.mon_reveil_chambre", "Réveil", "Alarm") is None
+    # déjà migré : « tab5_uptime » est aussi le slug de « Tab5 Uptime » ; le préfixe de
+    # l'appareil n'est jamais vide, donc rien (trouvé par le banc de HA le 24/10/2026)
+    assert renommage.nouvel_entity_id("sensor.tab5_uptime", "Tab5 Uptime", "Uptime") is None
 
 
 def test_plan():
