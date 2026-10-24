@@ -71,7 +71,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 
-from . import assistant_flux, firmware, installation, messages
+from . import assistant_flux, firmware, installation, messages, renommage
 from .const import (
     ATTENTE_CAPTEUR_S,
     CAPTEUR_VERSION,
@@ -83,6 +83,7 @@ from .const import (
     ISSUE_CONFIGURATION,
     ISSUE_FICHIERS_ABSENTS,
     ISSUE_FIRMWARE,
+    ISSUE_MIGRATION,
     ISSUE_PACKAGES,
     ISSUE_REDEMARRAGE,
     ISSUE_REMPLACES,
@@ -111,8 +112,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: Tab5ConfigEntry) -> bool
 
     async def _au_demarrage(_hass: HomeAssistant) -> None:
         await gestionnaire.async_installer()
+        gestionnaire.proposer_migration()
 
     entry.async_on_unload(async_at_started(hass, _au_demarrage))
+    # Une entité ESPHome créée (le firmware anglais vient de parler) : migration à proposer.
+    # @callback : sinon HA l'appellerait hors de la boucle, et le registre ne se lit qu'ici.
+    @callback
+    def _entite_ajoutee(_event: Event[er.EventEntityRegistryUpdatedData]) -> None:
+        gestionnaire.proposer_migration()
+
+    entry.async_on_unload(hass.bus.async_listen(
+        er.EVENT_ENTITY_REGISTRY_UPDATED, _entite_ajoutee, event_filter=_entite_creee))
     return True
 
 
@@ -125,7 +135,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     mémoire part, et une nouvelle installation repartira comme la première fois."""
     await Store(hass, STOCKAGE_VERSION, STOCKAGE_CLE).async_remove()
     for cle in (ISSUE_FICHIERS_ABSENTS, ISSUE_CONFIGURATION, ISSUE_PACKAGES, ISSUE_REDEMARRAGE,
-                ISSUE_REMPLACES, ISSUE_FIRMWARE, ISSUE_ASSISTANT):
+                ISSUE_REMPLACES, ISSUE_FIRMWARE, ISSUE_ASSISTANT, ISSUE_MIGRATION):
         ir.async_delete_issue(hass, DOMAIN, cle)
 
 
@@ -136,6 +146,11 @@ async def _options_changees(hass: HomeAssistant, entry: Tab5ConfigEntry) -> None
 @callback
 def _est_une_mise_a_jour(donnees: EventStateChangedData) -> bool:
     return donnees["entity_id"].startswith("update.")
+
+
+@callback
+def _entite_creee(donnees: er.EventEntityRegistryUpdatedData) -> bool:
+    return donnees["action"] == "create"
 
 
 class Gestionnaire:
@@ -358,6 +373,48 @@ class Gestionnaire:
                   reparable: bool = False, persistant: bool = False) -> None:
         ir.async_create_issue(self.hass, DOMAIN, cle, is_fixable=reparable, is_persistent=persistant,
                               severity=gravite, translation_key=cle, translation_placeholders=valeurs)
+
+    # ── Noms anglais (renommage.py) ─────────────────────────────────────────
+
+    def _plan_migration(self) -> list[renommage.Renommage]:
+        """Plan pour les entités ESPHome de chaque tablette (trouvée par son modèle, comme
+        pour le firmware)."""
+        appareils = dr.async_get(self.hass)
+        entrees: list[tuple[str, str, str | None]] = []
+        for e in er.async_get(self.hass).entities.values():
+            if e.platform != "esphome" or not e.device_id:
+                continue
+            appareil = appareils.async_get(e.device_id)
+            if appareil is not None and appareil.model == MODELE_TABLETTE:
+                entrees.append((e.entity_id, e.unique_id, e.name))
+        return renommage.planifier(entrees)
+
+    @callback
+    def proposer_migration(self) -> None:
+        if plan := self._plan_migration():
+            self._probleme(ISSUE_MIGRATION, ir.IssueSeverity.WARNING,
+                           {"nombre": str(len(plan))}, reparable=True)
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_MIGRATION)
+
+    async def async_migrer(self) -> int:
+        """Applique le plan dans le registre : identifiant d'entité anglais (l'historique et
+        les statistiques suivent) et nom affiché anglais. Un identifiant déjà pris par une
+        autre entité n'est pas touché (le nom l'est quand même)."""
+        registre = er.async_get(self.hass)
+        faits = 0
+        for r in self._plan_migration():
+            changements: dict[str, Any] = {}
+            if r.nouvel_entity_id and registre.async_get(r.nouvel_entity_id) is None:
+                changements["new_entity_id"] = r.nouvel_entity_id
+            if r.nom:
+                changements["name"] = r.nom
+            if changements:
+                registre.async_update_entity(r.entity_id, **changements)
+                faits += 1
+        _LOGGER.info("Tab5 : %d entités passées à leur nom anglais", faits)
+        self.proposer_migration()
+        return faits
 
     # ── Firmware ────────────────────────────────────────────────────────────
 
