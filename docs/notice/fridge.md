@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a tap on the icon that blinks in the clock's top-right corner, the « Froid » entry of the tablet's « Aller à l'écran » list in Home Assistant, « Frigos » in the Agenda family of the navigation wheel (long press on the central card), or a tap or a long press of the clock or of a button top right when the blueprint gives it « Froid (réfrigérateurs, congélateurs) · Cold (fridges, freezers) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+**Opens with** a tap on the icon that blinks in the clock's top-right corner, the « Fridges » entry of the tablet's « Aller à l'écran » list in Home Assistant, « Frigos » in the Agenda family of the navigation wheel (long press on the central card), or a tap or a long press of the clock or of a button top right when the blueprint gives it « Froid (réfrigérateurs, congélateurs) · Cold (fridges, freezers) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 ![The fridges and freezers window: one card per appliance, its temperature coloured against its norm, its state and its 24-hour minimum and maximum](../images/notice/froid-en.webp)
 
@@ -41,7 +41,7 @@ Like every window, it closes with its **×**, a tap on the dark area around it, 
 
 ---
 
-**S'ouvre par** un tap sur l'icône qui clignote dans le coin haut droit de l'horloge, l'entrée « Froid » de la liste « Aller à l'écran » de la tablette dans Home Assistant, « Frigos » dans la famille Agenda de la roue de navigation (appui long sur la carte centrale), ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Froid (réfrigérateurs, congélateurs) · Cold (fridges, freezers) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+**S'ouvre par** un tap sur l'icône qui clignote dans le coin haut droit de l'horloge, l'entrée « Fridges » de la liste « Aller à l'écran » de la tablette dans Home Assistant, « Frigos » dans la famille Agenda de la roue de navigation (appui long sur la carte centrale), ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Froid (réfrigérateurs, congélateurs) · Cold (fridges, freezers) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 ![La fenêtre des frigos et congélateurs : une carte par appareil, sa température colorée selon sa norme, son état et ses minimum et maximum sur 24 heures](../images/notice/froid-fr.webp)
 

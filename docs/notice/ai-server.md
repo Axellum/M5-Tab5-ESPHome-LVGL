@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** the « Serveur IA » entry of the tablet's « Aller à l'écran » list in Home Assistant, « Serveur IA » in the Agenda family of the navigation wheel (long press on the central card; offered only once Home Assistant has sent a server), or a tap or a long press of the clock or of a button top right when the blueprint gives it « Serveur IA (LLM local) · AI server (local LLM) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+**Opens with** the « AI server » entry of the tablet's « Aller à l'écran » list in Home Assistant, « Serveur IA » in the Agenda family of the navigation wheel (long press on the central card; offered only once Home Assistant has sent a server), or a tap or a long press of the clock or of a button top right when the blueprint gives it « Serveur IA (LLM local) · AI server (local LLM) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 ![The AI server window: online, loaded model, tokens per second, memory and the graphics card](../images/notice/serveur-ia-en.webp)
 
@@ -37,7 +37,7 @@ Like every window, it closes with its **×**, a tap on the dark area around it, 
 
 ---
 
-**S'ouvre par** l'entrée « Serveur IA » de la liste « Aller à l'écran » de la tablette dans Home Assistant, « Serveur IA » dans la famille Agenda de la roue de navigation (appui long sur la carte centrale ; proposé seulement quand Home Assistant a envoyé un serveur), ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Serveur IA (LLM local) · AI server (local LLM) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+**S'ouvre par** l'entrée « AI server » de la liste « Aller à l'écran » de la tablette dans Home Assistant, « Serveur IA » dans la famille Agenda de la roue de navigation (appui long sur la carte centrale ; proposé seulement quand Home Assistant a envoyé un serveur), ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Serveur IA (LLM local) · AI server (local LLM) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 ![La fenêtre du serveur IA : en ligne, modèle chargé, jetons par seconde, mémoire et carte graphique](../images/notice/serveur-ia-fr.webp)
 

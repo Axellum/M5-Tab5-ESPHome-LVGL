@@ -153,7 +153,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_economie.py` | `tests/` | Contenu | Mode économie d'énergie : options du select dans l'ordre de `ChoixEconomie`, câblage YAML de `tab5-economie.yaml`. |
 | `test_emplacements.py` | `tests/` | Contenu | Emplacements (ADR-0019) : clés poussées par le blueprint = table de `tab5_maj_emplacements`. |
 | `test_energie.py` | `tests/` | Contenu + rendu | Popup Énergie (ADR-0028) : contrat des deux actions, champs de l'instantané, créneaux des vues, package, démo, firmware. |
-| `test_extinction_auto.py` | `tests/` | Contenu | Extinction automatique de l'écran : défaut « Jamais », délais dans l'ordre des options, exclusions (OTA en cours, voix…). |
+| `test_extinction_auto.py` | `tests/` | Contenu | Extinction automatique de l'écran : défaut « Never », délais dans l'ordre des options, exclusions (OTA en cours, voix…). |
 | `test_formes_themes.py` | `tests/` | Unitaire | Formes et zones sombres des thèmes (ADR-0029, lot 3) : `tools/gen_themes.py` sur un thème d'essai, dans un dossier temporaire. |
 | `test_garde_origine.py` | `tests/` | Contenu | Garde d'origine des événements `esphome.tab5_*` : seul l'appareil Tab5 est écouté (blueprint, `tab5_evenements.yaml`). |
 | `test_historique.py` | `tests/` | Contenu + rendu | Popup Température (ADR-0032) : action `tab5_maj_historique`, vues, limites du firmware face au package et à la démo. |
