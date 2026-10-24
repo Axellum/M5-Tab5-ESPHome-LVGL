@@ -187,6 +187,16 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ---
 
+### HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)
+
+**Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026.
+
+**Root cause:** neither the tablet nor this repository. Since 23 October 2026, GitHub answers a release download with a redirect that carries a Content-Security-Policy header of about 9 KB (9,242 bytes measured on `tab5_hacs.zip` on 24 October), and HACS 2.0.5 refuses any header line over 8,190 bytes. Every integration that HACS installs from a release archive is hit. Tracked by HACS: [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), fix proposed in [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (not released on 24 October).
+
+**Fix:** wait for a HACS release that fixes it, then *Download* again. Meanwhile, the files go in by hand, without HACS: [parts A to C](installation/home-assistant-files.md#a-download-and-unzip). Do not copy the integration from the repository: it holds the code but not the files (« no Home Assistant files in the integration », below).
+
+---
+
 ### Tab5 integration (HACS): a message in Repairs
 
 **Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → System → Repairs* shows a message whose title starts with « Tab5 ».
@@ -421,6 +431,14 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 **Cause racine :** HACS vérifie un dépôt sur sa dernière release complète, même avec les versions bêta activées, et seules les releases depuis la 3.7.0 portent l'intégration : avant la publication de la 3.7.0 (7 octobre 2026), HACS refusait ce dépôt (essayé ce jour-là, avec la 3.6.0 comme dernière release complète). La boîte vide vient de HACS : au premier chargement par le lien, ses textes ne sont pas encore chargés (vu avec HACS 2.0.5).
 
 **Correctif :** « Dépôt introuvable » : vérifier sur la [page des releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) que la release marquée *Latest* est la 3.7.0 ou plus récente et, pour un ajout à la main, que le type est **Integration** ; puis réessayer. Boîte vide : recharger la page, la boîte revient avec ses textes, *Ajouter* à droite. Sans HACS, l'archive copiée à la main marche comme avant ([parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser)).
+
+### HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)
+
+**Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026.
+
+**Cause racine :** ni la tablette ni ce dépôt. Depuis le 23 octobre 2026, GitHub répond au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et HACS 2.0.5 refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release sont touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), correctif proposé dans [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (pas publié le 24 octobre).
+
+**Correctif :** attendre une version de HACS qui le corrige, puis *Download* de nouveau. En attendant, les fichiers se posent à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
 
 ### Intégration Tab5 (HACS) : un message dans Corrections
 
