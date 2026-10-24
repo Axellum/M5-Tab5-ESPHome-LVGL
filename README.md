@@ -29,6 +29,8 @@
 
 > *A personal project exploring what's possible when AI writes all the code. Built with Antigravity, DeepSeek, MiniMax, Z.ai, Claude, and Cursor — not a single line typed by hand. I am more the architect than the author.*
 
+> ℹ️ **In development:** A worldwide weather and natural hazard API ([Vigie API](https://github.com/Axellum/vigie-api)) is currently being built to power this screen and Home Assistant, accompanied by a public web portal ([vigie.auxfilsdesidees.fr](https://vigie.auxfilsdesidees.fr)) and a standalone weather display requiring no HA server ([Vigie Display](https://github.com/Axellum/vigie-display)). See [Related Projects](docs/related_projects.md).
+
 ## Why this one
 
 - **Push-only, zero polling.** Home Assistant sends only what changed; the tablet never asks for anything ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
@@ -231,6 +233,8 @@ If something in the code is weird, it might be an AI quirk. If something works s
 **[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
 > *Un projet personnel pour voir ce que donne l'IA quand elle écrit tout le code. Construit avec Antigravity, DeepSeek, MiniMax, Z.ai, Claude et Cursor — pas une ligne tapée à la main. J'en suis plus l'architecte que l'auteur.*
+
+> ℹ️ **En cours de développement :** Une API météo et alertes mondiales ([Vigie API](https://github.com/Axellum/vigie-api)) est actuellement développée pour alimenter cet écran et Home Assistant, complétée par un portail web ([vigie.auxfilsdesidees.fr](https://vigie.auxfilsdesidees.fr)) et un écran météo autonome sans serveur HA ([Vigie Display](https://github.com/Axellum/vigie-display)). Voir [Projets associés](docs/related_projects.md#version-française).
 
 ## Pourquoi celui-ci
 
