@@ -162,25 +162,33 @@ def nom_firmware(domaine: str, uid: str) -> str | None:
     return None
 
 
-def nouvel_entity_id(entity_id: str, ancien: str, neuf: str) -> str | None:
-    """Identifiant d'entité avec le nom anglais, s'il finit par le nom d'origine.
+def nouveaux_entity_ids(entity_id: str, ancien: str, neuf: str) -> tuple[str, ...]:
+    """Identifiants possibles avec le nom anglais, dans l'ordre de préférence ; () s'il ne
+    finit pas par le nom d'origine (choisi par l'utilisateur : gardé) ou ne change pas.
 
-    Home Assistant le compose « domaine.<appareil>_<nom> » (puis « _2 »… quand il est déjà
-    pris) : seule la fin change, le préfixe de l'appareil et le « _2 » restent (un second
-    écran garde le sien). Un identifiant choisi par l'utilisateur ne finit pas par le nom :
-    gardé (None)."""
+    Home Assistant le compose « domaine.<appareil>_<nom> », puis « _2 »… quand il est déjà
+    pris. Seule la fin change, le préfixe de l'appareil reste ; le « _2 » tombe si
+    l'identifiant sans lui est libre (la 7B de l'auteur en avait 19, hérités d'un écran
+    retiré), sinon il reste (un second écran)."""
     domaine, objet = entity_id.split(".", 1)
     m = re.fullmatch(r"(.*?_)?" + re.escape(slug(ancien)) + r"(_[0-9]+)?", objet)
     if not m:
-        return None
-    nouveau = f"{domaine}.{m.group(1) or ''}{slug(neuf)}{m.group(2) or ''}"
-    return None if nouveau == entity_id else nouveau
+        return ()
+    base = f"{domaine}.{m.group(1) or ''}{slug(neuf)}"
+    candidats = (base, base + m.group(2)) if m.group(2) else (base,)
+    return () if entity_id in candidats else candidats
+
+
+def nouvel_entity_id(entity_id: str, ancien: str, neuf: str) -> str | None:
+    """Le premier identifiant de nouveaux_entity_ids, ou None."""
+    candidats = nouveaux_entity_ids(entity_id, ancien, neuf)
+    return candidats[0] if candidats else None
 
 
 @dataclass(frozen=True)
 class Renommage:
     entity_id: str
-    nouvel_entity_id: str | None  # None : l'identifiant ne change pas
+    nouveaux_entity_ids: tuple[str, ...]  # par préférence ; () : l'identifiant ne change pas
     nom: str | None  # nom affiché anglais ; None : déjà là, ou un nom donné par l'utilisateur
 
 
@@ -188,17 +196,18 @@ def planifier(entrees: list[tuple[str, str, str | None]]) -> list[Renommage]:
     """Plan pour les entrées ESPHome d'une tablette : [(entity_id, id unique, nom du
     registre), …]. Le nom du registre (None quand l'utilisateur n'en a pas donné) prend le
     nom anglais ; un nom donné par l'utilisateur reste. Une entrée déjà migrée ne donne
-    rien : la réparation disparaît une fois tout fait."""
+    rien : la réparation disparaît une fois tout fait. Les identifiants sans « _N » passent
+    d'abord : ils prennent l'identifiant anglais nu avant un second écran."""
     plan: list[Renommage] = []
-    for eid, uid, nom_registre in entrees:
+    for eid, uid, nom_registre in sorted(entrees, key=lambda e: (bool(re.search(r"_[0-9]+$", e[0])), e[0])):
         domaine = eid.split(".", 1)[0]
         ancien = nom_firmware(domaine, uid)
         if ancien is None:
             continue
         neuf = ESPHOME[(domaine, ancien)]
-        cible = nouvel_entity_id(eid, ancien, neuf)
+        cibles = nouveaux_entity_ids(eid, ancien, neuf)
         nom = neuf if nom_registre is None else None
-        if cible or nom:
-            plan.append(Renommage(eid, cible, nom))
+        if cibles or nom:
+            plan.append(Renommage(eid, cibles, nom))
     return plan
 

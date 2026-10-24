@@ -387,7 +387,11 @@ class Gestionnaire:
             appareil = appareils.async_get(e.device_id)
             if appareil is not None and appareil.model == MODELE_TABLETTE:
                 entrees.append((e.entity_id, e.unique_id, e.name))
-        return renommage.planifier(entrees)
+        # Rien de faisable (identifiants anglais tous pris, nom déjà donné) : pas proposé,
+        # sinon la réparation reviendrait sans fin.
+        registre = er.async_get(self.hass)
+        return [r for r in renommage.planifier(entrees)
+                if r.nom or any(registre.async_get(c) is None for c in r.nouveaux_entity_ids)]
 
     @callback
     def proposer_migration(self) -> None:
@@ -405,8 +409,9 @@ class Gestionnaire:
         faits = 0
         for r in self._plan_migration():
             changements: dict[str, Any] = {}
-            if r.nouvel_entity_id and registre.async_get(r.nouvel_entity_id) is None:
-                changements["new_entity_id"] = r.nouvel_entity_id
+            libre = next((c for c in r.nouveaux_entity_ids if registre.async_get(c) is None), None)
+            if libre:
+                changements["new_entity_id"] = libre
             if r.nom:
                 changements["name"] = r.nom
             if changements:

@@ -48,9 +48,12 @@ def test_entity_id():
             == "sensor.tab5_uptime")
     assert (renommage.nouvel_entity_id("media_player.tab5_tab5_media_player", "tab5_media_player",
                                        "Media Player") == "media_player.tab5_media_player")
-    # un second écran (« _2 ») garde son suffixe ; la 7B de l'auteur s'appelle « tab5_ha_hmi »
-    assert (renommage.nouvel_entity_id("time.tab5_reveil_heure_2", "Réveil : heure", "Alarm: time")
-            == "time.tab5_alarm_time_2")
+    # « _2 » : sans lui d'abord, avec lui s'il est pris (un second écran) ; préfixe de la 7B
+    # de l'auteur, lu dans son HA le 24/10/2026
+    assert (renommage.nouveaux_entity_ids("sensor.m5stack_tab5_home_assistant_hmi_tab5_uptime_2",
+                                          "Tab5 Uptime", "Uptime")
+            == ("sensor.m5stack_tab5_home_assistant_hmi_uptime",
+                "sensor.m5stack_tab5_home_assistant_hmi_uptime_2"))
     assert (renommage.nouvel_entity_id("time.tab5_ha_hmi_reveil_heure", "Réveil : heure",
                                        "Alarm: time") == "time.tab5_ha_hmi_alarm_time")
     # choisi par l'utilisateur : gardé
@@ -65,11 +68,15 @@ def test_plan():
         ("number.tab5_volume", f"{MAC}/0/number/Volume", None),  # hors table
     ]
     plan = {r.entity_id: r for r in renommage.planifier(entrees)}
-    assert plan["switch.tab5_reveil"] == renommage.Renommage("switch.tab5_reveil", "switch.tab5_alarm", "Alarm")
-    assert plan["select.tab5_theme"] == renommage.Renommage("select.tab5_theme", None, "Theme")
+    assert plan["switch.tab5_reveil"] == renommage.Renommage("switch.tab5_reveil", ("switch.tab5_alarm",), "Alarm")
+    assert plan["select.tab5_theme"] == renommage.Renommage("select.tab5_theme", (), "Theme")
     assert plan["sensor.tab5_tab5_uptime"] == renommage.Renommage("sensor.tab5_tab5_uptime",
-                                                                  "sensor.tab5_uptime", None)
+                                                                  ("sensor.tab5_uptime",), None)
     assert "number.tab5_volume" not in plan
+    # deux écrans du même nom : celui sans « _2 » passe d'abord et prend l'identifiant nu
+    deux = renommage.planifier([("switch.tab5_reveil_2", f"{MAC}/0/switch/Réveil", None),
+                                ("switch.tab5_reveil", "11:22:33:44:55:66/0/switch/Réveil", None)])
+    assert [r.entity_id for r in deux] == ["switch.tab5_reveil", "switch.tab5_reveil_2"]
     # déjà migré : plus rien, la réparation disparaît
     faits = [("switch.tab5_alarm", f"{MAC}/0/switch/Réveil", "Alarm"),
              ("select.tab5_theme", f"{MAC}/0/select/Thème", "Theme")]
