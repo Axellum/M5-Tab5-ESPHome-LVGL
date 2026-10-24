@@ -4,6 +4,16 @@
 
 ---
 
+## Vigie — Global Weather & Hazard Ecosystem
+
+A companion ecosystem under active development to gather natural hazard alerts and weather across the world:
+- **[Vigie API](https://github.com/Axellum/vigie-api)** — Python service aggregating global hazards (earthquakes, tsunamis, volcanoes, storms, floods) and weather data into normalized GeoJSON and an ultra-compact binary/text frame for embedded microcontrollers.
+- **[Vigie Web](https://github.com/Axellum/vigie-web)** (Live at **[vigie.auxfilsdesidees.fr](https://vigie.auxfilsdesidees.fr)**) — Public interactive web portal to explore real-time hazards on world maps and local forecasts.
+- **[Vigie Display](https://github.com/Axellum/vigie-display)** — Standalone ESP32-P4 / Waveshare 7-inch touch screen running ESPHome + LVGL, querying the Vigie API directly with no Home Assistant server needed.
+- **Home Assistant integration** (`custom_components/vigie`) — Feeds sensors, events, and automations into Home Assistant to enrich this Tab5 screen.
+
+---
+
 ## vromvrom-engine — Multi-Agent Orchestrator
 
 This screen is the physical front-end of a broader experiment. The companion backend is **[vromvrom-engine](https://github.com/Axellum/vromvrom-engine)** — a Python asyncio multi-agent engine used (among other things) for:
@@ -43,6 +53,16 @@ If any part of this is useful to you — as a starting point, as a reference, or
 ---
 
 ## Version Française
+
+---
+
+## Vigie — Écosystème météo & alertes mondiales
+
+Un écosystème compagnon en développement actif pour regrouper les vigilances de catastrophes naturelles et météo à l'échelle mondiale :
+- **[Vigie API](https://github.com/Axellum/vigie-api)** — Service Python agrégeant les aléas mondiaux (séismes, tsunamis, volcans, tempêtes, crues) et données météo en GeoJSON standardisé et en trames ultra-compactes pour microcontrôleurs embarqués.
+- **[Vigie Web](https://github.com/Axellum/vigie-web)** (En ligne sur **[vigie.auxfilsdesidees.fr](https://vigie.auxfilsdesidees.fr)**) — Portail web interactif pour explorer les alertes sur cartes mondiales et météo locale.
+- **[Vigie Display](https://github.com/Axellum/vigie-display)** — Écran tactile 7" Waveshare ESP32-P4 autonome tournant sous ESPHome + LVGL, interrogeant directement Vigie API sans aucun serveur Home Assistant.
+- **Intégration Home Assistant** (`custom_components/vigie`) — Alimente les entités, capteurs et automations de Home Assistant pour enrichir cet écran Tab5.
 
 ---
 
