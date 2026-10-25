@@ -51,6 +51,15 @@ chaque sonde du chargeur (#533), Waveshare 7B : sens de l'écran choisi dans Hom
 l'intégration (#531). Firmware et fichiers Home Assistant dans n'importe quel ordre ;
 `custom_templates` rechargé d'abord.
 
+[v3.9.0-rc.8](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.8)
+le 25/10/2026 : la tablette en anglais dans Home Assistant (demande de husyildiz, discussion
+#278) : entités du firmware renommées par une réparation de l'intégration (#540), options des
+menus et états texte (#541), noms et options des packages, « Not set » pour une liste à choisir
+(#542), docs (#546) ; deux écrans : celui qui redémarre reçoit de nouveau sa poussée complète
+(#543) ; compilation avec ESPHome 2026.10.0 (#535). Fichiers Home Assistant avec
+l'intégration, firmware dans n'importe quel ordre, puis la réparation « Tab5 : passer les
+entités à leurs noms anglais ».
+
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.1).
