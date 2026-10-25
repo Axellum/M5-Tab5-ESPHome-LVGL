@@ -69,10 +69,13 @@ def test_les_options_choisies_existent():
     noms = [c["nom"] for c in cas]
     assert len(noms) == len(set(noms)) and noms[0] == "reference", "la référence d'abord, sans doublon"
     assert noms[-1] == "reference_end"
-    assert {c["eco"] for c in cas} <= set(_options("Tab5 Économie d'énergie"))
-    assert {c["theme"] for c in cas} - {""} <= set(_options("Thème"))
-    assert {c["mode"] for c in cas} - {""} <= set(_options("Clair ou sombre"))
-    assert "Jamais" in _options("Tab5 Extinction auto de l'écran")
+    # Par l'INDEX de l'option (options en anglais depuis le 24/10/2026, ADR-0070, en français
+    # avant : le script lit la liste de la tablette), -1 = le réglage de l'utilisateur.
+    eco, theme, mode = (_options(n) for n in ("Tab5 Économie d'énergie", "Thème", "Clair ou sombre"))
+    assert {c["eco"] for c in cas} == {0, 2} and eco[0] == "Never" and eco[2] == "Always"
+    assert {c["theme"] for c in cas} == {-1, 13} and theme[13] == "Obsidian", "le thème très sombre"
+    assert {c["mode"] for c in cas} == {-1, 0, 1} and mode[:2] == ["Dark", "Light"]
+    assert _options("Tab5 Extinction auto de l'écran")[0] == "Never"
     assert all(0 <= c["ecran"] <= 100 for c in cas)
 
 

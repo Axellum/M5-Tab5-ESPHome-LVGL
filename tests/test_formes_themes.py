@@ -18,6 +18,7 @@ REPO = Path(__file__).resolve().parent.parent
 import gen_themes  # noqa: E402
 
 ESSAI = """nom: Essai
+nom_ha: Trial
 ordre: 2
 herite: ardoise
 zones_sombres: [bandeau]

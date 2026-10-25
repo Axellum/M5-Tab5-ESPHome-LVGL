@@ -11,6 +11,7 @@
 # Non repris : l'état « bouton actif » dessiné par l'esquisse (Domo, mode et ventilation
 # actifs) ; ces boutons gardent la bordure d'accent de l'interface.
 nom: Relief doux
+nom_ha: Soft relief   # option lue par Home Assistant (ADR-0070)
 ordre: 2
 herite: ardoise
 zones_sombres: [bandeau]

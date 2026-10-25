@@ -175,17 +175,17 @@ def _ouvertures(c: Carte) -> dict:
     """Gestes de l'accueil qui ouvrent un écran : étape du Tab5 → navigation (règle 1 ; le
     type de la navigation dit aussi où le geste joué mène : popup ou Arcade)."""
     return {
-        E.Toucher(*E.BOUTON_SYS): E.Aller("Réglages"),
-        E.Long(*E.BOUTON_SYS): E.Aller("Console système"),
-        E.Long(*E.BOUTON_TV): E.Aller("Télécommande TV"),
+        E.Toucher(*E.BOUTON_SYS): E.Aller("Settings"),
+        E.Long(*E.BOUTON_SYS): E.Aller("System console"),
+        E.Long(*E.BOUTON_TV): E.Aller("TV remote"),
         E.Toucher(*E.BOUTON_TV, apres=1.0): E.Service("rendu_ecran", (("ecran", ECRAN_ARCADE),), apres=1.0),
-        E.Long(*E.HEURES): E.Aller("Réveil"),
-        E.Long(*E.DATE): E.Aller("Calendrier"),
-        E.Long(*E.MICRO): E.Aller("Assistant vocal"),
-        E.Long(*E.SOUS_HORLOGE): E.Aller("Plantes"),
-        E.Toucher(*E.CONSIGNE_CLIM): E.Aller("Climatisation"),
-        E.Long(*E.SERRE): E.Aller("Température"),
-        E.Long(*E.SALON_TEMP): E.Aller("Température"),
+        E.Long(*E.HEURES): E.Aller("Alarm"),
+        E.Long(*E.DATE): E.Aller("Calendar"),
+        E.Long(*E.MICRO): E.Aller("Voice assistant"),
+        E.Long(*E.SOUS_HORLOGE): E.Aller("Plants"),
+        E.Toucher(*E.CONSIGNE_CLIM): E.Aller("Air conditioning"),
+        E.Long(*E.SERRE): E.Aller("Temperature"),
+        E.Long(*E.SALON_TEMP): E.Aller("Temperature"),
     }
 
 
@@ -227,7 +227,7 @@ def adapter(ecran: E.Ecran, carte: str = "tab5", taille: tuple[int, int] | None 
     def une(etape):
         nonlocal mode
         if isinstance(etape, E.Aller):
-            mode = {"Accueil": ACCUEIL, "Musique": LECTEUR}.get(etape.option, POPUP)
+            mode = {"Home": ACCUEIL, "Music": LECTEUR}.get(etape.option, POPUP)
             return etape
         if isinstance(etape, E.Service) and etape.nom == "rendu_ecran":
             mode = ARCADE

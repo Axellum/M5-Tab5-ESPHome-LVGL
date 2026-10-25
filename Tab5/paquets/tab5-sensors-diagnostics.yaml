@@ -298,9 +298,11 @@ text_sensor:
   # Version du logiciel ESP-Hosted du co-processeur Wi-Fi (ESP32-C6), qu'ESPHome ne met
   # pas à jour : celle installée en usine tant que personne ne l'a reflashé. Lue une
   # fois, Wi-Fi connecté (la requête passe par le C6). Chaque essai peut bloquer la
-  # boucle jusqu'à 1 s si le C6 ne répond pas : 3 essais au plus, puis « inconnue ».
+  # boucle jusqu'à 1 s si le C6 ne répond pas : 3 essais au plus, puis « Unknown »
+  # (« inconnue » avant le 24/10/2026 : l'état est lu par HA, en anglais, ADR-0070 ; pas
+  # « unknown » en minuscules, l'état spécial de HA pour « aucune valeur »).
   # `carte_c6_version` (carte-*.yaml) : false quand le C6 de la carte ne répond jamais à
-  # cette requête (Waveshare 7B, firmware d'usine) : « inconnue » tout de suite, sans
+  # cette requête (Waveshare 7B, firmware d'usine) : « Unknown » tout de suite, sans
   # requête. Mesuré sur la 7B le 16/10/2026 : 3 à 4 essais après chaque démarrage, chacun
   # « template.text_sensor took 1001 ms » (Loop Time à 1 021 ms), l'écran figé pendant ce temps.
   - platform: template
@@ -312,11 +314,11 @@ text_sensor:
     lambda: |-
       static uint8_t essais = 0;
       if (essais >= 3) return {};
-      if (!${carte_c6_version}) { essais = 3; return std::string("inconnue"); }
+      if (!${carte_c6_version}) { essais = 3; return std::string("Unknown"); }
       if (!network::is_connected()) return {};
       char buf[16];
       if (read_c6_firmware_version(buf, sizeof(buf))) { essais = 3; return std::string(buf); }
-      if (++essais >= 3) return std::string("inconnue");
+      if (++essais >= 3) return std::string("Unknown");
       return {};
 
   # Préfixe des actions de CETTE tablette (ADR-0063, plusieurs écrans) : HA appelle
@@ -593,12 +595,13 @@ select:
       # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
       - script.execute: tab5_reglages_sync_ui
 
-  # Mode de charge de la batterie (09/10/2026, demande d'Axel ; ADR-0045) : « Classique »
-  # (le défaut, le comportement d'avant : charge rapide arrêtée) ou « Rapide »
+  # Mode de charge de la batterie (09/10/2026, demande d'Axel ; ADR-0045) : « Classic »
+  # (le défaut, le comportement d'avant : charge rapide arrêtée) ou « Fast »
   # (nCHG_QC_EN, `quick_charge`). Sans effet chargeur coupé (sans batterie, pendant une
   # sonde, en pause à 80 %) : l'interval de 1 s plus bas ne l'allume qu'avec CHG_EN.
   # Gardé en mémoire : la tablette garde l'INDEX, une option nouvelle s'ajoute à la fin,
-  # avec sa valeur dans ModeCharge (tests/test_batterie.py relit les deux).
+  # avec sa valeur dans ModeCharge (tests/test_batterie.py relit les deux). Options en
+  # anglais, lues par HA (ADR-0070 ; « Classique », « Rapide » avant le 24/10/2026).
   - platform: template
     id: tab5_mode_charge
     name: "Tab5 Mode de charge"
@@ -607,9 +610,9 @@ select:
     optimistic: true
     restore_value: true
     options:
-      - "Classique"
-      - "Rapide"
-    initial_option: "Classique"
+      - "Classic"
+      - "Fast"
+    initial_option: "Classic"
     on_value:
       - script.execute: tab5_reglages_sync_ui
 
@@ -617,7 +620,9 @@ select:
   # (WIFI_PS_MIN_MODEM, envoyée au C6 par ESP-Hosted) jamais (le défaut, le comportement
   # d'avant : power_save_mode NONE plus haut), sur batterie ou toujours, comme « Tab5
   # Économie d'énergie » ; jamais pendant la voix, un son ou une OTA (wifi_eco_voulu,
-  # tab5_economie.h). Appliqué à chaud par le script tab5_wifi_eco_appliquer.
+  # tab5_economie.h). Appliqué à chaud par le script tab5_wifi_eco_appliquer. Options en
+  # anglais, lues par HA (ADR-0070 ; « Jamais », « Sur batterie », « Toujours » avant le
+  # 24/10/2026), dans l'ordre de « Tab5 Économie d'énergie ».
   - platform: template
     id: tab5_wifi_eco
     name: "Tab5 Wi-Fi éco"
@@ -626,10 +631,10 @@ select:
     optimistic: true
     restore_value: true
     options:
-      - "Jamais"
-      - "Sur batterie"
-      - "Toujours"
-    initial_option: "Jamais"
+      - "Never"
+      - "On battery"
+      - "Always"
+    initial_option: "Never"
     on_value:
       - script.execute: tab5_wifi_eco_appliquer
       - script.execute: tab5_reglages_sync_ui

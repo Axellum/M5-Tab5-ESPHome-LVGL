@@ -27,6 +27,8 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 POPUP = TAB5 / "ui_components" / "reglages_popup.yaml"
 SCRIPTS = TAB5 / "paquets" / "tab5-reglages.yaml"
+# Les traductions anglaises de l'écran (clé = le texte français du code).
+ANGLAIS = yaml.safe_load((TAB5 / "lang" / "en.yaml").read_text(encoding="utf-8"))
 
 BOUTON = re.compile(r"file: reglages_choix_btn\.yaml, vars: \{ id: (\w+), x: \d+, y: \d+, w: \d+, "
                     r"reglage: (\d+), valeur: (-?\d+), label_text: \"([^\"]*)\" \}")
@@ -105,7 +107,11 @@ def test_une_pastille_par_option_dans_l_ordre_du_select():
             ("REGLAGE_WIFI_ECO", "tab5-sensors-diagnostics.yaml", "tab5_wifi_eco", "REGLAGES_NB_WIFI_ECO"),
             ("REGLAGE_ANIMATIONS", "tab5-economie.yaml", "tab5_animations", "REGLAGES_NB_ANIMATIONS")):
         options = _options(fichier, select)
-        assert [libelle for _, _, libelle in boutons[nom]] == options, f"{nom} : libellés ≠ options de {select}"
+        # Les pastilles sont écrites en français et traduites par tr() ; les options, lues par
+        # HA, sont en anglais (ADR-0070, 24/10/2026) : l'écran en anglais et HA disent la même
+        # chose, option par option (« Jamais » → « Never »).
+        anglais = [ANGLAIS.get(libelle, libelle) for _, _, libelle in boutons[nom]]
+        assert anglais == options, f"{nom} : libellés traduits ≠ options de {select}"
         assert [valeur for _, valeur, _ in boutons[nom]] == list(range(len(options))), nom
         assert _nb(nb) == len(options), f"{nb} ≠ {len(options)} options de {select}"
 

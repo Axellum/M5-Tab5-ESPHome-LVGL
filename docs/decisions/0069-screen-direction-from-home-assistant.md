@@ -37,3 +37,8 @@ What was checked before deciding (ESPHome 2026.9.1, the 7B's floor, in its own e
 - API contract unchanged: one more entity of the device, no action, no event, nothing in the HA packages. The tablet's dashboard (`custom_templates/tab5_dashboard.jinja`) shows it in its « Tablette » column, with its help sentence, when the entity exists (the Tab5 has none). The off-device render has no select: its 7B captures stay at `carte_rotation`.
 - `tests/test_sens_ecran.py` checks the select, that no other board has it, the boot order, that the bar and Neon Apron read the chosen angle and that the publication forces no angle.
 - Not checked on a board when written: the change while running from Home Assistant, the boot bar and the first frame at 0° restored from NVS, the published firmware on the author's board.
+
+## Update (2026-10-24)
+
+The options of the selects named here are English since [ADR-0070](0070-home-assistant-reads-english.md) (« Normal / Upside down »; « Upside down » is what this ADR calls « Retourné »); same order, the tablet keeps the index. The decision above stands.
+

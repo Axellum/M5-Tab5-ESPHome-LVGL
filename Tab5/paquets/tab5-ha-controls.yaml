@@ -48,7 +48,9 @@ select:
   # les noms natifs de Tab5/lang/*.yaml, DANS L'ORDRE de leurs `_index` : la tablette
   # mémorise l'INDEX choisi (restore_value), donc une nouvelle langue s'ajoute
   # TOUJOURS à la fin (tests/test_i18n.py vérifie l'ordre). Seul l'écran change :
-  # noms d'entités, options de select et codes vus par HA restent en français.
+  # noms d'entités et codes vus par HA ne changent pas, options de select et états
+  # texte vus par HA sont en anglais dans toutes les langues (ADR-0070, 24/10/2026).
+  # Ces options-ci sont l'exception : chaque langue sous son nom natif.
   # Au démarrage, la valeur restaurée règle la langue AVANT la traduction des textes
   # du YAML (on_boot -100). Un changement en cours de route redémarre la tablette :
   # les textes posés par le YAML ne se traduisent qu'au démarrage.
@@ -88,7 +90,8 @@ select:
   # sans toucher la dalle, l'écran s'éteint comme quand HA l'éteint (light.turn_off de
   # `backlight`, qui met LVGL en pause) ; le toucher, la tape (« Tab5 Tap-to-Wake »),
   # HA et le réveil le rallument comme avant. « Jamais » par défaut : rien ne change
-  # pour qui ne choisit rien. Les options sont lues par HA : jamais traduites. La
+  # pour qui ne choisit rien. Les options sont lues par HA : en anglais (ADR-0070 ;
+  # « Jamais » avant le 24/10/2026), jamais traduites dans la langue de l'écran. La
   # tablette garde l'INDEX choisi (restore_value) : une option nouvelle s'ajoute à la
   # fin, et DELAIS_MIN de l'interval en bas de ce fichier suit le même ordre
   # (tests/test_extinction_auto.py).
@@ -100,13 +103,13 @@ select:
     optimistic: true
     restore_value: true
     options:
-      - "Jamais"
+      - "Never"
       - "1 min"
       - "2 min"
       - "5 min"
       - "10 min"
       - "30 min"
-    initial_option: "Jamais"
+    initial_option: "Never"
     on_value:
       # Popup Réglages (tab5-reglages.yaml) : repeint s'il a déjà été ouvert.
       - script.execute: tab5_reglages_sync_ui

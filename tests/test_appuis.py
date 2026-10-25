@@ -41,26 +41,28 @@ NAVIGATION = os.path.join(TAB5, "paquets", "tab5-navigation.yaml")
 STYLES = os.path.join(TAB5, "paquets", "tab5-styles.yaml")
 REGLES = os.path.join(REPO, "tools", "check_tab5_code_rules.py")
 
-# Option du select « Aller à l'écran » de chaque valeur d'Ecran, dans l'ordre de l'enum.
+# Option du select « Aller à l'écran » de chaque valeur d'Ecran, dans l'ordre de l'enum. En
+# anglais depuis le 24/10/2026 (ADR-0070 ; « Accueil », « Assistant vocal »… avant) : seul le
+# texte a changé, l'index de chaque option est toujours sa valeur d'Ecran.
 OPTIONS = {
-    "AUCUN": "—", "ACCUEIL": "Accueil", "ASSISTANT": "Assistant vocal", "CALENDRIER": "Calendrier",
-    "REVEIL": "Réveil", "CLIM": "Climatisation", "PLANTES": "Plantes", "TV": "Télécommande TV",
-    "CONSOLE": "Console système", "ENERGIE": "Énergie", "REGLAGES": "Réglages", "ALERTES": "Alertes",
-    "MAISON": "Maison",
+    "AUCUN": "—", "ACCUEIL": "Home", "ASSISTANT": "Voice assistant", "CALENDRIER": "Calendar",
+    "REVEIL": "Alarm", "CLIM": "Air conditioning", "PLANTES": "Plants", "TV": "TV remote",
+    "CONSOLE": "System console", "ENERGIE": "Energy", "REGLAGES": "Settings", "ALERTES": "Alerts",
+    "MAISON": "House",
     # Roue de navigation (ADR-0042, 09/10/2026) : à la fin aussi.
-    "LUMIERES": "Lumières", "VOLET": "Volet", "TEMPERATURE": "Température",
+    "LUMIERES": "Lights", "VOLET": "Shutter", "TEMPERATURE": "Temperature",
     # Popup Météo (ADR-0043, 09/10/2026) : après eux.
-    "METEO": "Météo",
+    "METEO": "Weather",
     # Lecteur de musique (ADR-0050, 10/10/2026) : à la fin aussi.
-    "MUSIQUE": "Musique",
+    "MUSIQUE": "Music",
     # Popup Caméras (ADR-0049, 10/10/2026) : après lui.
-    "CAMERAS": "Caméras",
+    "CAMERAS": "Cameras",
     # Capteurs suivis (ADR-0054, 10/10/2026) : à la fin aussi.
-    "SUIVI": "Suivi",
+    "SUIVI": "Tracking",
     # Froid (ADR-0055, 10/10/2026) : après lui.
-    "FROID": "Froid",
+    "FROID": "Fridges",
     # Serveur IA (ADR-0059, 10/10/2026) : après lui.
-    "SERVEUR_IA": "Serveur IA",
+    "SERVEUR_IA": "AI server",
 }
 # Code du blueprint → valeur d'Ecran.
 CODES = {
@@ -225,12 +227,12 @@ def test_select_par_la_routine_unique():
     # Pas de switch qui recopierait la liste des écrans : l'ouverture d'un écran est
     # celle que lui donne le registre (ModalRegistry::ouvrir), sinon animate_popup_open.
     assert "switch" not in script and "ModalRegistry::ouvrir(target)" in script
-    # « Console système » est la page Système des Réglages depuis le 08/10/2026 : la même
-    # fenêtre, ouverte sur cette page, ou cette page montrée si elle est déjà ouverte.
-    assert 'ModalRegistry::find(e == Ecran::CONSOLE ? "Réglages" : nom)' in script
+    # « System console » est la page Système des Réglages depuis le 08/10/2026 : la même
+    # fenêtre (« Settings »), ouverte sur cette page, ou cette page montrée si elle est déjà ouverte.
+    assert 'ModalRegistry::find(e == Ecran::CONSOLE ? "Settings" : nom)' in script
     assert "id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_SYSTEME);" in script
     assert "if (e == Ecran::CONSOLE) reglages_afficher_page(REGLAGES_PAGE_SYSTEME);" in script
-    assert re.search(r'"Réglages",\s+ModalRegistry::POPUP,\s+'
+    assert re.search(r'"Settings",\s+ModalRegistry::POPUP,\s+'
                      r'\[\] \{ id\(tab5_reglages_ouvrir\)\.execute\(REGLAGES_PAGE_ECRAN\); \}\);', texte)
     # Une seule ouverture des Réglages dans tout le firmware : tab5_reglages_ouvrir ; plus
     # aucune console à part.

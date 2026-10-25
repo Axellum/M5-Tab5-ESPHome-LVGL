@@ -196,7 +196,7 @@ Première vraie mesure de ce que consomme le Tab5, faite le **10/10/2026** sur u
 | Ampli du haut-parleur coupé | 2,58 W | −0,05 W | 5,7 h |
 | Écran à 50 % | 1,74 W | −0,89 W (−34 %) | 8,5 h |
 | Écran à 10 % | 1,73 W | −0,90 W | 8,6 h |
-| Économie d'énergie « Toujours » | 1,73 W | −0,90 W | 8,6 h |
+| Économie d'énergie « Always » | 1,73 W | −0,90 W | 8,6 h |
 | Écran éteint | 1,23 W | −1,40 W (−53 %) | 12,0 h |
 | Thème sombre (Obsidienne), écran 100 % | 2,63 W | 0,00 W | 5,6 h |
 | Même thème en mode clair | 2,65 W | +0,02 W | 5,6 h |
@@ -209,7 +209,7 @@ La batterie est donnée pour 7,4 V × 2000 mAh = 14,8 Wh ([documentation M5Stack
 
 1. **Le rétroéclairage est le seul grand levier.** 100 % → 50 % économise 0,89 W, un tiers du total. Éteindre l'écran en économise 1,4 W, plus de la moitié.
 2. **Sous 50 %, il n'y a plus rien à gagner** : 50 % et 10 % donnent la même puissance (1,74 et 1,73 W). La cause n'est pas établie (un plancher du pilote de rétroéclairage est la première piste) ; une mesure à 75 % et 25 % trancherait.
-3. **Le mode économie d'énergie, c'est en pratique son plafond à 50 %.** « Toujours » (plafond 50 %, 10 % après 30 s sans toucher, aucune animation, 30 images/s) consomme comme l'écran à 10 % : pas de gain mesurable des animations ni de la cadence.
+3. **Le mode économie d'énergie, c'est en pratique son plafond à 50 %.** « Always » (plafond 50 %, 10 % après 30 s sans toucher, aucune animation, 30 images/s) consomme comme l'écran à 10 % : pas de gain mesurable des animations ni de la cadence.
 4. **Le thème ne change rien** : sombre ou clair, 0,02 W. L'écran est rétroéclairé, un pixel noir n'éteint pas la lumière (le type de dalle n'a pas été vérifié sur sa fiche). Un thème sombre sur batterie est une affaire de goût, pas d'autonomie.
 5. **La voix ne coûte presque rien.** Le micro (Okay Nabu) et l'ampli du haut-parleur consomment chacun environ 0,05 W, soit le bruit de la mesure. Couper Okay Nabu pour économiser renonce à l'assistant vocal pour rien.
 6. **Le reste de la tablette consomme 1,2 W** avec tout coupé (processeur, Wi-Fi par l'ESP32-C6, mémoire) : le plancher de l'appareil tel qu'il tourne aujourd'hui.
@@ -306,9 +306,9 @@ Même testeur, même carte, la nuit des [mesures de vitesse](performance.md#wave
 | Chacun des 21 thèmes, sombre | 1,944 à 1,968 W | aucun |
 | Chacun des 21 thèmes, clair | 1,995 à 2,013 W | environ +0,05 W (+2,5 %) |
 | Obsidienne, sombre / clair | 1,955 / 2,003 W | clair +2,5 % |
-| Animations « Aucune » / « Essentielles » | 1,950 / 1,959 W | aucun |
-| Économie d'énergie « Toujours » | 1,238 W | −37 % |
-| Wi-Fi éco « Toujours » | 1,781 W | −9 % |
+| Animations « None » / « Essential » | 1,950 / 1,959 W | aucun |
+| Économie d'énergie « Always » | 1,238 W | −37 % |
+| Wi-Fi éco « Always » | 1,781 W | −9 % |
 | Ok Nabu coupé | 1,938 W | −1 % |
 | Haut-parleur coupé | 1,946 W | −0,5 % |
 | Micro et haut-parleur coupés | 1,905 W | −2,6 % |
@@ -317,14 +317,14 @@ Même testeur, même carte, la nuit des [mesures de vitesse](performance.md#wave
 | La nuit, écran allumé (0 h 03 → 6 h 15) | 1,957 W | |
 
 1. **Ni le thème ni les animations ne changent la puissance.** Les 21 thèmes sombres tiennent dans 0,024 W (le bruit) ; le mode clair ajoute environ 0,05 W, quel que soit le thème.
-2. **L'économie d'énergie « Toujours » ramène la carte à son plancher** : 1,238 W, comme le rétroéclairage à 1 % ou éteint. Sur un accueil laissé seul, ce mode baisse la luminosité au minimum après 30 s sans toucher ([réglages](notice/settings.md)). L'écran restait-il lisible ? Pas vérifié.
-3. **Le Wi-Fi éco « Toujours » économise 0,18 W** (−9 %), environ 1,5 kWh par an s'il reste toujours actif ; les réponses peuvent arriver un peu plus tard, ce qui n'est pas mesuré.
+2. **L'économie d'énergie « Always » ramène la carte à son plancher** : 1,238 W, comme le rétroéclairage à 1 % ou éteint. Sur un accueil laissé seul, ce mode baisse la luminosité au minimum après 30 s sans toucher ([réglages](notice/settings.md)). L'écran restait-il lisible ? Pas vérifié.
+3. **Le Wi-Fi éco « Always » économise 0,18 W** (−9 %), environ 1,5 kWh par an s'il reste toujours actif ; les réponses peuvent arriver un peu plus tard, ce qui n'est pas mesuré.
 4. **Le micro et le haut-parleur coûtent peu** : 0,05 W pour les deux.
 5. **Aucune dérive sur la nuit** : 12,79 Wh en 6 h 43 min (1,90 W en moyenne, dont une demi-heure écran éteint) ; écran allumé, la moyenne de chaque heure est restée entre 1,956 et 1,958 W.
 
 ## Quoi en faire
 
-Réglages qui existent déjà : **Luminosité** (50 % est le bon compromis), **Extinction auto** (5 min) avec **Extinction auto sur batterie seulement** pour qu'elle ne joue que débranchée, **Économie d'énergie** (« Sur batterie » est l'état d'origine), **Limite de charge** à 80 % pour une tablette toujours branchée, **Rallumer l'écran à « Okay Nabu »** et **d'une tape** pour le retrouver.
+Réglages qui existent déjà : **Luminosité** (50 % est le bon compromis), **Extinction auto** (5 min) avec **Extinction auto sur batterie seulement** pour qu'elle ne joue que débranchée, **Économie d'énergie** (« On battery » est l'état d'origine), **Limite de charge** à 80 % pour une tablette toujours branchée, **Rallumer l'écran à « Okay Nabu »** et **d'une tape** pour le retrouver.
 
 Inutile d'après la mesure : le thème sombre sur batterie (0 W), couper Okay Nabu (0,05 W et plus de voix).
 

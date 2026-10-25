@@ -23,7 +23,8 @@ oubliée :
      correspond exactement au libellé d'une fenêtre enregistrée — `find()` la
      retrouve par ce nom, un écart serait un no-op silencieux. Seule exception,
      SELECT_ALIAS : une option qui ouvre une page d'une autre fenêtre (« Console
-     système » = page Système des Réglages depuis le 08/10/2026), à condition que
+     système », « System console » depuis le 24/10/2026 = page Système des Réglages
+     depuis le 08/10/2026), à condition que
      tab5_ecran_ouvrir fasse bien la traduction.
 
 Usage : python tools/check_tab5_registry.py   (aussi lancé par `pytest`, tests/test_guards.py)
@@ -52,12 +53,13 @@ NAVIGATION_YAML = TAB5 / "paquets" / "tab5-navigation.yaml"
 RE_NAMESPACE = re.compile(r"^namespace (\w+) \{", re.M)
 RE_ADD = re.compile(r'ModalRegistry::add\(\s*id\((\w+)\)\s*,\s*(nullptr|"([^"]*)")\s*,')
 LEGACY_TABLES = ("kPopups", "kScreens", "kTargetOf")
-SELECT_SKIP = {"—", "Accueil"}
+SELECT_SKIP = {"—", "Home"}
 # Option du select → (fenêtre enregistrée qui l'affiche, traduction attendue dans
-# tab5_ecran_ouvrir, tab5-navigation.yaml). Le nom de l'option ne change pas : HA,
-# le blueprint et les automatisations de l'utilisateur l'écrivent.
+# tab5_ecran_ouvrir, tab5-navigation.yaml). Le nom de l'option ne change plus : HA et les
+# automatisations de l'utilisateur l'écrivent. En anglais depuis le 24/10/2026 (ADR-0070 ;
+# « Console système » → « Réglages » avant).
 SELECT_ALIAS = {
-    "Console système": ("Réglages", 'ModalRegistry::find(e == Ecran::CONSOLE ? "Réglages" : nom)'),
+    "System console": ("Settings", 'ModalRegistry::find(e == Ecran::CONSOLE ? "Settings" : nom)'),
 }
 
 

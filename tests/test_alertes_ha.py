@@ -692,12 +692,13 @@ def test_l_historique_part_a_la_demande_de_la_tablette():
     assert "tab5_alertes_historique('payload')" in script
     auto = next(a for a in push["automation"] if a["id"] == "tab5_ha_hmi_alertes_historique_push")
     assert {"entity_id": "sensor.tab5_alertes", "attribute": "historique"}.items() <= auto["triggers"][0].items()
-    assert "is_state', 'Alertes')" in json.dumps(auto["conditions"], ensure_ascii=False)
-    # « Alertes » : le nom du popup dans le registre (« Écran courant ») et l'option du
+    # « Alerts » depuis le firmware du 24/10/2026 (ADR-0070), « Alertes » avant : les deux.
+    assert "is_state', ['Alerts', 'Alertes'])" in json.dumps(auto["conditions"], ensure_ascii=False)
+    # « Alerts » : le nom du popup dans le registre (« Écran courant ») et l'option du
     # select « Aller à l'écran ».
     navigation = (TAB5 / "paquets" / "tab5-navigation.yaml").read_text(encoding="utf-8")
-    assert '"Alertes",          ModalRegistry::POPUP' in navigation
-    assert '      - "Alertes"\n' in navigation
+    assert '"Alerts",           ModalRegistry::POPUP' in navigation
+    assert '      - "Alerts"\n' in navigation
     evenements = json.dumps(_charger("packages", "tab5_evenements.yaml"), ensure_ascii=False)
     assert "esphome.tab5_alertes_historique" in evenements and "script.tab5_push_alertes_historique" in evenements
     firmware = (TAB5 / "paquets" / "tab5-alertes.yaml").read_text(encoding="utf-8")

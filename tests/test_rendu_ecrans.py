@@ -47,7 +47,7 @@ def test_appuis_dans_l_ecran():
 def test_options_du_select_aller_a_l_ecran():
     bloc = _lire("Tab5", "paquets", "tab5-navigation.yaml").split('name: "Aller à l\'écran"', 1)[1]
     options = set(re.findall(r'^\s+- "([^"]+)"', bloc.split("on_value:", 1)[0], re.M))
-    assert "Accueil" in options
+    assert "Home" in options
     for ecran in ECRANS:
         for etape in _etapes(ecran):
             if isinstance(etape, Aller):
