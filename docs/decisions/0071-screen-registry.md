@@ -44,7 +44,7 @@ Sorted with the author on 2026-10-25. Nothing moves in this decision: a « scree
 |---|---|---|
 | Calendars, work keyword, phone, tracked sensors, fridges / freezers, weather sources | Home | The same for the whole household |
 | Chat pipeline | Home | The pipelines are the home's (author's choice) |
-| Presence sensor, night screen off, music players | Screen (later) | Each screen is in its own room (music players: author's choice) |
+| Presence sensor, night screen off, music players | Screen ([ADR-0072](0072-screen-settings.md), same day) | Each screen is in its own room (music players: author's choice) |
 | Rooms, tiles, zones, cameras, wheels | Screen | Already possible: one blueprint automation per screen (`tablette` input) |
 | Theme, light / dark, brightness, language, direction, alarm, « announce before », volume | Device | Firmware entities, already per screen |
 

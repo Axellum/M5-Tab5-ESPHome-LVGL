@@ -65,6 +65,7 @@
       par la carte elle-même, à garder entre {% raw %} et {% endraw %}.
 ============================================================================ -#}
 {%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='', chemin='tab5', titre='', vues_seules=false) -%}
+{%- from 'tab5_tablette.jinja' import tab5_ecran_libelle -%}
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
 {#- Plusieurs tablettes : appareil = l'identifiant ou le nom de celle à montrer
@@ -740,6 +741,53 @@ views:
                 style: dropdown
           - type: heading
             heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Not set » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « Not set »: never') }}"
+            heading_style: subtitle
+{%- endif %}
+{#- Réglages par écran (ADR-0072, 25/10/2026) : présence, nuit et lecteurs de l'écran choisi
+    dans « Tab5 · screen to set » ; « Régler cet écran » choisit celui de cette page. -#}
+{%- if 'select.tab5_ecran_a_regler' in present %}
+          - type: heading
+            heading: "{{ t('Réglages propres à un écran', 'Settings of one screen') }}"
+            icon: mdi:tablet-cellphone
+          - type: tile
+            entity: select.tab5_ecran_a_regler
+            name: "{{ t('Écran à régler', 'Screen to set') }}"
+            icon: mdi:tablet-cellphone
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+{%- if ns.api %}
+          - type: button
+            name: "{{ t('Régler cet écran', 'Set this screen') }}"
+            icon: mdi:target
+            show_state: false
+            tap_action:
+              action: perform-action
+              perform_action: select.select_option
+              target:
+                entity_id: select.tab5_ecran_a_regler
+              data:
+                option: "{{ tab5_ecran_libelle(device_id(ns.api)) | replace('"', '') }}"
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- for e, fr_, en_, icone in [('select.tab5_ecran_capteur_de_presence', 'Capteur de présence de cet écran', 'Presence sensor of this screen', 'mdi:motion-sensor'),
+                               ('select.tab5_ecran_extinction_de_nuit', 'Extinction de nuit de cet écran', 'Night screen off of this screen', 'mdi:weather-night'),
+                               ('select.tab5_ecran_lecteurs_de_musique', 'Lecteurs de musique de cet écran', 'Music players of this screen', 'mdi:music-box-multiple')] %}
+{%- if e in present %}
+          - type: tile
+            entity: {{ e }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+{%- endif %}
+{%- endfor %}
+          - type: heading
+            heading: "{{ t('« Same as home » : la liste de la maison ; le pipeline, les agendas et le téléphone restent ceux de la maison', '« Same as home »: the home list; the pipeline, calendars and phone stay those of the home') }}"
             heading_style: subtitle
 {%- endif %}
 {%- for cle, fr_, en_, icone in [('extinction_batterie', 'Extinction sur batterie seulement', 'Auto-off on battery only', 'mdi:battery-clock'),
@@ -2295,6 +2343,48 @@ views:
     'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « Not set »: nunca',
     'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « Not set »: mai',
     'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « Not set »: asla'},
+  'Réglages propres à un écran': {
+    'de': 'Einstellungen eines Bildschirms',
+    'nl': 'Instellingen van één scherm',
+    'es': 'Ajustes de una pantalla',
+    'it': 'Impostazioni di uno schermo',
+    'tr': 'Bir ekranın ayarları'},
+  'Écran à régler': {
+    'de': 'Einzustellender Bildschirm',
+    'nl': 'In te stellen scherm',
+    'es': 'Pantalla a ajustar',
+    'it': 'Schermo da impostare',
+    'tr': 'Ayarlanacak ekran'},
+  'Régler cet écran': {
+    'de': 'Diesen Bildschirm einstellen',
+    'nl': 'Dit scherm instellen',
+    'es': 'Ajustar esta pantalla',
+    'it': 'Imposta questo schermo',
+    'tr': 'Bu ekranı ayarla'},
+  'Capteur de présence de cet écran': {
+    'de': 'Präsenzsensor dieses Bildschirms',
+    'nl': 'Aanwezigheidssensor van dit scherm',
+    'es': 'Sensor de presencia de esta pantalla',
+    'it': 'Sensore di presenza di questo schermo',
+    'tr': 'Bu ekranın varlık sensörü'},
+  'Extinction de nuit de cet écran': {
+    'de': 'Nachtabschaltung dieses Bildschirms',
+    'nl': 'Nachtuitschakeling van dit scherm',
+    'es': 'Apagado nocturno de esta pantalla',
+    'it': 'Spegnimento notturno di questo schermo',
+    'tr': 'Bu ekranın gece kapatması'},
+  'Lecteurs de musique de cet écran': {
+    'de': 'Musikplayer dieses Bildschirms',
+    'nl': 'Muziekspelers van dit scherm',
+    'es': 'Reproductores de música de esta pantalla',
+    'it': 'Lettori musicali di questo schermo',
+    'tr': 'Bu ekranın müzik çalarları'},
+  '« Same as home » : la liste de la maison ; le pipeline, les agendas et le téléphone restent ceux de la maison': {
+    'de': '« Same as home »: die Liste des Hauses; Pipeline, Kalender und Telefon bleiben die des Hauses',
+    'nl': '« Same as home »: de lijst van het huis; pipeline, agenda’s en telefoon blijven die van het huis',
+    'es': '« Same as home »: la lista de la casa; el pipeline, los calendarios y el teléfono siguen siendo los de la casa',
+    'it': '« Same as home »: l’elenco della casa; pipeline, calendari e telefono restano quelli della casa',
+    'tr': '« Same as home »: evin listesi; pipeline, takvimler ve telefon evinkiler olarak kalır'},
   'Extinction sur batterie seulement': {
     'de': 'Automatisch aus nur im Akkubetrieb',
     'nl': 'Automatisch uit alleen op batterij',

@@ -152,14 +152,15 @@ def test_miroir_nuit_de_l_ecran(plage):
 def test_automatisation_tient_l_interrupteur():
     push = yaml.load((HA / "packages" / "tab5_push.yaml").read_text(encoding="utf-8"), Loader=_Chargeur)
     auto = next(a for a in push["automation"] if a["id"] == "tab5_extinction_nuit")
-    miroir = next(t for t in auto["triggers"] if t.get("entity_id") == "binary_sensor.tab5_nuit_de_l_ecran")
-    assert "to" in miroir and miroir["to"] is None, "tout changement d'état, indisponible compris"
+    # Plage de chaque écran (ADR-0072) : la liste des écrans dans leur plage, tout changement.
+    miroir = next(t for t in auto["triggers"] if t.get("entity_id") == "sensor.tab5_nuits_ecrans")
+    assert miroir.get("attribute") == "nuit" and "to" not in miroir
     assert any(t.get("event_type") == "esphome.tab5_connected" for t in auto["triggers"])
     # Pas de déclencheur sur l'attribut de la tablette : il part pendant l'ajout, liaison pas prête.
     assert not any(t.get("entity_id") == "sensor.tab5_tablette" for t in auto["triggers"])
     attente, action = _boucle(auto)
     assert "nuit_ecran" in attente
-    assert action["action"] == "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
+    assert action["action"] == "switch.turn_{{ 'on' if repeat.item in (state_attr('sensor.tab5_nuits_ecrans', 'nuit') or []) else 'off' }}"
     assert action["target"] == {"entity_id": "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(repeat.item, 'nuit_ecran') }}"}
     assert action["continue_on_error"] is True
     macro = (HA / "custom_templates" / "tab5_tablette.jinja").read_text(encoding="utf-8")
