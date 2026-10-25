@@ -82,14 +82,14 @@ def test_plafonds_du_package_et_de_la_liste():
 
 
 def test_liste_de_ha():
-    """« Tab5 · capteurs suivis » : entity_id fixé, mémoire déclarée et déclencheur de la
+    """« Tab5 · tracked sensors » : entity_id fixé, mémoire déclarée et déclencheur de la
     liste, seulement les capteurs qui ont des statistiques."""
     paquet = yaml.safe_load(_lire(REGLAGES).replace("!", "!!str "))
     assert "tab5_choix_suivis" in paquet["input_text"]
     bloc = paquet["template"][0]
     assert "input_text.tab5_choix_suivis" in bloc["triggers"][-1]["entity_id"]
     select = next(s for s in bloc["select"] if s["unique_id"] == "tab5_capteurs_suivis")
-    assert select["name"] == "Tab5 · capteurs suivis · tracked sensors"
+    assert select["name"] == "Tab5 · tracked sensors"
     assert select["default_entity_id"] == "select.tab5_capteurs_suivis"
     assert "selectattr('attributes.state_class', 'eq', 'measurement')" in bloc["variables"]["suivis_ha"]
 

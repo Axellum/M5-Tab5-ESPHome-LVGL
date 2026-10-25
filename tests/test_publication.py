@@ -463,7 +463,7 @@ def test_archive_ha_arborescence_de_config(tmp_path):
 
 
 def test_archive_ha_porte_sa_version(tmp_path):
-    """Garde (f) de tab5_health.yaml : dans l'archive, « Tab5 · version des fichiers HA »
+    """Garde (f) de tab5_health.yaml : dans l'archive, « Tab5 · HA files version »
     vaut la version de la release ; dans le dépôt, « dépôt » (jamais comparé). Une seule
     ligne porte le marqueur."""
     import zipfile

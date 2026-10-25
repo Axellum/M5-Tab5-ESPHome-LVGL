@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistant · calendars and people",
-        "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Aucun » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « Aucun ».",
+        "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Not set » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « None ».",
         "data": {
           "agenda_travail": "Work calendar",
           "agenda_rdv": "Appointments calendar",
@@ -110,7 +110,7 @@
           "agenda_anniversaires": "Birthdays, holidays and phone: the list already guesses by itself when there is a single candidate.",
           "telephone_suivi": "Turns the screen on when back, off when gone.",
           "presence": "Turns the screen on on detection, off after 15 min without presence.",
-          "pipeline": "The « Chat » mode of the screen; « Aucun » hides its buttons."
+          "pipeline": "The « Chat » mode of the screen; « None » hides its buttons."
         }
       },
       "recapitulatif": {
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistant · calendars and people",
-            "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Aucun » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « Aucun ».",
+            "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Not set » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « None ».",
             "data": {
               "agenda_travail": "Work calendar",
               "agenda_rdv": "Appointments calendar",
@@ -258,7 +258,7 @@
               "agenda_anniversaires": "Birthdays, holidays and phone: the list already guesses by itself when there is a single candidate.",
               "telephone_suivi": "Turns the screen on when back, off when gone.",
               "presence": "Turns the screen on on detection, off after 15 min without presence.",
-              "pipeline": "The « Chat » mode of the screen; « Aucun » hides its buttons."
+              "pipeline": "The « Chat » mode of the screen; « None » hides its buttons."
             }
           },
           "recapitulatif": {
@@ -279,6 +279,17 @@
           "aucune_piece_choisie": "Pick at least one room.",
           "trop_de_pieces": "Ten rooms at most.",
           "trop_de_tuiles": "Twenty tiles at most."
+        }
+      }
+    },
+    "migrer_entites": {
+      "title": "Tab5: switch the entities to their English names",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Migrate the Tab5 entities",
+            "description": "The tablet's entities now have English names in Home Assistant, and {nombre} entities still carry their old French name or ID. Submit to rename them: they keep their history, and the tablet keeps its settings. Your own dashboards and automations that use their old entity IDs need updating."
+          }
         }
       }
     }

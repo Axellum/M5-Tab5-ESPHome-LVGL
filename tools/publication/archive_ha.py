@@ -15,7 +15,7 @@ redémarrer, puis choisir ses sources dans les listes « Tab5 · … » (docs/in
     LISEZMOI-Tab5.txt                               (ces étapes, en français et en anglais)
 
 Version : la seule ligne des packages qui finit par le marqueur `# >>> version de l'archive`
-(capteur « Tab5 · version des fichiers HA », packages/tab5_health.yaml) prend la version de la
+(capteur « Tab5 · HA files version », packages/tab5_health.yaml) prend la version de la
 release à la place de « dépôt » : HA compare ainsi ses fichiers au firmware de la tablette et
 prévient s'ils sont plus anciens (garde (f)). Un ancien tag, sans marqueur, s'archive tel quel.
 
@@ -83,7 +83,7 @@ FRANÇAIS
    configuration brute » : remplacez tout par ce résultat, enregistrez.
 tab5_optionnel/ : un volet qui ne signale pas sa course ? Copiez
 volet_serre_tracking.yaml dans packages/, puis choisissez-le dans
-« Tab5 · volet à course simulée ». Sinon, ignorez ce dossier.
+« Tab5 · shutter with simulated travel ». Sinon, ignorez ce dossier.
 
 ENGLISH
 1. Unzip this archive into Home Assistant's config/ folder (the one holding
@@ -106,7 +106,7 @@ ENGLISH
    replace everything with that result, save.
 tab5_optionnel/: a shutter that doesn't report its travel? Copy
 volet_serre_tracking.yaml into packages/, then pick it in
-"Tab5 · volet à course simulée". Otherwise ignore this folder.
+"Tab5 · shutter with simulated travel". Otherwise ignore this folder.
 """
 
 

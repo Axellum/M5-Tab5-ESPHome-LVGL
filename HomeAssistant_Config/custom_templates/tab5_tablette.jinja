@@ -80,7 +80,7 @@
       demande sa poussée complète) avant d'avoir publié son préfixe : le capteur vaut
       alors « unknown » ou « unavailable », qui passent le filtre des noms (16/10/2026,
       poussée envoyée à esphome.unknown_… et perdue). -#}
-  {%- set lisibles = device_entities(d | string) | select('match', 'sensor[.].*_prefixe_des_actions(_[0-9]+)?$')
+  {%- set lisibles = device_entities(d | string) | select('match', 'sensor[.].*_(prefixe_des_actions|action_prefix)(_[0-9]+)?$')
         | map('states') | reject('in', ['unknown', 'unavailable', 'none']) | select('match', '^[a-z0-9_]+$') | list -%}
   {{- lisibles | first | default('tab5_ha_hmi', true) -}}
 {%- endmacro -%}

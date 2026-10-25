@@ -51,7 +51,7 @@
 # son appareil (sensor.tab5_tablette, packages/tab5_reglages.yaml), et les gardes
 # se déclenchent sur ses miroirs `sensor.tab5_demarrage` (« Tab5 Uptime ») et
 # `binary_sensor.tab5_connectee` (« HA API Status »). Vérification : les attributs
-# de « Tab5 · tablette » dans Outils de développement → États.
+# de « Tab5 · tablet » dans Outils de développement → États.
 #
 # Reste à adapter si vous réutilisez ce package ailleurs :
 #   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)
@@ -62,7 +62,7 @@ script:
   # le même notification_id existe déjà) + un push mobile via notify.notify.
   # mode parallel : deux gardes peuvent tomber en même temps (reboot + API).
   tab5_health_notify:
-    alias: "Tab5 — santé : notifier (persistante + mobile)"
+    alias: "Tab5 — health: notify (persistent + mobile)"
     mode: parallel
     max: 3
     fields:
@@ -151,7 +151,7 @@ automation:
   # raison fraîche (délai dépassé), on notifie : mieux vaut une alerte de trop qu'un
   # plantage muet.
   - id: tab5_health_unexpected_reboot
-    alias: "Tab5 — santé : reboot inattendu (nouveau démarrage)"
+    alias: "Tab5 — health: unexpected reboot (new boot)"
     description: >-
       Alerte quand l'heure de démarrage du Tab5 change sans que le redémarrage ait
       été demandé : brownout, crash firmware, coupure d'alimentation. Une mise à
@@ -194,8 +194,8 @@ automation:
                or raison is match('Power button or RTC watchdog')
                or raison in ['software via esp_restart', 'USB peripheral']) }}
       # Statistiques longues (lot K, 09/10/2026) : chaque redémarrage reconnu ici,
-      # demandé ou non, est compté par « Tab5 · redémarrages » et, s'il est inattendu
-      # (même classement que la notification), par « Tab5 · redémarrages inattendus »
+      # demandé ou non, est compté par « Tab5 · restarts » et, s'il est inattendu
+      # (même classement que la notification), par « Tab5 · unexpected restarts »
       # (fin de ce fichier). Avant la condition : un redémarrage demandé compte aussi.
       - event: tab5_sante_redemarrage
         event_data:
@@ -233,7 +233,7 @@ automation:
   # d'alerte sur un HA où la tablette n'est pas encore ajoutée.
   # ==========================================================================
   - id: tab5_health_api_off_2min
-    alias: "Tab5 — santé : API ESPHome déconnectée depuis 2 min"
+    alias: "Tab5 — health: ESPHome API disconnected for 2 min"
     description: >-
       Alerte si le Tab5 est déconnecté de l'API native Home Assistant depuis
       plus de 2 minutes : toutes les poussées échouent pendant ce temps.
@@ -274,7 +274,7 @@ automation:
   # /10 min la reproduit à chaque cycle).
   # ==========================================================================
   - id: tab5_health_template_error
-    alias: "Tab5 — santé : erreur de rendu dans une poussée écran"
+    alias: "Tab5 — health: render error in a screen push"
     description: >-
       Alerte quand une automation ou un script Tab5 journalise « Error
       rendering » : une action de poussée a été sautée en silence par
@@ -331,7 +331,7 @@ automation:
   # reset anormal, plantage, ou Wi-Fi absent 90 s ou plus.
   # ==========================================================================
   - id: tab5_health_journal
-    alias: "Tab5 — santé : journal des démarrages et coupures"
+    alias: "Tab5 — health: log of boots and disconnections"
     description: >-
       Notifie le journal envoyé par le Tab5 à sa reconnexion : plantage, erreurs
       du lien Wi-Fi (co-processeur C6), avertissements pendant une absence de HA.
@@ -397,7 +397,7 @@ automation:
   # les versions se rejoignent.
   # ==========================================================================
   - id: tab5_health_fichiers_ha
-    alias: "Tab5 — santé : fichiers HA plus anciens que le firmware"
+    alias: "Tab5 — health: HA files older than the firmware"
     description: >-
       Prévient quand la tablette tourne une version plus récente que les fichiers
       Tab5 de Home Assistant (packages, modèles, blueprint).
@@ -452,7 +452,7 @@ automation:
   # entité ni code : il est lu tel quel sur le téléphone.
   # ==========================================================================
   - id: tab5_health_batterie_faible
-    alias: "Tab5 — santé : batterie faible"
+    alias: "Tab5 — health: low battery"
     description: >-
       Prévient quand la tablette tourne sur sa batterie et passe sous 20 %, puis
       sous 10 % : il est temps de la brancher.
@@ -495,7 +495,7 @@ automation:
   # chaque coupure. Message court, sans entité ni code.
   # ==========================================================================
   - id: tab5_health_securite_chargeur
-    alias: "Tab5 — santé : sécurité du chargeur"
+    alias: "Tab5 — health: charger safety"
     description: >-
       Prévient quand la tablette coupe son chargeur par sécurité (surchauffe,
       tension anormale, charge sans batterie).
@@ -536,7 +536,7 @@ template:
   # release dans l'archive tab5_home_assistant.zip (tools/publication/archive_ha.py,
   # marqueur en fin de ligne : une seule ligne le porte, tests/test_publication.py).
   - sensor:
-      - name: "Tab5 · version des fichiers HA · HA files version"
+      - name: "Tab5 · HA files version"
         unique_id: tab5_version_des_fichiers_ha
         default_entity_id: sensor.tab5_version_des_fichiers_ha
         icon: mdi:package-variant
@@ -550,7 +550,7 @@ template:
       # Éteint si l'une des deux est illisible : fichiers copiés depuis le dépôt
       # (« dépôt »), firmware sans version ; « 3.3.1-dev » est lisible et sert.
       # Rendu par tests/test_version.py.
-      - name: "Tab5 · fichiers HA en retard · HA files out of date"
+      - name: "Tab5 · HA files out of date"
         unique_id: tab5_fichiers_ha_en_retard
         default_entity_id: binary_sensor.tab5_fichiers_ha_en_retard
         device_class: update
@@ -591,13 +591,13 @@ template:
       - trigger: event
         event_type: event_template_reloaded
     sensor:
-      - name: "Tab5 · redémarrages"
+      - name: "Tab5 · restarts"
         unique_id: tab5_redemarrages
         default_entity_id: sensor.tab5_redemarrages
         icon: mdi:restart
         state_class: total_increasing
         state: "{{ (this.state | int(0)) + (1 if trigger.id == 'redemarrage' else 0) }}"
-      - name: "Tab5 · redémarrages inattendus"
+      - name: "Tab5 · unexpected restarts"
         unique_id: tab5_redemarrages_inattendus
         default_entity_id: sensor.tab5_redemarrages_inattendus
         icon: mdi:restart-alert
@@ -625,7 +625,7 @@ template:
         entity_id: sensor.tab5_demarrage
         id: demarrage
     sensor:
-      - name: "Tab5 · fonctionnement continu"
+      - name: "Tab5 · continuous uptime"
         unique_id: tab5_fonctionnement_continu
         default_entity_id: sensor.tab5_fonctionnement_continu
         icon: mdi:timer-outline

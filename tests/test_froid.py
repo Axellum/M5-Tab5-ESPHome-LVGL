@@ -104,7 +104,7 @@ def test_seuils_de_la_demande():
 
 
 def test_listes_de_ha():
-    """« Tab5 · réfrigérateurs » et « Tab5 · congélateurs » : entity_id fixés, mémoires
+    """« Tab5 · fridges » et « Tab5 · freezers » : entity_id fixés, mémoires
     déclarées et déclencheurs, seulement des capteurs de température à statistiques, un
     capteur choisi dans une liste absent de l'autre."""
     paquet = yaml.safe_load(_lire(REGLAGES).replace("!", "!!str "))
@@ -118,8 +118,8 @@ def test_listes_de_ha():
     assert "selectattr('attributes.state_class', 'eq', 'measurement')" in candidats
     assert "reject('in', frigos_choisis)" in bloc["variables"]["congelateurs_choisis"]
     selects = {s["unique_id"]: s for s in bloc["select"]}
-    for uid, nom in (("tab5_refrigerateurs", "Tab5 · réfrigérateurs · fridges"),
-                     ("tab5_congelateurs", "Tab5 · congélateurs · freezers")):
+    for uid, nom in (("tab5_refrigerateurs", "Tab5 · fridges"),
+                     ("tab5_congelateurs", "Tab5 · freezers")):
         s = selects[uid]
         assert s["name"] == nom and s["default_entity_id"] == f"select.{uid}"
         assert "reject('in', frigos_choisis + congelateurs_choisis)" in s["options"]
@@ -473,9 +473,9 @@ def test_source_froid():
 def test_source_froid_en_doute_et_abonnement():
     texte = _lire(MACRO_ALERTES)
     assert "i.startswith('froid:')" in texte and "states('sensor.tab5_froid') in ['unavailable', 'unknown']" in texte
-    assert "'froid': states('input_select.tab5_alertes_froid') != 'Non'" in texte
+    assert "'froid': states('input_select.tab5_alertes_froid') not in non" in texte and "set non = ['No', 'Non']" in texte
     paquet = yaml.safe_load(_lire(ALERTES).replace("!", "!!str "))
-    assert paquet["input_select"]["tab5_alertes_froid"]["options"] == ["Oui", "Non"]
+    assert paquet["input_select"]["tab5_alertes_froid"]["options"] == ["Yes", "No"]
     declencheurs = paquet["template"][0]["triggers"]
     assert {"trigger": "state", "entity_id": "sensor.tab5_froid", "id": "tick"} in declencheurs
     assert any("input_select.tab5_alertes_froid" in (d.get("entity_id") or []) for d in declencheurs)

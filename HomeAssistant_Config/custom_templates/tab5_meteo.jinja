@@ -3,7 +3,7 @@
   (08/10/2026). Ce matin-là, l'entité Météo-France de l'auteur est passée
   `unavailable` (« Connection reset by peer ») : la tablette a reçu « unavailable » à
   0 °C et les prévisions n'ont plus été demandées, alors qu'OpenWeatherMap marchait.
-  Importées par packages/tab5_meteo_sources.yaml (capteur « Tab5 Météo », dont les
+  Importées par packages/tab5_meteo_sources.yaml (capteur « Tab5 Weather », dont les
   attributs servent aux poussées, à l'alerte et au tableau de bord) :
     {%- from 'tab5_meteo.jinja' import tab5_meteo_effective, tab5_meteo_nom, tab5_meteo_repli -%}
 
@@ -13,7 +13,7 @@
       relève même sans changement) ou 'absente' (pas d'entité).
   tab5_meteo_effective()
       La source choisie (attribut `meteo` de sensor.tab5_sources_meteo, qui suit la liste
-      « Tab5 · source des prévisions ») si elle est 'ok' ; sinon la première 'ok' parmi
+      « Tab5 · forecast source ») si elle est 'ok' ; sinon la première 'ok' parmi
       les sources connues (OpenWeatherMap, Météo-France), puis parmi toutes les entités
       weather.* (Met.no de l'onboarding…) ; sinon la choisie si elle n'est que périmée
       (mieux que rien) ; sinon '' : les poussées météo sont sautées, la tablette garde

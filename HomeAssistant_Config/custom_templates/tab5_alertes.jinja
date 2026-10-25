@@ -1,5 +1,5 @@
 {#-
-  Alertes de la carte centrale du Tab5 (packages/tab5_alerts.yaml, capteur « Tab5 Alertes »,
+  Alertes de la carte centrale du Tab5 (packages/tab5_alerts.yaml, capteur « Tab5 Alerts »,
   plan des alertes du 06/10/2026, ADR-0034). Importées par le package :
     {% from 'tab5_alertes.jinja' import tab5_alertes_memoire %}
 
@@ -32,7 +32,7 @@
     froid      appareil de sensor.tab5_froid au    cause ET niveau (la valeur change le
                niveau 1 (Orange) ou 2 (Rouge)      libellé, pas la révision ; ADR-0055)
 
-  Abonnements : listes « Tab5 · alertes … » de packages/tab5_alerts.yaml. Une source à
+  Abonnements : listes « Tab5 · alerts: … » de packages/tab5_alerts.yaml. Une source à
   laquelle on n'est pas abonné reste suivie (sans être affichée) : s'y réabonner ne fait pas
   revenir ce qui était déjà lu.
 
@@ -43,7 +43,7 @@
     tab5_alertes_sources(suivi, anciennes, seuil_pile)
         Ce que disent les états de HA en ce moment (suivi : pour le doute et les piles).
     tab5_alertes_abonnements()
-        Les listes « Tab5 · alertes … », lues dans HA (JSON).
+        Les listes « Tab5 · alerts: … », lues dans HA (JSON).
     tab5_alertes_memoire(type_evt, donnees)
         Colle les trois : mémoire = attributs du capteur, heure = now().
     tab5_alertes_historique_liste(memoire, abonnements, n) et
@@ -227,7 +227,7 @@
        'reglages': ns.reglages, 'affichees': aff.l} | to_json -}}
 {%- endmacro -%}
 
-{#- Abonnée (listes « Tab5 · alertes … ») ? Rend « o » si oui, rien sinon (une macro rend du
+{#- Abonnée (listes « Tab5 · alerts: … ») ? Rend « o » si oui, rien sinon (une macro rend du
     texte). Source inconnue (entrée d'historique d'avant le lot 4) : montrée. -#}
 {%- macro _abonnee(s, g, ab) -%}
   {%- set rang = {'Rouge': 0, 'Orange': 1, 'Jaune': 2} -%}
@@ -376,19 +376,26 @@
   {{- {'actives': ns.a, 'incertains': ns.inc, 'absents': ns.abs, 'anciennes': anciennes} | to_json -}}
 {%- endmacro -%}
 
-{#- ── Le capteur « Tab5 Alertes » ───────────────────────────────────────────────────── -#}
-{#- Abonnements : listes « Tab5 · alertes … » (packages/tab5_alerts.yaml) ; liste absente =
-    choix par défaut (le premier de chaque liste). -#}
+{#- ── Le capteur « Tab5 Alerts » ───────────────────────────────────────────────────── -#}
+{#- Abonnements : listes « Tab5 · alerts: … » (packages/tab5_alerts.yaml) ; liste absente =
+    choix par défaut (le premier de chaque liste). Options en anglais depuis le 24/10/2026
+    (« All », « Yellow », « No »…) ; les françaises d'avant (« Toutes », « Jaune », « Non »…)
+    restent lues : une installation sans l'intégration redémarre sur l'option restaurée.
+    Les codes rendus, eux, ne changent pas (toutes / ha / aucune, Jaune / Orange / Rouge /
+    Aucune) : la logique et la mémoire les lisent. -#}
 {%- macro tab5_alertes_abonnements() -%}
   {%- set maj = states('input_select.tab5_alertes_maj') -%}
   {%- set vigilance = states('input_select.tab5_alertes_vigilance') -%}
-  {{- {'maj': {'Home Assistant seulement': 'ha', 'Aucune': 'aucune'}.get(maj, 'toutes'),
-       'vigilance': vigilance if vigilance in ['Orange', 'Rouge', 'Aucune'] else 'Jaune',
-       'probleme': states('input_select.tab5_alertes_problemes') != 'Non',
-       'indispo': states('input_select.tab5_alertes_indisponibles') != 'Non',
-       'etiquette': states('input_select.tab5_alertes_etiquette') != 'Non',
-       'pile': states('input_select.tab5_alertes_piles') != 'Aucune',
-       'froid': states('input_select.tab5_alertes_froid') != 'Non'} | to_json -}}
+  {%- set non = ['No', 'Non'] -%}
+  {{- {'maj': {'Home Assistant only': 'ha', 'Home Assistant seulement': 'ha',
+               'None': 'aucune', 'Aucune': 'aucune'}.get(maj, 'toutes'),
+       'vigilance': {'Orange': 'Orange', 'Red': 'Rouge', 'Rouge': 'Rouge',
+                     'None': 'Aucune', 'Aucune': 'Aucune'}.get(vigilance, 'Jaune'),
+       'probleme': states('input_select.tab5_alertes_problemes') not in non,
+       'indispo': states('input_select.tab5_alertes_indisponibles') not in non,
+       'etiquette': states('input_select.tab5_alertes_etiquette') not in non,
+       'pile': states('input_select.tab5_alertes_piles') not in ['None', 'Aucune'],
+       'froid': states('input_select.tab5_alertes_froid') not in non} | to_json -}}
 {%- endmacro -%}
 
 {%- macro tab5_alertes_memoire(type_evt, donnees) -%}

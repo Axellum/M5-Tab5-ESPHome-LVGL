@@ -24,7 +24,7 @@
            pas encore (rest_command… sur un HA neuf), puis tout le YAML
            (homeassistant.reload_all) : pas de 2e redémarrage. Dans cet ordre, sinon une
            automatisation lit un modèle ou une entrée pas encore là ;
-        4. constate l'effet : le capteur « Tab5 · version des fichiers HA »
+        4. constate l'effet : le capteur « Tab5 · HA files version »
            (packages/tab5_health.yaml) donne la nouvelle version ; sinon une réparation dit
            quoi faire (ligne `packages:` absente, ou redémarrage) ;
         5. propose l'assistant de configuration (ADR-0052) : fichiers actifs et aucune
@@ -64,6 +64,7 @@ from homeassistant.helpers import check_config
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import restore_state
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.storage import Store
@@ -71,7 +72,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 
-from . import assistant_flux, firmware, installation, messages
+from . import assistant_flux, firmware, installation, messages, renommage
 from .const import (
     ATTENTE_CAPTEUR_S,
     CAPTEUR_VERSION,
@@ -83,6 +84,7 @@ from .const import (
     ISSUE_CONFIGURATION,
     ISSUE_FICHIERS_ABSENTS,
     ISSUE_FIRMWARE,
+    ISSUE_MIGRATION,
     ISSUE_PACKAGES,
     ISSUE_REDEMARRAGE,
     ISSUE_REMPLACES,
@@ -110,9 +112,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: Tab5ConfigEntry) -> bool
     entry.async_on_unload(gestionnaire.arreter)
 
     async def _au_demarrage(_hass: HomeAssistant) -> None:
+        await gestionnaire.async_options_au_demarrage()
         await gestionnaire.async_installer()
+        gestionnaire.proposer_migration()
 
     entry.async_on_unload(async_at_started(hass, _au_demarrage))
+    # Une entité ESPHome créée (le firmware anglais vient de parler) : migration à proposer.
+    # @callback : sinon HA l'appellerait hors de la boucle, et le registre ne se lit qu'ici.
+    @callback
+    def _entite_ajoutee(_event: Event[er.EventEntityRegistryUpdatedData]) -> None:
+        gestionnaire.proposer_migration()
+
+    entry.async_on_unload(hass.bus.async_listen(
+        er.EVENT_ENTITY_REGISTRY_UPDATED, _entite_ajoutee, event_filter=_entite_creee))
     return True
 
 
@@ -125,7 +137,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     mémoire part, et une nouvelle installation repartira comme la première fois."""
     await Store(hass, STOCKAGE_VERSION, STOCKAGE_CLE).async_remove()
     for cle in (ISSUE_FICHIERS_ABSENTS, ISSUE_CONFIGURATION, ISSUE_PACKAGES, ISSUE_REDEMARRAGE,
-                ISSUE_REMPLACES, ISSUE_FIRMWARE, ISSUE_ASSISTANT):
+                ISSUE_REMPLACES, ISSUE_FIRMWARE, ISSUE_ASSISTANT, ISSUE_MIGRATION):
         ir.async_delete_issue(hass, DOMAIN, cle)
 
 
@@ -136,6 +148,11 @@ async def _options_changees(hass: HomeAssistant, entry: Tab5ConfigEntry) -> None
 @callback
 def _est_une_mise_a_jour(donnees: EventStateChangedData) -> bool:
     return donnees["entity_id"].startswith("update.")
+
+
+@callback
+def _entite_creee(donnees: er.EventEntityRegistryUpdatedData) -> bool:
+    return donnees["action"] == "create"
 
 
 class Gestionnaire:
@@ -269,7 +286,9 @@ class Gestionnaire:
         # Configuration déjà invalide avant (erreur bloquante) : reload_all refuserait.
         redemarrer = bloquant
         if not packages_absents and not bloquant:
+            choisies = self._options_choisies()
             redemarrer = await self._recharger(installation.domaines(plan.contenus), config_yaml)
+            await self._options_gardees(choisies)
 
         # 4. L'effet : HA lit la nouvelle version des fichiers.
         if not packages_absents and not await self._attendre_version():
@@ -358,6 +377,81 @@ class Gestionnaire:
                   reparable: bool = False, persistant: bool = False) -> None:
         ir.async_create_issue(self.hass, DOMAIN, cle, is_fixable=reparable, is_persistent=persistant,
                               severity=gravite, translation_key=cle, translation_placeholders=valeurs)
+
+    # ── Noms anglais (renommage.py) ─────────────────────────────────────────
+
+    def _plan_migration(self) -> list[renommage.Renommage]:
+        """Plan pour les entités ESPHome de chaque tablette (trouvée par son modèle, comme
+        pour le firmware)."""
+        appareils = dr.async_get(self.hass)
+        entrees: list[tuple[str, str, str | None]] = []
+        for e in er.async_get(self.hass).entities.values():
+            if e.platform != "esphome" or not e.device_id:
+                continue
+            appareil = appareils.async_get(e.device_id)
+            if appareil is not None and appareil.model == MODELE_TABLETTE:
+                entrees.append((e.entity_id, e.unique_id, e.name))
+        # Rien de faisable (identifiants anglais tous pris, nom déjà donné) : pas proposé,
+        # sinon la réparation reviendrait sans fin.
+        registre = er.async_get(self.hass)
+        return [r for r in renommage.planifier(entrees)
+                if r.nom or any(registre.async_get(c) is None for c in r.nouveaux_entity_ids)]
+
+    def _options_choisies(self) -> dict[str, str]:
+        """Option choisie de chaque liste des packages dont les options ont changé de langue."""
+        return {eid: etat.state for eid in renommage.OPTIONS_PAQUETS
+                if (etat := self.hass.states.get(eid)) is not None}
+
+    async def _options_gardees(self, choisies: dict[str, str]) -> None:
+        """Remet l'option choisie avant, traduite : sans elle, Home Assistant reprend la
+        première option d'une liste dont l'option choisie n'existe plus."""
+        for eid, avant in choisies.items():
+            apres = renommage.option_anglaise(eid, avant)
+            etat = self.hass.states.get(eid)
+            if not apres or etat is None or etat.state == apres or apres not in (etat.attributes.get("options") or []):
+                continue
+            await self.hass.services.async_call("input_select", "select_option",
+                                                {"entity_id": eid, "option": apres}, blocking=True)
+            _LOGGER.info("Tab5 : %s gardé « %s » → « %s »", eid, avant, apres)
+
+    async def async_options_au_demarrage(self) -> None:
+        """Fichiers posés puis Home Assistant redémarré (ou installés à la main) : l'option
+        d'avant n'existait plus, la liste a repris la première. La dernière option connue
+        avant l'arrêt est dans les états restaurés de HA."""
+        try:
+            restaures = restore_state.async_get(self.hass).last_states
+        except Exception:  # noqa: BLE001 — sans états restaurés, rien à garder
+            return
+        await self._options_gardees({eid: r.state.state for eid in renommage.OPTIONS_PAQUETS
+                                     if (r := restaures.get(eid)) is not None})
+
+    @callback
+    def proposer_migration(self) -> None:
+        if plan := self._plan_migration():
+            self._probleme(ISSUE_MIGRATION, ir.IssueSeverity.WARNING,
+                           {"nombre": str(len(plan))}, reparable=True)
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_MIGRATION)
+
+    async def async_migrer(self) -> int:
+        """Applique le plan dans le registre : identifiant d'entité anglais (l'historique et
+        les statistiques suivent) et nom affiché anglais. Un identifiant déjà pris par une
+        autre entité n'est pas touché (le nom l'est quand même)."""
+        registre = er.async_get(self.hass)
+        faits = 0
+        for r in self._plan_migration():
+            changements: dict[str, Any] = {}
+            libre = next((c for c in r.nouveaux_entity_ids if registre.async_get(c) is None), None)
+            if libre:
+                changements["new_entity_id"] = libre
+            if r.nom:
+                changements["name"] = r.nom
+            if changements:
+                registre.async_update_entity(r.entity_id, **changements)
+                faits += 1
+        _LOGGER.info("Tab5 : %d entités passées à leur nom anglais", faits)
+        self.proposer_migration()
+        return faits
 
     # ── Firmware ────────────────────────────────────────────────────────────
 

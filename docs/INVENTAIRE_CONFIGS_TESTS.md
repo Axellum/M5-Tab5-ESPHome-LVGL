@@ -90,12 +90,12 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 |---|---|---|
 | `packages/tab5_push.yaml` | `HomeAssistant_Config/packages/` | Package principal : automatisations de poussée, scripts `tab5_push_*`, scripts appelés par le Tab5, capteur de pluie. |
 | `packages/tab5_evenements.yaml` | `HomeAssistant_Config/packages/` | Demandes de la tablette (ADR-0025) : une automatisation traduit les événements `esphome.tab5_*` en une liste blanche d'actions (annonces, calendrier, alertes lues, voix, pipeline, console système), pour un appareil de modèle `tab5-ha-hmi` seulement. Remplace l'option « actions HA ». |
-| `packages/tab5_alerts.yaml` | `HomeAssistant_Config/packages/` | Alertes de la carte centrale : capteur « Tab5 Alertes » (en cours, lues, historique), script `tab5_dismiss_alert`, sauvegarde des alertes lues, `sensor.tab5_unavailable_count`. |
+| `packages/tab5_alerts.yaml` | `HomeAssistant_Config/packages/` | Alertes de la carte centrale : capteur « Tab5 Alerts » (en cours, lues, historique), script `tab5_dismiss_alert`, sauvegarde des alertes lues, `sensor.tab5_unavailable_count`. |
 | `custom_templates/tab5_alertes.jinja` | `HomeAssistant_Config/custom_templates/` | Logique des alertes (06/10/2026) : révisions, fin confirmée, alertes lues, historique (importée par `tab5_alerts.yaml`, règles en tête du fichier). |
 | `packages/tab5_calendar.yaml` | `HomeAssistant_Config/packages/` | Package calendrier HA. |
 | `custom_templates/tab5_calendar.jinja` | `HomeAssistant_Config/custom_templates/` | Macros Jinja du calendrier (importées par `tab5_calendar.yaml`). |
 | `custom_templates/tab5_tablette.jinja` | `HomeAssistant_Config/custom_templates/` | Macros « la tablette » (08/10/2026, HA-7) : tablette connectée, garde d'origine, capteur API ; importées par les packages et le blueprint. |
-| `custom_templates/tab5_meteo.jinja` | `HomeAssistant_Config/custom_templates/` | Macros de la météo effective (08/10/2026) : la source choisie, ou un repli tant qu'elle ne répond pas ; importées par « Tab5 Météo » (`tab5_meteo_sources.yaml`). |
+| `custom_templates/tab5_meteo.jinja` | `HomeAssistant_Config/custom_templates/` | Macros de la météo effective (08/10/2026) : la source choisie, ou un repli tant qu'elle ne répond pas ; importées par « Tab5 Weather » (`tab5_meteo_sources.yaml`). |
 | `custom_templates/tab5_dashboard.jinja` | `HomeAssistant_Config/custom_templates/` | Macro `tab5_dashboard()` (04/10/2026) : écrit le tableau de bord HA de la tablette (vues Tab5, Réglages, Santé) avec les entités de la maison, trouvées par le modèle de l'appareil ; rendue dans Outils de développement → Modèle (`docs/installation.md`, étape 7). |
 | `packages/tab5_health.yaml` | `HomeAssistant_Config/packages/` | Package santé HA. |
 | `packages/tab5_reveil.yaml` | `HomeAssistant_Config/packages/` | Package réveil HA. |

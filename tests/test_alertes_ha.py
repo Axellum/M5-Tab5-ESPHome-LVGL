@@ -133,7 +133,7 @@ def src(actives=None, incertains=(), absents=(), anciennes=()):
 
 
 class Capteur:
-    """Le capteur « Tab5 Alertes » : ses attributs passent d'un déclenchement au suivant."""
+    """Le capteur « Tab5 Alerts » : ses attributs passent d'un déclenchement au suivant."""
 
     def __init__(self, abonnements=None):
         self.m = {}
@@ -476,12 +476,15 @@ def test_le_capteur_lit_sa_propre_memoire(premiere):
 
 # ─── Abonnements (lot 2) ─────────────────────────────────────────────────────────
 
+# Options en anglais depuis le 24/10/2026 (décision d'Axel) ; la macro lit aussi les
+# françaises d'avant (test_abonnements_lus_dans_les_listes).
 LISTES = {
-    "tab5_alertes_maj": ["Toutes", "Home Assistant seulement", "Aucune"],
-    "tab5_alertes_vigilance": ["Jaune", "Orange", "Rouge", "Aucune"],
-    "tab5_alertes_problemes": ["Oui", "Non"],
-    "tab5_alertes_indisponibles": ["Oui", "Non"],
-    "tab5_alertes_etiquette": ["Oui", "Non"],
+    "tab5_alertes_maj": ["All", "Home Assistant only", "None"],
+    "tab5_alertes_vigilance": ["Yellow", "Orange", "Red", "None"],
+    "tab5_alertes_problemes": ["Yes", "No"],
+    "tab5_alertes_indisponibles": ["Yes", "No"],
+    "tab5_alertes_etiquette": ["Yes", "No"],
+    "tab5_alertes_froid": ["Yes", "No"],
 }
 
 
@@ -493,11 +496,11 @@ def test_les_abonnements_sont_des_listes_qui_gardent_le_choix():
     for cle, options in LISTES.items():
         assert listes[cle]["options"] == options, cle
     piles = listes["tab5_alertes_piles"]["options"]
-    assert piles[0] == "20 %" and piles[-1] == "Aucune"
+    assert piles[0] == "20 %" and piles[-1] == "None"
     assert all(o.endswith(" %") and o.split(" ")[0].isdigit() for o in piles[:-1])
     for cle, conf in listes.items():
         assert "initial" not in conf, cle
-        assert conf["name"].startswith("Tab5 · alertes : "), cle
+        assert conf["name"].startswith("Tab5 · alerts: "), cle
     surveillees = {e for t in _bloc_alertes()["triggers"] if t.get("trigger") == "state"
                    for e in ([t["entity_id"]] if isinstance(t["entity_id"], str) else t["entity_id"])}
     assert {f"input_select.{cle}" for cle in listes} <= surveillees
@@ -523,16 +526,22 @@ MAISON = [
 ]
 
 
-def test_abonnements_lus_dans_les_listes():
+# Les options d'aujourd'hui, puis celles d'avant le 24/10/2026 : une installation sans
+# l'intégration redémarre sur l'option restaurée, française, et doit la lire pareil.
+@pytest.mark.parametrize("ha_seul, rouge, non, aucune", [
+    ("Home Assistant only", "Red", "No", "None"),
+    ("Home Assistant seulement", "Rouge", "Non", "Aucune"),
+])
+def test_abonnements_lus_dans_les_listes(ha_seul, rouge, non, aucune):
     tout = [a["i"].split("#")[0] for a in memoire(MAISON)["affichees"]]
     assert set(tout) == {"update.esphome_update", "update.home_assistant_core_update", "binary_sensor.fuite",
                          "binary_sensor.porte", "sensor.pot_batterie", "ha:indispo", "meteo:vigilance"}
-    choix = [Etat("input_select.tab5_alertes_maj", "Home Assistant seulement"),
-             Etat("input_select.tab5_alertes_vigilance", "Rouge"),
-             Etat("input_select.tab5_alertes_problemes", "Non"),
-             Etat("input_select.tab5_alertes_indisponibles", "Non"),
-             Etat("input_select.tab5_alertes_etiquette", "Non"),
-             Etat("input_select.tab5_alertes_piles", "Aucune")]
+    choix = [Etat("input_select.tab5_alertes_maj", ha_seul),
+             Etat("input_select.tab5_alertes_vigilance", rouge),
+             Etat("input_select.tab5_alertes_problemes", non),
+             Etat("input_select.tab5_alertes_indisponibles", non),
+             Etat("input_select.tab5_alertes_etiquette", non),
+             Etat("input_select.tab5_alertes_piles", aucune)]
     m = memoire(MAISON + choix)
     assert [a["i"] for a in m["affichees"]] == ["update.home_assistant_core_update#1"]
     # Pas affichées, mais suivies : s'y réabonner ne fait pas revenir ce qui était lu.
@@ -660,7 +669,7 @@ def test_l_historique_suit_les_abonnements():
 def test_l_historique_lu_dans_ha():
     h = [_entree("update.x", "maj", t="@maj:Paquet"), _entree("binary_sensor.porte", "etiquette")]
     etats = [Etat("sensor.tab5_alertes", "1", {"historique": h}),
-             Etat("input_select.tab5_alertes_maj", "Aucune")]
+             Etat("input_select.tab5_alertes_maj", "None")]
     gabarit = _env(etats).from_string(
         "{% from 'tab5_alertes.jinja' import tab5_alertes_historique %}"
         "{{ tab5_alertes_historique('payload') }}#{{ tab5_alertes_historique('liste') }}")
