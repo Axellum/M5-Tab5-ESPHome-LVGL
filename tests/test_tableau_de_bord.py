@@ -30,6 +30,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 
 import verifier_installation as verifier  # noqa: E402  (entites_du_tableau : même lecture que le job « HA neuf »)
 MODELE = REPO / "HomeAssistant_Config" / "custom_templates" / "tab5_dashboard.jinja"
+TABLETTE = MODELE.with_name("tab5_tablette.jinja")  # importé par tab5_dashboard_ecrans()
 HA_DIR = REPO / "HomeAssistant_Config"
 
 # Entités du firmware volontairement sans carte : (domaine, slug du nom) → raison.
@@ -255,7 +256,7 @@ def _maison(tablettes, packages=True, aides=False, langue="Français"):
     return Etats(etats), tablettes
 
 
-def _rendre(maison, noter=None, **variables):
+def _rendre(maison, noter=None, appel=None, **variables):
     """Rend la macro dans la maison donnée. `noter(français, anglais)`, s'il est donné, reçoit
     chaque appel de t() (la ligne de définition de t() est complétée à la volée)."""
     etats, tablettes = maison
@@ -268,7 +269,8 @@ def _rendre(maison, noter=None, **variables):
     # custom_templates/ de HA : la macro s'importe par son nom de fichier.
     env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols", "jinja2.ext.do"],
                                         undefined=jinja2.StrictUndefined, bytecode_cache=_JINJA,
-                                        loader=jinja2.FunctionLoader(lambda nom: texte if nom == MODELE.name else None))
+                                        loader=jinja2.FunctionLoader(lambda nom: texte if nom == MODELE.name else (
+                                            TABLETTE.read_text(encoding="utf-8") if nom == TABLETTE.name else None)))
     env.globals["noter"] = noter or (lambda *_: "")
     env.globals.update(
         states=etats, state_attr=etats.attr, is_state=lambda e, s: etats(e) == s,
@@ -279,6 +281,9 @@ def _rendre(maison, noter=None, **variables):
         device_entities=lambda appareil: [e for e, a in appareils.items() if a == appareil],
     )
     env.tests.update(match=lambda v, motif, ignorecase=False: bool(re.match(motif, str(v), re.I if ignorecase else 0)))
+    env.filters["states"] = etats  # map('states') de tab5_prefixe()
+    if appel:
+        return env.from_string(appel).render()
     if not variables:
         return env.from_string(verifier.APPEL_TABLEAU).render()  # la ligne de la doc, telle quelle
     arguments = ", ".join(f"{nom}={valeur!r}" for nom, valeur in variables.items())
@@ -419,6 +424,49 @@ def test_deux_tablettes_celle_qui_est_connectee():
     references = verifier.entites_du_tableau(tableau)
     assert any(e.startswith("binary_sensor.") and "_deux_" in e for e in references)
     assert not any(APPAREIL in e and "_deux_" not in e for e in references)
+
+
+APPEL_ECRANS = "{% from 'tab5_dashboard.jinja' import tab5_dashboard_ecrans %}{{ tab5_dashboard_ecrans('dashboard-tab5') }}"
+
+
+def _deux_ecrans():
+    """Le Tab5 (préfixe « tab5 ») et un second écran (préfixe « tab5_deux »), connectés."""
+    tablettes = {**_tablette("tab5"), **_tablette("deux")}
+    for nom, prefixe in (("tab5", "tab5"), ("deux", "tab5_deux")):
+        for e in tablettes[nom]:
+            if re.search(r"_(prefixe_des_actions|action_prefix)$", e.entity_id):
+                e.state = prefixe
+    return tablettes
+
+
+def test_un_jeu_de_vues_par_ecran():
+    """Plusieurs écrans (ADR-0071, lot 2) : Tab5, Réglages et Santé pour chacun, sur un
+    chemin tiré du préfixe de ses actions ; chaque jeu ne montre que ses entités et ses
+    boutons mènent à ses propres sous-vues."""
+    tableau = yaml.safe_load(_rendre(_maison(_deux_ecrans()), appel=APPEL_ECRANS))
+    chemins = [v["path"] for v in tableau["views"]]
+    assert sorted(chemins) == sorted(["tab5", "tab5-reglages", "tab5-sante",
+                                      "tab5-deux", "tab5-deux-reglages", "tab5-deux-sante"])
+    for chemin, autre in (("tab5", "_deux_"), ("tab5-deux", None)):
+        vues = [v for v in tableau["views"] if v["path"] in (chemin, f"{chemin}-reglages", f"{chemin}-sante")]
+        references = verifier.entites_du_tableau({"views": vues})
+        cles = [e for e in references if APPAREIL in e]
+        assert cles, chemin
+        if autre:
+            assert not any(autre in e for e in cles), f"{chemin} montre l'autre écran"
+        else:
+            assert all("_deux_" in e or e.startswith("assist_satellite.") or "_deux" in e for e in cles), chemin
+        texte = yaml.safe_dump(vues, allow_unicode=True)
+        navigations = set(re.findall(r"/dashboard-tab5/([a-z0-9-]+)", texte))
+        assert navigations <= {chemin, f"{chemin}-reglages", f"{chemin}-sante"}, navigations
+    # Toujours des vues valides pour le job « HA neuf » : chaque vue a un titre.
+    assert all(v.get("title") for v in tableau["views"])
+
+
+def test_un_seul_ecran_comme_avant():
+    """Un seul écran : tab5_dashboard_ecrans() rend exactement tab5_dashboard()."""
+    maison = _maison(_tablette())
+    assert _rendre(maison, appel=APPEL_ECRANS) == _rendre(maison)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
