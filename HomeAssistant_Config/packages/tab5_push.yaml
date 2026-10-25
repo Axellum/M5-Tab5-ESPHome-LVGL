@@ -27,8 +27,9 @@
 #       (ADR-0024) : l'agenda de travail, le téléphone et le capteur de présence se
 #       choisissent dans HA (listes « Tab5 · … », packages/tab5_reglages.yaml), la
 #       source des prévisions aussi (« Tab5 · forecast source »), et les
-#       entités de la tablette sont trouvées par le modèle de l'appareil
-#       (sensor.tab5_tablette), quel que soit son nom.
+#       entités de chaque écran sont trouvées par le modèle de l'appareil
+#       (tab5_cibles / tab5_entite, custom_templates/tab5_tablette.jinja, ADR-0071),
+#       quel que soit son nom.
 #       Modèles importés : custom_templates/tab5_calendar.jinja (jour travaillé des
 #       prévisions jours, depuis le 07/10/2026) et tab5_alertes.jinja (historique des
 #       alertes), à déployer et recharger AVANT ce package, sinon ces payloads ne se
@@ -590,8 +591,10 @@ automation:
     # déclencheurs du capteur, et n'éteignait plus qu'au départ du téléphone.
     # Capteur et téléphone choisis dans HA (« Tab5 · presence sensor »,
     # « Tab5 · phone ») et lus sur leurs miroirs (tab5_reglages.yaml) : sans choix,
-    # les miroirs restent indisponibles et rien ne se déclenche. L'écran et « réveil en
-    # cours » sont ceux de la tablette détectée (sensor.tab5_tablette).
+    # les miroirs restent indisponibles et rien ne se déclenche. Chaque écran connecté
+    # (tab5_cibles, ADR-0071), avec son propre « réveil en cours » : avant le 25/10/2026,
+    # seul celui de sensor.tab5_tablette suivait la présence. Le capteur et le téléphone
+    # sont encore ceux de la maison.
     description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
     mode: queued
     max: 5
@@ -616,35 +619,44 @@ automation:
         to: 'not_home'
         id: "eteindre"
     variables:
-      ecran: "{{ state_attr('sensor.tab5_tablette', 'ecran') or '' }}"
-      reveil: "{{ state_attr('sensor.tab5_tablette', 'reveil_en_cours') or '' }}"
+      appareils: >-
+        {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
+        {{ tab5_cibles('').split(',') | select | list }}
     conditions:
       - condition: template
-        value_template: "{{ ecran != '' }}"
+        value_template: "{{ appareils | count > 0 }}"
     actions:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: "allumer"
-              - condition: template
-                value_template: "{{ is_state(ecran, 'off') }}"
-            sequence:
-              - action: light.turn_on
-                target:
-                  entity_id: "{{ ecran }}"
-          - conditions:
-              - condition: trigger
-                id: "eteindre"
-              - condition: template
-                value_template: "{{ is_state(ecran, 'on') }}"
-              # Ne jamais éteindre un réveil qui sonne (le firmware rallume l'écran
-              # à la sonnerie).
-              - condition: template
-                value_template: "{{ not is_state(reveil, 'on') }}"
-            sequence:
-              - action: light.turn_off
-                target:
-                  entity_id: "{{ ecran }}"
+      - repeat:
+          for_each: "{{ appareils }}"
+          sequence:
+            - variables:
+                ecran: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(repeat.item, 'ecran') }}"
+                reveil: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(repeat.item, 'reveil_en_cours') }}"
+            - choose:
+                - conditions:
+                    - condition: trigger
+                      id: "allumer"
+                    - condition: template
+                      value_template: "{{ ecran != '' and is_state(ecran, 'off') }}"
+                  sequence:
+                    - action: light.turn_on
+                      continue_on_error: true
+                      target:
+                        entity_id: "{{ ecran }}"
+                - conditions:
+                    - condition: trigger
+                      id: "eteindre"
+                    - condition: template
+                      value_template: "{{ ecran != '' and is_state(ecran, 'on') }}"
+                    # Ne jamais éteindre un réveil qui sonne (le firmware rallume l'écran
+                    # à la sonnerie) : le réveil de CET écran.
+                    - condition: template
+                      value_template: "{{ not is_state(reveil, 'on') }}"
+                  sequence:
+                    - action: light.turn_off
+                      continue_on_error: true
+                      target:
+                        entity_id: "{{ ecran }}"
 
 
   - id: tab5_theme_jour_nuit
@@ -682,21 +694,29 @@ automation:
       - condition: template
         value_template: "{{ states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
     actions:
-      # Comme « Tab5 — night screen off » : la liaison et l'interrupteur détecté
-      # (sensor.tab5_tablette, mis à jour par le même tab5_connected) peuvent arriver un peu
-      # après ; on les attend 10 s, sinon on s'arrête sans erreur (la connexion suivante
-      # relancera ce passage). Une liaison qui tombe pendant l'appel n'arrête rien.
-      - wait_template: &theme_pret >-
-          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-          {{ tab5_connectee() == 'oui' and (state_attr('sensor.tab5_tablette', 'theme_nuit') or '') != '' }}
-        timeout: "00:00:10"
-        continue_on_timeout: true
-      - condition: template
-        value_template: *theme_pret
-      - action: "switch.turn_{{ 'on' if is_state('sun.sun', 'below_horizon') else 'off' }}"
-        continue_on_error: true
-        target:
-          entity_id: "{{ state_attr('sensor.tab5_tablette', 'theme_nuit') }}"
+      # Chaque écran (ADR-0071) : sur tab5_connected, celui qui vient de se connecter ;
+      # sinon chaque écran connecté (tab5_cibles). Comme « Tab5 — night screen off » : sa
+      # liaison et son interrupteur peuvent arriver un peu après l'événement ; on les attend
+      # 10 s, sinon on passe sans erreur (la connexion suivante relancera ce passage). Une
+      # liaison qui tombe pendant l'appel n'arrête rien.
+      - repeat:
+          for_each: &cibles_connexion >-
+            {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
+            {{ tab5_cibles(trigger.event.data.device_id | default('', true) if trigger.id == 'tab5_connected' else '').split(',') | select | list }}
+          sequence:
+            - wait_template: &theme_pret >-
+                {%- from 'tab5_tablette.jinja' import tab5_entite -%}
+                {{ is_state(tab5_entite(repeat.item, 'api'), 'on') and tab5_entite(repeat.item, 'theme_nuit') != '' }}
+              timeout: "00:00:10"
+              continue_on_timeout: true
+            - if:
+                - condition: template
+                  value_template: *theme_pret
+              then:
+                - action: "switch.turn_{{ 'on' if is_state('sun.sun', 'below_horizon') else 'off' }}"
+                  continue_on_error: true
+                  target:
+                    entity_id: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(repeat.item, 'theme_nuit') }}"
 
   - id: tab5_extinction_nuit
     alias: "Tab5 — night screen off"
@@ -732,21 +752,27 @@ automation:
           {%- from 'tab5_tablette.jinja' import tab5_origine -%}
           {{ tab5_origine(trigger) == 'oui' }}
     actions:
-      # Sur tab5_connected, la liaison et l'interrupteur détecté (sensor.tab5_tablette, mis à
-      # jour par le même événement) peuvent arriver un peu après : on les attend 10 s ; sinon
-      # on s'arrête sans erreur, la connexion suivante relancera ce passage.
-      - wait_template: &nuit_prete >-
-          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-          {{ tab5_connectee() == 'oui' and (state_attr('sensor.tab5_tablette', 'nuit_ecran') or '') != '' }}
-        timeout: "00:00:10"
-        continue_on_timeout: true
-      - condition: template
-        value_template: *nuit_prete
-      # Une liaison qui tombe pendant l'appel n'arrête rien : la prochaine connexion renvoie l'état.
-      - action: "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
-        continue_on_error: true
-        target:
-          entity_id: "{{ state_attr('sensor.tab5_tablette', 'nuit_ecran') }}"
+      # Chaque écran (ADR-0071), comme le thème : sur tab5_connected, celui qui vient de se
+      # connecter, sinon chaque écran connecté. Sa liaison et son interrupteur peuvent
+      # arriver un peu après l'événement : on les attend 10 s ; sinon on passe sans erreur,
+      # la connexion suivante relancera ce passage. Une liaison qui tombe pendant l'appel
+      # n'arrête rien : la prochaine connexion renvoie l'état.
+      - repeat:
+          for_each: *cibles_connexion
+          sequence:
+            - wait_template: &nuit_prete >-
+                {%- from 'tab5_tablette.jinja' import tab5_entite -%}
+                {{ is_state(tab5_entite(repeat.item, 'api'), 'on') and tab5_entite(repeat.item, 'nuit_ecran') != '' }}
+              timeout: "00:00:10"
+              continue_on_timeout: true
+            - if:
+                - condition: template
+                  value_template: *nuit_prete
+              then:
+                - action: "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
+                  continue_on_error: true
+                  target:
+                    entity_id: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(repeat.item, 'nuit_ecran') }}"
 
 script:
   # ─────────────────────────────────────────────────────────────────────────────

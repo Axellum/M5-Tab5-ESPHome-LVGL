@@ -577,7 +577,10 @@ template:
       api: >-
         {%- from 'tab5_tablette.jinja' import tab5_api -%}
         {{ tab5_api() }}
-      entites: "{{ device_entities(device_id(api)) if api else [] }}"
+      appareil: "{{ device_id(api) if api else '' }}"
+    # Gardé pour vos automatisations et les fichiers HA d'avant : il ne suit qu'UN
+    # écran. Les packages lisent chaque écran par tab5_cibles() / tab5_entite()
+    # (custom_templates/tab5_tablette.jinja, ADR-0071), et la liste est « Tab5 · screens ».
     sensor:
       - name: "Tab5 · tablet"
         unique_id: tab5_tablette
@@ -587,37 +590,60 @@ template:
         state: "{{ (device_attr(api, 'name_by_user') or device_attr(api, 'name')) if api else 'absente' }}"
         attributes:
           api: "{{ api }}"
-          ecran: "{{ entites | select('match', 'light[.].*_display_backlight(_[0-9]+)?$') | first | default('') }}"
-          reveil_en_cours: "{{ entites | select('match', 'binary_sensor[.].*_(reveil_en_cours|alarm_ringing)(_[0-9]+)?$') | first | default('') }}"
-          raison: "{{ entites | select('match', 'sensor[.].*_(raison_du_redemarrage|restart_reason)(_[0-9]+)?$') | first | default('') }}"
-          demarrage: "{{ entites | select('match', 'sensor[.].*_uptime(_[0-9]+)?$') | first | default('') }}"
-          micro: "{{ entites | select('match', 'switch[.].*_wake_word_active(_[0-9]+)?$') | first | default('') }}"
-          satellite: "{{ entites | select('match', 'assist_satellite[.]') | first | default('') }}"
-          rdv_avant: "{{ entites | select('match', 'number[.].*_(rendez_vous_annoncer_avant|appointments_announce_before)(_[0-9]+)?$') | first | default('') }}"
-          # Select « Langue » du firmware (Français, English, Deutsch…) : langue du
-          # briefing parlé du réveil (tab5_reveil.yaml).
-          langue: "{{ entites | select('match', 'select[.].*_(langue|language)(_[0-9]+)?$') | first | default('') }}"
-          # Interrupteur « Nuit (thème auto) » du firmware : mode Auto du thème de
-          # l'écran, réglé d'après le soleil (tab5_push.yaml, « Tab5 — day/night theme »).
-          theme_nuit: "{{ entites | select('match', 'switch[.].*_(nuit_theme_auto|night_auto_theme)(_[0-9]+)?$') | first | default('') }}"
-          # Interrupteur « Tab5 Nuit (écran éteint) » du firmware (16/10/2026), tenu d'après
-          # « Tab5 · night screen off » (tab5_push.yaml, « Tab5 — night screen off »).
-          nuit_ecran: "{{ entites | select('match', 'switch[.].*_(nuit_ecran_eteint|night_screen_off)(_[0-9]+)?$') | first | default('') }}"
-          # Select de pipeline de la tablette (AssistPipelineSelect de HA : ses options
-          # commencent par « preferred ») ; depuis HA 2025.10, un second (« Assistant
-          # 2 ») a les mêmes options : le premier par ordre d'entity_id, comme
-          # tab5_evenements.yaml.
-          pipeline: >-
-            {%- set ns = namespace(l=[]) -%}
-            {%- for e in entites | select('match', 'select[.]') -%}
-              {%- if 'preferred' in (state_attr(e, 'options') or []) -%}
-                {%- set ns.l = ns.l + [e] -%}
-              {%- endif -%}
-            {%- endfor -%}
-            {{ (ns.l | sort | first) if ns.l else '' }}
+          ecran: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'ecran') }}"
+          reveil_en_cours: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'reveil_en_cours') }}"
+          raison: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'raison') }}"
+          demarrage: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'demarrage') }}"
+          micro: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'micro') }}"
+          satellite: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'satellite') }}"
+          rdv_avant: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'rdv_avant') }}"
+          # Select « Langue » du firmware (Français, English, Deutsch…).
+          langue: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'langue') }}"
+          # Interrupteur « Nuit (thème auto) » du firmware.
+          theme_nuit: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'theme_nuit') }}"
+          # Interrupteur « Tab5 Nuit (écran éteint) » du firmware (16/10/2026).
+          nuit_ecran: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'nuit_ecran') }}"
+          # Select de pipeline de la tablette (AssistPipelineSelect de HA) : ses options
+          # donnent la liste « Tab5 · chat pipeline » (les pipelines sont ceux de la maison).
+          pipeline: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'pipeline') }}"
           # Version du projet lue dans le sw_version de l'appareil (« 3.2.2 (ESPHome
           # 2026.9.0) » depuis la 3.0) : premier mot, ou '' si illisible.
           version: "{{ ((device_attr(api, 'sw_version') or '') | string).split(' ') | first if api else '' }}"
+
+  # Registre des écrans (ADR-0071, 25/10/2026) : chaque appareil de modèle tab5-ha-hmi,
+  # connecté ou non. État : combien sont connectés. Attributs : `ecrans`, une ligne par
+  # écran (appareil, nom, préfixe des actions, connectée, depuis, version), et
+  # `hors_ligne`, les device_id des écrans hors ligne (alerte de santé (c), une par
+  # écran). Modèle ordinaire, pas à déclencheurs : il parcourt states.binary_sensor,
+  # HA le recalcule donc à chaque changement de ce domaine (au plus une fois par
+  # seconde), et un écran qu'on ajoute y entre sans rechargement.
+  - sensor:
+      - name: "Tab5 · screens"
+        unique_id: tab5_ecrans
+        default_entity_id: sensor.tab5_ecrans
+        icon: mdi:tablet-cellphone
+        state: >-
+          {{ states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$')
+             | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | map('device_attr', 'model')
+             | select('eq', 'tab5-ha-hmi') | list | count }}
+        attributes:
+          ecrans: >-
+            {%- from 'tab5_tablette.jinja' import tab5_prefixe, tab5_nom -%}
+            {%- set ns = namespace(l=[], vus=[]) -%}
+            {%- for s in states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') | sort(attribute='entity_id') -%}
+              {%- set d = device_id(s.entity_id) -%}
+              {%- if d and d not in ns.vus and device_attr(d, 'model') == 'tab5-ha-hmi' -%}
+                {%- set ns.vus = ns.vus + [d] -%}
+                {%- set ns.l = ns.l + [{'appareil': d, 'nom': tab5_nom(d), 'prefixe': tab5_prefixe(d),
+                      'connectee': s.state == 'on', 'depuis': s.last_changed.isoformat(),
+                      'version': ((device_attr(d, 'sw_version') or '') | string).split(' ') | first}] -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ ns.l }}
+          hors_ligne: >-
+            {{ states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$')
+               | rejectattr('state', 'eq', 'on') | map(attribute='entity_id') | map('device_id') | select
+               | select('is_device_attr', 'model', 'tab5-ha-hmi') | unique | sort | list }}
 
   # ──────────────────────────────────────────────────────────────────────────
   # 3. Miroirs, pour les déclencheurs des automatisations
@@ -666,8 +692,9 @@ template:
         availability: >-
           {%- set e = states('select.tab5_telephone') -%}
           {{ (e.startswith('device_tracker.') or e.startswith('person.')) and has_value(e) }}
-      # Heure du dernier démarrage de la tablette (« Tab5 Uptime ») : garde (b) de
-      # packages/tab5_health.yaml, qui lit ses from_state / to_state. État recopié
+      # Heure du dernier démarrage de la tablette (« Tab5 Uptime ») d'UN écran, celui
+      # de sensor.tab5_tablette : « Tab5 · continuous uptime » de tab5_health.yaml (la
+      # garde (b) lit chaque écran depuis le 25/10/2026, ADR-0071). État recopié
       # tel quel, `unavailable` compris, avec l'attribut `source` : indisponible SANS
       # `source` = pas encore de tablette dans HA (son arrivée n'est pas un
       # redémarrage) ; `unavailable` AVEC `source` = tablette perdue par HA.
@@ -680,13 +707,31 @@ template:
         attributes:
           source: "{{ state_attr('sensor.tab5_tablette', 'demarrage') or '' }}"
       # « Rendez-vous : annoncer avant » (number du firmware) : packages/tab5_reveil.yaml
-      # republie les rendez-vous quand il change.
+      # republie les rendez-vous quand il change. Plusieurs écrans (ADR-0071) : la valeur
+      # de chacun, séparées par « · » (« 15 » avec un seul écran, comme avant) ; un
+      # écran hors ligne n'y figure pas.
       - name: "Tab5 · appointments: announce before"
         unique_id: tab5_rendez_vous_annoncer_avant
         default_entity_id: sensor.tab5_rendez_vous_annoncer_avant
         icon: mdi:timer-outline
-        state: "{{ states(state_attr('sensor.tab5_tablette', 'rdv_avant') or '') }}"
-        availability: "{{ has_value(state_attr('sensor.tab5_tablette', 'rdv_avant') or '') }}"
+        state: >-
+          {%- from 'tab5_tablette.jinja' import tab5_cibles, tab5_entite -%}
+          {%- set ns = namespace(l=[]) -%}
+          {%- for d in tab5_cibles('').split(',') | select -%}
+            {%- set e = tab5_entite(d, 'rdv_avant') -%}
+            {%- if e and has_value(e) -%}
+              {%- set ns.l = ns.l + [states(e)] -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ ns.l | join(' · ') }}
+        availability: >-
+          {%- from 'tab5_tablette.jinja' import tab5_cibles, tab5_entite -%}
+          {%- set ns = namespace(n=0) -%}
+          {%- for d in tab5_cibles('').split(',') | select -%}
+            {%- set e = tab5_entite(d, 'rdv_avant') -%}
+            {%- set ns.n = ns.n + (1 if e and has_value(e) else 0) -%}
+          {%- endfor -%}
+          {{ ns.n > 0 }}
       # Nombre d'agendas choisis ; attributs = signature (état, début, fin, titre de
       # l'événement en cours ou suivant) : ils changent quand un événement commence,
       # finit, ou que le suivant change, comme l'état d'un agenda. `travail` relance

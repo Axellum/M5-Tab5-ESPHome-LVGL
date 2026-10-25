@@ -147,9 +147,14 @@ automation:
               # Package tab5_reveil.yaml absent : rien (avant, « Action … not found »).
               - if: "{{ states['script.tab5_reveil_annonce'] is not none }}"
                 then:
+                  # L'écran qui sonne : le briefing parle sur son satellite, dans sa
+                  # langue (ADR-0071).
                   - action: script.turn_on
                     target:
                       entity_id: script.tab5_reveil_annonce
+                    data:
+                      variables:
+                        appareil: "{{ trigger.event.data.device_id }}"
 
           - alias: "Annonce sur le satellite de la tablette (rendez-vous, volet arrêté)"
             conditions:

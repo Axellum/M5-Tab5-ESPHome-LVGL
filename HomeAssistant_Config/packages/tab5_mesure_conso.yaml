@@ -65,12 +65,21 @@ script:
         default: false
         selector:
           boolean:
+      # Plusieurs écrans (ADR-0071) : celui à mesurer ; vide, celui de tab5_api(),
+      # comme avant.
+      appareil:
+        name: "Screen · écran"
+        description: "The screen to measure; empty: the connected one (with several screens, pick it)."
+        selector:
+          device:
+            filter:
+              model: tab5-ha-hmi
     sequence:
       # ── Tablette et entités ──
       - variables:
           api: >-
             {%- from 'tab5_tablette.jinja' import tab5_api -%}
-            {{ tab5_api() }}
+            {{ tab5_api(appareil | default('', true) | string) }}
           ent: "{{ device_entities(device_id(api)) if api else [] }}"
           e_conso: "{{ ent | select('match', 'sensor[.].*_(tab5_consommation|power_draw)(_[0-9]+)?$') | first | default('') }}"
           e_sur_batterie: "{{ ent | select('match', 'binary_sensor[.].*_(tab5_sur_batterie|on_battery)(_[0-9]+)?$') | first | default('') }}"

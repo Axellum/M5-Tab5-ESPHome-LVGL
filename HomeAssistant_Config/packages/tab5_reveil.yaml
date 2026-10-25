@@ -34,7 +34,7 @@
 #       de repos » est actif. À régler AVANT de recharger les automatisations lors
 #       d'une migration depuis les placeholders.
 # @i18n Le briefing parlé suit la langue de l'écran (select « Langue » du firmware,
-#       trouvé par sensor.tab5_tablette) : français, anglais, allemand, néerlandais,
+#       qui sonne, trouvé par tab5_entite()) : français, anglais, allemand, néerlandais,
 #       espagnol, italien, turc ; une langue inconnue parle français. Le texte français est
 #       celui d'avant le 29/09/2026, mot pour mot. Heures dites « 8 heures 05 » en
 #       français, « 8:05 » ailleurs (les voix lisent ce format comme une heure).
@@ -149,7 +149,18 @@ script:
       si switch.tab5_alarm_tts est actif. Appelé PAR LE FIRMWARE
       (script.tab5_alarm_speak), jamais par un déclencheur horaire : c'est le
       Tab5 qui sait à quelle heure il a sonné.
-    mode: single
+    # Un passage par écran qui sonne (ADR-0071) : deux réveils à la même heure parlent
+    # chacun sur leur écran ; en single, le second était abandonné.
+    mode: parallel
+    max: 5
+    fields:
+      appareil:
+        name: "Device · appareil"
+        description: "device_id de l'écran qui sonne (tab5_evenements.yaml) ; vide : le premier écran connecté"
+        selector:
+          device:
+            filter:
+              model: tab5-ha-hmi
     sequence:
       - variables: *agendas_reveil
       - variables:
@@ -158,9 +169,14 @@ script:
           # exactement ce que la tablette a utilisé pour décider.
           debut_jour: "{{ now().strftime('%Y-%m-%d 00:00:00') }}"
           fin_jour: "{{ (now() + timedelta(days=1)).strftime('%Y-%m-%d 00:00:00') }}"
-          # Satellite vocal de la tablette détectée (sensor.tab5_tablette), quel que
-          # soit le nom de l'appareil dans HA.
-          satellite: "{{ state_attr('sensor.tab5_tablette', 'satellite') or '' }}"
+          # L'écran qui sonne (son device_id, passé par tab5_evenements.yaml) ; appelé à
+          # la main sans appareil : le premier écran connecté (tab5_cibles).
+          ecran_reveil: >-
+            {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
+            {{ (tab5_cibles(appareil | default('', true)).split(',') | select | list + [''])[0] }}
+          # Satellite vocal de cet écran, quel que soit le nom de l'appareil dans HA.
+          satellite: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(ecran_reveil, 'satellite') }}"
+          langue_reveil: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(ecran_reveil, 'langue') }}"
       - condition: template
         value_template: "{{ satellite != '' }}"
       - if:
@@ -181,7 +197,7 @@ script:
           entity_id: "{{ satellite }}"
           message: >-
             {% from 'tab5_calendar.jinja' import ev_start, ev_end, ev_summary %}
-            {% set langue = states(state_attr('sensor.tab5_tablette', 'langue') or '') %}
+            {% set langue = states(langue_reveil) %}
             {# Phrases par langue : bonjour + heure, travail (début, fin), repos,
                rendez-vous (titre, heure), température. Une langue inconnue parle
                français (@i18n). #}

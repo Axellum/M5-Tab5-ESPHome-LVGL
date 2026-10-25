@@ -28,7 +28,7 @@ HEALTH = REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml"
 
 CAPTEUR = "binary_sensor.tab5_fichiers_ha_en_retard"
 VERSION_FICHIERS = "sensor.tab5_version_des_fichiers_ha"
-TABLETTE = "sensor.tab5_tablette"
+ECRANS = "sensor.tab5_ecrans"  # registre des écrans (ADR-0071)
 
 
 # ─── Version par défaut du firmware ──────────────────────────────────────────
@@ -88,7 +88,7 @@ def _en_retard(fichiers, tablette):
     """État rendu du capteur (True = allumé), comme un binary_sensor de modèle : le texte
     « True » allume, le reste éteint."""
     etats = {VERSION_FICHIERS: fichiers}
-    attributs = {TABLETTE: {"version": tablette}}
+    attributs = {ECRANS: {"ecrans": [{"nom": "Tab5", "version": tablette}]}}
     rendu = _environnement(etats, attributs).from_string(_capteur()["state"]).render().strip()
     assert rendu in ("True", "False"), f"rendu inattendu : {rendu!r}"
     return rendu == "True"
@@ -105,7 +105,7 @@ def _en_retard(fichiers, tablette):
     ("3.4.0", "3.3.1", False),       # fichiers plus récents : ce capteur ne le dit pas
     ("dépôt", "3.4.0", False),       # fichiers copiés depuis le dépôt : jamais comparés
     ("unknown", "3.4.0", False),     # capteur de version absent
-    ("3.3.0", "", False),            # tablette introuvable (sensor.tab5_tablette)
+    ("3.3.0", "", False),            # version de l'écran absente
     ("3.3.0", None, False),
     ("3.3.0", "inconnue", False),    # version illisible
 ], ids=lambda v: str(v))
@@ -113,11 +113,25 @@ def test_fichiers_ha_en_retard(fichiers, tablette, allume):
     assert _en_retard(fichiers, tablette) is allume
 
 
-def test_attributs_du_capteur():
+def _rendus(ecrans):
+    env = _environnement({VERSION_FICHIERS: "3.3.0"}, {ECRANS: {"ecrans": ecrans}})
     capteur = _capteur()
-    env = _environnement({VERSION_FICHIERS: "3.3.0"}, {TABLETTE: {"version": "3.4.0"}})
-    rendus = {nom: env.from_string(modele).render() for nom, modele in capteur["attributes"].items()}
-    assert rendus == {"fichiers": "3.3.0", "tablette": "3.4.0"}
+    etat = env.from_string(capteur["state"]).render().strip()
+    return etat, {nom: env.from_string(modele).render().strip() for nom, modele in capteur["attributes"].items()}
+
+
+def test_attributs_du_capteur():
+    assert _rendus([{"nom": "Tab5", "version": "3.4.0"}]) == ("True", {"fichiers": "3.3.0", "tablette": "3.4.0"})
+
+
+def test_plusieurs_ecrans():
+    """Allumé dès qu'un écran est plus récent que les fichiers (ADR-0071, 25/10/2026) ; avant,
+    seule la version de l'écran suivi par sensor.tab5_tablette comptait."""
+    etat, attributs = _rendus([{"nom": "Salon", "version": "3.3.1"}, {"nom": "Chambre", "version": "3.4.0"}])
+    assert etat == "True"
+    assert attributs["tablette"] == "Salon 3.3.1 · Chambre 3.4.0"
+    assert _rendus([{"nom": "Salon", "version": "3.3.1"}, {"nom": "Chambre", "version": "3.3.0"}])[0] == "False"
+    assert _rendus([]) == ("False", {"fichiers": "3.3.0", "tablette": ""})
 
 
 def test_notification_suit_le_capteur():
