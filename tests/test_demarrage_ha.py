@@ -73,10 +73,14 @@ def _rendre(modele, declencheur, liaison_depuis):
     env.globals.update(
         integration_entities=lambda domaine: [capteur] if domaine == "esphome" else [],
         device_attr=lambda e, nom: "tab5-ha-hmi" if nom == "model" else None,
+        device_id=lambda e: "appareil_tab5",
         is_state=lambda e, s: s == "on", states={capteur: etat}, now=lambda: maintenant,
     )
     env.tests["match"] = lambda v, motif: re.match(motif, str(v)) is not None
-    return env.from_string(modele).render(trigger={"id": declencheur}).strip() == "True"
+    trigger = {"id": declencheur}
+    if declencheur == "tab5_connected":  # la tablette qui a émis l'événement
+        trigger["event"] = {"data": {"device_id": "appareil_tab5"}}
+    return env.from_string(modele).render(trigger=trigger).strip() == "True"
 
 
 def test_la_garde_des_3_minutes_ne_vise_que_tab5_connected():
