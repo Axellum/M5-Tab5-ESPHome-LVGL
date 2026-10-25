@@ -98,4 +98,6 @@ def test_le_firmware_publie_garde_la_rotation_de_la_carte():
 def test_documente():
     for chemin in (("docs", "waveshare-7b.md"), ("docs", "installation", "settings.md")):
         texte = lire(*chemin)
-        assert texte.count("Sens de l'écran") >= 2, "/".join(chemin)  # EN et FR
+        # EN et FR, sous le nom que Home Assistant montre (« Sens de l'écran » avant la
+        # migration des entités, #540 ; le firmware garde ce nom-là).
+        assert texte.count("Screen direction") >= 2, "/".join(chemin)

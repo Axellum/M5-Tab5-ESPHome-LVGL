@@ -20,7 +20,7 @@ With the HACS integration, its setup assistant can create it for you from your H
 
 **One automation per tablet.** As soon as it is saved, the tablet receives your devices.
 
-**It worked if** the tiles at the bottom of the screen show your devices. The tablet's diagnostic sensor « Zones masquées » lists what is hidden: a slot you left empty, or an entity that does not exist.
+**It worked if** the tiles at the bottom of the screen show your devices. The tablet's diagnostic sensor « Hidden zones » lists what is hidden: a slot you left empty, or an entity that does not exist.
 
 ## The sections
 
@@ -78,7 +78,7 @@ Avec l'intégration HACS, son assistant de configuration peut la créer pour vou
 
 **Une automatisation par tablette.** Dès qu'elle est enregistrée, la tablette reçoit vos appareils.
 
-**C'est bon si** les tuiles du bas de l'écran montrent vos appareils. Le capteur de diagnostic « Zones masquées » de la tablette liste ce qui est masqué : un emplacement laissé vide, ou une entité qui n'existe pas.
+**C'est bon si** les tuiles du bas de l'écran montrent vos appareils. Le capteur de diagnostic « Hidden zones » de la tablette liste ce qui est masqué : un emplacement laissé vide, ou une entité qui n'existe pas.
 
 ## Les sections
 
