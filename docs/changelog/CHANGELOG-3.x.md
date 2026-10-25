@@ -1,10 +1,1060 @@
 # Changelog — versions 3.x (archive)
 
-Les versions 3.0.0 à 3.6.0 ont été archivées le 08/10/2026, après la 3.7.0, et la 3.7.0
-après la 3.8.0 : le [`CHANGELOG.md`](../../CHANGELOG.md) ne garde que `[Unreleased]` et la
-dernière version mineure. Les dates sont celles du merge dans `main`. Le texte des sections
-est inchangé, sauf les liens relatifs recalés pour ce dossier (`docs/…` → `../../docs/…`) :
-20 dans la 3.7.0, 15 dans les versions 3.0.0 à 3.6.0.
+Les versions 3.0.0 à 3.6.0 ont été archivées le 08/10/2026, après la 3.7.0, la 3.7.0
+après la 3.8.0, et les 3.8.0 et 3.8.1 le 25/10/2026, après la 3.9.0 : le
+[`CHANGELOG.md`](../../CHANGELOG.md) ne garde que `[Unreleased]` et la dernière version
+mineure. Les dates sont celles du merge dans `main`. Le texte des sections est inchangé, sauf
+les liens relatifs recalés pour ce dossier (`docs/…` → `../../docs/…`) : 29 dans les 3.8.0 et
+3.8.1, 20 dans la 3.7.0, 15 dans les versions 3.0.0 à 3.6.0.
+
+## [3.8.1] — 2026-10-11
+
+Version de sécurité et corrective : protection thermique anti-surchauffe et fiabilité de la détection batterie sans batterie physique.
+
+- **Ordre de mise à jour** :
+  - **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
+- **Sécurité thermique (anti-surchauffe)** (#457) :
+  - Verrou thermique autonome sur l'ESP32-P4 en C++ (`Tab5/socle/tab5_batterie.h`, `Tab5/ecran/tab5_batterie.cpp`) : si le SoC dépasse 55 °C ou subit une élévation brutale (+4 °C en <= 60 s avec CPU > 48 °C), coupure immédiate et verrouillage du chargeur (CHG_EN et Quick Charge) pendant au moins 15 minutes et jusqu'à refroidissement complet sous 44 °C.
+  - Surveillance accélérée de la température cœur `sys_core_temp` avec période ramenée à 10 s et filtrage dynamique vers Home Assistant (`Tab5/paquets/tab5-sensors-diagnostics.yaml`).
+- **Détection batterie sans batterie physique** (#457) :
+  - Rehaussement du seuil de présence batterie (`kBatterieSeuilV`) de 3,0 V à 5,5 V pour éviter les faux positifs dus aux tensions résiduelles/flottantes (3,29 V relevés) lorsque la tablette est alimentée sans batterie physique.
+- **Documentation et maintenance** (#456) :
+  - Archivage de la section 3.7.0 dans `docs/changelog/CHANGELOG-3.x.md`.
+
+## [3.8.0] — 2026-10-10
+
+De `v3.7.0` à aujourd'hui : soixante-dix-sept pull requests (#377 → #454, sans #398, fermée),
+dont quatre de pré-release (#380, #403, #406, #433) et trois de Dependabot (#396, #397, #399), et
+celle de la release. Quatre sont nées de la
+[discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (#379, #429,
+#444, #451) — merci à @husyildiz, pour son test de consommation et la capture de son tableau
+Énergie. Stable publiée trois jours après la 3.7.0, à la demande de l'auteur, au lieu des deux
+semaines habituelles entre deux stables ; vingt-deux de ces PR (#429, #434 → #454) sont arrivées
+après la [v3.8.0-rc.4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.4)
+et ne sont passées par aucune pré-release.
+- **Nouveaux popups** : **Musique**, un lecteur pour tout `media_player`, avec une mini-barre
+  « en lecture » sur l'accueil (#430, #436, [ADR-0050](../../docs/decisions/0050-music-player.md)) ;
+  **Caméras**, une image fixe par caméra, rangées par pièce, en mosaïque, téléchargées et décodées
+  hors de la boucle principale (#429, #439, #440, #446, #447, #449,
+  [ADR-0049](../../docs/decisions/0049-cameras-popup.md), [ADR-0057](../../docs/decisions/0057-cameras-rooms.md)) ;
+  **Suivi**, les courbes des capteurs choisis dans Home Assistant (#438,
+  [ADR-0054](../../docs/decisions/0054-tracked-sensors.md)) ; **Frigos et congélateurs**, normes, porte
+  mal fermée, alertes et, au niveau grave, une icône qui clignote sur l'horloge (#441,
+  [ADR-0055](../../docs/decisions/0055-fridge-freezer-monitoring.md)) ; **Serveur IA**, le tableau de
+  bord d'un serveur de LLM local (débit, VRAM, température du GPU, RAM, puissance) avec
+  Décharger, Réveiller (Wake-on-LAN) et Redémarrer (#450, #453,
+  [ADR-0059](../../docs/decisions/0059-local-llm-server-popup.md),
+  [ADR-0060](../../docs/decisions/0060-ai-server-actions.md)), alimenté par les nouveaux packages
+  `tab5_llm.yaml` (Ollama, llama.cpp, LM Studio, #448) et `tab5_serveur_ia.yaml`.
+- **Popups en pages**, une seule brique pour le glissé et les noms des pages
+  ([ADR-0046](../../docs/decisions/0046-popups-a-pages.md)) : Réglages en quatre pages, la console
+  système devient la page Système (#400) ; Lumières et Volets, une page par pièce (#424) ; Météo
+  en graphiques sur trois pages (#425, [ADR-0043](../../docs/decisions/0043-weather-popup.md)) ; Réveil
+  en cinq pages, réglé sur des rouleaux (#426) ; Température avec l'humidité, une page par pièce
+  (#422, [ADR-0047](../../docs/decisions/0047-room-climate-chart.md)) ; Énergie en quatre pages : flux,
+  soleil et prévision du jour apprise sur la maison, production, bilan avec revente et gains
+  (#451, [ADR-0058](../../docs/decisions/0058-energy-sun-forecast-balance.md)) ; télécommande : TV,
+  Apple TV, Freebox Player, une page chacune (#445, [ADR-0056](../../docs/decisions/0056-several-remotes.md)).
+- **Accueil au choix** : la zone à gauche de l'horloge montre le vocal, un graphique des 15
+  prochaines heures, un lecteur compact ou un capteur suivi (#431, #432, #438,
+  [ADR-0051](../../docs/decisions/0051-left-zone-choice.md)) ; l'horloge en trois zones et douze gestes
+  au choix dans le blueprint (#415, [ADR-0039](../../docs/decisions/0039-gestes-accueil.md)) ; jusqu'à
+  trois lignes de capteurs dans le panneau « Ok Nabu », défilement automatique ou fixe (#418,
+  [ADR-0041](../../docs/decisions/0041-ok-nabu-panel-scrolling.md)) ; tuiles météo en cellule pleine et
+  fond de l'horloge au choix (#443) ; mention « prévisions périmées » quand la météo n'arrive plus
+  (#395) ; lignes centrées, cadres et points ajustés (#419, #428).
+- **Roues et climat** : roue d'actions rapides à deux anneaux (#378) ; roue de navigation sur
+  l'appui long de la carte centrale, Musique et TV dans « Appareils » (#423, #434,
+  [ADR-0042](../../docs/decisions/0042-navigation-wheel.md)) ; roue de la clim au toucher de la
+  température de la pièce, et carrousel des clims (#414, #420,
+  [ADR-0038](../../docs/decisions/0038-climate-carousel.md),
+  [ADR-0048](../../docs/decisions/0048-climate-wheel-from-temperature.md)) ; le climat de chaque pièce
+  en mode HA : température, humidité, clim (#416, [ADR-0040](../../docs/decisions/0040-room-climate.md)) ;
+  « Son de la tablette » dans la liste de la tuile − / + (#379).
+- **Batterie et alimentation** : plus de souffle sans batterie (le chargeur ne charge plus dans le
+  vide), limite de charge à 80 %, consommation en W, batterie faible sur le téléphone (#387) ;
+  chargeur laissé éteint au démarrage quand le démarrage précédent n'a vu aucune batterie (#452) ;
+  mode de charge, niveau des animations et Wi-Fi éco (#421,
+  [ADR-0045](../../docs/decisions/0045-charging-animations-eco-wifi.md)) ; un test de consommation
+  lancé depuis Home Assistant (#405), `tools/mesure_conso.py` (#404) et une première mesure
+  publiée, page « Consommation » (#444).
+- **Plus fluide** : changer de thème ne fige plus l'écran 3,2 s (#383) ; le popup Caméras ne gèle
+  plus l'écran à chaque image (#439, #440).
+- **Home Assistant** : l'intégration HACS a un assistant de configuration qui part des pièces de
+  Home Assistant, puis propose la maison et les listes « Tab5 · … », en sept langues (#435, #437,
+  [ADR-0052](../../docs/decisions/0052-setup-assistant-rooms.md),
+  [ADR-0053](../../docs/decisions/0053-setup-assistant-home-lists.md)) ; trois défauts de l'intégration
+  corrigés (#390) ; repli automatique sur une autre météo quand la source choisie se tait (#393) ;
+  plus de garde-fou `is_primary_active`, qui pouvait figer l'écran sans erreur (#382) ;
+  statistiques de fiabilité au-delà de 7 jours (#413) ; chronologie du démarrage dans une entité
+  de diagnostic (#452).
+- **Solidité** (audits du 30/09 et du 07/10) : correctifs du firmware et de Home Assistant (#381,
+  #382) ; lecture des payloads de HA en C++ pur, testée sur PC et fuzzée, et ses défauts corrigés
+  (#411, #417) ; contrat HA ↔ firmware vérifié entre versions (#410) ; socle C++ commun, code des
+  tuiles, YAML et données des thèmes rangés, polices figées dans le dépôt (#386, #388, #389, #392,
+  #394) ; moteur des dames dans son module (#412) ; garde-fous, tests et CI (#385, #391, #427) ;
+  `Tab5/` rangé en sous-dossiers (#401) ; normes de style et CHANGELOG archivé (#402) ; page
+  d'installation sous CSP et SRI, `SHA256SUMS` et provenance des binaires (#409).
+- **Documentation** : photo et rendus du firmware dans le README et le site (#377) ; docs de
+  l'audit du 07/10 (#384) ; première installation : ordre, prérequis, dépannage (#407, #408) ;
+  mesures des caméras sur la tablette (#442) ; où choisir les capteurs suivis (#454) ; notices
+  Musique, Caméras, Suivi, Frigos, Serveur IA et page « Consommation ».
+
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
+
+**Ordre de mise à jour** (`python tools/contrat_api.py --matrice`, lu dans le code, pas essayé) :
+le firmware 3.7.0 avec les fichiers HA de la 3.8.0 est « cassé (6) » : six actions qu'il n'a pas
+(`tab5_maj_energie_soleil`, `tab5_maj_energie_bilan`, `tab5_maj_froid`, `tab5_maj_lecteur`,
+`tab5_maj_serveur_ia`, `tab5_maj_suivi`) sont refusées par Home Assistant et le script qui les
+appelle s'arrête ; le firmware 3.8.0 avec les fichiers HA de la 3.7.0 est « dégradé (11) » : il
+marche, mais les nouveaux popups restent vides, sans erreur. Même verdict depuis la v3.8.0-rc.4
+(canal bêta).
+
+### À faire en mettant à jour depuis la 3.7.0
+
+1. **Firmware d'abord** : entité « Firmware » dans Home Assistant. Avec l'intégration « Tab5 »
+   (HACS) : *Download* de la nouvelle version dans HACS et le redémarrage qu'il demande ;
+   l'intégration pose alors les fichiers, puis lance elle-même la mise à jour de la tablette
+   (option cochée par défaut). Dans ce cas les fichiers arrivent avant le firmware : jusqu'à la
+   fin de l'OTA, les six nouvelles poussées sont refusées.
+2. **Puis les fichiers Home Assistant**, à la main : remplacer les fichiers par ceux de
+   `tab5_home_assistant.zip` de cette version. D'abord `custom_templates/` (nouveaux :
+   `tab5_tablette.jinja`, `tab5_meteo.jinja`), puis **Outils de développement → YAML → Modèles
+   Jinja personnalisés** ; ensuite les packages, dont six nouveaux (`tab5_lecteur.yaml`,
+   `tab5_suivi.yaml`, `tab5_froid.yaml`, `tab5_llm.yaml`, `tab5_serveur_ia.yaml`,
+   `tab5_mesure_conso.yaml`), et le blueprint « Tab5 — emplacements » (le réimporter s'il a été
+   importé par son URL) ; recharger toute la configuration YAML. Le popup Serveur IA a besoin de
+   `tab5_llm.yaml` et de `tab5_serveur_ia.yaml`, recopiés après le firmware ; son bouton Réveiller
+   charge l'intégration Wake on LAN (`wake_on_lan:` dans `tab5_llm.yaml`) : redémarrer Home
+   Assistant si la clé n'était pas déjà dans `configuration.yaml` (l'intégration « Tab5 » la
+   charge sans redémarrage).
+3. **Ménage** : `input_boolean.is_primary_active` et les automatisations « Force Primary Active on
+   Boot » et « Tab5 Santé — is_primary_active OFF depuis 5 min » disparaissent ; si Home
+   Assistant les garde en « indisponible », les supprimer dans Paramètres → Entités. Le snippet
+   `tab5_alerts_dismissed_input_text.yaml` n'existe plus.
+4. **Quand vous voulez** : dans le blueprint, les nouvelles sections (« Zone à gauche de
+   l'horloge », « Panneau Ok Nabu », « Horloge et boutons du haut » et ses douze gestes,
+   « Caméras », les autres télécommandes, la température, l'humidité et la clim de chaque pièce,
+   les nouvelles entrées de l'énergie) ; les listes « Tab5 · lecteurs de musique », « Tab5 ·
+   capteurs suivis », « Tab5 · réfrigérateurs », « Tab5 · congélateurs », « Tab5 · type de
+   serveur IA » et les autres « Tab5 · serveur IA, … » ; les réglages de la tablette (Mode de
+   charge, Limite de charge, Animations, Wi-Fi éco, Fond de l'horloge) ; le tableau de bord à
+   refaire (étape 7 du guide), pour les nouvelles entités.
+
+### Mesures de la version
+
+- Taille, lue dans le journal de la CI (job `build-min` de `main` à `5bc4634`, ESPHome 2026.9.0,
+  la version des binaires publiés ; la publication recompile) : application 5 051 426 o (62,2 %
+  de 8 126 464 o), contre 4 836 246 o (59,5 %) pour la v3.8.0-rc.4 publiée. RAM statique :
+  239 834 o (53,8 %), contre 209 794 o (47,1 %) pour la rc.4 et 192 602 o (43,2 %) pour la 3.7.0.
+  Binaires OTA publiés (`st7123`) : 4 591 616 o pour la 3.7.0, 4 853 760 o pour la rc.4 ; celui
+  de la 3.8.0 n'existe qu'à la publication.
+- Mesuré sur la tablette pendant le développement (chiffres des entrées ci-dessous) : changer de
+  thème, prototype affiché en 0,44 à 0,51 s au lieu de 3,7 à 3,9 s (#383) ; Caméras, avec une
+  caméra 640 × 480, décodage matériel en 3 à 12 ms au lieu de 1,0 s et pire tour de boucle de la
+  minute à 217 ms au lieu de 1 020 ms (#440) ; sans batterie, plus de souffle une fois le chargeur
+  coupé (firmware de test, #387) ; tuiles météo en cellule pleine, essai validé (#443) ;
+  chronologie du démarrage, première version des repères, trois démarrages : expandeur à 7,2 s,
+  rétroéclairage à 21,4 s. Consommation mesurée par @husyildiz sur la rc.4 : 2,63 W écran à
+  100 %, 1,74 W à 50 %, 1,23 W écran éteint (#444).
+- La RAM interne libre et la durée d'une image n'ont pas été remesurées sur la tablette pour
+  cette version.
+- CI sur `main` à `5bc4634` : compilations requises vertes (dernière ESPHome, 2026.9.1, et
+  version minimale, 2026.9.0), job `python` vert (pytest, moteurs des jeux et parseurs sous ASan
+  et UBSan) ; intégration HACS et installation dans un Home Assistant neuf (2026.9.4 et 2026.8.3)
+  vertes. Rendu hors tablette et sanitizers : non finis à la rédaction, à lire sur ce commit.
+
+### Problèmes connus
+
+Ceux de la 3.7.0, et :
+- **Peu essayée sur la tablette** : stable trois jours après la 3.7.0, par choix de l'auteur, et
+  les vingt-deux PR d'après la rc.4 n'ont été dans aucune pré-release. Au merge, leur entrée
+  ci-dessous dit « non essayé » ou « non testé sur la tablette » pour : les popups Musique,
+  Suivi, Frigos, Serveur IA, Énergie en pages, Météo, Réveil, Lumières et Volets en pages,
+  Température avec l'humidité, Réglages en pages et leurs nouveaux réglages ; plusieurs
+  télécommandes ; les caméras par pièce et la mosaïque ; la zone à gauche de l'horloge ; la roue
+  à deux anneaux, la roue de navigation, la roue et le carrousel des clims ; le climat des
+  pièces ; le panneau Ok Nabu à lignes ; les gestes de l'horloge ; les repères fins de la
+  chronologie du démarrage et le chargeur éteint au démarrage.
+- **Mémoire** : la RAM statique passe de 192 602 o (3.7.0) à 239 834 o (+47 232 o, 53,8 %) ; ce
+  qu'il reste de RAM interne libre sur la tablette n'a pas été remesuré.
+- **Serveur IA** : seul un Ollama 0.30.6 a été lu en vrai, sans modèle chargé ; llama.cpp et
+  LM Studio n'ont jamais été interrogés ; aucune action (Décharger, Redémarrer) envoyée à un vrai
+  serveur, aucun paquet Wake-on-LAN envoyé ; le popup n'a jamais été ouvert sur la tablette. Les
+  seuils du GPU (80 et 90 °C) ne sont pas vérifiés selon les cartes. Ollama ne donne pas de débit
+  global en tokens/s, LM Studio ni VRAM ni débit hors d'une réponse : ces valeurs restent à
+  « — ».
+- **Énergie** : la courbe « ciel clair » apprise et la prévision du jour n'ont jamais été
+  confrontées à une vraie installation solaire.
+- **Caméras** : un seul essai réel, avec une caméra 640 × 480, avant les pièces et la mosaïque ;
+  jamais plusieurs vraies caméras.
+- **Musique** : la pochette est téléchargée en http ; https n'est pas pris en charge.
+- **Batterie** : la limite de charge n'a pas été essayée avec une batterie (chargeur arrêté et USB
+  branché, on ne sait pas encore si la tablette tourne sur l'USB ou sur sa batterie) ; la charge
+  « Rapide » n'est pas mesurée ; le gain et la latence du Wi-Fi éco ne sont pas vérifiés. Une
+  batterie neuve ou totalement plate posée sur une tablette qui n'en avait pas est vue absente :
+  allumer « Tab5 Batterie montée ».
+- **Fiabilité** : les compteurs de redémarrages n'ont pas été vérifiés sur un vrai redémarrage.
+- Les images de la notice des popups Lumières et Volets montrent encore l'ancien popup.
+- Les textes en allemand, néerlandais, espagnol, italien et turc (écran, tableau de bord,
+  intégration) sont écrits par une IA, pas encore relus.
+
+### Pré-releases
+
+Tirées de cette version, sur le canal bêta :
+[v3.8.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.1)
+le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
+de la tuile − / + (#379).
+[v3.8.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.2)
+le 08/10/2026 : plus de souffle sans batterie, limite de charge et consommation (#387), changer de
+thème ne fige plus l'écran (#383), Réglages en quatre pages (#400), repli météo et mention
+« prévisions périmées » (#393, #395), correctifs et lots de l'audit du 07/10 (#381, #382, #384 à
+#386, #388 à #394), rangement de `Tab5/` (#401, #402). Fichiers Home Assistant à recopier avant le
+firmware.
+[v3.8.0-rc.3](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.3)
+le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batterie toutes les 2 s
+pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
+firmware.
+[v3.8.0-rc.4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.4)
+le 10/10/2026 : zone à gauche de l'horloge au choix — vocal, graphique des prochaines heures ou
+lecteur compact (#431, #432), popup Musique pour tout lecteur multimédia (#430), popups Météo en
+graphiques (#425), Réveil (#426), Lumières et Volets (#424) en pages, roue de navigation (#423) et
+roue de la clim (#420), carrousel des clims (#414), climat de la pièce (#416), historique avec
+l'humidité (#422), gestes de l'accueil au choix (#415), panneau Ok Nabu à lignes (#418), Réglages :
+charge, animations, Wi-Fi éco (#421), parseurs testés et fuzzés (#411, #417), corrections de
+l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
+
+### 2026-10-10 — Popup « Serveur IA » : décharger le modèle, réveiller le PC, redémarrer le service (ADR-0060)
+
+- **Demande d'Axel** (lot 3 de l'audit « Tab5 et LLM locaux » du 10/10) : agir sur le serveur d'IA depuis son popup.
+- **Trois boutons** dans le bandeau, à droite du modèle (`serveur_ia_action.yaml`, un `!include` par bouton) : « Décharger » (Ollama, LM Studio ; grisé sans modèle chargé), « Réveiller » (Wake-on-LAN ; grisé quand le serveur répond), « Redémarrer » (le script ou le bouton choisi dans HA). Chacun n'apparaît que réglé dans Home Assistant ; rien de réglé, le popup reste comme avant. Décharger et redémarrer demandent un second tap (« Confirmer ? » en orange, 4 s) ; réveiller part tout de suite ; « Envoyé » en vert 5 s, sans autre envoi.
+- **Événements seulement** (ADR-0025) : la tablette émet `esphome.tab5_serveur_ia_action` avec un code (`decharger`, `reveiller`, `redemarrer`), jamais un nom de modèle, une adresse ou une entité. `tab5_evenements.yaml` ne laisse passer que ces trois codes vers `script.tab5_serveur_ia_action`.
+- **`packages/tab5_llm.yaml`** : `sensor.tab5_serveur_ia_actions` (ce qui est offert, actif ou grisé, à un seul endroit), une adresse MAC « Tab5 · adresse MAC du serveur IA » (vide par défaut), une liste « Tab5 · serveur IA, redémarrage » (scripts et boutons, sans ceux du projet ni de la tablette, « Aucun » par défaut), `rest_command.tab5_serveur_ia_envoyer` (POST JSON, 10 s), le script (mode single, ne fait que ce qui est offert à cet instant, une action toutes les 5 s au plus, relevé relancé tout de suite après) et la clé `wake_on_lan:` (charge l'intégration Wake on LAN ; une clé déjà dans `configuration.yaml` ne fait pas doublon). llama.cpp : pas de « Décharger » (son `/models/unload` n'existe qu'en mode routeur).
+- **Payload `tab5_maj_serveur_ia` : un 14e champ `actions`** (`code` actif, `-code` grisé), ajouté par `packages/tab5_serveur_ia.yaml`. Compatible dans les deux sens : un ancien firmware ignore le champ, un ancien package n'en envoie pas (aucun bouton). Lu par `serveur_ia_lire()` (masques de bits, codes inconnus ignorés), testé sur PC et fuzzé.
+- Tableau de bord HA (deux réglages en sept langues), notice et guide `docs/serveur-ia.md` (section « Actions depuis la tablette »), rendu hors tablette (`serveur-ia-actions`, `serveur-ia-confirmer`), démo (actions dans deux scènes), `tests/test_serveur_ia_actions.py` (actions offertes contre un calcul à part, script rejoué : seules quatre actions permises, rien sans action offerte et active, corps JSON, cadence). 4 textes d'écran en six langues, glyphes MDI `eject` et `restart` dans `mdi_font_32`. Contrat 1.2.0 inchangé (déjà mineur depuis v3.8.0-rc.4), un événement de plus.
+- **Ordre de mise à jour : le firmware d'abord, puis les packages HA** (`tab5_llm.yaml`, `tab5_serveur_ia.yaml`, `tab5_evenements.yaml`, puis recharger le YAML). Wake on LAN : rien de plus si `wake_on_lan:` est déjà dans `configuration.yaml` ; sinon un redémarrage de HA, ou l'intégration « Tab5 », qui le charge à chaud.
+- **Non vérifié** : aucune action envoyée à un vrai serveur (l'Ollama de l'auteur seulement lu), aucun paquet magique envoyé, pas essayé sur la tablette.
+### 2026-10-10 — Popup Énergie en pages : flux, soleil et prévision du jour apprise sur la maison, bilan avec revente et gains (ADR-0058)
+
+- **Demande d'Axel**, après la capture du tableau Énergie de HA envoyée par husyildiz ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : un popup plus graphique et plus lisible, la course du soleil, les heures de forte production, la météo des prochaines heures, la consommation face à la production, la revente et les gains.
+- **Écran** (`tab5_energie.cpp`, `energie_popup.yaml`, nouveau `energie_flux_noeud.yaml`) : quatre pages par la brique commune (ADR-0046), ouvertes sur la première qui a des données. **Flux** : cercles solaire, maison, réseau, batterie, traits aussi épais que la puissance, anneau de la maison partagé entre soleil et réseau, sans animation. **Aujourd'hui** : arc du soleil du lever au coucher, production heure par heure, prévision en contour, courbe « ciel clair » apprise, bande du meilleur créneau, produit / prévu aujourd'hui et demain. **Production** : la page d'avant, inchangée. **Bilan** : production consommée sur place / vendue, consommation solaire / réseau, taux d'autoconsommation, vente, achat et gains par heure, jour ou mois. Lecture des deux nouveaux payloads dans `tab5_parse.*` (testée, fuzzée) ; 31 textes en six langues ; glyphe `piggy-bank`.
+- **Home Assistant** (`packages/tab5_energie.yaml`, blueprint « Tab5 — emplacements ») : lever, midi et coucher par `sun.sun` ; courbe « ciel clair » = pour chaque heure, la 2e meilleure production des 30 derniers jours (statistiques `hour`), qui prend en compte l'orientation et les ombres sans réglage ; prévision = cette courbe × (1 − 0,75 × nébulosité^3,4) avec la météo horaire déjà utilisée (nébulosité, sinon par condition), ou mise à l'échelle d'une prévision externe (Forecast.Solar, Solcast…) ; meilleur créneau de 3 h jusqu'au coucher ; bilan et gains par les compteurs d'achat et de vente et les prix. Nouvelles entrées facultatives : prévision du jour et de demain, énergie achetée et vendue, prix d'achat et de revente (nombre ou capteur), monnaie. Rien n'est poussé popup fermé.
+- **Contrat** : deux actions ajoutées, `tab5_maj_energie_soleil` et `tab5_maj_energie_bilan` (version mineure) ; HA les appelle avec `continue_on_error`, un firmware plus ancien garde le popup d'avant. Démo (journée de juin), rendu hors tablette (`energie-flux`, `energie-aujourdhui`, `energie-bilan`), graines du fuzz des services, `tests/test_energie.py` (modèles Jinja contre un calcul Python indépendant).
+- Non essayé sur la tablette, ni sur une vraie installation solaire : la justesse de la courbe apprise et de la prévision reste à confirmer avec des données réelles.
+
+### 2026-10-10 — Capteurs suivis : où les choisir, dit dans la notice et dans le tableau de bord
+
+- **Demande d'Axel** : il n'a pas trouvé où choisir son capteur de bourse. La notice « Suivi » dit maintenant le chemin exact (Paramètres → Appareils et services → Entités, « capteurs suivis », entité `select.tab5_capteurs_suivis`, ou la vue Réglages du tableau de bord) et comment cocher (« ○ » devient « ✓ »). Le tableau de bord (`custom_templates/tab5_dashboard.jinja`) ajoute, sous les tuiles de la section Maison, un texte court en sept langues avec un lien vers la notice, quand la liste existe. **Documentation et texte de tableau de bord seulement** : aucun changement de firmware ni de contrat ; le tableau de bord déjà posé dans HA ne le montre qu'après régénération.
+
+### 2026-10-10 — Repères plus fins de la chronologie du démarrage
+
+- **Demande d'Axel**, après la première mesure sur la tablette (3 démarrages : `expandeur` à 7,2 s, `retro` à 21,4 s) : découper les ~7 s d'avant l'expandeur et les ~14 s d'après. 25 étapes au lieu de 7, en deux textes de moins de 255 caractères (limite d'un état de HA) : **Tab5 Chronologie du démarrage** jusqu'à la fin de `setup()` (`ctor`, `objets`, `setup`, `bus`, `expandeur`, `avant1s`, `apres1s`, `p600`, `donnees`, `lvgl`, `wifiinit`, `reseau`, `ecoute`, `fin`, `i18n`, `zones`) et la nouvelle **Tab5 Chronologie du démarrage (suite)** (`ordo`, `retro`, `dessin`, `image`, `tard`, `wifi`, `api`, `fin600`, `chargeur`).
+- **Horloge** : `esp_timer` (depuis l'initialisation d'ESP-IDF) au lieu de `millis()`, qui compte les ticks de FreeRTOS depuis le lancement de l'ordonnanceur ; `ordo` donne l'écart entre les deux (une valeur de la première version = valeur − `ordo`).
+- **Séquence `on_boot`** (accord d'Axel du 10/10/2026, marques seulement) : marques avant et après la lambda du `delay(1000)`, laissée telle quelle ; au début et à la fin de l'`on_boot` 600 ; au début, après la langue, après les zones et à la fin de l'`on_boot` -100 ; et, en fin de liste, sept entrées qui ne font que marquer, à des priorités libres (2000, 801, 500, 399, 249, 199, 99), pour borner les bandes de priorité de `setup()`. Les priorités et l'ordre des trois entrées d'origine ne changent pas (`tests/test_chronologie_demarrage.py`). Autres marques : un constructeur C++ global (`ctor`) et un style posé sur aucun widget, créé avant eux (`objets`, `tab5-styles.yaml`).
+- Limite : l'écran, le tactile, les codecs audio et les capteurs ont la même priorité (600) ; sans changer de priorité, `donnees` les mesure ensemble. Lecture de chaque repère : `docs/performance.md`, « Chronologie du démarrage ». Tableau de bord de HA : une carte de plus (`custom_templates/tab5_dashboard.jinja` à recopier, sept langues). **Non testé sur la tablette.**
+
+### 2026-10-10 — Chargeur éteint au démarrage quand le démarrage précédent n'a vu aucune batterie
+
+- **Demande d'Axel** : sans batterie, les 30 s de chargeur allumé au démarrage (réveil d'une batterie en protection, comme M5Unified) chargeaient dans le vide (8,39 V lus) et ajoutaient un pic de consommation au pire moment. `charge_enable` passe de `ALWAYS_ON` à `ALWAYS_OFF` ; le premier pas de l'interval du chargeur (fin de `setup()`) décide d'après la mémoire du démarrage précédent, gardée en NVS (globals `tab5_batterie_memoire` : 0 inconnue, 1 aucune, 2 vue ; écrite seulement quand elle change). **Aucune** : chargeur laissé coupé, sonde tout de suite. **Vue** ou **inconnue** (premier démarrage après la mise à jour) : réveil de 30 s puis sonde, comme avant, mais à partir de la fin de `setup()` au lieu du début (~7 s plus tard).
+- **Risque documenté** : une batterie neuve ou totalement plate posée sur une tablette qui n'en avait pas lit moins de 3,0 V et est vue absente. Allumer **Tab5 Batterie montée** la réveille désormais **tout de suite** (30 s), puis une fois par heure tant qu'elle n'est pas vue (avant : la première heure d'attente).
+- Logique pure dans `Tab5/socle/tab5_batterie.h` (`MemoireBatterie`, `chargeur_demarrer()`, `batterie_memoire_suivante()`), cas dans `tools/test_alarm_clock.cpp` ; `tests/test_batterie.py` relit le câblage. Chronologie du démarrage : étape `chargeur` (premier allumage ; « - » sans batterie). Docs : `docs/hardware.md` (Battery / Batterie), `docs/troubleshooting.md`. Contrat HA ↔ firmware inchangé. **Non testé sur la tablette.**
+
+### 2026-10-10 — Chronologie du démarrage dans Home Assistant
+
+- **Demande d'Axel** : la tablette, sur chargeur secteur, n'a pas de journal série ; on ne savait ni ce qui occupe les ~5 s de `setup()` ni quand le rétroéclairage s'allume. Nouvelle entité de diagnostic **Tab5 Chronologie du démarrage** : `expandeur=…; retro=…; dessin=…; image=…; wifi=…; api=…`, en ms depuis le lancement du minuteur d'ESP-IDF (`Tab5/socle/tab5_demarrage.h`, testé sur PC par `tools/test_tab5_socle.cpp`). Marques posées sur l'alimentation USB (setup des composants matériels, avant l'attente de 1 s), la première écriture du rétroéclairage, le premier dessin LVGL et la première image, le Wi-Fi et l'API ; publiée à partir de la première image, jamais pendant `setup()`. **Aucun changement de comportement** : la séquence `on_boot` (ADR-0005) n'est pas touchée. Lecture : `docs/performance.md`, « Chronologie du démarrage ». Tableau de bord de HA : une carte de plus sous « État » (page Santé, `custom_templates/tab5_dashboard.jinja` à recopier, sept langues). **Non testé sur la tablette.**
+
+### 2026-10-10 — Popup « Serveur IA » : le tableau de bord d'un serveur de LLM local (ADR-0059)
+
+- **Demande d'Axel** (lot 2 de l'audit « Tab5 et LLM locaux » du 10/10, audits 2 et 4) : une vue en direct du serveur d'IA de la maison sur la tablette, plus rapide que la tendance du popup Suivi.
+- **Nouveau popup « Serveur IA »** (`tab5_serveur_ia.cpp`, `serveur_ia_popup.yaml`, `serveur_ia_carte.yaml`, chrome partagé) : un bandeau (pastille en ligne / hors ligne, état, nom du serveur, modèle chargé coupé par « … »), la carte des **tokens par seconde** (grand chiffre, courbe lissée des 24 dernières poussées gardée par la tablette, requêtes en cours et en file) et quatre cartes : **VRAM** utilisée / totale avec une barre, **température du GPU** colorée selon le niveau décidé par Home Assistant, **RAM** en % avec une barre, **puissance** en W. Une valeur inconnue s'écrit « — », jamais un 0 inventé. Rien n'est repeint tant que le popup est fermé. Pas encore de boutons (lot 3 : leur place est gardée dans le bandeau).
+- Ouvert par « Aller à l'écran → Serveur IA » (option ajoutée à la fin), le geste `serveur_ia` (blueprint, fin de la liste) et la roue de navigation (Agenda ▸ Serveur IA), **seulement une fois qu'un serveur a été poussé**.
+- **Nouvelle action `tab5_maj_serveur_ia`** (`payload` : « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance »), lue par `serveur_ia_lire()` (`tab5_parse`, section 14), testée sur PC (`tools/test_parse.cpp`) et fuzzée (`fuzz_parse.cpp`, `fuzz_services.py`).
+- **Nouveau package `packages/tab5_serveur_ia.yaml`** (rien en dur, ADR-0024) : dix listes « Tab5 · serveur IA, … » (« Aucun » par défaut, chaque liste ne propose que les capteurs qui conviennent ; capteurs de `tab5_llm.yaml`, Glances, System Monitor, une prise mesurée…), le payload assemblé par Home Assistant (unités converties en Go base 1024, °C, W ; arrondis contre le bruit ; seuils du GPU 80 et 90 °C à un seul endroit, **non vérifiés par GPU**), poussé à chaque changement avec **deux secondes au moins** entre deux poussées, et tout de suite à la connexion, à « MAJ Écran », au changement d'une liste et au démarrage de HA. Tableau de bord HA du Tab5 : les dix listes dans « Maison » (sept langues).
+- Démo (16 services, un serveur par scène), rendu hors tablette (`serveur-ia`, `serveur-ia-hors-ligne`, `serveur-ia-vide`), notice `docs/notice/ai-server.md`, 15 textes d'écran en six langues, glyphes MDI `server`, `speedometer`, `memory`, `expansion-card` et « — » dans `roboto_55_b`. Contrat 1.2.0 (mineure, déjà comptée). **Ordre de mise à jour : le firmware d'abord**, puis `packages/tab5_serveur_ia.yaml` et le blueprint. Non essayé sur la tablette.
+
+### 2026-10-10 — Popup Caméras : la colonne des pièces suit le changement de thème
+
+- **Correctif** des lots 1 et 2 (ADR-0057) : popup ouvert, un changement de thème laissait la puce de la pièce montrée et le texte des puces dans les couleurs de l'ancien thème (`choix_peindre()` les écrit en style local). `cameras_rejouer_theme()`, appelée par `theme_rejouer_ui()`, les repeint. Vu par le rendu « clair » (bascule à chaud ≠ démarrage à froid sur `cameras` et `cameras-piece-hors-ligne`). **Non testé sur la tablette.**
+
+### 2026-10-10 — Serveur IA local : capteurs Ollama, llama.cpp et LM Studio dans Home Assistant, sans firmware
+
+- **Demande d'Axel** (lot 0 de l'audit « Tab5 et LLM locaux » du 10/10) : superviser un serveur d'inférence local depuis Home Assistant et mettre ses chiffres dans le popup Suivi existant (ADR-0054), sans toucher au firmware.
+- **Nouveau package `packages/tab5_llm.yaml`** (rien en dur, ADR-0024) : « Tab5 · type de serveur IA · AI server type » (Aucun par défaut / Ollama / llama.cpp / LM Studio) et « Tab5 · adresse du serveur IA · AI server address » ; avec « Aucun » ou sans adresse, **aucune requête**. Un capteur à déclencheurs (`sensor.tab5_serveur_ia_releve`) interroge le serveur toutes les 30 s par `rest_command.tab5_serveur_ia` (GET, 5 s au plus) : Ollama `/api/ps` ; llama.cpp `/health`, `/props`, `/metrics` (avec `--metrics`), `/slots` ; LM Studio `/api/v1/models` (0.4 et plus). Capteurs : en ligne, modèle(s) chargé(s), et trois mesures à `state_class: measurement` proposées dans « Tab5 · capteurs suivis » — VRAM utilisée (Ollama), vitesse de génération en tokens/s (llama.cpp, écart des compteurs entre deux relevés), requêtes en cours (llama.cpp). Ce qu'un serveur ne donne pas reste indisponible : **Ollama n'a pas de compteur global de tokens/s**, LM Studio ni VRAM ni débit hors d'une réponse. Aucun capteur matériel : température et VRAM du GPU, RAM, puissance viennent de Glances ou de System Monitor.
+- Tableau de bord HA du Tab5 : les deux réglages dans « Maison » (sept langues). Nouvelle page `docs/serveur-ia.md` (EN/FR, menu « Utiliser la tablette »), dont la limite du Suivi (une poussée toutes les cinq minutes au plus, une tendance). `HomeAssistant_Config/README.md`, `docs/README.md`, cartographie.
+- **Tests** : `tests/test_serveur_ia.py` rend les vrais modèles Jinja du package sur des réponses simulées des trois serveurs (formes des docs officielles) et les compare à un calcul Python indépendant ; mêmes modèles rendus par le moteur de modèles du HA d'Axel (lecture seule). **Seul Ollama a été lu en vrai** (`/api/ps` d'un Ollama 0.30.6, aucun modèle chargé) ; **llama.cpp et LM Studio non testés contre un vrai serveur.** Contrat HA ↔ firmware inchangé. Rien à faire sur la tablette ; package à recopier dans Home Assistant.
+
+### 2026-10-10 — Popup Caméras : la mosaïque (ADR-0057, lot 2)
+
+- **Suite de la demande d'Axel** (plusieurs caméras dans plusieurs pièces). **Non testé sur la tablette ni avec de vraies caméras.**
+- **Mosaïque** dès deux caméras dans la pièce choisie (ou « Toutes ») : le cadre en quatre cases de 476 × 266 (`cameras_vignette.yaml` ×4), quatre caméras par page (deux au milieu, trois avec la troisième centrée en bas, ou 2 × 2) ; au-delà, le glissé change de page et les pastilles comptent les pages. Chaque case : le nom de la caméra dans une pastille de verre, sa petite image, « Chargement... » ou « Hors ligne depuis … » (image atténuée). **Tap sur une case** : la caméra en grand (la vue du lot 1) ; **tap sur l'image** : retour à la mosaïque, sur la page de cette caméra. La vue est gardée en NVS avec la pièce et la caméra.
+- **Vignettes demandées petites** (`width=480&height=270`) et montrées « couvrantes » : recadrées sans transformation quand elles tiennent presque (une caméra 1080p arrive à 480 × 270), réduites juste assez sinon.
+- **Toujours une image à la fois** : en mosaïque, les cases de la page à tour de rôle (d'abord celles sans image), chacune toutes les 10 s ; rien pour les autres pages. Chaque caméra garde sa dernière grande image et sa dernière vignette dans le même budget de 8 Mio. Le chargeur ne réutilise plus un tampon deux fois trop grand (une grande image rendue ne porte plus une vignette).
+- Deux textes d'écran en sept langues (« Toutes les caméras », « Touchez une image pour l'agrandir »). Test `tests/test_cameras_popup.py` : autant de puces, de cases et de pastilles dans le YAML que de constantes dans le C++. Rendu : `cameras` (mosaïque), `cameras-mosaique-page-2`, `cameras-plein-ecran`, `cameras-piece-hors-ligne`. Docs : ADR-0057 (lot 2), notice Caméras, `docs/screens.md`, cartographie.
+
+### 2026-10-10 — Popup Caméras : plusieurs caméras dans plusieurs pièces (ADR-0057, lot 1)
+
+- **Demande d'Axel** (« fais comme tu le vois ») : gérer plusieurs caméras dans plusieurs pièces, intuitif, complet, propre, beau et léger. **Non testé sur la tablette ni avec plusieurs vraies caméras.**
+- **La pièce vient de Home Assistant, sans réglage** : le blueprint « Tab5 — emplacements » ajoute à chaque caméra sa pièce (`area_name` : celle de l'entité, sinon de son appareil) et, si elle est `unavailable`, l'heure depuis laquelle (`last_changed`). Format « nom|image|pièce|depuis », **16 caméras** au plus (8 avant). Même action, mêmes variables : `contrat/contrat.yaml` inchangé (1.2.0, pas encore publiée). Rétrocompatible dans les deux sens : un firmware d'avant lit « nom|image » et ignore la suite ; ce firmware lit « nom|image » d'un blueprint d'avant comme des caméras sans pièce.
+- **Colonne des pièces** (à partir de deux pièces ; `cameras_puce.yaml` ×17) : « Toutes », une puce par pièce avec son nombre de caméras, « Autres » pour les caméras sans pièce ; défilante au-delà de huit. Le cadre de l'image passe contre le bord droit pour lui laisser 238 px (un nom de pièce entier). Avec une seule pièce : pas de colonne, image centrée comme avant. Le glissé et les pastilles ne parcourent que la pièce choisie (brique des popups à pages, ADR-0046). Sous l'image, « Pièce · Caméra ». Pièce et caméra **gardées en NVS** (par une empreinte de leur nom).
+- **La dernière image de chaque caméra est gardée** tant que le popup est ouvert (8 Mio au plus, jamais sous 6 Mio de PSRAM libre ; la plus anciennement vue part d'abord) : revenir sur une caméra la montre tout de suite. Le chargeur **donne** son tampon décodé à l'écran au lieu d'échanger deux tampons. Les voisines de la caméra montrée sont chargées une fois entre deux images : un glissé tombe sur une image.
+- **Hors ligne** : une caméra que HA dit indisponible n'est pas demandée ; « Hors ligne depuis 14:32 » (ou « … depuis Lun 14:32 », « … depuis le 3 Oct ») au milieu du cadre, sur sa dernière image atténuée. Deux échecs de suite disent la même chose. Chaque caméra a son propre compte d'échecs et son attente (10 s, 30 s, 60 s) : une caméra en panne ne retient plus le tour des autres.
+- **Lecture du payload** en C++ pur (`cameras_lire()` : rang de la pièce de chaque caméra, pièce vide en dernier ; `tools/test_parse.cpp`, invariants dans le fuzzeur `tools/fuzz/fuzz_parse.cpp`) ; réponse du blueprint rendue par `tests/test_cameras_blueprint.py` (pièces, hors ligne, séparateurs, seize au plus, lisible par un firmware d'avant). Hors tablette, le bouchon du chargeur rend une mire calculée (une teinte par caméra) : le rendu montre la mise en page avec des images (`cameras`, `cameras-piece-hors-ligne`).
+- Cinq textes d'écran en sept langues (« Toutes », « Autres », trois « Hors ligne depuis … »). Docs : ADR-0057 (et une note dans l'ADR-0049), notice Caméras (EN/FR), `docs/screens.md`, `docs/architecture.md`, `Tab5/README.md` (table des services), `HomeAssistant_Config/README.md`, cartographie. **Blueprint à recopier** dans Home Assistant pour les pièces ; le firmware marche aussi avec l'ancien.
+
+### 2026-10-10 — Popup télécommande : plusieurs télécommandes (TV, Apple TV, Freebox Player), une page chacune (ADR-0056)
+
+- **Demande d'Axel** : la télécommande à l'écran pour la TV Samsung, l'Apple TV et le Freebox Player, dans le même popup, plus belle et au moins aussi pratique.
+- **Côté Home Assistant** (aucune entité dans le firmware, ADR-0025) : nouvelle entrée « Autres télécommandes · Other remotes » du blueprint « Tab5 — emplacements » (`telecommandes_autres`, plusieurs `remote`) ; la liste = celle de la TV puis les autres, sans doublon, quatre au plus, poussée avec tous les états (clé `telecommandes|écran|nom|…` de `tab5_maj_emplacements` : `boitier` pour l'intégration Apple TV, `tv` sinon ; nom de l'appareil sans la pièce ni la parenthèse finale). Les branches « Télécommande : … » envoient chaque touche à la télécommande de la page (`tv`, `tv1`, `tv2`, `tv3`) et la traduisent pour un boîtier (`telecommande_apple_tv` : `select`, `menu`, `top_menu`, `play_pause`, `skip_backward`… ; ni muet ni source chez pyatv) ; Marche / Arrêt d'un boîtier = les commandes `turn_on` / `turn_off` selon son lecteur (`remote.turn_on` d'Apple TV ne fait que connecter HA). L'assistant de l'intégration propose les autres télécommandes quand il a trouvé celle de la TV et qu'il y en a trois au plus.
+- **Écran** (`tv_remote_popup.yaml` refait, `tv_touche.yaml`, `Tab5/ecran/tab5_telecommande.cpp`, `Tab5/paquets/tab5-telecommande.yaml`) : les noms des télécommandes en haut et le glissement gauche / droite (brique commune, ADR-0046 ; rien avec une seule) ; zone principale au pixel (Marche / Arrêt, Source ou Stop, Menu ; pavé en disque de 400 px avec OK ; Lecture, Pause, Retour, Accueil à droite du pavé ; volume) et rangée basse : applications pour la TV, rangée de lecture pour un boîtier (Précédent, Reculer, Lecture / Pause, Avancer, Suivant). Touches au moins aussi grandes qu'avant (Muet 150 × 100 au lieu de 60 px de haut, lecture 258 × 100). L'écran TV est proposé aussi sans la TV du blueprint quand HA a poussé des télécommandes.
+- **Rétrocompatible** : la première télécommande garde l'emplacement `tv` ; un blueprint plus ancien (sans la clé) garde la page unique d'avant, un firmware plus ancien ignore la clé et commande la TV. Contrat inchangé (1.2.0) : aucune action ni variable ajoutée.
+- 6 textes d'écran en six langues ; glyphes MDI `rewind`, `fast-forward`, `play-pause` et `volume-high` (`mdi_font_45`) ; `tests/test_telecommandes.py` (codes, emplacements, traductions, clé rendue et aiguillage par les vrais modèles du blueprint) ; `telecommandes_lire()` testée (`tools/test_parse.cpp`) et fuzzée. Non essayé sur la tablette ni sur les vrais appareils.
+
+### 2026-10-10 — Tuiles météo en cellule pleine et fond de l'horloge au choix
+
+- **Demande d'Axel** (essai validé sur la tablette) : les tuiles de prévisions prennent la même cellule que les tuiles des pièces — une carte pleine de 230 × 275 px, sans les deux onglets en saillie du jour et de la température ; le nom du jour et les températures s'écrivent directement sur la carte (`forecast_day_body.yaml` pleine hauteur, `forecast_day_title_tab.yaml` et `forecast_day_temp_tab.yaml` sans fond ni relief). L'icône météo, les épaules et les appuis ne bougent pas.
+- **Fond de la tuile de l'horloge au choix** : interrupteur « Tab5 Fond de l'horloge » (`tab5-ha-controls.yaml`, éteint par défaut, gardé en mémoire, appliqué sans redémarrage par `horloge_fond_ui()`), réglé depuis Réglages ▸ Apparence (Oui / Non à droite de « Clair ou sombre », qui passe en demi-largeur, `REGLAGE_HORLOGE_FOND`). Sans fond, la tuile garde sa bordure.
+- Une entrée de plus dans le tableau de bord HA (`tab5_dashboard.jinja`, traduite) ; le texte « Fond de l'horloge » en six langues. Aucun changement du contrat HA ↔ firmware.
+
+### 2026-10-10 — Première mesure de consommation du Tab5 : page « Consommation »
+
+- **Demande d'Axel** : mettre en doc les chiffres du test de husyildiz (rc.4, discussion #278) avec une analyse, la consommation annuelle et ce qu'on peut en tirer.
+- Nouvelle page `docs/consumption.md` (FR/EN, menu « Comprendre le projet ») : 2,63 W à 100 %, 1,74 W à 50 %, 1,23 W écran éteint ; le thème (0,02 W) et Okay Nabu / haut-parleur (0,05 W chacun) ne changent rien ; l'économie d'énergie revient à son plafond de 50 % ; kWh par an ; pistes (extinction auto sur batterie, mesure à la prise). Le « 23,7 Wh » et les « 9 h » du script de test sont signalés comme trop hauts (capacité nominale 14,8 Wh). Aucune autre tablette n'est chiffrée : non mesuré, méthode donnée.
+- `docs/hardware.md` et `docs/performance.md` ne disent plus « jamais mesurée ». Documentation seule.
+
+### 2026-10-10 — Réfrigérateurs et congélateurs : normes, porte mal fermée, popup « Froid » et icône qui clignote sur l'horloge (ADR-0055)
+
+- **Demande d'Axel** : suivre le frigo et le congélateur — les déclarer dans les réglages, contrôler la température par rapport aux normes, repérer une montée (porte mal fermée), voir les 24 dernières heures, les alertes habituelles de la carte centrale et, pour un problème grave seulement, une icône qui clignote dans le coin de l'horloge ; un popup de gestion avec la courbe et les incidents.
+- **Côté Home Assistant** (rien en dur, ADR-0024) : deux listes à choix multiples « Tab5 · réfrigérateurs · fridges » et « Tab5 · congélateurs · freezers » (`packages/tab5_reglages.yaml` : capteurs de température à statistiques, quatre appareils au plus en tout, un capteur choisi dans une liste absent de l'autre) ; nouveau package `packages/tab5_froid.yaml` : `script.tab5_froid_calculer` décide du niveau (0 conforme, 1 attention, 2 grave), de la cause et de sa durée, avec **les seuils à un seul endroit** (variable `seuils`, commentée) — réfrigérateur 0 à 5 °C, attention si la moyenne de 15 min sort de la norme, grave au-dessus de 8 °C pendant 30 min ou à 10 °C ; congélateur -18 °C au plus, attention au-dessus de -15 °C, grave au-dessus de -12 °C pendant 30 min ou à -10 °C ; montée de 2 / 4 °C depuis le plus bas des 30 dernières minutes = « porte ouverte ? », encore là après 20 min sans redescendre = « porte mal fermée » ; 30 min sans mesure = « capteur muet ». État gardé dans `sensor.tab5_froid` (modèle à déclencheur, restauré, mis à jour par l'événement `tab5_froid_bilan`), dernier incident terminé compris. Calcul au changement d'un capteur (une minute au plus entre deux), toutes les cinq minutes, au changement d'une liste, à la connexion, à « MAJ Écran » et au démarrage de HA.
+- **Alertes** : source « froid » dans `custom_templates/tab5_alertes.jinja` (un id par appareil, Orange en attention, Rouge au niveau grave, libellé codé `@froid:` composé par la tablette dans sa langue : « Frigo cuisine : porte mal fermée, 9.1 °C »), abonnement « Tab5 · alertes : réfrigérateurs et congélateurs » (`packages/tab5_alerts.yaml`, tableau de bord de la tablette).
+- **Icône `fridge-alert`** dans le coin haut droit de l'horloge (`btn_froid_alerte`, rôle `ERROR`), seulement au niveau grave : clignote sans fondu (un `lv_timer` de 500 ms créé une fois, en pause quand elle est cachée, allumée fixe pendant que le popup est ouvert) ; un tap ouvre le popup.
+- **Popup « Froid »** titré « Frigos et congélateurs » (`froid_popup.yaml`, `froid_carte.yaml` ×4, `Tab5/ecran/tab5_froid.cpp`) : chrome partagé (ADR-0009), une ligne du registre (ADR-0013, 26 fenêtres sur 32), `Ecran::FROID` (option « Froid » à la fin de « Aller à l'écran », code de geste `froid` à la fin de `kCodesGestes`, index 27, proposé par le blueprint), et **« Frigos » au bout de la famille Agenda de la roue de navigation** (Appareils et le premier anneau sont pleins ; proposé sauf si HA dit qu'aucun appareil n'est déclaré). Une carte par appareil : icône réfrigérateur ou flocon, nom, température et statut colorés par niveau, extrêmes des 24 h et norme, courbe des 24 h entre les pointillés de la norme, dernier incident. Titre et mot de la roue : « Frigos », pas « Froid », dont la traduction est déjà « Cool » (mode d'une clim).
+- **Contrat** : nouvelle action `tab5_maj_froid` (`payload` : « nom|type|valeur|niveau|cause|depuis|min|max|bas|haut|points|icause|idebut|iduree|imax;… »), lue en C++ pur par `froid_lire()` (`tab5_parse.*`, section 12 ; cas dans `tools/test_parse.cpp`, fuzzée) ; `contrat/contrat.yaml` reste en 1.2.0 (déjà une mineure depuis la dernière version publiée, `contrat_api.py --semver` : « version suffisante »). **Ordre de mise à jour : le firmware d'abord**, puis `packages/tab5_reglages.yaml`, `packages/tab5_froid.yaml`, `packages/tab5_alerts.yaml`, `custom_templates/tab5_alertes.jinja`, `custom_templates/tab5_dashboard.jinja` et le blueprint « Tab5 — emplacements » (geste « Froid »). Fichiers HA avant le firmware : la poussée échoue sans rien arrêter, et le libellé des alertes s'affiche brut (`@froid:…`) jusqu'au firmware.
+- 37 textes d'écran en six langues ; glyphes MDI `fridge` et `fridge-alert` ; `tests/test_froid.py` rend les vrais modèles Jinja du package appel après appel et les compare à un calcul Python indépendant (seuils, porte, capteur muet, incident, °F) ; rendu hors tablette : `froid-vide`, `froid`, `accueil-froid` (non comparé : l'icône clignote). Non essayé sur la tablette.
+
+### 2026-10-10 — Capteurs suivis : la courbe d'un capteur à gauche de l'horloge et un popup « Suivi » (ADR-0054)
+
+- **Demande d'Axel** : le graphique d'un capteur numérique choisi dans Home Assistant à la place du vocal, du graphique météo ou du lecteur, et un popup plein écran avec tous les capteurs qu'il suit. Générique : n'importe quel capteur à statistiques (`state_class: measurement`) — un cours de bourse, une température, une puissance… — ; ni le code ni l'écran ne parlent de bourse.
+- **Quatrième contenu de la zone à gauche de l'horloge** (`ZoneGauche::CAPTEUR`, code `capteur`, à la fin : la NVS garde l'index) : carte de l'emprise du graphique (`zone_suivi`, `Tab5/ui_components/suivi_zone.yaml`) avec le nom, la variation en haut à droite (flèche de tendance, vert à la hausse, rouge à la baisse, gris stable : rôles `SUCCESS`, `ERROR`, `TEXT_DIM` de la palette), la valeur dans la police de la date avec son unité, et la courbe des 24 dernières heures sur le dégradé du graphique (même tampon PSRAM, partagé : `zone_degrade_peindre()`, le graphique et la carte ne sont jamais montrés ensemble). Le **premier capteur de la liste** est celui de la zone. Sauté au tap et au départ tant que Home Assistant dit qu'aucun capteur n'est suivi. Un tap ouvre le popup.
+- **Popup « Suivi »** (`suivi_popup.yaml`, `suivi_carte.yaml` ×6, `Tab5/ecran/tab5_suivi.cpp`) : chrome partagé (ADR-0009), une ligne du registre (ADR-0013), `Ecran::SUIVI` (option « Suivi » à la fin de « Aller à l'écran », code de geste `suivi` à la fin de `kCodesGestes`, index 26, icône `chart-line`). Une carte par capteur (six au plus) : nom, valeur et unité, flèche et variation colorées, période (« Aujourd'hui » pour la variation du jour en %, « 24 h » pour un écart dans l'unité), courbe lissée (`ui_courbe_lisse()`) et son dernier point. Une rangée jusqu'à trois capteurs, deux au-delà, la dernière centrée.
+- **Côté Home Assistant** (rien en dur, ADR-0024) : liste à choix multiples « Tab5 · capteurs suivis · tracked sensors » (`packages/tab5_reglages.yaml`, six au plus, capteurs `measurement` seulement) ; nouveau package `packages/tab5_suivi.yaml` : `script.tab5_suivi_pousser` lit `recorder.get_statistics` (moyennes horaires des 24 dernières heures, en UTC) et pousse ; une poussée au changement d'un capteur suivi, puis cinq minutes au plus entre deux ; tout de suite quand la liste change, à la connexion, à « MAJ Écran », au démarrage de HA et toutes les heures. La variation est le `change_pct` de l'entité quand elle en a un (variation du jour), sinon l'écart depuis la première heure de la courbe. Modèle vérifié en lecture sur le HA d'Axel (rendu du modèle de la poussée, sans appel d'action). Le tableau de bord HA du Tab5 montre la nouvelle liste.
+- **Contrat** : nouvelle action `tab5_maj_suivi` (`payload` : « nom|valeur|unité|variation|genre|points;… ») ; `contrat/contrat.yaml` passe en 1.2.0. **Ordre de mise à jour : le firmware d'abord**, puis `packages/tab5_reglages.yaml`, `packages/tab5_suivi.yaml` et le blueprint « Tab5 — emplacements » (option « Capteur suivi en courbe » de la zone gauche, geste « Suivi »). Fichiers HA neufs avec un firmware d'avant : la poussée échoue sans arrêter le reste (`continue_on_error`) ; firmware neuf avec des fichiers HA d'avant : le popup et la carte restent sur « En attente de Home Assistant ».
+- **Lecture du payload** en C++ pur testé sur PC (`suivis_lire()`, `Tab5/socle/tab5_parse.*`, section 11 ; cas dans `tools/test_parse.cpp`, appelée par le fuzzeur `tools/fuzz/fuzz_parse.cpp`) ; graine pour `tools/sanitizers/fuzz_services.py`. Quatre textes d'écran en six langues. Glyphes MDI `chart-line` (polices 26, 32, 70) et `trending-up` / `-down` / `-neutral` (32).
+- Docs : ADR-0054, notice « Suivi » (`docs/notice/tracking.md`, EN/FR, dans le menu du site), notice de l'accueil, `docs/screens.md`, `docs/architecture.md`, `Tab5/README.md`, `HomeAssistant_Config/README.md`, cartographie. Rendu hors tablette : quatre captures (`suivi-vide`, `suivi`, `accueil-zone-capteur`, `-gelule`). Tests : `tests/test_suivi.py` (nouveau : modèles Jinja de la poussée rendus et comparés à un calcul indépendant), `test_zone_gauche.py`, `test_appuis.py`, `test_gestes.py`, `test_maison.py`, `test_emplacements.py`. **Non essayé sur la tablette.**
+
+### 2026-10-10 — Popup Caméras : les images arrivent en arrière-plan, l'écran ne gèle plus (ADR-0049)
+
+- Chaque image du popup Caméras figeait l'écran et le tactile ~1,6 s (après #439), parce que l'`online_image` d'ESPHome télécharge et décode dans la boucle principale. L'image est maintenant téléchargée et décodée **hors de la boucle** (`Tab5/ecran/tab5_cameras_charge.cpp`, première tâche FreeRTOS du firmware) : `esp_http_client` avec une connexion gardée d'une image à l'autre (plus de poignée de main TLS à chaque image), **décodeur JPEG matériel** de l'ESP32-P4 en RGB565, deux tampons en PSRAM échangés quand l'image est prête. La boucle ne fait plus que sonder (100 ms) et montrer l'image. Une caméra hors ligne ne gèle plus rien ; après un échec, la dernière image reste avec « Plus d'image depuis … ». Mémoire : deux images au lieu d'une pendant que le popup est ouvert (2 × 600 Ko de PSRAM pour une caméra 640 × 480), tout rendu à la fermeture ; 12 Ko de RAM interne pour la pile de la tâche.
+- Mesuré sur la tablette le 10/10/2026 avec la même caméra 640 × 480 (12 images de 37 à 39 Ko) : HA **~0,4 s** par image avec la connexion gardée (0,6 s pour la première), décodage matériel **3 à 12 ms** (1,0 s avant), plus aucun « took a long time » de la caméra dans la boucle (4 par minute avant), pire tour de boucle de la minute **217 ms au lieu de 1 020 ms**, une image toutes les 5,4 s au lieu de 6,6 s. Pile de la tâche : 9 860 octets jamais utilisés sur 12 288. Popup fermé 6 fois pendant un chargement, puis Home Assistant injoignable (`ESP_ERR_HTTP_CONNECT`, nouvel essai 10 s après) : ni plantage ni redémarrage, RAM interne revenue au même niveau après chaque fermeture.
+
+### 2026-10-10 — Popup Caméras : l'image n'est plus agrandie (ADR-0049)
+
+- Premier essai réel avec une caméra 640 × 480 (M5Stack AtomS3R-CAM) : chaque image figeait l'écran ~2 s, dont 1,45 s de décodage, parce que `resize: 960x540` faisait agrandir l'image à 720 × 540 par ESPHome, pixel par pixel (même durée pour un JPEG de 11 et de 45 Ko). `cameras_image` n'a plus de `resize:` : l'image est décodée à sa taille, montrée telle quelle si elle tient dans le cadre (une caméra 640 × 480 apparaît donc un peu plus petite), réduite à l'affichage par LVGL (`lv_image_set_scale()`) si elle le dépasse (HA envoie 1152 × 648 pour une caméra 2304 × 1296). Mesuré sur la tablette avec la même caméra (7 images de 36 Ko) : décodage **1,0 s au lieu de 1,45 s**, écran figé **~1,6 s par image au lieu de ~2 s** (l'attente de HA, ~0,6 s, ne change pas), une image toutes les 6,6 s au lieu de 7 s. Le reste du décodage est le coût du dessin pixel par pixel d'ESPHome.
+
+### 2026-10-10 — Intégration HACS : l'assistant propose aussi la maison et les listes « Tab5 · … » (ADR-0053, lot 2)
+- **Page « Maison »** : les entrées du blueprint qui ne dépendent pas d'une pièce (TV et sa télécommande, batterie du téléphone, température et humidité du haut de l'accueil, seconde température et « dehors », clim, pots, météo des prévisions, nom ESPHome de la tablette), pré-remplies **seulement quand Home Assistant n'a qu'une réponse** (une seule TV, une seule clim, une seule météo, la seule température « extérieure »…) ; la température du haut de l'accueil est celle de la pièce 1. Une automatisation déjà là : ses valeurs d'abord.
+- **Page « Agendas et personnes »** : les listes « Tab5 · … » de `tab5_reglages.yaml`, une liste déroulante chacune. Un choix déjà fait reste ; une liste encore sur « Aucun » reçoit une proposition quand une seule entité convient — mêmes règles que le package pour les quatre qu'il devine, et pour les quatre qu'il ne devine jamais : l'agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré (marquées « proposé » au récapitulatif). Réglées à la validation par `select.select_option`, comme à la main, puis vérifiées ; la notification dit ce qui est réglé ou pas.
+- **Mise à jour d'une automatisation existante** (case cochée) : pièces et entrées de la maison remplacées, un champ vidé garde sa valeur, une case « dehors » décochée est écrite. Les listes se règlent avec ou sans la case.
+- **Code** : `assistant.py` (`proposer_maison`, `proposer_liste`, testés sans HA), `assistant_flux.py` (étapes `maison` et `agendas`), `messages.py` ; `manifest.json` : `after_dependencies` + `assist_pipeline`. **CI** : étape 1 bis étendue (température extérieure, agenda local « Travail CI », liste réglée et vérifiée, case décochée). Doc : `installation/home-assistant-files.md`.
+- **L'intégration parle les sept langues de l'écran** (demandé par Axel) : allemand, néerlandais, espagnol, italien et turc rejoignent le français et l'anglais — `translations/{de,nl,es,it,tr}.json` (toute l'intégration : installation, options, réparations, assistant), les notifications de `messages.py` et le récapitulatif de l'assistant, choisis d'après la langue du serveur (une autre langue → l'anglais). Traduits avec Claude depuis le français, pas encore relus par un locuteur natif ; les noms des menus de Home Assistant cités dans les textes ne sont pas vérifiés dans chaque langue. `tests/test_integration_tab5.py` vérifie que les sept fichiers ont les mêmes clés, les mêmes paramètres `{…}` et le même code entre accents graves ; `tests/test_assistant_tab5.py`, la même chose pour les textes Python.
+- Correctif du lot 1 : deux sauvegardes d'`automations.yaml` dans la même seconde se trient dans l'ordre (la purge des cinq dernières pouvait garder la plus ancienne).
+
+### 2026-10-10 — Intégration HACS : assistant de configuration, les pièces de Home Assistant → l'automatisation du blueprint (ADR-0052, lot 1)
+
+- **Assistant de configuration** (demandé par Axel : un nouvel utilisateur presque tout réglé dès l'installation) : une fois les fichiers en place, et tant qu'aucune automatisation du blueprint « Tab5 — emplacements de l'écran » n'existe, la réparation « Tab5 : configurer la tablette depuis vos pièces » l'ouvre ; il se relance depuis les options de l'intégration (case « Lancer l'assistant de configuration »). Pages : les pièces (jusqu'à cinq pièces de Home Assistant, pré-choisies, les plus pilotables d'abord, les pièces vides écartées), une page par pièce (nom, tuiles — lumières, volets, interrupteurs, ventilateurs, lecteurs, cinq au plus —, capteur de température, d'humidité, clim : les entrées `piece_n_*` de l'ADR-0040, toutes pré-remplies et modifiables), puis un récapitulatif avec des noms, pas des identifiants. Jamais proposées : les entités de la tablette elle-même, désactivées, cachées, de configuration ou de diagnostic. Aucune pièce utilisable : il le dit et ne change rien.
+- **Écriture** : seulement à la validation du récapitulatif, dans `automations.yaml` (inclus par `configuration.yaml`, lisible sans étiquette `!secret` / `!include`), sauvegardé avant dans `tab5_sauvegardes/automatisations/` (5 gardées), relu juste avant d'écrire (changé entre-temps : rien n'est écrit), puis `automation.reload` et constat que l'automatisation est chargée ; une notification dit le résultat. **Rien n'est écrasé ni créé en double** : une automatisation du blueprint déjà là ne change que si la case « Remplacer les pièces de l'automatisation existante » est cochée, et alors seulement ses pièces ; plusieurs, ou une hors d'`automations.yaml` : rien n'est écrit. Fichier pas utilisable : le YAML à coller dans une notification. Le Home Assistant d'Axel n'installe pas l'intégration, et son automatisation existe : rien n'y change.
+- **Code** : `custom_components/tab5/assistant.py` (pur, testé sans HA par `tests/test_assistant_tab5.py` : propositions, entrées du blueprint, ajout et mise à jour d'`automations.yaml`, sauvegardes, refus) et `assistant_flux.py` (formulaires, partagés par la réparation et les options) ; `manifest.json` : `after_dependencies: [automation]`. Les sauvegardes d'installation ignorent désormais les dossiers non datés de `tab5_sauvegardes/`.
+- **CI** (`integration-hacs.yml`, HA 2026.9.4 et 2026.8.3) : étape 1 bis du scénario dans un Home Assistant neuf — deux pièces, des entités de modèle, un thermostat, une lumière cachée ; la réparation suivie comme l'interface, valeurs proposées acceptées → automatisation écrite, chargée, réparation retirée ; relancé depuis les options sans la case → `automations.yaml` à l'octet près ; avec la case → seules les pièces changent, sauvegarde faite.
+- Textes en français et en anglais (les cinq autres langues de l'écran : lot 2). Doc : `installation/home-assistant-files.md` (avec HACS), `installation/devices.md`.
+
+### 2026-10-10 — Correctif : la mini-barre « en lecture » se montre à chaque pause
+
+- **Mini-barre masquée une pause sur deux** (#430) : l'instant de la pause était gardé comme `millis() | 1` pour que 0 veuille dire « pas en pause ». Quand la milliseconde était paire, cet instant dépassait `millis()` d'un, et la peinture faite dans la même milliseconde lisait un écart de 2^32 − 1 ms au lieu de 0 : la mini-barre restait cachée et le cadre Ok Nabu en place. Un drapeau séparé (`s_en_pause`) remplace l'astuce (`Tab5/ecran/tab5_lecteur.cpp`). C'est aussi ce qui faisait échouer au hasard l'étape « bascule à chaud = démarrage à froid » du rendu clair (`accueil-musique-clair.png`, l'une des deux séries avec la mini-barre, l'autre sans). Non essayé sur la tablette.
+
+### 2026-10-10 — Roue de navigation : Musique et TV dans « Appareils ▸ » (ADR-0042)
+
+- **Demande d'Axel** (« ajoute musique et tv dans appareils ») : la famille « Appareils ▸ » de la roue de navigation (appui long de la carte centrale) finit par **Musique** (le popup Musique, ADR-0050, icône de son en-tête) et **TV** (la télécommande, icône de son en-tête). La TV n'est proposée qu'avec sa zone ; Musique, comme le lecteur de la zone à gauche de l'horloge, tant que Home Assistant n'a pas dit qu'aucun lecteur n'est choisi (le geste « musique » et « Aller à l'écran » l'ouvrent toujours).
+- **Second anneau à huit choix** (`kRoueChoix` = 8, deux boutons `roue_choix` et leurs mots de plus) : au-dessus de la carte centrale, 100 px au moins entre deux choix (28 px d'air), 109,6 px jusqu'au premier anneau, tout dans l'écran ; les huit mots d'« Appareils » dans les sept langues gardent 22 px d'air entre eux et 38 px jusqu'aux autres boutons (`tests/test_roue_navigation.py`). La roue d'une tuile (tuiles, popup Maison, roue d'une clim) reste à six (`kRoueChoixTuile`) : à huit, l'éventail d'une tuile au bord de l'écran ferait chevaucher ses choix (`tests/test_roue.py`).
+- Clé d'écran nouvelle « TV » (six langues). Docs : note datée dans l'ADR-0042, notice (accueil, musique, TV, EN/FR), `docs/screens.md`, cartographie. Rendu hors tablette : `roue-navigation-appareils` montre sept choix (Températures, Clims, Lumières, Volets, Plantes, Musique, TV ; pas d'Énergie, absente de cette scène de la démo). **Non testé sur la tablette.**
+
+### 2026-10-10 — Accueil : le lecteur de musique dans la zone à gauche de l'horloge, et un graphique plus lisible (ADR-0051, lot 2)
+
+- **Lecteur compact** (plan validé par Axel : « très beau, léger ») : troisième contenu de la zone à gauche de l'horloge, à la place du vocal ou du graphique, dans une carte de la même emprise (`zone_lecteur`, nouveau composant `Tab5/ui_components/lecteur_zone.yaml`). La pochette (la même image que le popup Musique, sans second téléchargement), le titre, l'artiste, une fine barre de position, précédent / lecture-pause / suivant ; rien en lecture : la phrase du popup (« Rien en lecture », « Lecteur éteint »…) et le nom du lecteur. Un tap hors des boutons ouvre le popup Musique. Mêmes données et mêmes commandes que le lecteur de l'ADR-0050 (`tab5_maj_lecteur`, événement `esphome.tab5_lecteur`) : rien de nouveau côté Home Assistant, aucune entité nommée, contrat inchangé, aucune nouvelle clé de traduction. Pochette aux coins concentriques à ceux de la carte, textes coupés avant le coin arrondi, dans chaque thème ; repeint seulement montré (sinon au retour). Le volume n'y est pas (il ne tiendrait pas proprement ; le popup l'a).
+- **Cycle** : « lecteur » entre dans le cycle (vocal → graphique → lecteur) et dans le contenu de départ possible ; il est **sauté quand Home Assistant a dit qu'aucun lecteur n'est choisi** (liste « Tab5 · lecteurs de musique » vide) et revient quand la liste se remplit. Avant toute poussée, il s'affiche (« En attente de Home Assistant »).
+- **Mini-barre « en lecture »** (choix d'Axel) : gardée sur le cadre Ok Nabu, masquée tant que la zone gauche montre le lecteur, elle revient quand la zone change.
+- **Graphique des 15 heures** (demande d'Axel sur la capture du rendu) : trait de 5 px arrondi, dégradé discret de la couleur de la courbe dessous (une image ARGB8888 calculée à la peinture, tampon de 156 Kio en PSRAM pris une fois ; une seule image en plus), points du plus chaud et du plus froid de 12 px cerclés, leurs valeurs posées à la première place libre (jamais sur la courbe, une barre ou l'autre valeur, ni hors du cadre), barres de pluie visibles dès qu'il pleut (8 px au moins, racine carrée de la quantité), rien sans pluie.
+- **Blueprint « Tab5 — emplacements »** : option « Lecteur de musique · Music player » dans la section « Zone à gauche de l'horloge », dans le cycle par défaut. **Blueprint à recopier** dans Home Assistant pour proposer le lecteur ; ordre libre (un firmware d'avant saute le code `lecteur`, un blueprint d'avant ne le propose pas).
+- Docs : ADR-0051 (lot 2), note dans l'ADR-0050, notice (accueil, musique, vue d'ensemble, EN/FR), `docs/screens.md`, `docs/architecture.md`, `Tab5/README.md`, cartographie. Rendu hors tablette : trois captures (`accueil-zone-lecteur`, `-vide`, `-gelule`). Tests : `tests/test_zone_gauche.py`, `test_emplacements.py`. Non essayé sur la tablette.
+
+### 2026-10-10 — Popup Musique : un lecteur de musique pour les media_player de la maison (ADR-0050)
+
+- **Demande d'Axel** : « une pop up qui ne prend pas tout l'écran, très belle, pour faire un lecteur de musique genre Spotify, pratique, avec miniature ». Carte centrée de 940 × 536 sur un voile, chrome partagé (ADR-0009) : en-tête avec l'icône, le nom du lecteur et l'application en cours (pastille), pochette de 360 px à gauche (icône de note sans pochette), titre, artiste et album à droite, barre de position glissable avec le temps écoulé et la durée, aléatoire / précédent / lecture-pause / suivant / répétition, volume avec la sourdine, puis une pastille par lecteur en bas pour passer de l'un à l'autre. Un bouton n'apparaît que si le lecteur sait le faire (`supported_features`) ; lecteur éteint : « Lecteur éteint » et un bouton « Allumer » ; aucun lecteur choisi : une phrase qui dit où les choisir. Générique : n'importe quel `media_player` (Apple TV, TV, Freebox, Steam Deck, la tablette elle-même…), pas seulement Spotify. **Non testé sur la tablette.**
+- **Trois façons de l'ouvrir** : l'appui long d'une tuile `med` sans option `t` (avant : le popup appareil ; avec `t`, toujours la télécommande), la **mini-barre « en lecture »** de l'accueil, posée sur le cadre « Ok Nabu » quand le lecteur montré joue, et 5 min après une pause (pochette, titre, artiste, lecture-pause ; un toucher ouvre le popup), et le **geste « musique »** (code ajouté à la fin de la liste des gestes, index 24, après celui de la zone à gauche de l'horloge, et dans le blueprint « Tab5 — emplacements » : « Musique (lecteur) · Music (player) »), plus l'option « Musique » à la fin de « Aller à l'écran ».
+- **Côté Home Assistant** (rien en dur, ADR-0024) : les lecteurs proposés se choisissent dans la liste à choix multiples « Tab5 · lecteurs de musique · music players » (`packages/tab5_reglages.yaml`, six au plus). Nouveau package `packages/tab5_lecteur.yaml` : le lecteur montré (celui choisi sur l'écran, sinon le premier qui joue), une poussée quand son état change (une seule à la fois, mode `restart`, 400 ms de regroupement : pas de rafale pendant la lecture, la position avance sur la tablette), et les commandes du popup en liste blanche sur les lecteurs choisis (`script.tab5_lecteur_commande`, appelé par `tab5_evenements.yaml`). La pochette est téléchargée par la tablette depuis Home Assistant (`entity_picture`, en http sur l'adresse de HA vue par la tablette : https n'est pas pris en charge).
+- **Contrat** : nouvelle action `tab5_maj_lecteur` (`lecteurs`, `etat`) et nouvel événement `esphome.tab5_lecteur` (`action`, `lecteur`, `valeur`) ; `contrat/contrat.yaml` passe en 1.1.0. **Ordre de mise à jour : le firmware d'abord**, puis `packages/tab5_reglages.yaml`, `packages/tab5_lecteur.yaml`, `packages/tab5_evenements.yaml` et le blueprint « Tab5 — emplacements ». Fichiers HA neufs avec un firmware d'avant : la poussée du lecteur échoue sans arrêter le reste (`continue_on_error`) ; firmware neuf avec des fichiers HA d'avant : le popup reste sur « En attente de Home Assistant » et la mini-barre ne paraît pas.
+- **Lecture du payload** en C++ pur testé sur PC (`Tab5/socle/tab5_parse.*`, section 9, cas dans `tools/test_parse.cpp`, appelée par le fuzzeur `tools/fuzz/fuzz_parse.cpp`) ; graine du service pour `tools/sanitizers/fuzz_services.py`. Textes en six langues (7 clés). Glyphes MDI ajoutés aux polices 26, 32, 45, 70 et 120. Le tableau de bord HA du Tab5 montre la nouvelle liste.
+- **Fichiers partagés avec d'autres lots** (blocs isolés) : `Tab5/paquets/tab5-lvgl.yaml`, `Tab5/ecran/tab5_zones.h` / `.cpp`, `Tab5/paquets/tab5-navigation.yaml`, le blueprint `tab5_emplacements.yaml`, `tests/test_appuis.py`.
+
+### 2026-10-10 — Accueil : la zone à gauche de l'horloge au choix, vocal ou graphique des prochaines heures (ADR-0051)
+
+- **Demande d'Axel** : choisir ce que montre la zone à gauche de l'horloge (au-dessus d'Ok Nabu) — les commandes vocales, un lecteur audio ou un graphique —, comme les autres zones, et passer au contenu suivant d'un tap sur une zone de l'écran (pour l'instant la seconde température, qui ouvrait l'Arcade) ou par un geste au choix.
+- **Deux contenus** : le **vocal** (micro, Domo, Discu : regroupés dans le conteneur transparent `zone_vocal`, rendu et gestes inchangés) et un **graphique des 15 prochaines heures** (`zone_graphique`, nouveau module `Tab5/ecran/tab5_zone_gauche.cpp`) : courbe de la température lissée comme celle du popup Météo (`ui_courbe_lisse()`, sortie de `tab5_meteo.cpp` pour être partagée), point et valeur à l'heure la plus chaude et la plus froide, barres de pluie en mm aux couleurs de la pluie, trois heures et le cumul de pluie. Lu dans `cal_heures_data` : rien de nouveau demandé à Home Assistant. Une trentaine d'objets (`lv_line` + `lv_obj`), construits au premier affichage, repeints seulement aux nouvelles prévisions horaires ou au changement de thème ; couleurs de la palette, aucune nouvelle police, aucun nouveau texte. Un tap sur le graphique ouvre le popup Météo. Le **lecteur** est réservé (`ZoneGauche::LECTEUR`, code `lecteur`) : le firmware le saute et le blueprint ne le propose pas tant qu'il n'existe pas.
+- **Bascule** : le tap sur la seconde température (`btn_serre_games`, id gardé) passe au contenu suivant ; son appui long (historique) ne change pas. Sans seconde sonde, l'icône à sa place n'est plus une manette mais `view-carousel` (U+F056C). Nouveau code de geste `zone_gauche_suivante` (index 23, à la fin de `kCodesGestes`), au choix sur les douze gestes de l'accueil. **L'Arcade reste à un toucher** : le tap du bouton manette (« auto ») et « Jeux » dans la roue de navigation.
+- **Blueprint « Tab5 — emplacements »** : section « Zone à gauche de l'horloge » (contenu au démarrage, contenus que le tap fait défiler) et option `zone_gauche_suivante` dans les gestes ; nouvelle clé `gauche|départ|c1|c2…;` de `tab5_maj_emplacements`, lue en C++ pur par `zone_gauche_lire()` (`tab5_parse`, cas dans `tools/test_parse.cpp`, appelée par le harnais libFuzzer, graine ajoutée à `fuzz_services.py`). Sans la clé (blueprint d'avant) : vocal au démarrage, vocal et graphique au tap. Choix gardé en NVS (« zgau »).
+- **Contrat inchangé** (aucune variable de service ajoutée ou retirée ; `contrat/contrat.yaml` intact). Ordre de mise à jour libre : un firmware d'avant ignore la clé `gauche` et le code `zone_gauche_suivante` ; un blueprint d'avant laisse le cycle par défaut. **Blueprint à recopier** dans Home Assistant pour choisir le contenu.
+- Docs : ADR-0051, notice de l'accueil (EN/FR), `docs/screens.md`, `docs/arcade.md`, `docs/architecture.md`, `docs/demo_mode.md`, `adapt-to-your-home.md`, `Tab5/README.md`, boîte à outils d'`AGENTS.md`. Rendu hors tablette : l'Arcade s'ouvre par le bouton manette, deux nouvelles captures (`accueil-zone-graphique`, et dans le thème Capsule). Tests : `tests/test_zone_gauche.py` (nouveau), `test_appuis.py`, `test_gestes.py`, `test_emplacements.py`, `test_historique.py`. Non essayé sur la tablette.
+
+### 2026-10-09 — Popup Caméras : une image fixe de chaque caméra (ADR-0049)
+
+Demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (caméras Tapo). Firmware et blueprint « Tab5 — emplacements » à recopier ; ni package ni script. **Non testé sur la tablette ni avec une vraie caméra.**
+
+- **Une page par caméra** choisie dans la nouvelle section « Caméras · Cameras » du blueprint (8 au plus), changée d'un glissé ; le nom et l'heure de l'image dessous, des pastilles à partir de deux caméras. **Pas de vidéo** : une image fixe, la suivante 5 s après la précédente, **seulement popup ouvert** ; l'image décodée (960 × 540 RGB565, environ 1 Mo de PSRAM) est libérée à la fermeture.
+- **Contrat 1.2.0 (ajout)** : événement `esphome.tab5_cameras` (ouverture, toutes les 4 min popup ouvert, après une image en échec) et action `tab5_maj_cameras(adresse, cameras)` (« nom|image;… », `image` = l'`entity_picture`, jeton tourné par HA toutes les 5 min). Lecture en C++ pur (`cameras_lire()`, `camera_url()`, `ha_base_depuis_hote()`, `tab5_parse`), testée et fuzzée. La tablette ajoute `width=960&height=540` pour que HA réduise l'image ; l'adresse de HA est celle d'où il se connecte (port 8123), ou celle du blueprint.
+- **Ouverture** : option « Caméras » de « Aller à l'écran » (HA peut l'ouvrir, une sonnette par exemple), code de geste `cameras` (index 25) dans le blueprint. **Roue de navigation** (demande d'Axel) : « Caméras » à la fin de la famille « Agenda ▸ », Appareils étant plein (six choix au plus) ; toujours proposé, comme Météo (sans caméra, le popup dit « Aucune caméra choisie »). Glyphe `cctv` ajouté à `mdi_font_70`, `_36`, `_32` et `_26`. Pas de tuile (écartée dans l'ADR).
+- **Coûts estimés, non mesurés** : boucle principale bloquée pendant la capture par HA puis le décodage (0,2 à 0,5 s estimés par image) ; tampon de téléchargement de la taille du JPEG gardé après la fermeture (limite d'ESPHome). JPEG progressif refusé (« Image indisponible »). Une caméra hors ligne fige l'écran jusqu'à 12 s par essai (timeout de `http_request`) : essais espacés de 10, 30 puis 60 s après des échecs de suite.
+- Notice [Caméras](../../docs/notice/cameras.md), rendu hors tablette `cameras` (la page sans image : le rendu ne télécharge rien).
+
+### 2026-10-09 — Accueil : lignes de capteurs centrées en hauteur, cadres Ok Nabu et − / + ajustés au texte, points des prévisions plus bas
+
+- **Demande d'Axel** : les lignes de capteurs de la rangée sous l'horloge (ADR-0031) et du panneau « Ok Nabu » (ADR-0041) collaient au haut de leur zone — sur le rendu, encre à 4 px du haut du cadre Ok Nabu et 31 px du bas, à 3 px du haut de la rangée et 17 px du bas. Cause : LVGL pose la piste d'une flexbox en haut (`flex_align_track` à START par défaut) ; `flex_align_cross: CENTER` ne centrait l'élément que dans cette piste. `rangee_panneau.yaml` centre maintenant la piste. La ligne des plantes et la ligne d'écoute ne changent pas. **Non testé sur la tablette.**
+- **Demande d'Axel** : les cadres « Ok Nabu » et − / + étaient trop hauts pour leur texte (90 px pour une ligne de 45 px, le texte « nageait »). Ils font 72 px (`cadre_bas_h`) : un intérieur d'une ligne de zone (`ligne_zone_h`, 70 px, la hauteur de la rangée sous l'horloge, où se dessinent les mêmes lignes ; deux jetons de `tab5-ui-tokens.yaml`), bas toujours à y 308. La place libérée va au-dessus : la rangée Domo / micro / Discu reste centrée entre le bandeau d'état et le cadre Ok Nabu (56 px d'air de chaque côté, 47 avant ; y 90 au lieu de 81), les températures entre les boutons du haut et la tuile − / + (centre à y 173 au lieu de 164, zones tactiles avec). − et + font 52 px, à 14 px des côtés (alignés sur les températures, comme avant) et 10 px du haut et du bas, au lieu de 62 px à 14 px des quatre bords : plus grands ou plus près du bord, l'arrondi de la tuile en gélule du thème Capsule rognait leurs coins (vu au rendu avec 56 px à 8 px ; `test_nabu.py` le calcule dans les 21 thèmes). Dans le cadre Ok Nabu, une ligne d'icônes sans valeur prend des icônes de 45 px (70 sous l'horloge) et les éléments gardent 17 px des bords (`kMargeCadre`, 14 avant) pour rester dans la gélule du thème Capsule. **Non testé sur la tablette** ; à regarder sur l'écran : la taille de − et + au doigt.
+- **Demande d'Axel** : les points de pagination des prévisions (sous la carte centrale) descendent de 3 px (`pagination_container`, y 417 → 420, après 414 → 417 le même jour) : encre à y 420-423, 3 px sous la carte centrale (bas à 416 ; ils la touchaient), 18 px au-dessus des onglets des tuiles (442). **Non testé sur la tablette.**
+- Tests : `tests/commun.py` gagne `jeton()` et `avec_jetons()` (lire une géométrie posée par un jeton) ; `test_nabu.py` (cadre, arrondi dans les 21 thèmes avec le nouveau rayon borné, tuile − / + en miroir, lignes centrées), `test_carrousel_clim.py`, `test_roue_clim.py`, `test_gestes.py` suivent. Rendu : le point de toucher de la température du salon passe à (955, 173).
+
+### 2026-10-09 — Réveil en cinq pages, réglé sur des rouleaux
+
+Firmware seul : aucun fichier Home Assistant à recopier, mêmes entités, contrat inchangé.
+
+- **Cinq pages** (demande d'Axel : « plus claire, plus grande, avec le switch pour passer d'une partie à l'autre comme les Paramètres ») : **Heure** (l'heure fixe en grand, la bascule marche / arrêt, la prochaine sonnerie, Tester et l'arrêt), **Jours** (mode, jours de l'heure fixe, jours de repos), **Ouverture** (délai, pas avant, pas après, repos mini), **Sonnerie** (mélodie, volume, volume progressif, répétition, durée max) et **Annonces** (annonce parlée, annonce des rendez-vous et son avance, prochain rendez-vous). Une page se choisit par son nom à côté du titre ou d'un glissé sur la fenêtre, en boucle, sans animation ; la fenêtre s'ouvre toujours sur Heure.
+- **Des rouleaux à la place des 20 boutons ‹ › / ▲ ▼** : l'heure et les minutes (de 5 en 5) en 130 px, les sept autres valeurs en 45 px (`ui_components/rouleau.yaml`, un `lv_roller` LVGL). La liste des valeurs et le calcul index ↔ valeur sont du C++ pur testé sur PC (`rouleau_*()`, `tab5_core.cpp`, `tools/test_alarm_clock.cpp`) ; une valeur réglée autrement dans HA (une minute hors des multiples de 5) s'insère à sa place au lieu d'être arrondie. Bornes et pas = ceux des entités (`tests/test_alarme_popup.py`).
+- **La roue d'actions rapides (ADR-0036) n'est pas utilisée** : son premier anneau ne porte que des icônes, elle doublerait des rouleaux qui montrent déjà toutes les valeurs, et elle passerait par `tab5_roue.cpp`, que d'autres lots changent.
+- **Ajouts** : quatre préréglages de jours (Tous les jours, Lundi-Vendredi, Lundi-Samedi, Week-end : l'option du select `Réveil : jours`, jusqu'ici réglable seulement dans HA) ; une phrase sur la page Ouverture qui dit l'effet des quatre réglages (« Sonne 1h00 avant l'ouverture… ») ou que le mode n'est pas choisi ; le prochain rendez-vous sur trois lignes au lieu d'une ; une mélodie se choisit d'un tap (elle se fait entendre, comme avant).
+- **Retiré** : le bouton « Fermer » (la croix de l'en-tête fait la même chose, ADR-0009) ; les scripts internes `tab5_alarm_shift` et `tab5_alarm_cycle_melody`, remplacés par `tab5_alarm_rouleau` et `tab5_alarm_melodie` (aucun n'était appelé par HA).
+- **Partagé avec les autres popups à pages** : le geste et la couleur du nom de la page affichée viennent de la brique commune (`pages_brancher()` et `choix_peindre()`, `Tab5/ecran/tab5_pages.cpp`, ADR-0046) ; les noms gardent leur place du popup. La brique ignore désormais aussi un geste parti d'un rouleau (`lv_roller`), comme d'un curseur ou d'un arc. Avec les Réglages : les noms des pages (`reglages_onglet.yaml` avec `prefixe: reveil` et une largeur `w` facultative) et les titres de rangée ; nouveaux gabarits `choix_btn.yaml` (19 boutons à choix) et `rouleau.yaml` (9 rouleaux). `bouton_pas.yaml` ne sert plus qu'aux flèches du thème. Glyphe `volume-plus` ajouté à `mdi_font_32`, `chevron-up` / `chevron-down` retirés (plus affichés).
+- **Sanitizers** : UBSan signale un décalage d'une valeur négative dans le dessin des rouleaux de LVGL 9.5.0 (`lv_roller.c:598`, amont, bénin sous GCC). Il est inscrit dans la liste des rapports connus de `tools/sanitizers/rapports.py`, toujours affiché (« connu, amont »), sans faire échouer le job ; tout autre rapport le fait.
+- Rendu hors tablette : `reveil` (page Heure), `reveil-jours`, `reveil-ouverture` (par un glissé parti d'un préréglage, qui ne doit pas le déclencher), `reveil-reglages-sonnerie`, `reveil-annonces` ; `reveil-sonnerie` suit le bouton Tester. **Non essayé sur la tablette** (geste des rouleaux au doigt, lisibilité).
+
+### 2026-10-09 — Popup Météo : les prévisions en graphiques (ADR-0043)
+
+- **Demande d'Axel** : une fenêtre « Météo » plein écran, chrome partagé, trois pages changées par leur nom à côté du titre ou d'un glissé, comme les Réglages. « Aujourd'hui » : la météo du moment (icône, température, condition en mots, minimum et maximum du jour, pluie sur les heures montrées) puis jusqu'à 15 heures en courbe lissée (monotone, sans dépassement), icônes, valeurs à la couleur de la température, barres de pluie en mm, l'heure en cours marquée, « Demain » après minuit. « 10 jours » : une ligne par jour, barre en dégradé du minimum au maximum sur une échelle commune, la température du moment en point. « Détails » : la pluie dans l'heure à l'échelle du temps devant des lignes de niveau, la phrase de la carte centrale, humidité, indice UV (niveaux de l'OMS), probabilités de gel et de neige. **Non testé sur la tablette.**
+- **Accès** : option « Météo » à la fin de « Aller à l'écran » (`Ecran::METEO`), code de geste `meteo` à la fin de la liste (index 22, après ceux de la roue de navigation) et dans le blueprint « Tab5 — emplacements » (« Météo · Weather »), « Agenda ▸ Météo » en tête de la roue de navigation (ADR-0042), appui long sur le corps d'une carte de prévision **qui ne porte pas d'appareil** (celle qui en porte garde l'appui long de l'appareil). L'appui long de la carte centrale ne change pas.
+- **Rien de nouveau demandé à HA** : le popup lit les prévisions horaires et journalières, les barres et la phrase de pluie de l'accueil, et garde enfin les champs de `tab5_maj_meteo_actuelle` et `tab5_maj_probabilites` (jusque-là « réservés »). `packages/tab5_push.yaml` renvoie le troisième bloc horaire (`count: 3`, heures 10 à 14) ; la démo aussi.
+- **Ordre de mise à jour** : indifférent, `contrat/contrat.yaml` ne change pas. Un firmware d'avant reçoit le troisième bloc sans l'afficher (comme avant le 25/09) ; un package d'avant avec ce firmware : dix heures dans la courbe.
+- **Factorisé** (règle 5) : les pages passent par la brique commune des popups à pages (`pages_brancher()`, `choix_peindre()`, `tab5_pages.cpp`, ADR-0046), les noms des pages restant aux places fixes de `reglages_onglet.yaml`, qui prend un `prefixe` (`reglages` ou `meteo`) ; `ui_rectangle()` / `ui_ligne()` / `ui_poser()` quittent `tab5_historique.cpp` ; `update_meteo_icon()` prend une échelle (deux polices de 48 et 32 px pour les icônes des heures). Textes en six langues (32 clés, contexte `uv` pour les niveaux d'UV).
+- Rendu hors tablette : `meteo-aujourdhui`, `meteo-jours`, `meteo-details`.
+
+### 2026-10-09 — La roue de la clim par la température de la pièce (ADR-0048)
+
+- **Demande d'Axel** (correction du carrousel, ADR-0038) : toucher la température de la pièce ouvre une **roue**, celle des tuiles (ADR-0036), pas une page. La roue de la clim de la pièce affichée en mode HA (sa clim propre d'abord), sinon de celle du blueprint, en éventail entier vers le haut depuis un point bas sous la température (posée sur elle, trop haute, la roue s'ouvrait dessous, serrée) : Éteindre, Mode ▸, Consigne ▸, Options ▸ (ce que l'appareil a), « Détails » = le carrousel des clims ouvert sur elle. Avec plusieurs clims, **« Clims ▸ »** prend la place de « Maison » : ses choix montrent chaque clim (consigne ou icône éteinte, nom dessous) et un toucher passe la roue sur elle. **Non testé sur la tablette.**
+- **Inchangé** : sans réglages reçus pour cette clim (celle du blueprint avant `climr`), le toucher ouvre le carrousel comme avant ; sans aucune clim, la liste de la tuile − / + ; l'appui long ouvre l'historique ; le carrousel, son glisser et ses pastilles ; la roue d'une tuile `cli`. Aucune commande nouvelle, contrat inchangé (emplacements `clim`, `tRT`, `cpR`) : rien à recopier dans Home Assistant.
+- **Un seul code de roue clim** (`Tab5/ecran/tab5_tuiles_roue.cpp`) : `clim_roue_ouvrir(ClimRef, ancre)` est la roue d'une tuile sans tuile ; les boutons d'une clim sont construits par le même code pour une tuile `cli` et pour une clim quelconque (blueprint, tuile, pièce). `tab5_clim.cpp` lit aussi la clim d'une pièce pour la roue ; `clim_carrousel_ouvrir()` devient `clim_ref_choisir()` + `clim_carrousel_ouvrir_sur()`, et la carte appelle `clim_temperature_ouvrir()`. Un réglage ou un état poussé d'une clim repeint la roue ouverte sur une clim (avant : seulement l'état de la tuile). Une icône de plus dans `mdi_font_36` (air-conditioner, « Clims »).
+- Tests : `tests/test_roue_clim.py`, mises à jour de `test_roue.py`, `test_carrousel_clim.py`, `test_piece_climat.py`. Rendu hors tablette : nouveaux écrans `roue-clim-temperature` (mode HA, la clim du Bureau), `roue-clim-temperature-clims` (« Clims ▸ » déplié) et `roue-clim-temperature-meteo` (mode météo, la clim du blueprint) ; `climatisation-carrousel-mode-ha` passe par le « Détails » de la roue (même image attendue).
+
+### 2026-10-09 — Popup Température : l'humidité avec la température, une page par pièce (ADR-0047)
+
+- **Demande d'Axel** : un graphique des températures et de l'humidité des capteurs de chaque pièce, si présents, et passer d'une pièce à l'autre dans le popup. **Non testé sur la tablette.**
+- **Humidité** : quand l'emplacement a une sonde d'humidité (« Salon — humidité » pour le salon, « Humidité de la pièce » pour une pièce, ADR-0040 ; jamais la serre), sa courbe est tracée sur le même graphique, dans la couleur de l'humidité (`HUMIDITY_WET`, l'accent secondaire sur un thème dont l'accent est du même bleu), avec son échelle en % à droite sur les mêmes lignes de grille ; les degrés passent en couleur d'accent, la légende devient « Température », « Minimum et maximum », « Humidité », et la quatrième carte montre l'humidité du moment et sa plage. Sans sonde d'humidité : le popup d'avant, à l'identique.
+- **Pages** : un onglet par température connue à côté du titre (salon, chaque pièce à température déclarée, seconde température ; aucun avec une seule), comme les pages des Réglages ; un toucher ou un glissement à gauche ou à droite montre la suivante, à la même vue, tout de suite d'après ce que la tablette garde (les trois vues de chaque température déjà vue, ~40 Ko de PSRAM au lieu de ~6 Ko), puis la réponse de HA. Un appui long sur l'humidité d'une pièce (à droite, mode HA) ouvre aussi le popup. Onglets et geste écrits dans `tab5_historique.cpp`, en attendant la brique commune « popup à pages ».
+- **Contrat inchangé (1.0.0)** : mêmes variables de `tab5_maj_historique`, champs plus longs (septième champ d'en-tête = humidité actuelle, trois valeurs d'humidité en % entiers par créneau), qu'un firmware plus ancien ignore. Lecture déplacée dans `historique_lire()` (`Tab5/socle/tab5_parse.h`), testée par `tools/test_parse.cpp` et fuzzée (onzième parseur de `tools/fuzz/fuzz_parse.cpp`).
+- **Home Assistant** : `packages/tab5_historique.yaml` (champ `humidite` du script, deuxième statistique dans le même `recorder.get_statistics`) et le blueprint « Tab5 — emplacements » (il passe la sonde d'humidité de l'emplacement) changent : à recopier.
+- **Ordre de mise à jour HA ↔ firmware** : indifférent. Nouveaux fichiers HA avec un ancien firmware : champs d'humidité ignorés, popup d'avant. Nouveau firmware avec d'anciens fichiers HA : pas d'humidité, le popup d'avant avec ses onglets. Il faut les deux pour voir la courbe d'humidité.
+- **Rendu et démo** : humidité du salon et du Bureau dans la démo ; `temperature-salon`, `temperature-piece` et les écrans `temperature-serre*` / `temperature-dehors` changent (onglets) ; nouveaux écrans `temperature-glisser` (du salon à l'Entrée, sa température seule) et `temperature-onglet` (l'onglet du Bureau, vue 7 jours).
+
+
+### 2026-10-09 — Roue de navigation sur l'appui long de la carte centrale (ADR-0042)
+
+- **Demande d'Axel** : l'appui long de la carte centrale (chacun de ses panneaux, et le titre d'une page de prévisions ou de la pièce du mode HA) ouvre, au-dessus d'elle, la roue d'actions rapides des tuiles (ADR-0036) sur les écrans de la tablette. Six boutons, un mot à côté de chacun : **Alertes** (l'historique, ce qu'ouvrait l'appui long jusqu'ici ; marqué quand une alerte est à l'écran), **Pièces** (Maison, puis chaque pièce qui a des appareils : le mode HA sur elle, d'un toucher), **Appareils** (Températures, Clims, Lumières, Volets, Énergie, Plantes), **Agenda** (Calendrier, Réveil ; la Météo du lot du popup météo y prendra la tête), **Tablette** (Jeux, Réglages, Système) et **Assistant**. Une famille se déplie sur le second anneau, le moyeu dit laquelle. Seuls les écrans qui ont quelque chose à montrer dans la maison sont proposés ; une famille vide disparaît.
+- **Roue** : un mode « mots » (`RoueTete::mots`) écrit le mot de chaque bouton dans son axe, à une distance mesurée sur le mot (`mot_recul()`), les mots d'une rangée se partagent la largeur (`largeurs_libres()`). Les mots du second anneau, dans toutes les roues (tuiles comprises), suivent la même règle : un mot sur le côté ne couvre plus son bouton. Six légendes (`roue_bouton_N_legende`) remplacent les deux des liens « Maison » / « Détails », qui restent à leur place. Rose des vents au moyeu (`mdi_font_45`, `mdi_font_70`), seize icônes de plus dans `mdi_font_36`.
+- **Trois écrans de plus** dans « Aller à l'écran » et les gestes de l'accueil : *Lumières* et *Volet* (le popup d'une tuile, sur la pièce affichée en mode HA, sinon la première qui en a : `tuiles_ecran_ouvrir()`), *Température* (l'historique de la température de gauche de l'accueil, sinon la serre). Codes de geste `lumieres`, `volet`, `temperature` et `roue` (la roue elle-même, depuis l'horloge ou un bouton du haut), ajoutés après `nabu_suivant` dans `kCodesGestes` et le blueprint « Tab5 — emplacements » (la NVS garde l'index).
+- **Ordre de mise à jour** : indifférent, `contrat/contrat.yaml` ne change pas (aucune variable, aucun événement). Ce blueprint avec un firmware d'avant : un geste réglé sur un des quatre nouveaux codes ne fait rien. Un blueprint d'avant avec ce firmware : les nouveaux choix ne sont pas proposés.
+- Nouveau fichier `Tab5/ecran/tab5_roue_navigation.cpp`, test `tests/test_roue_navigation.py`. Non essayé sur la tablette au moment de la PR (rendu, lisibilité des mots, appui long au doigt).
+### 2026-10-09 — Réglages : mode de charge, animations, Wi-Fi éco (ADR-0045)
+
+- **Demande d'Axel** : trois réglages de plus, dans les Réglages de la tablette et dans Home Assistant (tableau de bord du Tab5 compris). Les défauts gardent le comportement d'avant. **Non testé sur la tablette.**
+- **« Tab5 Mode de charge »** (Classique / Rapide, page Batterie, à côté de la limite de charge) : « Rapide » allume la charge rapide du chargeur (`nCHG_QC_EN`, P5), seulement quand le chargeur est allumé — jamais sans batterie, pendant une sonde ou en pause à 80 % (`charge_rapide_voulue()`, `tab5_batterie.h`, appliqué par l'interval qui commande CHG_EN). M5Unified appelle ces deux états 500 mA et 1000 mA : **non mesuré**.
+- **« Tab5 Animations »** (Complètes / Essentielles / Aucune, page Apparence, à côté de Nuit) : « Essentielles » garde la seule rotation de la carte centrale ; « Aucune » rend tout instantané. Un seul point de décision, `economie_decider()` : l'économie d'énergie active impose « Aucune », comme avant. `animations_reduites()` devient `animations_niveau()`.
+- **« Tab5 Wi-Fi éco »** (Jamais / Sur batterie / Toujours, page Batterie) : l'économie légère du Wi-Fi (`WIFI_PS_MIN_MODEM`), appliquée à chaud par une requête au C6 à chaque changement de décision, jamais pendant la voix, un son ou une OTA (`wifi_eco_voulu()`, `wifi_eco_appliquer()`, journal `tab5.wifi`). Courant gagné, latence ajoutée et prise en compte par le C6 1.4.1 : **non vérifiés**.
+- **Écran** : rangées côte à côte (Nuit et Animations ; Limite et Mode de charge), Wi-Fi éco sous l'économie d'énergie ; la phrase sous la limite de charge (« 80 % : la charge s'arrête à 80 % et reprend à 70 % ») quitte l'écran faute de place, elle reste sous la tuile du tableau de bord HA. `reglages_rangee.yaml` prend un `x` facultatif. Traductions dans les six langues.
+- **Home Assistant** : trois tuiles sur le tableau de bord du Tab5 (`custom_templates/tab5_dashboard.jinja`, à recopier pour les voir). Pas de nouvelle variable de service : contrat inchangé, ordre de mise à jour indifférent.
+### 2026-10-09 — Popups Lumières et Volets : toute la maison, une page par pièce (ADR-0046)
+
+Firmware seul pour les popups : contrat inchangé, aucun événement nouveau.
+
+- **Lumières** (demande d'Axel) : le popup montre toutes les lumières de la maison, **une page par pièce** qui en a. Les noms des pièces sont en haut, à côté de la × (la pièce affichée en couleur d'accent) : toucher un nom ou **glisser à gauche / à droite** change de pièce ; une seule pièce, ni noms ni glissement. Chaque ligne est dessinée comme la carte de la tuile en mode HA : **toucher la pastille ronde** refait le toucher de la tuile (allumer / éteindre, confirmation de l'option `k`), **appui long** ouvre la roue d'actions rapides de la tuile, toucher la ligne la choisit pour l'arc et les couleurs. Le popup s'ouvre sur la pièce de la lumière touchée.
+- **Retiré** : le bouton **On/Off** du popup Lumières (la pastille de chaque ligne le remplace) ; l'icône F0425 sort de `mdi_font_56`. Le script `tab5_light_popup_show` (plus d'appelant) disparaît.
+- **Volets** : même organisation, une page par pièce qui a des volets ; à gauche les volets de la pièce et deux boutons **Tout ouvrir** / **Tout fermer** (la commande `ouvrir` / `fermer` de chaque volet de la page, un événement par volet), à droite le volet choisi (volet dessiné à glisser, son nom, position, état, Ouvrir / Stop / Fermer). La carte COMMANDES disparaît (ses trois boutons passent sous la position). Un volet aux options `k` ou `r` n'est pas listé, comme avant il n'ouvrait pas ce popup.
+- **Sans tuile touchée** : les écrans de la roue de navigation (ADR-0042) — « Aller à l'écran » → *Lumières* / *Volet*, la roue (*Appareils* → *Lumières* / *Volets*) et les gestes `lumieres` / `volet` du blueprint — ouvrent ces popups sur la pièce affichée, ou la première qui en a ; un volet compte s'il est dans le popup (ni `k` ni `r`), sinon l'écran s'ouvrirait vide. Aucun écran, code ni option nouveau : ceux de l'ADR-0042. Le libellé du geste `volet` dans le blueprint devient « Volets de la pièce affichée · Shutters of the room shown » (même valeur : rien à refaire dans HA).
+- **Une brique commune des popups à pages**, `Tab5/ecran/tab5_pages.cpp` (`PagesPopup`, `pages_brancher()`, `pages_onglets()`, `choix_peindre()`) : le glissement de page et les noms en haut. Le popup Réglages s'en sert (comportement inchangé), et le popup Température (ADR-0047) pour son glissement et la couleur de son onglet affiché (la place de ses onglets reste la sienne : rendu inchangé). Composants : `pages_onglet.yaml` (nouveau), `piece_ligne.yaml` (issu de `light_sel_btn.yaml`), `volet_btn.yaml` paramétré (taille, pastille, police, fonction appelée).
+- Textes : « AMPOULES », « VOLETS », « Tout ouvrir », « Tout fermer » dans les sept langues (« Lumières » et « Volets », les titres, viennent de la roue de navigation) ; « Ampoule », « AMPOULE », « COMMANDES » et les trois noms des lumières 3.x (« Ampoule Chambre / Salon / LEDs ») retirés, plus affichés.
+- Non essayé sur la tablette : rendu des noms de pièces à cinq pièces (158 px chacun), glissement, appui long d'une ligne. Les images de la notice (`lumieres-chambre-*.webp`, `volet-*.webp`) montrent encore l'ancien popup.
+
+### 2026-10-09 — Panneau « Ok Nabu » à lignes et défilement au choix (lot 3, ADR-0041)
+
+- **Des lignes dans le bouton « Ok Nabu »** : jusqu'à trois lignes de quatre capteurs, choisies dans la nouvelle section « Panneau Ok Nabu · Ok Nabu panel » du blueprint « Tab5 — emplacements », avec le même modèle, le même dessin et les mêmes clés que la rangée sous l'horloge (lettre `n` : `np`, `nd`, `nLI` dans `tab5_maj_tuiles`, états `nLI` dans `tab5_maj_emplacements`). La ligne d'écoute « Ok Nabu : ON / OFF » vient en premier d'origine (deuxième, troisième ou masquée au choix). Un tap sur la ligne d'écoute bascule toujours le mot de réveil ; sur une ligne de capteurs, il ne fait rien. Pastilles sous le panneau, même glissement que la rangée, 14 px de marge dans le cadre pour ne rien couper dans un cadre en gélule (thème Capsule ; `tests/test_nabu.py` le calcule pour les 21 thèmes).
+- **Tap sur les heures** : sa valeur « auto » devient « ligne suivante du panneau Ok Nabu » (code `nabu_suivant`, index 17, icône `microphone-message`), aussi au choix pour les onze autres gestes. Sans ligne dans le panneau, il ne fait rien, comme avant.
+- **Défilement au choix** pour la rangée sous l'horloge, le panneau Ok Nabu et la tuile − / + : « Automatique » (avec la carte centrale) ou « Fixe ». D'origine : rangée automatique, panneau et tuile fixes, soit l'écran d'avant. En automatique, un geste remet le compte à zéro ; la tuile − / + passe par la clim et les appareils du blueprint (pas le son de la tablette), sans écrire la NVS, jamais liste ouverte. Clé `defil|rangée|nabu|clim|secondes;` poussée avec les gestes, gardée en NVS. `kTourCentralS` n'a plus qu'une définition (`tab5_internal.h`).
+- **Gabarits** : `ui_components/rangee_panneau.yaml` (les deux panneaux de quatre éléments de chaque zone) et `ui_components/rangee_pastilles.yaml` (les pastilles des deux zones).
+- **Ordre de mise à jour** : indifférent, `contrat/contrat.yaml` ne change pas (des clés dans les payloads existants). Ce blueprint avec un firmware d'avant : les clés `n` et `defil` ignorées, le bouton reste « Ok Nabu : ON / OFF ». Un blueprint d'avant avec ce firmware : le bouton d'avant et les défilements d'origine.
+- Non essayé sur la tablette au moment de la PR (rendu dans les 21 thèmes, tap au doigt, défilement).
+
+### 2026-10-09 — Corrigé : points de pagination des prévisions 3 px plus bas
+
+- Les points sous la carte centrale (`pagination_container`, `tab5-lvgl.yaml`) passent de y 414 à 417 (demande d'Axel). Les points restent à 430-434, sous la carte (bas à 416) et au-dessus des onglets des tuiles (442) ; rien d'autre ne bouge. Rendu à l'écran non vérifié.
+
+### 2026-10-09 — Le climat de la pièce en mode HA (ADR-0040, lot C)
+
+- **Demande d'Axel** : en mode HA (Domo), dans une autre pièce, la carte clim montre la température de la pièce (et son humidité en option) et règle la clim de la pièce, à la place des températures du salon et de la serre. **Non testé sur la tablette.**
+- **Blueprint** : trois champs facultatifs, vides par défaut, dans les sections « Pièce 1 » à « Pièce 5 » : « Température de la pièce », « Humidité de la pièce », « Climatisation de la pièce ». Nouvelles clés de `tab5_maj_emplacements`, sans nouvelle variable d'action (contrat inchangé, 1.0.0) : `pR|température|humidité|clim`, les réglages et l'état de la clim de la pièce `crpR|…` / `cepR|…` (champs de `crRT` / `ceRT`). Toutes les pièces à la connexion, puis une pièce avec les mesures lentes ou, tout de suite, quand sa clim change d'état ou de consigne (deux déclencheurs par pièce, générés par `tools/gen_blueprint_emplacements.py`). Commandes de la clim de la pièce à l'emplacement `cpR`, par les branches « Clim : … » existantes, vers cette clim seulement.
+- **Firmware** (`Tab5/ecran/tab5_piece_climat.cpp`, nouveau ; la clé `pR` est lue par `piece_climat_lire()` de `Tab5/socle/tab5_parse.h`, testée par `tools/test_parse.cpp` et fuzzée) : sur une pièce qui a une température déclarée, thermomètre et température à gauche (icône teintée par l'humidité), goutte et humidité à droite, ou rien ; la tuile − / + règle sa clim (− / +, et un toucher sur la consigne ouvre le popup clim sur elle) sans changer le choix de sa liste ; appui long sur la température : son historique (clés `p0` à `p4` du popup Température et de `packages/tab5_historique.yaml`). Hors du mode HA ou sur une pièce sans ces champs : l'écran d'avant. Clims des pièces dans la table des clims de tuile (30 cases en PSRAM au lieu de 25).
+- **Ordre de mise à jour HA ↔ firmware** : indifférent. Le nouveau blueprint avec un ancien firmware : clés ignorées, écran d'avant. Le nouveau firmware avec un ancien blueprint : aucune clé `pR`, écran d'avant. Il faut les deux (blueprint et `tab5_historique.yaml` recopiés, firmware flashé) pour voir le climat des pièces.
+- **Limite** : les réglages de la clim d'une pièce (bornes, pas, modes) ne repartent qu'avec un changement de son état ou une reconnexion, comme ceux des clims de tuile.
+- **Carrousel des clims** (ADR-0038) : la clim propre de chaque pièce y a sa page, après celles des tuiles (`clims_enumerer()`) ; la même clim sur une tuile de la pièce (même nom) n'a qu'une page. En mode HA, toucher la température de la pièce ouvre le carrousel sur sa clim propre, sinon sur la première de ses tuiles.
+- **Rendu et démo** : le Bureau de la démo a température, humidité et clim, l'Entrée une température seule ; nouveaux écrans `temperature-piece` et `climatisation-piece` ; `accueil-ha-piece-2` et `accueil-ha-piece-4` changent, et les écrans du carrousel (`climatisation-par-la-piece` : deux pages, le Bureau ayant sa clim ; `climatisation-carrousel*` : quatre pastilles ; `climatisation-carrousel-mode-ha` : la clim propre du Bureau).
+
+### 2026-10-09 — Corrigé : défauts de lecture des payloads de HA relevés par le lot F
+
+Firmware seul (`Tab5/socle/tab5_parse.cpp`) : aucun fichier Home Assistant à recopier, les payloads de HA (ceux de la v3.7.0 compris) se lisent comme avant. Contrat inchangé (1.0.0).
+
+- **« Pas de données » pour la pluie** : HA envoie `@-1,0` quand il n'a pas de relevé ; la tablette le prenait pour `@-` (aucune source) et laissait la phrase vide. La faute était côté firmware (le contrat de `tab5-api-logic.yaml` dit bien « niveau -1 pas de données ») : `@-` n'est plus « aucune source » que sans chiffre après le « - ».
+- **Vigilance** : un champ vide ne fait plus remonter les suivants d'un cran (`split_fields` au lieu de `strtok_r`). HA envoie toujours « Vert », rien ne change pour lui. Alertes HA, barres de pluie et détail du jour du calendrier gardent `strtok_r` : il n'y saute que des enregistrements vides, et chacun porte sa clé (id, index, genre), donc rien ne s'y décale (tests à l'appui).
+- **Prévisions** : un index illisible (« abc », vide) n'écrase plus le premier créneau, et une température ou une pluie non finie ou hors bornes (« nan », « inf », « 1e99 » ; températures -100 à 150, pluie 0 à 1000 mm) n'est plus affichée : l'enregistrement est ignoré, le créneau garde ce qu'il avait, et le payload est signalé une fois au journal (`payload_refuse`, comme l'historique des alertes). Un premier créneau illisible fait refuser le bloc horaire au lieu de le prendre pour le bloc 0. Un nombre vide ou illisible vaut toujours 0, comme avant (HA envoie 0 pour une valeur absente).
+- **Production solaire** : plus coupée à 15 octets sans le dire ; lue par `champ_nombre()` (au-delà de 31 octets, refusée). HA envoie un entier de 0 à 100 ou `nan`.
+- `tools/test_parse.cpp` : chaque test qui figeait un de ces défauts affirme le bon comportement (« [corrigé] »), et `test_payloads_ha()` vérifie que les payloads tels que HA les envoie donnent les mêmes valeurs qu'avant. Graines du fuzz pour ces cas limites (`tools/fuzz/graines.py`). Non testé sur la tablette.
+
+### 2026-10-09 — Carrousel des clims : une page par clim, ouvert par la température de la pièce (lot B)
+
+- **Toucher la température de la pièce** (carte clim de l'accueil) ouvre le popup clim en **carrousel** (demande d'Axel) : une page par clim que la tablette connaît — celle du blueprint, puis chaque tuile de clim sans l'option m dont HA a envoyé les réglages ([ADR-0038](../../docs/decisions/0038-climate-carousel.md)). Glisser à gauche ou à droite montre la suivante ou la précédente, en boucle, sans animation ; des pastilles sous les cartes disent laquelle (8 au plus). Une seule clim : ni pastilles ni glisse, l'écran d'avant. Il s'ouvre sur la clim de la pièce affichée en mode HA quand elle en a une, sinon sur celle du blueprint. L'appui long (historique) ne change pas.
+- **Un seul popup** : une page est le popup clim existant repeint pour cette clim (titre = son nom, ou celui de la pièce de sa tuile quand HA n'en donne pas ; boutons qu'elle n'a pas masqués). Ouvert par la consigne, une tuile ou « Aller à l'écran », il est aussi un carrousel. Le glisser reste dans le popup (rien ne change derrière) ; glisser l'arc de côté règle toujours la consigne.
+- **La liste de la tuile − / +** (ADR-0033) s'ouvre maintenant par un **appui long sur la valeur entre − et +** ; sans aucune clim, toucher la température de la pièce la déroule encore. Le tap sur la valeur ne change pas. Description de la section « Tuile − / + » du blueprint mise à jour (texte seul).
+- **Pour les lots suivants** : `clims_enumerer()` (`tab5_internal.h`) est la seule liste des clims de la tablette ; une clim propre à une pièce y sera une ligne (boîte à outils d'`AGENTS.md`).
+- Tests : `tests/test_carrousel_clim.py`. Rendu hors tablette : `climatisation-par-la-piece` (une clim), `climatisation-carrousel`, `-page-2`, `-page-3` et `-mode-ha` (trois clims, deux de tuile poussées puis oubliées). **Non essayé sur la tablette.**
+
+### 2026-10-09 — Gestes de l'accueil au choix : l'horloge en trois zones (lot A, ADR-0039)
+
+- **L'horloge en trois zones tactiles** : les heures, les minutes et la date (`ui_components/horloge_zone.yaml`, à la place de `btn_clock_calendar_zone`), qui couvrent toute la tuile sans trou ni recouvrement, coupées dans le « : » et entre les chiffres et la date dans les 21 thèmes (`tests/test_gestes.py`). **Ce qui change d'origine** : le réveil passe du tap sur l'horloge à l'appui long sur l'heure (heures ou minutes) ; le calendrier reste à l'appui long, sur la date ; un tap sur les minutes passe à l'appareil suivant de la tuile − / + (sans dérouler la liste, choix gardé) ; un tap sur la date, à la ligne suivante de la rangée sous l'horloge ; un tap sur les heures ne fait rien.
+- **Douze gestes au choix** dans le blueprint « Tab5 — emplacements », section renommée « Horloge et boutons du haut · Clock and top buttons » : le tap et l'appui long des heures, des minutes, de la date et des trois boutons du haut. Automatique (le comportement ci-dessus), Rien, un écran, ou une action : `mode_domo` (le tap du bouton maison), `appareil_suivant`, `rangee_suivante`, `ecoute` (le mot de réveil, comme le tap d'Ok Nabu). Les trois entrées `appui_*` restent.
+- **Transport** : une clé `gestes|c1|…|c12;` dans `tab5_maj_emplacements` (ordre : tap puis appui long des heures, des minutes, de la date, du bouton maison, de l'engrenage, de la manette), sans nouvelle variable : `contrat/contrat.yaml` ne change pas. Le blueprint pousse toujours `appuis`, qu'un firmware 3.7 lit seul ; le nouveau firmware fait passer `gestes` avant `appuis`, et un payload sans `gestes` remet tout en automatique. Choix en NVS (nouvelle préférence). Un seul script fait un geste (`tab5_geste`, `geste_cible()`), une seule liste de codes (`kCodesGestes`, écrans puis actions, index gardé en NVS).
+- **Icônes** : la mini icône d'un bouton du haut montre toujours son appui long ; quand son tap est changé, l'icône du bouton montre ce que fait le tap (`tap_glyphe()`). La clim choisie sur la tuile − / + montre aussi son icône à gauche de la consigne (`clim_consigne_icone`), qui reste au centre exact de la tuile.
+- **Ordre de mise à jour** : indifférent. Un blueprint d'avant avec ce firmware : les gestes en automatique, les appuis longs choisis gardés. Ce blueprint avec un firmware d'avant : la clé `gestes` ignorée, une action choisie pour un appui long y vaut « auto ».
+- Non essayé sur la tablette au moment de la PR (zones au doigt, icônes dans les 21 thèmes).
+
+### 2026-10-09 — Lecture des payloads de HA testée sur PC et fuzzée (lot F de l'audit du 30/09)
+
+- **`Tab5/socle/tab5_parse.h/.cpp`** (nouveau, pur : ni ESPHome ni LVGL) : la lecture des chaînes poussées par Home Assistant sort des unités d'écran, famille par famille — prévisions heures et jours, vigilance, alertes HA, historique des alertes et bandeau info, pluie (barres et phrase), calendrier (mois et détail du jour), emplacements et production solaire, réglages et état de la clim. Les unités d'écran l'appellent et ne gardent que l'affichage. **Extraction neutre** : boucles recopiées, travers compris (`strtok_r` qui fusionne les champs vides, `atoi` qui lit un index illisible comme 0, « inf » accepté par les prévisions) ; les changer est un changement de contrat, laissé à une PR à part.
+- **`tools/test_parse.cpp`** (nouveau) : chaque parseur sur le vrai code — cas normaux, champs vides, payloads tronqués, valeurs extrêmes, « nan » et « inf » ; les comportements discutables gardés sont marqués « [figé] ». Compilé par g++ sous ASan + UBSan dans le job `python` de la CI.
+- **Fuzz libFuzzer** permanent (`tools/fuzz/fuzz_parse.cpp`, clang `-fsanitize=fuzzer,address,undefined`) : job `fuzz-parseurs` de `sanitizers.yml` (non requis), 3 min par run, graines tirées des payloads du fuzz de la tablette virtuelle (`tools/fuzz/graines.py`), témoin positif rejoué avant (un comportement indéfini connu doit être signalé). `tests/test_fuzz_parse.py` tient chaque fonction de `tab5_parse.h` testée ET fuzzée.
+- Restent dans les unités d'écran : la lecture des tuiles et des tuiles − / + (`tab5_tuiles.cpp`, `tab5_reglables.cpp` : structures gardées en NVS, filtre des glyphes des polices), et les `atof`/`atoi`/`sscanf` des lambdas YAML (`tab5-api-logic.yaml`, `tab5-calendar.yaml`).
+- Aucun changement de comportement attendu ; non testé sur la tablette.
+
+### 2026-10-09 — Fiabilité mesurable au-delà de 7 jours (lot K de l'audit du 30/09, Home Assistant seul)
+
+- **Trois capteurs à statistiques longues** dans `packages/tab5_health.yaml` : le recorder ne garde les états que quelques jours, et « Tab5 Uptime » (horodatage) comme « Raison du redémarrage » (texte) n'avaient pas de statistiques. « Tab5 · redémarrages » et « Tab5 · redémarrages inattendus » (`total_increasing`) comptent l'événement `tab5_sante_redemarrage` que la garde « reboot inattendu » émet désormais pour chaque redémarrage reconnu, avec son propre classement demandé / inattendu (rien n'est recopié) ; une coupure Wi-Fi sans reboot, un redémarrage de HA ou l'arrivée de la tablette ne comptent pas. « Tab5 · fonctionnement continu » (`duration`, `measurement`, heures) : temps depuis le dernier démarrage, toutes les 15 min, sans `now()` (instant du déclencheur). Lecture : Outils de développement → Statistiques. Pas de tuile dans le tableau de bord du Tab5.
+- Modèles validés par le moteur de modèles du Home Assistant de l'auteur (2026.10.0, `POST /api/template`) contre un calcul Python indépendant ; `tests/test_sante_statistiques.py`. **Non vérifié** : le comptage sur un vrai redémarrage et la restauration après un redémarrage de HA.
+- *À faire en mettant à jour* : recopier `packages/tab5_health.yaml`, recharger les automatisations et les modèles. Aucun changement du firmware.
+
+### 2026-10-09 — Moteur des dames dans son propre module (lot G de l'audit du 30/09)
+
+- **`Tab5/jeux/draughts_engine.h` / `.cpp`** (nouveaux) : le moteur des dames (`Draughts::Engine` : position de départ, génération des coups, application, nulles, évaluation) quitte `draughts_game.{h,cpp}`, où il partageait le fichier avec l'interface LVGL et la sauvegarde. Code déplacé tel quel, ligne à ligne : aucun changement de comportement. `draughts_ai.*` garde l'IA, `draughts_game.*` l'interface.
+- **Test C++ du moteur** : `tools/test_draughts_engine.cpp` compile `draughts_engine.cpp` directement, sans l'en-tête de remplacement d'ESPHome. Supprimés : `tools/hote/extraire_moteur_dames.py` (qui recopiait le bloc par script) et son garde dans `tests/test_moteurs_hote.py`, remplacé par un garde de pureté du nouveau module. Le miroir Python `tools/test_draughts_engine.py` reste.
+- Le test C++ des échecs (`tools/test_chess_engine.cpp`, vrai `chess_ai.cpp` sous ASan + UBSan) était déjà en CI depuis le lot L9 (#391) : inchangé.
+
+### 2026-10-09 — Contrat HA ↔ firmware prouvé entre versions (lot E de l'audit du 30/09)
+
+- **Instantané du contrat** `contrat/contrat.yaml` (nouveau) : les 23 actions de la tablette avec leurs variables, les 22 événements `esphome.tab5_*` avec leurs champs, et une version semver du contrat (1.0.0 = celui de la 3.8.0-rc.3), distincte de celle du firmware. Généré par `tools/contrat_api.py --write`, vérifié par `--check` et pytest. Aucune action ni variable changée.
+- **Semver contre le dernier tag** (`tests/test_contrat_versions.py`) : le contrat du dernier tag est lu dans son propre code (`git cat-file`) ; une action retirée, une variable ajoutée, retirée ou de type changé, un événement ou un champ plus émis exigent une version majeure ; une action, un événement ou un champ nouveau, une mineure. Le message dit quelle version poser.
+- **Matrice N-1** (`python tools/contrat_api.py --matrice`, tableau Markdown, `--en` pour la note de release) : firmware d'une version avec les fichiers HA de l'autre, dans les deux sens, contre le dernier tag stable et le dernier tag. Un appel qui ne peut pas partir avec l'ancien firmware (déclenché par un événement qu'il n'émet pas, garde `protocole` du blueprint) ne compte pas. Sans étiquette dans `[Unreleased]`, les deux sens doivent passer ; une ligne « **Contrat HA ↔ firmware** : … (depuis vX) » du CHANGELOG annonce l'ordre et pytest la confronte à la matrice. Aujourd'hui, 3.8.0-rc.3 contre 3.7.0 : compatible dans les deux sens (seul `esphome.tab5_batterie_faible` attend l'autre moitié).
+- **CI** : le job `python` récupère les tags `v*` sans historique (`git fetch --depth=1`) ; sans eux, ces tests échouent en CI et sont sautés en local.
+- `tests/test_contrat.py` (phase 1) lit le contrat par le même module, sans changement de ses vérifications.
+
+### 2026-10-09 — Lot J de l'audit du 30/09 (sécurité) : page d'installation et publication
+
+- **Page `/install/`** : politique de sécurité du contenu (CSP) qui n'autorise que le script de la page (par son empreinte) et ESP Web Tools 10.4.0 depuis son dossier de jsDelivr ; empreinte SRI sur le script d'entrée. Essayé dans un navigateur : la page marche, un script d'un autre dossier ou injecté est bloqué ; non essayé : l'ouverture de la fenêtre d'installation avec une vraie tablette. `tests/test_csp_installation.py` vérifie l'empreinte et la version.
+- **Publication** (`publication.yml`) : fichier `SHA256SUMS` joint à la release et attestation de provenance (`actions/attest-build-provenance`, figée par SHA, sans bloquer la publication si elle échoue). **Non essayé avant la prochaine release.** Comment vérifier : `docs/installation/flash.md`.
+
+### 2026-10-09 — Première installation, suite : prérequis, bêta, Home Assistant 2026.8 testé (doc, CI)
+
+- **`installation/README.md`** : « Ce qu'il faut » ajoute le Wi-Fi 2,4 GHz (fiche M5Stack du Tab5) et la source USB-C (conseil 5 V / 2 A, pas une exigence). **`flash.md`** : en bêta, prendre aussi `tab5_home_assistant.zip` de la pré-release. **`updates.md`, `troubleshooting.md`** : le menu est « Paramètres → Système → Réparations ».
+- **CI** : `installation-ha.yml` et `integration-hacs.yml` tournent sur Home Assistant 2026.9.4 **et** 2026.8.3 (le plancher annoncé par `hacs.json` et la doc), artefacts suffixés par la version.
+
+### 2026-10-09 — Première installation : ordre, dépannage et repères de version (doc)
+
+- **Page `/install/`** : une note dit de mettre les fichiers Home Assistant en place avant d'installer (la fenêtre d'ajout dure 30 min après le démarrage) ; le renvoi « guide, étape 4 » devient « étape 1 » ; le texte de l'écran ST7121 dit qu'elle tourne chez un autre utilisateur, comme `flash.md`.
+- **`home-assistant-files.md`** : les parties internes passent de 1-2-3 à A-B-C (elles se confondaient avec les étapes 1 à 7), avec leurs renvois dans `troubleshooting.md` ; les nouveautés 3.8 (alerte d'erreur de rendu, course du volet) sont marquées.
+- **`wifi.md`** : le point d'accès « Tab5 Fallback AP » se coupe aussi 30 min après le démarrage d'une tablette sans clé ; un redémarrage le rouvre.
+- **`installation/README.md`** : tableau « première installation : rien n'apparaît ? ». `updates.md` et `weather.md` : nouveaux essais du firmware et repli météo marqués « depuis la 3.8 ». Lien « documentation » de l'intégration HACS vers le guide des fichiers HA.
+### 2026-10-08 — Test de consommation dans Home Assistant, lecture toutes les 2 s
+
+- **Script « Tab5 — consumption test »** (`packages/tab5_mesure_conso.yaml`, nouveau) : sur une
+  tablette qui tourne sur sa batterie, 11 cas de 5 min (écran 100 / 50 / 10 % et éteint, « Okay
+  Nabu » coupé, haut-parleur coupé, thème Obsidienne sombre puis clair, économie d'énergie
+  « Toujours », tout coupé, référence rejouée), « Tab5 Consommation » lue toutes les 5 s ; à la fin,
+  réglages remis et notification avec un tableau en anglais à copier (moyenne, min, max, écart à la
+  référence, niveau, tension, température, énergie, autonomie approximative). Rien à installer ni
+  jeton : lisible dans l'interface de HA. S'arrête si la tablette est branchée. *Essai à blanc* :
+  1 min par cas, sans batterie. Bouton « Test de consommation » dans le tableau de bord du Tab5.
+- **Firmware** : interrupteur « Tab5 Mesure de consommation » (coupé par défaut et au démarrage) :
+  l'INA226 est lu toutes les 2 s au lieu de 60 s, coupé seul au bout de 2 h.
+- *À faire en mettant à jour* : recopier `packages/tab5_mesure_conso.yaml` et
+  `custom_templates/tab5_dashboard.jinja`, recharger les scripts (et les modèles Jinja).
+
+### 2026-10-08 — Outil : consommation sur batterie, scénario par scénario
+
+- **`tools/mesure_conso.py`** : sur une tablette qui tourne sur sa batterie (USB débranché), pilote
+  l'écran (100 / 50 / 10 %, éteint), le micro (« Okay Nabu ») et le haut-parleur par l'API REST de
+  Home Assistant (jeton longue durée, jamais écrit ni affiché), lit « Tab5 Consommation » et écrit un
+  CSV à partager ; 8 scénarios de 5 min (≈ 40 min), la référence rejouée à la fin ; remet les
+  réglages trouvés au départ, même après Ctrl+C ; bibliothèque standard de Python seulement. Une
+  lecture par minute (INA226 à 60 s) : de quoi classer les gros postes, pas les petits écarts.
+  Essayé en `--essai` sur la tablette de l'auteur (sans batterie : pilotage et remise des réglages
+  vérifiés, aucune valeur lue) ; pas encore lancé sur une tablette avec batterie.
+
+### 2026-10-08 — Normes de style et CHANGELOG archivé
+
+Aucun fichier de code reformaté, aucun changement du firmware.
+
+- **`.clang-format`** décrit le style C++ déjà en place (clang-format 23.1.3, options choisies
+  pour réécrire le moins de lignes possible) : 4 espaces, `T* p`, retours à la ligne de
+  l'auteur gardés, formes courtes sur une ligne, `#include` non triés. Son en-tête dit ce qui
+  diffère encore d'un fichier à l'autre (alignements des jeux, `alarm_clock.cpp` en 2 espaces).
+- **Hook pre-commit `clang-format-lignes-modifiees`** : `git-clang-format --diff --staged` ne
+  contrôle que les lignes indexées et ne réécrit rien ; il échoue avec le diff à appliquer.
+  Fichiers générés, `tab5_tokens.h` et la table de questions de Trial Poursuite exclus ; en CI,
+  rien n'est indexé, il ne contrôle donc rien.
+- **`.editorconfig`** : UTF-8 sans BOM, saut de ligne final, 4 espaces (C++, Python), 2 (YAML,
+  JSON, Jinja, HTML, SVG), fins de ligne laissées à git (`*.sh` en LF).
+- **`CHANGELOG.md` allégé** (6 252 → environ 1 500 lignes) : les versions 3.0.0 à 3.6.0 vont
+  dans `docs/changelog/CHANGELOG-3.0-3.6.x.md`, les 2.x dans `docs/changelog/CHANGELOG-2.x.md`,
+  recopiées telles quelles (seuls 18 liens relatifs recalés pour ce dossier) ; des renvois
+  en bas de ce fichier. `tests/test_version.py` lit toujours la première entrée `## [X.Y.Z]`
+  d'ici.
+
+### 2026-10-08 — Réglages en quatre pages, la console devient la page Système
+
+- **Le popup « Réglages » a quatre pages** : **Écran** et **Apparence** (les deux cartes
+  d'avant, chacune sur toute la largeur), **Batterie** (nouvelle) et **Système** (l'ancienne
+  console système, `console_sys.yaml`, qui n'est plus un popup à part). Les noms des pages sont
+  en haut, à côté du titre, la page montrée allumée (`reglages_onglet.yaml`, ×4). Une tape sur
+  un nom montre sa page ; glisser à gauche ou à droite dans le popup montre la suivante ou la
+  précédente, en boucle, sans transition. Le popup garde le geste (il ne remonte pas à
+  `page_main`, l'accueil ne change pas de page derrière), un glissement parti d'un curseur ne
+  bouge que le curseur, et la tape au bout d'un glissement ne choisit rien
+  (`ui_appui_glisse()`). Changer de page ou fermer le popup annule une confirmation ouverte.
+- **Page Batterie** : la limite de charge (100 % / 80 %), l'économie d'énergie (Jamais, Sur
+  batterie, Toujours) et « Batterie montée » (Oui / Non) ; en lecture seule, l'état (Sur
+  batterie, En charge, Sur USB, Pas de batterie détectée), le niveau, la tension et la
+  consommation, repeints seulement pendant que la page est montrée
+  (`reglages_batterie_peindre()`).
+- **Ouverture** : un tap sur l'engrenage ouvre la page Écran, son appui long la page Système.
+  Côté Home Assistant rien ne change de nom : l'option « Console système » de « Aller à
+  l'écran » et les clés du blueprint ouvrent la page Système (`tab5_ecran_ouvrir`,
+  `check_tab5_registry.py` : alias de l'option vers la fenêtre « Réglages »). Les
+  rafraîchissements de la console ne tournent que Réglages ouverts sur la page Système
+  (`reglages_page_visible(REGLAGES_PAGE_SYSTEME)`).
+- Textes nouveaux dans les sept langues ; `tools/test_alarm_clock.cpp` (page voisine, textes
+  de la page Batterie), `tests/test_reglages.py` (pages, geste, gardes de la console),
+  `tools/rendu/ecrans.py` (une capture par page). Notice, `docs/screens.md`,
+  `docs/installation/settings.md`, `docs/architecture.md`. Pas encore essayé sur la tablette.
+
+### 2026-10-08 — Rangement de `Tab5/` en sous-dossiers
+
+Aucun changement visible ni de comportement : le firmware généré est le même, seuls les
+chemins changent.
+
+- **Les 116 fichiers de la racine de `Tab5/` rangés en quatre dossiers** (`git mv`,
+  historique gardé) : `socle/` (le C++ pur, compilé et testé sur PC sans ESPHome ni LVGL),
+  `ecran/` (la couche LVGL, dont `tab5_custom.h`), `jeux/` (les huit consoles et
+  `game_common.h`), `paquets/` (les paquets ESPHome : `tab5-*.yaml`, `ecran-*.yaml`,
+  `publication-*.yaml`). Les trois polices d'icônes et la licence de ChessPieces rejoignent
+  `fonts/`. Restent à la racine : `README.md`, `user_entities*.yaml`, `tuiles_icones.yaml`.
+  La table de correspondance est dans `CARTOGRAPHIE_TAB5.md` (§ 1) et dans `Tab5/README.md`.
+- **Aucun `#include` ne change** : ESPHome copie à plat chaque fichier de `includes:`, d'où
+  des noms uniques entre dossiers. Un paquet inclut ses composants par `../ui_components/`.
+- **Outils et tests** : `tools/tab5_sources.py` trouve une source où qu'elle soit rangée
+  (les globs sur la racine de `Tab5/` ne trouveraient plus rien) ; `tests/test_rangement.py`
+  garde le rangement (racine vide, noms uniques, `includes:` existants, `socle/` pur). Les
+  compilations g++ de la CI prennent `-I Tab5/socle` et `-I Tab5/jeux`.
+- **Un en-tête par module** : `tab5_custom.h` (1 583 lignes) devient l'en-tête parapluie qui
+  inclut 22 en-têtes de `Tab5/ecran/`, un par module (`tab5_forecast.h`, `tab5_clim.h`,
+  `tab5_zones.h`… à côté de leur `.cpp`). Les déclarations sont recopiées telles quelles (mêmes
+  lignes, même ordre dans chaque module) ; les lambdas et les unités n'incluent toujours que
+  `tab5_custom.h`. Les deux configurations listent les nouveaux en-têtes sous `includes:`.
+  Les tests qui y cherchaient une déclaration lisent `contrat()` (`tools/tab5_sources.py`),
+  la règle 12 des règles de code aussi (mêmes 210 fonctions publiques).
+- **`AGENTS.md`** : l'état vrai de `tab5_maj_planning` (obsolète, aucun appelant ni dans le
+  dépôt ni dans le Home Assistant de l'auteur, gardé jusqu'à une future version majeure).
+
+Les anciens chemins restent tels quels dans les entrées plus anciennes de ce fichier.
+
+### 2026-10-08 — Météo : mention « prévisions périmées » au-dessus des tuiles
+
+- **Prévisions qui n'arrivent plus, dites à l'écran** : après l'incident du 07-08/10
+  (Météo-France figée de 21 h 04 à 11 h 34, puis indisponible), la tablette retient
+  l'heure de chaque poussée des prévisions (jours ou heures). Sans poussée depuis plus de
+  30 min (Home Assistant en pousse toutes les 10 min), une ligne discrète s'affiche
+  au-dessus des tuiles, à droite, avec une horloge : « Prévisions de 11 h 42 »,
+  « Prévisions d'hier 21 h 04 » ou « Prévisions vieilles de 3 jours ». En temps normal,
+  rien ne change ; rien non plus avant la première poussée, heure non réglée, ni en mode
+  appareils. Contrat inchangé (aucune variable ajoutée). Limite : une source figée que
+  Home Assistant continue de pousser n'est pas vue par la tablette, c'est à HA de cesser
+  de la pousser. Nouvelle scène du rendu hors tablette, `accueil-previsions-perimees`.
+
+### 2026-10-08 — Code des tuiles regroupé et découpé (lot L7)
+
+Aucun changement visible voulu ; le code des tuiles se lit et se modifie en un seul endroit par
+sujet.
+
+- **Une seule source** pour : la clé d'une tuile ou d'une pièce (`tuile_cle()`, `piece_cle()`,
+  `tab5_modele_ha.h`) ; ce que fait chaque type de tuile au toucher, à l'appui long et dans la
+  roue (table `kGestes[]`, une ligne par type) ; l'ouverture et la mise à jour des trois popups
+  d'une tuile (`PopupTuile`) ; les teintes des préréglages de lampe, lues par le popup lumière
+  et par la roue (`lampe_teinte()`).
+- **La roue ne repeint plus un bouton dont l'aspect n'a pas changé** : chaque bouton garde le
+  dernier aspect posé.
+- **Fichiers découpés** : `tab5_tuiles.cpp` (2 742 lignes) devient `tab5_tuiles.cpp` (modèle,
+  NVS, dessin, gestes), `tab5_tuiles_popups.cpp`, `tab5_tuiles_roue.cpp` et l'en-tête privé
+  `tab5_tuiles_priv.h` ; la clim sort de `tab5_cards.cpp` dans `tab5_clim.cpp` ; le câblage de
+  la roue sort de `tab5-tuiles.yaml` dans `tab5-roue.yaml` (script `tab5_roue_ui`, lancé par
+  `tab5_tuiles_ui` au même moment qu'avant). Code déplacé tel quel ; tests repointés.
+
+### 2026-10-08 — Batterie : plus de souffle sans batterie, limite de charge, consommation
+
+- **Un léger souffle continu sortait d'une tablette sans batterie** (entendu par l'auteur le
+  08/10, micro coupé ou pas) : depuis la 3.6.0 (#303), le chargeur était allumé à chaque
+  démarrage et chargeait dans le vide. Le couper l'a fait taire (essai sur la tablette, firmware
+  de test). Le chargeur est maintenant commandé chaque seconde (`Tab5/tab5_batterie.h`) : allumé
+  30 s au démarrage (pour réveiller une batterie dont la protection a coupé), puis coupé quelques
+  secondes pour lire la tension. Sans batterie, l'INA226 lit alors 1,83 à 1,94 V (mesuré) ; sous
+  3,0 V, pas de batterie, le chargeur reste coupé. Une batterie glissée tablette allumée est vue
+  à la lecture suivante (60 s). Avec une batterie, une lecture chargeur coupé toutes les 10 min,
+  et tout de suite si la tension tombe sous 6 V (batterie retirée). « Tab5 Batterie détectée »
+  remplace son ancienne règle (une lecture sous 6 V dans les 10 dernières minutes, chargeur
+  allumé).
+- **« Tab5 Limite de charge »** (100 % par défaut, ou 80 %) : pour une tablette branchée en
+  permanence, la charge s'arrête à 80 % et reprend à 70 %. Pas encore essayé avec une batterie :
+  chargeur arrêté et USB branché, on ne sait pas encore si la tablette tourne sur l'USB ou sur sa
+  batterie.
+- **« Tab5 Consommation »** (W) : tension × courant de la batterie quand la tablette tourne sur
+  elle ; aussi sur la ligne « Batterie » de la console système (« 78% · 3.1 W »), à la place de
+  la tension.
+- **Batterie faible sur le téléphone** : sur batterie, sous 20 % puis sous 10 %, la tablette
+  émet `esphome.tab5_batterie_faible` (niveau, seuil), une fois par seuil ; la garde
+  « batterie faible » de `packages/tab5_health.yaml` en fait une notification persistante et une
+  notification sur le téléphone.
+- `tools/test_alarm_clock.cpp` (chargeur, limite, alerte, console), `tests/test_batterie.py`
+  (câblage YAML) ; `docs/troubleshooting.md`, `docs/hardware.md`.
+
+### 2026-10-08 — YAML du firmware rangé (lot L8 de l'audit du 07/10)
+
+Rien ne doit changer à l'écran ni pour Home Assistant (mêmes entités, mêmes options, mêmes
+codes gardés en mémoire) : la configuration résolue ne diffère que par l'endroit où le code
+est écrit, deux identifiants ajoutés et l'ordre de deux widgets qui ne se chevauchent pas.
+- **Gabarits au lieu de copies** : tuiles journalières (`forecast_day_card.yaml`,
+  `forecast_day_body.yaml`), cartes du mode HA (`switch_card.yaml`), boutons du haut
+  (`bouton_haut.yaml`), boutons des panneaux centraux (`central_bouton.yaml`) ; un seul bouton à
+  pas pour le réveil et les Réglages (`bouton_pas.yaml`, à la place de deux) ; le chrome des
+  popups se ferme par `popup_id` au lieu d'une lambda écrite deux fois.
+- **Navigation à part** : `Tab5/tab5-navigation.yaml` réunit le registre des fenêtres,
+  `tab5_ecran_ouvrir`, « Aller à l'écran » et « Écran courant ». Le registre donne aussi
+  l'ouverture de chaque écran : le `switch` qui recopiait la liste des écrans disparaît.
+- **Logique en C++** : humidité des plantes (`pots_humidite_maj()`, un script au lieu de cinq
+  copies), tap-to-wake et cadence de l'IMU (plus de `static` dans une lambda), retour
+  automatique à l'accueil (`retour_auto_tick()`).
+
+### 2026-10-08 — Tests et CI de l'audit du 07/10 (lot L9)
+
+- **Les vrais moteurs d'échecs et de dames sont testés en CI**, sous ASan + UBSan, par le job
+  `python` : `tools/test_chess_engine.cpp` (`chess_ai.cpp` contre la suite perft) et
+  `tools/test_draughts_engine.cpp` (le moteur de `draughts_game.cpp` contre les perft 10×10 et
+  8×8 et les règles). Ils font foi ; les miroirs Python restent pour un poste sans g++, tenus égaux
+  par `tests/test_moteurs_hote.py`. Le miroir Python du Go, en double, est retiré : ses cas
+  manquants sont passés dans `tools/test_go_engine.cpp`.
+- **`pytest` en 47 s au lieu de 175 s** sur le poste de dev : blueprint et tableau de bord lus
+  une fois par session, gabarits Jinja compilés une fois, YAML lu par libyaml. `tests/commun.py`
+  et `tests/conftest.py` remplacent les chargeurs, lectures et `sys.path.insert` recopiés dans
+  53 fichiers. `pyserial` est installé : `tests/test_capture_serie.py` ne saute plus en CI.
+- `tests/test_contrat.py` ne lit plus `HomeAssistant_Config/rendered/` (ignoré par git) : en local,
+  les mêmes fichiers qu'en CI.
+- **Rendu hors tablette compilé une fois** (tâche `compiler`, programme passé aux neuf tâches
+  `rendu`) ; paquets pip en cache dans le rendu et les sanitizers. Dependabot suit aussi
+  `tools/site`, `tools/demo` et `tools/publication`.
+
+### 2026-10-08 — Home Assistant : factorisation des packages et du blueprint (lot L11)
+
+- **Une macro « la tablette »**, `custom_templates/tab5_tablette.jinja` : « une tablette est
+  connectée » (recopié 7 fois), la garde d'origine des événements `esphome.tab5_*` (6 fois) et le
+  capteur « HA API Status » de la tablette n'existent plus qu'ici, importés par les packages et
+  le blueprint.
+- **Blueprint « Tab5 — emplacements »** : les déclencheurs des 5 pièces et des 3 lignes de la
+  rangée sont écrits par `tools/gen_blueprint_emplacements.py` (`--check`, tenu par
+  `tests/test_blueprint_genere.py`) ; la liste des déclenchements qui poussent tout (recopiée
+  9 fois) devient la variable `tout_pousser`, l'action de la clim (2 fois) une ancre YAML. Mêmes
+  entrées, mêmes déclencheurs.
+- **Volet à course simulée** (optionnel) : un seul script chronomètre la course,
+  `script.tab5_volet_course`, appelé par la tablette et par le suivi des commandes directes ; sa
+  durée est le nouveau réglage « Tab5 · course du volet » (`number.tab5_course_du_volet`, mémoire
+  `input_text.tab5_memoire_course_volet`), **26 s par défaut, comme avant**. Une commande de la
+  tablette pendant une course lancée d'ailleurs annule maintenant ce premier chrono.
+- **Syntaxe actuelle de HA** (`triggers:`, `conditions:`, `actions:`, `- trigger:`) dans tous les
+  packages, l'optionnel et le snippet, et des noms « Tab5 — … » pour les automatisations et
+  scripts (« Tab5 — poussée complète de l'écran », « Tab5 — santé : … », « Tab5 — volet : … »).
+  Les `id:` ne changent pas : les entity_id des automatisations restent les mêmes.
+- **Moins de calculs** : le compte des entités indisponibles de la carte Santé
+  (`sensor.tab5_unavailable_count`) se fait par filtres et toutes les 5 min au lieu de 2 ; les
+  listes « Tab5 · … » (agendas, téléphone, présence, sources météo, TV, volet) ne se recalculent
+  plus sur une mise à jour du registre qui ne touche que capabilities, supported_features, options
+  ou suggested_object_id (419 des 485 événements du registre chez l'auteur en une semaine).
+- **Alerte « entités indisponibles »** : la liste gardée en mémoire est bornée à 100 entités
+  (elle grossissait sans fin) ; le nombre affiché par la tablette compte toujours toutes les
+  entités.
+- **Repli de la météo** (`custom_templates/tab5_meteo.jinja`, nouveau) : tant que l'entité
+  choisie dans « Tab5 · source des prévisions » est indisponible, ou sans relève depuis 2 h
+  (`last_reported`), la météo actuelle et les prévisions viennent d'une autre entité météo qui
+  répond (OpenWeatherMap, Météo-France, puis n'importe laquelle), et reviennent toutes seules à
+  la source choisie ; la liste garde le choix. Sans aucune entité qui répond, les poussées météo
+  sont sautées : l'écran garde ses dernières prévisions au lieu de « indisponible » à 0 °C (le
+  08/10, Météo-France indisponible de 11 h 34 à 11 h 42 chez l'auteur, OpenWeatherMap marchait).
+  Après 5 min de repli, la carte centrale affiche une alerte « Météo : OpenWeatherMap utilisé,
+  Météo-France indisponible depuis 11 h 34 », retirée au retour de la source ; la vue Santé du
+  tableau de bord montre la source utilisée. Nouveaux attributs de `sensor.tab5_meteo` :
+  `entite_effective`, `nom_effectif`, `nom_choisi`, `repli`, `repli_depuis`, `repli_heure`.
+  Pluie et vigilances inchangées.
+- Retiré : le snippet obsolète `snippets/tab5_alerts_dismissed_input_text.yaml`. Documenté (EN et
+  FR) : l'alerte « erreur de rendu » demande `system_log: fire_event: true` dans
+  `configuration.yaml`.
+
+**À faire en mettant à jour** (fichiers Home Assistant seulement, pas de firmware) :
+
+1. Copier **d'abord** `custom_templates/tab5_tablette.jinja` et `custom_templates/tab5_meteo.jinja`
+   (nouveaux), `custom_templates/tab5_alertes.jinja` et `custom_templates/tab5_dashboard.jinja`,
+   puis **Outils de développement → YAML → Modèles Jinja
+   personnalisés** (`homeassistant.reload_custom_templates`). Avant ce rechargement, les packages
+   et le blueprint qui importent la macro échouent à leur condition (la poussée s'arrête).
+   L'intégration HACS recharge les modèles en premier.
+2. Puis les packages (`tab5_push`, `tab5_health`, `tab5_reveil`, `tab5_alerts`, `tab5_calendar`,
+   `tab5_reglages`, `tab5_evenements`, `tab5_meteo_sources`, `tab5_historique`, `tab5_tv`), le blueprint
+   `tab5_emplacements.yaml` (réimporter un blueprint importé par son URL) et, s'il est installé,
+   `optionnel/volet_serre_tracking.yaml`.
+3. Recharger **Entrées de texte**, **Entités de modèle**, **Scripts** et **Automatisations** (ou
+   redémarrer HA). Nouvelles entités, seulement avec le volet optionnel :
+   `number.tab5_course_du_volet`, `input_text.tab5_memoire_course_volet`,
+   `script.tab5_volet_course`. Aucune entité retirée.
+4. Pour voir la ligne « Source météo » de la vue Santé : régénérer le tableau de bord du Tab5.
+
+### 2026-10-08 — Données générées des thèmes et polices figées (lot L12)
+
+Rien ne change à l'écran : mêmes couleurs, mêmes formes, mêmes fichiers de police.
+
+- **Retoucher un thème ne recompile plus tout le firmware.** Le catalogue des 21 thèmes
+  (`THEMES[]`, ~2 800 lignes générées) quitte `Tab5/tab5_tokens.h`, inclus par 26 unités C++ dont
+  deux jeux, pour `Tab5/tab5_themes_data.h`, inclus par `tab5_theme.cpp` et `tab5_reglages.cpp`
+  seulement. `tab5_tokens.h` passe de 3 125 à 273 lignes et ne garde que `PALETTE_SOMBRE`, que
+  `THEMES[0]` reprend. `tools/gen_themes.py` écrit le nouveau fichier ; `tests/test_themes.py`
+  vérifie qu'il est à jour et que personne d'autre ne l'inclut.
+- **Tables des thèmes liées à leur nombre** : des `static_assert` générés lient `kPolices`,
+  `kFormesDebut` et leurs sentinelles à `THEME_COUNT` ; une table périmée ne compile plus.
+- **Rôle de couleur `ICON_MUTED` retiré** : rien ne le lisait (66 rôles). Un test échoue
+  désormais sur un rôle que rien ne lit.
+- **Polices figées dans le dépôt** : Roboto 700 et les 20 polices des thèmes étaient des
+  `gfonts://`, redemandées à Google Fonts chaque jour par ESPHome ; une nouvelle version chez
+  Google changeait le firmware sans un mot. Les fichiers (`Tab5/fonts/`, 3,6 Mo, SIL OFL 1.1,
+  copyrights dans `Tab5/fonts/OFL.txt`) sont ceux que Google servait, octet pour octet ;
+  `tests/test_polices_themes.py` vérifie leur empreinte et qu'aucune police n'est plus
+  téléchargée à la compilation.
+- Polices des thèmes en mémoire (PERF-2 de l'audit) : aucun glyphe retiré, et toutes restent
+  compilées. La police de la date dessine aussi les textes libres de 45 px (réponse vocale,
+  alertes, planning, carte centrale) dans les 7 langues, et ESPHome ne sait pas charger une police
+  à la demande (raisons dans l'ADR-0029).
+
+### 2026-10-08 — Écritures gardées et petites optimisations (lot L10)
+
+Aucun changement visible : les mêmes valeurs, écrites seulement quand elles changent (en LVGL
+9.5.0, `lv_label_set_text()` et `lv_obj_set_style_*()` invalident même à valeur égale). Gain non
+mesuré sur la tablette.
+- **Popup Température** : le titre n'est plus écrit deux fois à chaque repeint ;
+  `peindre_graphique()` (≈ 200 lignes) découpé en onze étapes nommées, mêmes calculs.
+- **Repeints sans réécriture égale** : lignes du popup Alertes, bordures des boutons
+  (`highlight_button_border()` : vues Température et Énergie, bascules du réveil, assistant),
+  popup et sonnerie du réveil, grille du calendrier, titres de page, bandeau info et pluie,
+  pastilles des pages ; `set_label_text_utf8()` ne copie plus son texte.
+- **Tick de 1 s** : il ne relance plus le script du registre des fenêtres une fois la liste
+  remplie. Écran éteint, il referme toujours les popups après l'inactivité, pour se rallumer
+  sur l'accueil.
+- **Une seule recette** : les pastilles sous l'horloge passent par `pagination_afficher()` ; la
+  garde « appui au bout d'un glissement » devient `ui_appui_glisse()` ; `ui_style_num()` et
+  `ui_style_couleur()` rejoignent la boîte à outils d'`AGENTS.md`.
+
+### 2026-10-08 — Intégration HACS : trois défauts de l'audit du 07/10 (lot L11)
+
+- **Fichiers refusés plus réessayés à chaque démarrage** : quand la vérification de la
+  configuration refusait les fichiers d'une version, l'intégration refaisait le même essai à
+  chaque redémarrage de Home Assistant, avec une sauvegarde de plus, identique, qui poussait
+  les utiles hors des 5 gardées. Ces fichiers-là ne sont plus réessayés que sur demande
+  (*Configurer* → « Réinstaller maintenant les fichiers de cette version ») ou quand HACS en
+  apporte d'autres, et une sauvegarde identique à la précédente n'est plus refaite.
+- **Fichiers copiés à la main signalés** : une première installation remplaçait sans le dire
+  des fichiers du Tab5 déjà copiés à la main. Nouvelle réparation « Tab5 : des fichiers déjà
+  là ont été remplacés », qui les liste et nomme la sauvegarde ; la notification les nomme
+  aussi.
+- **Mise à jour de la tablette réessayée** : l'attente du firmware était oubliée avant même
+  de lancer la mise à jour, et rien ne réessayait un OTA raté. Elle reste jusqu'à ce que la
+  tablette donne la nouvelle version ; sinon nouvel essai toutes les 15 minutes, 3 en tout,
+  puis la réparation « Tab5 : la tablette n'est pas passée en X » dit de l'installer à la main.
+
+### 2026-10-08 — Garde-fous de l'audit du 07/10 (lot L6)
+
+- **Six règles de plus** dans `tools/check_tab5_code_rules.py` (jouées par `pytest`), chacune
+  falsifiée sur une copie du firmware : aucun nouvel appel `lv_*` ni `static` modifiable dans une
+  lambda YAML (les existants sont listés, plafonds exacts) ; pas de copie de chaîne dans un
+  `on_value:` ; chaque fonction de `tab5_custom.h` appelée hors de son fichier (10 exceptions
+  listées) ; `nullptr` et tag de journal `tab5.<module>` (corrigés dans trois unités) ; aucun mot
+  courant sans accent dans un texte de l'écran.
+- **Fuzz des sanitizers** : une graine par service déclaré (Énergie et historique d'énergie
+  ajoutés, rangée `hp`/`hd`/`hLI` et tuile − / + `rN`), tenue par `tests/test_sanitizers.py`.
+- **`tab5_maj_planning` obsolète** (décision de l'auteur) : gardé pour compatibilité, retiré dans
+  une future version majeure ; ses variables ne changent pas.
+
+### 2026-10-08 — Changer de thème ne fige plus l'écran
+
+- **Changer de thème, de mode clair ou sombre, ou passer à la nuit en mode Auto bloquait la
+  tablette 3,2 s**, quel que soit le thème (mesuré le 07/10 sur la tablette ; le nouveau thème
+  apparaissait 3,7 à 3,9 s après la demande). Ce n'étaient ni les ombres ni les dégradés, qui ne
+  coûtent que 25 à 32 ms de plus par image sur les deux « Relief » : chacun des 69 styles
+  repeints reparcourait les ~1 600 objets de l'écran et remettait en page tous les textes posés
+  sous ses objets. Les couleurs sont maintenant reposées d'un coup puis l'écran est redessiné
+  une fois ; seuls les objets qui portent l'un des 12 styles de forme (319 comptés sur la
+  tablette) sont remis en page, une seule fois. Les polices (3 styles) et les cases du calendrier
+  (5) gardent leur rafraîchissement par style. Prototype mesuré sur la tablette : 0,18-0,19 s,
+  nouveau thème affiché en 0,44-0,51 s,
+  même géométrie qu'avant sur 5 thèmes. Le démarrage dans un thème autre qu'Ardoise, qui coûtait
+  ~2,95 s de plus, passe par le même chemin (gain non mesuré).
+- `tools/gen_themes.py`, `theme_formes()` (`Tab5/tab5_theme.cpp`) ; `tests/test_themes.py`
+  vérifie que rien d'autre qu'une couleur n'est posé pendant que le rafraîchissement est coupé.
+
+### 2026-10-07 — Home Assistant : correctifs de l'audit du 07/10, plus de `is_primary_active`
+
+- **Plus de garde-fou `input_boolean.is_primary_active`** (décision de l'auteur) : ce reste de
+  l'ancienne bascule entre deux Home Assistant ([ADR-0008](../../docs/decisions/0008-single-ha-instance.md))
+  conditionnait toutes les poussées ; resté à `off`, il figeait l'écran sans aucune erreur. Il
+  disparaît, avec l'automatisation `force_primary_active_on_boot`, sa garde de santé « OFF depuis
+  5 min », sa tuile, sa ligne et sa pastille du tableau de bord. « MAJ Écran » ne fait plus que
+  relancer la poussée complète.
+- **« Éteindre les lumières » d'une pièce épargne une lampe réglée sur « Confirmer »**, comme
+  « Allumer seulement » et « Lecture seule » : une commande confirmée ne passe jamais par un seul
+  toucher ([ADR-0036](../../docs/decisions/0036-quick-action-wheel.md)). « Tout éteindre » de l'ancien
+  mode (lumières 1 à 3) suit la même règle.
+- **Bandeaux d'alerte** : le libellé est coupé à 100 caractères et le message ne dépasse plus
+  jamais 1 024 octets ; une alerte au texte très long faisait refuser tout le message par la
+  tablette, et les quatre bandeaux restaient sur les anciennes alertes.
+- **Pluie dans l'heure** : un changement du code ou des barres de pluie ne relance plus toute la
+  poussée complète (calendrier, prévisions, ~8 envois) ; la poussée légère envoie le code et les 9
+  barres, seulement quand l'un des deux change. La poussée complète renvoie encore les barres toutes
+  les 10 minutes.
+- **Jour travaillé des tuiles météo** calculé comme dans le calendrier (macros de
+  `custom_templates/tab5_calendar.jinja`) : le jour de fin d'un événement « journée entière » n'est
+  plus compté, les jours du milieu d'un événement de plusieurs jours le sont ; le lendemain d'une
+  garde de nuit n'est plus marqué travaillé. Le réveil lit aussi les événements par ces macros.
+- **Plus de poussée perdue** : la poussée complète (`queued`, 3 en file) et celle des rendez-vous
+  (`queued`, 2) ne laissent plus tomber une reconnexion de la tablette arrivée pendant un passage ;
+  le blueprint garde 50 déclenchements en file au lieu de 25 (éteindre toute la maison en produit
+  ~30).
+- **Popup Énergie** : les statistiques du recorder ne sont plus redemandées qu'au plus toutes les 5
+  minutes tant qu'il reste ouvert (au lieu de toutes les 5 s) ; l'instantané suit toujours.
+- **Calendrier** : une année ou un mois qui n'est pas un nombre arrête la réponse sans erreur.
+- **Mise à jour** : remplacer les packages, le blueprint et `custom_templates/` (le package
+  principal et celui du réveil importent maintenant `tab5_calendar.jinja`), recharger les modèles
+  Jinja puis la configuration YAML. L'entité `input_boolean.is_primary_active` et les
+  automatisations « Force Primary Active on Boot » et « Tab5 Santé — is_primary_active OFF depuis
+  5 min » disparaissent : si Home Assistant les garde en « indisponible », les supprimer dans
+  Paramètres → Entités. Refaire le tableau de bord (étape 7 du guide). Rien à changer sur la
+  tablette. Non essayé sur un vrai Home Assistant.
+
+### 2026-10-07 — Correctifs de l'audit du 07/10 (firmware)
+
+- **La roue d'actions rapides dit « Détails »** au lieu de « Réglages » pour ouvrir la fenêtre
+  complète de l'appareil (décision de l'auteur) : « Réglages » restait le nom de la fenêtre de
+  l'engrenage. « Details » en anglais, allemand et néerlandais, « Detalles », « Dettagli » et
+  « Ayrıntılar » en espagnol, italien et turc. [ADR-0036](../../docs/decisions/0036-quick-action-wheel.md) et notice à jour.
+- **La même lampe affiche le même pourcentage partout** : à 127/255, la carte disait 50 % et le
+  popup lumière 49 %. Carte, popup (arc compris) et roue arrondissent de la même façon, et une lampe
+  allumée n'affiche jamais 0 %.
+- **Popup lumière ouvert quand Home Assistant renvoie les tuiles** : ses lignes suivent les nouvelles
+  définitions, comme les popups volet et appareil ; il se ferme si la pièce n'a plus de lumière.
+- **Énergie** : l'après-midi, la vue « heures » montrait 23 barres au lieu de 24 (la dernière heure à
+  venir était perdue) et leur espacement changeait ; corrigé. L'année de début est bornée
+  (1970 à 2200) comme dans l'historique des températures.
+- **Bandeaux d'alerte** : leur texte passe par le même filtre que l'historique des alertes (aucun
+  caractère que les polices n'ont pas, plus de carré vide).
+- **Accents** : « Journée » (onglet du jour des prévisions), « Redémarrage... » (console) et
+  « Réflexion... » (assistant vocal).
+- **Console** : plus de 0/0 converti en entier quand la mémoire totale vaut 0 (tablette virtuelle),
+  ni de volume NaN converti en entier.
+- Vérifié sans changement : 10 bandes de prévision mini/maxi suffisent (7 jours au plus, par jour
+  seulement) ; un test le garde.
+
+### 2026-10-07 — Tuile − / + : « Son de la tablette »
+
+- **La dernière ligne de la liste de la tuile − / + dit ce qu'elle règle**
+  ([ADR-0033](../../docs/decisions/0033-adjustable-tile.md), [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
+  « Tablette » et l'icône d'une tablette ne disaient pas que c'était le volume de la tablette, qu'on
+  réglait de 0 à 100 % sans rien voir changer. Elle s'appelle « Son de la tablette » (Tablet volume)
+  et montre un haut-parleur, barré à 0 % ou quand le son est coupé ; le muet du popup de l'assistant
+  la repeint. Rien ne change dans Home Assistant.
+
+### 2026-10-07 — Roue d'actions rapides à deux anneaux
+
+- **Deux anneaux dans une roue** ([ADR-0036](../../docs/decisions/0036-quick-action-wheel.md), mis à
+  jour) : l'appui long d'une lumière, d'un volet ou d'une clim pose un moyeu sur la tuile (icône,
+  état, jauge en arc de la luminosité, de la position ou de la consigne, nom) et, au-dessus, un
+  premier anneau : **Maison** (le popup Maison, absent quand la roue s'ouvre depuis lui), les
+  commandes, les familles de réglages marquées d'un point, **Réglages** (le popup complet, ex-« ⋯ »).
+  Toucher une famille déplie ses choix sur un second anneau : luminosité 10 / 25 / 50 / 75 / 100 %,
+  blancs (chaud, crème, froid) et couleurs (rouge, orange, or, vert, bleu, violet) d'une lampe à
+  couleur ; position 25 / 50 / 75 % d'un volet ; modes, consigne (± 2 pas) et options (Éco, Boost,
+  Silence, Oscillation, Brise) d'une clim. Toucher ailleurs ou le moyeu replie, puis ferme ; un choix
+  ferme la roue (décision de l'auteur).
+- **Plus de lampes** : une lampe sans variateur a sa roue (Allumer, Éteindre, les liens) ; la règle
+  « moins de trois commandes : pas de roue » disparaît. Toujours aucune roue avec l'option `k`.
+- **Aspect** : voile des popups à 60 % au lieu du disque de verre, bandes de verre sous les anneaux,
+  boutons ronds de 72 px au verre des popups, état courant en verre teinté avec liseré et halo,
+  pastilles de couleur en dégradé, liens en contour avec leur mot. Ouverture et dépliage secs.
+- **Pas de famille « Ventilation »** : HA ne pousse pas la liste des vitesses ; la bascule Silence du
+  popup est dans les options. Aucune commande nouvelle : celles des tuiles et des popups lumière et
+  clim (`esphome.tab5_action`), rien à changer dans Home Assistant.
+- Rendu : `roue-lampe` (luminosités dépliées), `roue-lampe-couleurs` (nouveau), `roue-volet`
+  (positions), `roue-clim` (modes) ; les popups de tuile s'ouvrent par « Réglages ».
+  `tests/test_roue.py` réécrit (géométrie des deux anneaux pour toutes les tuiles, choix et commandes
+  comparés aux popups). Non essayé sur la tablette.
+
+### 2026-10-07 — Images du README et du site, HACS dans le dépannage
+
+- **Photo d'en-tête** : la photo de la tablette de l'auteur, prise le 07/10/2026 (sans
+  métadonnées), remplace celle de juillet en tête du README (donc de l'accueil du site), en haut de
+  « Écrans » et dans l'image de partage du site (`tab5_social_preview.jpg`).
+- **Galerie du README** : les 12 photos de juillet (interface d'alors, en français même dans la
+  partie anglaise) laissent la place à 18 écrans dessinés par le firmware lui-même sur un PC
+  (rendu hors tablette, données de démonstration), chacun dans un autre thème, en anglais dans la
+  partie anglaise et en français dans la française (`docs/images/galerie/`).
+- **Tour animé** : refait depuis le rendu de `main` (thème par défaut), 11 écrans dont la maison,
+  la roue d'actions et l'énergie, un par langue (`tab5_ui_tour_en.webp`, `tab5_ui_tour_fr.webp`).
+- **Planche des thèmes** : six accueils (Pixel, Bonbon, Sorbet, Béton brut, Zen Sumi, Capsule),
+  deux en mode pièces, quatre avec une alerte différente sur la carte centrale, en anglais
+  (`tab5_themes_en.jpg`) et en français (`tab5_themes.jpg`) ; README, « Écrans » et « Réglages ».
+- **« Écrans »** (`docs/screens.md`) : les photos de juillet deviennent les rendus de la notice,
+  les trois jeux montrés aussi dans la partie anglaise. Les anciennes photos restent dans
+  `docs/images/` pour le kit de presse.
+- **HACS** : nouvel incident « Ajout de Tab5 dans HACS : « Dépôt introuvable », ou une boîte
+  vide » (dernière release complète avant la 3.7.0 ; textes de HACS pas encore chargés au premier
+  passage par le lien, vu avec HACS 2.0.5), et un renvoi depuis l'étape 2 de « Avec HACS ». Ajout du
+  dépôt par le bouton essayé le 07/10 avec la 3.7.0 stable : HACS propose la v3.7.0 ;
+  téléchargement et ajout de l'intégration pas encore essayés par l'auteur.
+
+### 2026-10-08 — Firmware : socle C++ commun (lot L5 de l'audit du 07/10)
+
+- **Une seule copie** de la lecture bornée d'un payload (`Tab5/tab5_champs.h`, six variantes
+  retirées), des dates et des heures « HH:MM » (`tab5_core`), de la géométrie des popups
+  (`Tab5/tab5_geometrie.h`) et de ce que partagent les tuiles de pièce et la tuile − / +
+  (`Tab5/tab5_modele_ha.h`). Testées sur PC par `tools/test_tab5_socle.cpp` (g++ en CI).
+- **Un payload refusé laisse une ligne dans le journal** (`tab5.<module>`, raison et taille, jamais
+  le contenu), avec un plafond de taille commun de 16 Ko. Rien d'autre ne change à l'écran.
 
 ## [3.7.0] — 2026-10-07
 
