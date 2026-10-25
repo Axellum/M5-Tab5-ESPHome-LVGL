@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Asistan · takvimler ve kişiler",
-        "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “none” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Yok” yapabilirsiniz.",
+        "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Not set” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Yok” yapabilirsiniz.",
         "data": {
           "agenda_travail": "İş takvimi",
           "agenda_rdv": "Randevu takvimi",
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Asistan · takvimler ve kişiler",
-            "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “none” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Yok” yapabilirsiniz.",
+            "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Not set” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Yok” yapabilirsiniz.",
             "data": {
               "agenda_travail": "İş takvimi",
               "agenda_rdv": "Randevu takvimi",

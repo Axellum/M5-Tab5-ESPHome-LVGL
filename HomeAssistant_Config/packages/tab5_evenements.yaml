@@ -250,7 +250,7 @@ automation:
               - variables:
                   # « preferred » (Domotique) ou « Discussion LLM » (Discussion, nom fixé
                   # par le firmware). Discussion = le pipeline choisi dans « Tab5 · chat
-                  # pipeline » (tab5_reglages.yaml) ; « none » (« Aucun » avant le
+                  # pipeline » (tab5_reglages.yaml) ; « Not set » (« Aucun » avant le
                   # 24/10/2026 ; jamais « None », que HA relirait comme le None de
                   # Python) = le pipeline préféré (les boutons sont alors masqués sur
                   # un firmware qui le sait). Liste
@@ -259,7 +259,7 @@ automation:
                   demande: "{{ trigger.event.data.option | default('') | string }}"
                   choisi: "{{ states('select.tab5_pipeline_de_discussion') }}"
                   option: >-
-                    {%- if demande == 'preferred' or choisi in [none, 'none', 'None', 'Aucun', 'Aucune'] -%}preferred
+                    {%- if demande == 'preferred' or choisi in [none, 'Not set', 'none', 'None', 'Aucun', 'Aucune'] -%}preferred
                     {%- elif choisi in ['unknown', 'unavailable'] -%}{{ demande }}
                     {%- else -%}{{ choisi }}
                     {%- endif -%}

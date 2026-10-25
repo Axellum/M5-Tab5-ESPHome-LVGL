@@ -113,8 +113,8 @@ def _env(etats):
 
 
 def _payload(etats, choix):
-    """Le payload rendu, `choix` = {rôle: entité} (le reste sur « none »)."""
-    selects = [EtatHA(f"select.tab5_ia_{r}", choix.get(r, "none")) for r in ROLES]
+    """Le payload rendu, `choix` = {rôle: entité} (le reste sur « Not set »)."""
+    selects = [EtatHA(f"select.tab5_ia_{r}", choix.get(r, "Not set")) for r in ROLES]
     env = _env(list(etats) + selects)
     capteur = _modele_payload()
     compte = _rendre(env, capteur["state"], {})
@@ -265,7 +265,7 @@ def test_dix_listes_et_leurs_memoires():
         assert s["name"].startswith("Tab5 · AI server, ") and " · " not in s["name"][len("Tab5 · "):]
         memoire = f"input_text.tab5_choix_ia_{r[len('tab5_ia_'):]}"
         assert s["select_option"][0]["target"]["entity_id"] == memoire
-        assert memoire in s["state"] and "'none'" in s["state"] and "['none']" in s["options"]
+        assert memoire in s["state"] and "'Not set'" in s["state"] and "['Not set']" in s["options"]
     immediate = next(a for a in paquet["automation"] if a["id"] == "tab5_serveur_ia_immediat")
     assert immediate["triggers"][0]["entity_id"] == memoires
 
@@ -284,15 +284,15 @@ def test_chaque_liste_ne_propose_que_ce_qui_convient():
                                            device_class="humidity", state_class="measurement")]
     options = {r: _options(etats, r)[0] for r in ROLES}
     assert options["etat"] == ["binary_sensor.tab5_serveur_ia_en_ligne", "sensor.tab5_serveur_ia_modele",
-                               "sensor.tab5_serveur_ia_requetes", "none"]
+                               "sensor.tab5_serveur_ia_requetes", "Not set"]
     assert "sensor.tab5_serveur_ia_modele" in options["modele"] and "sensor.glances_ram" not in options["modele"]
     assert "sensor.tab5_serveur_ia_vitesse" in options["tokens"] and "binary_sensor" not in str(options["tokens"])
-    assert options["vram_totale"] == ["sensor.tab5_serveur_ia_vram", "sensor.glances_gpu_memoire_totale", "none"]
+    assert options["vram_totale"] == ["sensor.tab5_serveur_ia_vram", "sensor.glances_gpu_memoire_totale", "Not set"]
     assert "sensor.glances_ram" in options["vram"], "une VRAM utilisée en % est permise"
-    assert options["temperature"] == ["sensor.glances_gpu_temperature", "none"]
-    assert options["ram"] == ["sensor.glances_ram", "sensor.salon_humidite", "none"]
-    assert options["puissance"] == ["sensor.prise_pc_ia", "none"]
-    assert all(o[-1] == "none" for o in options.values())
+    assert options["temperature"] == ["sensor.glances_gpu_temperature", "Not set"]
+    assert options["ram"] == ["sensor.glances_ram", "sensor.salon_humidite", "Not set"]
+    assert options["puissance"] == ["sensor.prise_pc_ia", "Not set"]
+    assert all(o[-1] == "Not set" for o in options.values())
 
 
 def test_un_choix_disparu_reste_dans_sa_liste():
@@ -300,7 +300,7 @@ def test_un_choix_disparu_reste_dans_sa_liste():
     options, etat = _options(_ollama_et_glances(), "temperature", "sensor.gpu_parti")
     assert etat == "sensor.gpu_parti" and "sensor.gpu_parti" in options
     options, etat = _options(_ollama_et_glances(), "temperature", "n'importe quoi")
-    assert etat == "none"
+    assert etat == "Not set"
 
 
 # ─── Poussées ──────────────────────────────────────────────────────────────────

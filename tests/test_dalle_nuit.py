@@ -11,7 +11,7 @@ Rien ne compile ces règles hors tablette : ce fichier relit le YAML et le Jinja
   (esphome des deux cartes, http_request des firmwares publiés) passe par le script de la
   carte ;
 - « Tab5 · night screen off » propose 00:00-06:00 sans rien changer pour qui a choisi un
-  capteur de présence, et le miroir « Tab5 · screen night » dit « dans la plage » comme un
+  capteur de présence, et le miroir « Tab5 · night screen off now » dit « dans la plage » comme un
   calcul refait ici en Python (plage à cheval sur minuit comprise).
 """
 import datetime as dt
@@ -108,10 +108,11 @@ def _rendre(texte, etats, maintenant=None):
 
 @pytest.mark.parametrize("memoire, presence, attendu", [
     ("unknown", "unknown", "00:00-06:00"),           # jamais réglée : proposée
-    ("", "none", "00:00-06:00"),
-    ("unknown", "binary_sensor.salon", "none"),      # capteur de présence choisi : comme avant
-    ("none", "unknown", "none"),                     # choix gardé
-    ("Aucune", "unknown", "none"),                   # choix d'avant le 24/10/2026, gardé
+    ("", "Not set", "00:00-06:00"),
+    ("unknown", "binary_sensor.salon", "Not set"),   # capteur de présence choisi : comme avant
+    ("Not set", "unknown", "Not set"),               # choix gardé
+    ("Aucune", "unknown", "Not set"),                # choix d'avant le 24/10/2026, gardé
+    ("none", "unknown", "Not set"),                  # « none » du 24/10/2026, gardé
     ("23:00-07:00", "binary_sensor.salon", "23:00-07:00"),
     ("21:30-05:45", "unknown", "21:30-05:45"),       # plage écrite à la main
     ("25:00-06:00", "unknown", "00:00-06:00"),       # illisible : défaut
@@ -122,8 +123,8 @@ def test_liste_extinction_de_nuit(memoire, presence, attendu):
     etats = {"input_text.tab5_choix_extinction_nuit": memoire, "input_text.tab5_choix_presence": presence}
     assert _rendre(liste["state"], etats) == attendu
     options = yaml.safe_load(_rendre(liste["options"], etats))
-    assert attendu in options and options[-1] == "none"
-    assert all(o == "none" or PLAGE.match(o) for o in options)
+    assert attendu in options and options[-1] == "Not set"
+    assert all(o == "Not set" or PLAGE.match(o) for o in options)
 
 
 def _dans_la_plage(plage, h):
@@ -135,9 +136,9 @@ def _dans_la_plage(plage, h):
     return d <= m < f if d < f else (m >= d or m < f) if d > f else False
 
 
-@pytest.mark.parametrize("plage", ["00:00-06:00", "23:00-07:00", "22:00-06:00", "06:00-06:00", "12:15-13:45", "none"])
+@pytest.mark.parametrize("plage", ["00:00-06:00", "23:00-07:00", "22:00-06:00", "06:00-06:00", "12:15-13:45", "Not set"])
 def test_miroir_nuit_de_l_ecran(plage):
-    miroir = _modele("binary_sensor", "Tab5 · screen night")
+    miroir = _modele("binary_sensor", "Tab5 · night screen off now")
     etats = {"select.tab5_extinction_de_nuit": plage}
     for minutes in range(0, 24 * 60, 5):
         h = dt.datetime(2026, 10, 16, minutes // 60, minutes % 60)

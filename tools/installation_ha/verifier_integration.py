@@ -398,8 +398,8 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     maison = MAISON_ATTENDUE | ({"meteo_previsions": meteos[0]} if len(meteos) == 1 else {})
     rapport.info(f"1 bis. entités météo de ce HA : {meteos}")
     options_travail = await options_de(ha, SELECT_TRAVAIL, AGENDA_CI_ENTITE)
-    rapport.verifier(AGENDA_CI_ENTITE in options_travail and await etat(ha, SELECT_TRAVAIL) == "none",
-                     "1 bis. liste « Tab5 · work calendar » chargée, l'agenda parmi ses choix, réglée sur « none »",
+    rapport.verifier(AGENDA_CI_ENTITE in options_travail and await etat(ha, SELECT_TRAVAIL) == "Not set",
+                     "1 bis. liste « Tab5 · work calendar » chargée, l'agenda parmi ses choix, réglée sur « Not set »",
                      str(options_travail))
 
     # Par la réparation « configurer_pieces », valeurs proposées acceptées.
@@ -428,8 +428,8 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     if "agendas" in par_etape:
         proposee = suggestions(par_etape["agendas"])
         rapport.verifier(proposee.get("agenda_travail") == AGENDA_CI_ENTITE
-                         and all(v == "none" for k, v in proposee.items() if k != "agenda_travail"),
-                         "1 bis. agendas : l'agenda « travail » proposé, le reste sur « none »", str(proposee)[:400])
+                         and all(v == "Not set" for k, v in proposee.items() if k != "agenda_travail"),
+                         "1 bis. agendas : l'agenda « travail » proposé, le reste sur « Not set »", str(proposee)[:400])
     recap = json.dumps(formulaires[-1].get("description_placeholders") or {}, ensure_ascii=False)
     rapport.verifier("Salon CI" in recap and "Applique CI" in recap and "light.ci_applique" not in recap
                      and AGENDA_CI in recap and "Température extérieure CI" in recap,

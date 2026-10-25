@@ -76,7 +76,7 @@ input_text:
     name: "Tab5 · AI server MAC address"
     icon: mdi:power
     max: 17
-  # Mémoire de la liste « Tab5 · AI server, restart » (une entité, ou « none »).
+  # Mémoire de la liste « Tab5 · AI server, restart » (une entité, ou « Not set »).
   tab5_choix_ia_redemarrage:
     name: "Tab5 · memory · AI server, restart"
     icon: mdi:content-save-outline
@@ -290,7 +290,7 @@ template:
                     memoire=ns.memoire, tokens=ns.tokens, secondes=ns.secondes, requetes=ns.requetes,
                     attente=ns.attente, slots=ns.slots) }}
     sensor:
-      - name: "Tab5 · AI server · reading"
+      - name: "Tab5 · AI server · readings"
         unique_id: tab5_serveur_ia_releve
         default_entity_id: sensor.tab5_serveur_ia_releve
         icon: mdi:server-network
@@ -440,10 +440,10 @@ template:
         icon: mdi:restart
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_redemarrage') -%}
-          {{ ia_redemarrages + ([m] if m is match('(script|button)[.][a-z0-9_]+$') and not m.startswith('script.tab5_') and m not in ia_redemarrages else []) + ['none'] }}
+          {{ ia_redemarrages + ([m] if m is match('(script|button)[.][a-z0-9_]+$') and not m.startswith('script.tab5_') and m not in ia_redemarrages else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_redemarrage') -%}
-          {{ m if m is match('(script|button)[.][a-z0-9_]+$') and not m.startswith('script.tab5_') else 'none' }}
+          {{ m if m is match('(script|button)[.][a-z0-9_]+$') and not m.startswith('script.tab5_') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:

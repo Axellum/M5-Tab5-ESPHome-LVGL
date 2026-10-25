@@ -59,7 +59,7 @@ A long press on one of the two home-screen temperatures opens its history ([ADR-
 | Plants (0 to 5) | Pot 1 to 5: the moisture sensor; conductivity, light, temperature and battery are taken from the same device | Up to 4 plants: one slot each; 5: the « driest / median / wettest » summary. Popup cards, re-centred |
 | Climate | Climatisation | − / setpoint / + and the popup |
 | Work planning | Agenda de travail | Planning panel of the central card |
-| Voice « Discussion » mode | none: the list « Tab5 · chat pipeline » set to « none » (without the list, the zone stays) | Domo / Discu buttons of the home page and of the assistant popup; the tablet goes back to Domo |
+| Voice « Discussion » mode | none: the list « Tab5 · chat pipeline » set to « Not set » (without the list, the zone stays) | Domo / Discu buttons of the home page and of the assistant popup; the tablet goes back to Domo |
 | Lights (3.x setup) | Lumière 1 to 3 · Light 1 to 3 (« Ancien accueil » section) | Icons of tiles 3 to 5, card of the « HA » layer, rows of the Lights popup, « Tout éteindre » |
 | PC (3.x setup) | PC (a switch turns it on; a presence tracker only shows it) | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
 | Shutter (3.x setup) | Volet (and the optional `volet_serre_tracking.yaml` package, `tab5_optionnel/` of the archive, for a shutter that doesn't report its travel) | Icons of tile 2, card of the « HA » layer |
@@ -140,7 +140,7 @@ Un appui long sur l'une des deux températures de l'accueil ouvre son historique
 | Pots (0 à 5) | Pot 1 à 5 : le capteur d'humidité ; conductivité, éclairement, température et batterie sont pris sur le même appareil | Jusqu'à 4 pots : un emplacement chacun ; à 5 : le résumé « plus secs / médiane / plus humide ». Cartes du popup, recentrées |
 | Clim | Climatisation | − / consigne / + et le popup |
 | Planning de travail | Agenda de travail | Panneau planning de la carte centrale |
-| Mode vocal « Discussion » | aucune : la liste « Tab5 · chat pipeline » à « none » (sans la liste, la zone reste) | Boutons Domo / Discu de l'accueil et du popup assistant ; la tablette repasse en Domo |
+| Mode vocal « Discussion » | aucune : la liste « Tab5 · chat pipeline » à « Not set » (sans la liste, la zone reste) | Boutons Domo / Discu de l'accueil et du popup assistant ; la tablette repasse en Domo |
 | Lumières (réglage 3.x) | Lumière 1 à 3 · Light 1 to 3 (section « Ancien accueil ») | Icônes des tuiles 3 à 5, carte du calque « HA », lignes du popup Lumières, « Tout éteindre » |
 | PC (réglage 3.x) | PC (un interrupteur l'allume ; un suivi de présence l'affiche seulement) | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
 | Volet (réglage 3.x) | Volet (et le package optionnel `volet_serre_tracking.yaml`, `tab5_optionnel/` de l'archive, pour un volet qui ne signale pas sa course) | Icônes de la tuile 2, carte du calque « HA » |

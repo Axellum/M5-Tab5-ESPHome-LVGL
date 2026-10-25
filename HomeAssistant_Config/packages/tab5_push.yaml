@@ -695,20 +695,20 @@ automation:
   - id: tab5_extinction_nuit
     alias: "Tab5 — night screen off"
     # Extinction de nuit de l'écran (16/10/2026, audit anti-casse) : tient l'interrupteur
-    # « Tab5 Nuit (écran éteint) » de la tablette d'après la plage choisie dans « Tab5 · night screen off » (tab5_reglages.yaml, lue sur son miroir « Tab5 · screen night ») : allumé dans la plage, éteint hors de la plage, au changement de plage, à
+    # « Tab5 Nuit (écran éteint) » de la tablette d'après la plage choisie dans « Tab5 · night screen off » (tab5_reglages.yaml, lue sur son miroir « Tab5 · night screen off now ») : allumé dans la plage, éteint hors de la plage, au changement de plage, à
     # chaque connexion de la tablette (l'interrupteur repart éteint à son démarrage ; une
     # tablette qu'on ajoute se connecte aussi) et au démarrage de HA. Pas de déclencheur sur
     # l'attribut de sensor.tab5_tablette, contrairement au thème : il part pendant l'ajout de
     # l'appareil, quand la liaison bascule encore (« Not connected », test « Installation
     # dans un HA neuf » du 16/10/2026). La tablette fait le reste : écran éteint après 1 min sans toucher
-    # pendant la nuit, rallumé à la fin s'il a été éteint par la nuit. « none » : le
+    # pendant la nuit, rallumé à la fin s'il a été éteint par la nuit. « Not set » : le
     # miroir est indisponible, l'interrupteur est éteint (même en pleine nuit).
     description: "Allume l'interrupteur « Tab5 Nuit (écran éteint) » de la tablette pendant la plage de « Tab5 · night screen off », l'éteint à la fin"
     mode: queued
     max: 3
     max_exceeded: silent
     triggers:
-      # Tout changement d'état, indisponible compris (« none » choisi en pleine nuit).
+      # Tout changement d'état, indisponible compris (« Not set » choisi en pleine nuit).
       - trigger: state
         entity_id: binary_sensor.tab5_nuit_de_l_ecran
         to: ~

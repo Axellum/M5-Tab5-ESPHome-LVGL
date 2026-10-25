@@ -73,7 +73,7 @@ def _env(etats):
 
 
 def _maison(type_ia="Ollama", releve="ok", adresse="http://ia:11434", modeles=("gemma4",), instances=(),
-            mac="", cible="none", existe=True, autres=()):
+            mac="", cible="Not set", existe=True, autres=()):
     etats = [EtatHA("input_select.tab5_serveur_ia_type", type_ia),
              EtatHA(RELEVE, releve, adresse=adresse, modeles=list(modeles), instances=list(instances)),
              EtatHA("input_text.tab5_serveur_ia_mac", mac),
@@ -108,7 +108,7 @@ CAS = list(itertools.product(
     ["http://ia:1", ""],
     [(), ("gemma4", "qwen3:8b")],
     ["", MAC, " aa-bb-cc-dd-ee-0f ", "AA:BB:CC:DD:EE", "unknown"],
-    [("none", False), ("script.relancer_ollama", True), ("button.ia_restart", True), ("script.disparu", False),
+    [("Not set", False), ("script.relancer_ollama", True), ("button.ia_restart", True), ("script.disparu", False),
      ("script.tab5_push_meteo", True), ("script.a,script.b", True)],
 ))
 
@@ -267,7 +267,7 @@ def test_redemarrer(cible, action):
     (dict(type_ia="Ollama", releve="ok", mac=MAC), "reveiller"),       # grisé : déjà en ligne
     (dict(type_ia="Ollama", mac=""), "reveiller"),                     # pas de MAC
     (dict(type_ia="Ollama", cible="script.disparu", existe=False), "redemarrer"),
-    (dict(type_ia="Ollama", cible="none"), "redemarrer"),
+    (dict(type_ia="Ollama", cible="Not set"), "redemarrer"),
     (dict(type_ia="Ollama", cible="script.tab5_push_meteo"), "redemarrer"),   # écrit à la main
     (dict(type_ia="Ollama", cible="script.a,script.b"), "redemarrer"),
     (dict(type_ia="Ollama", mac=MAC, releve="hors_ligne", cible="script.x"), "reveiller,redemarrer"),
@@ -288,14 +288,14 @@ def test_select_redemarrage_ni_projet_ni_tablette():
               EtatHA("button.tab5_redemarrer", "unknown", appareil="tab5"),
               EtatHA("light.salon", "on")]
     bloc, select = _bloc("tab5_serveur_ia_redemarrage")
-    for memoire, etat in (("", "none"), ("button.ia_restart", "button.ia_restart"),
-                          ("script.oublie", "script.oublie"), ("light.salon", "none"),
-                          ("script.tab5_push_meteo", "none"), ("script.a,script.b", "none")):
+    for memoire, etat in (("", "Not set"), ("button.ia_restart", "button.ia_restart"),
+                          ("script.oublie", "script.oublie"), ("light.salon", "Not set"),
+                          ("script.tab5_push_meteo", "Not set"), ("script.a,script.b", "Not set")):
         etats = autres + [EtatHA("input_text.tab5_choix_ia_redemarrage", memoire)]
         env = _env(etats)
         ctx = {k: _rendre(env, v, {}) for k, v in bloc["variables"].items()}
         options = _rendre(env, select["options"], ctx)
-        assert options[-1] == "none"
+        assert options[-1] == "Not set"
         assert {"script.relancer_ollama", "button.ia_restart"} <= set(options)
         assert not {"script.tab5_push_meteo", "button.tab5_redemarrer", "light.salon"} & set(options)
         assert _rendre(env, select["state"], ctx) == etat

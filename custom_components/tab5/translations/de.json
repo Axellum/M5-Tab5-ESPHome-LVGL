@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistent · Kalender und Personen",
-        "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „none“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Keine“ setzen.",
+        "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Not set“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Keine“ setzen.",
         "data": {
           "agenda_travail": "Arbeitskalender",
           "agenda_rdv": "Terminkalender",
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistent · Kalender und Personen",
-            "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „none“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Keine“ setzen.",
+            "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Not set“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Keine“ setzen.",
             "data": {
               "agenda_travail": "Arbeitskalender",
               "agenda_rdv": "Terminkalender",

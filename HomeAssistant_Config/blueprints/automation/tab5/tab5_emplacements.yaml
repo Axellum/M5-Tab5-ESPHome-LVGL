@@ -3428,7 +3428,7 @@ variables:
   # Le volet que suit le package volet_serre_tracking.yaml : celui que nomme sa liste
   # « Tab5 · shutter with simulated travel », s'il existe. Sa tuile montre l'état tenu par le
   # package (input_text.volet_serre_etat), ses commandes passent par
-  # script.tab5_volet_action. Liste sur « none » (son défaut) ou package absent : '',
+  # script.tab5_volet_action. Liste sur « Not set » (son défaut) ou package absent : '',
   # chaque volet est commandé directement. Avant le 06/10/2026, la seule présence du
   # script suffisait : un package copié sans choisir le volet rendait muet celui de
   # l'entrée Volet, le script s'arrêtant sur « Aucun » (discussion #278).
@@ -3530,7 +3530,7 @@ variables:
     - pot_4
     - pot_5
   # Clés des zones de l'écran (kCles de Tab5/ecran/tab5_zones.cpp). « discussion » n'est pas une
-  # entrée : absente quand la liste « Tab5 · chat pipeline » vaut « none »
+  # entrée : absente quand la liste « Tab5 · chat pipeline » vaut « Not set »
   # (variable absentes, plus bas).
   cles_zones:
     - lumiere_1
@@ -4671,14 +4671,14 @@ triggers:
   - trigger: state
     entity_id: input_text.volet_serre_etat
     id: volet_suivi
-  # Volet choisi (ou remis à « none ») dans la liste « Tab5 · shutter with simulated travel » :
+  # Volet choisi (ou remis à « Not set ») dans la liste « Tab5 · shutter with simulated travel » :
   # volet_suivi change, les tuiles concernées et le volet de l'entrée Volet repartent
   # avec la bonne source d'état. Sans le package, ne se déclenche jamais.
   - trigger: state
     entity_id: select.tab5_volet_a_course_simulee
     to: ~
     id: volet_choisi
-  # Pipeline de discussion choisi, ou remis à « none » (liste du package) : la réponse
+  # Pipeline de discussion choisi, ou remis à « Not set » (liste du package) : la réponse
   # des zones repart, sans attendre que la tablette la redemande (boutons Domo / Discu).
   # Sans la liste (package plus ancien), ne se déclenche jamais.
   - trigger: state
@@ -4817,9 +4817,9 @@ actions:
         {%- set ns = namespace(l=[]) -%}
         {%- for c in cles_zones -%}
           {%- if c == 'discussion' -%}
-            {#- Pas une entrée : la liste « Tab5 · chat pipeline ». « none » masque
+            {#- Pas une entrée : la liste « Tab5 · chat pipeline ». « Not set » masque
                 les boutons Domo / Discu ; sans la liste (package plus ancien), ils restent. -#}
-            {%- if states('select.tab5_pipeline_de_discussion') in ['none', 'None', 'Aucun', 'Aucune'] -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
+            {%- if states('select.tab5_pipeline_de_discussion') in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}
           {%- else -%}
             {%- set x = sources.get(c, '') -%}
             {%- if not x or states[x] is none -%}{%- set ns.l = ns.l + [c] -%}{%- endif -%}

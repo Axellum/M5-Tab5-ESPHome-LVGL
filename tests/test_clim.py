@@ -757,7 +757,7 @@ def _absentes(*etats, trigger=None):
 
 
 def test_discussion_absente_seulement_sur_aucun():
-    assert "discussion" in _absentes(Etat("select.tab5_pipeline_de_discussion", "none"))
+    assert "discussion" in _absentes(Etat("select.tab5_pipeline_de_discussion", "Not set"))
     # « Aucun » d'un package d'avant le 24/10/2026.
     assert "discussion" in _absentes(Etat("select.tab5_pipeline_de_discussion", "Aucun"))
     assert "discussion" not in _absentes(Etat("select.tab5_pipeline_de_discussion", "Mon LLM"))
@@ -771,7 +771,7 @@ def test_le_pipeline_change_renvoie_les_zones():
     assert declencheur == [{"trigger": "state", "entity_id": "select.tab5_pipeline_de_discussion",
                             "id": "pipeline_discussion"}]
     avant = Etat("select.tab5_pipeline_de_discussion", "Mon LLM")
-    apres = Etat("select.tab5_pipeline_de_discussion", "none")
+    apres = Etat("select.tab5_pipeline_de_discussion", "Not set")
     p = Passage({}, [apres], _declencheur("pipeline_discussion", avant, apres))
     assert p.conditions(), "le passage continue (tablette connectée)"
     branche = _chercher(p.corps["actions"], lambda d: d.get("alias") == "La tablette demande quelles zones sont absentes")

@@ -102,10 +102,10 @@ template:
         icon: mdi:television
         options: >-
           {%- set m = states('input_text.tab5_choix_tv') -%}
-          {{ tvs + ([m] if m.startswith('media_player.') and m not in tvs else []) + ['none'] }}
+          {{ tvs + ([m] if m.startswith('media_player.') and m not in tvs else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_tv') -%}
-          {{ m if m.startswith('media_player.') else ('none' if m in ['none', 'None', 'Aucun', 'Aucune'] or samsung | count != 1 else samsung[0]) }}
+          {{ m if m.startswith('media_player.') else ('Not set' if m in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] or samsung | count != 1 else samsung[0]) }}
         select_option:
           - action: input_text.set_value
             target:

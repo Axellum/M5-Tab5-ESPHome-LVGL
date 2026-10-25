@@ -20,11 +20,12 @@
 #       changement d'un capteur de la maison (jusqu'à une fois par seconde).
 #       Ici : au démarrage, au rechargement des modèles, quand une entité est
 #       ajoutée ou renommée (entity_registry_updated) et quand un choix change.
-# @contrat État d'une liste = entity_id choisi, ou « none » (« Aucun » / « Aucune »
-#       avant le 24/10/2026 : une mémoire écrite avant peut le contenir, chaque lecture
-#       accepte les trois et l'état dit « none »). Les packages lisent
+# @contrat État d'une liste = entity_id choisi, ou « Not set » (décision d'Axel du
+#       25/10/2026 ; jamais « None », relu par HA comme le None de Python). Une mémoire
+#       écrite avant peut contenir « Aucun », « Aucune » ou « none » : chaque lecture les
+#       accepte, avec « None », et l'état dit « Not set »). Les packages lisent
 #       `states('select.tab5_…')` et vérifient l'existence (`expand(x) | count > 0`,
-#       qui ne lève jamais d'erreur, contrairement à `states[x]` sur « none »).
+#       qui ne lève jamais d'erreur, contrairement à `states[x]` sur « Not set »).
 #       « Tab5 · music players » (ADR-0050) est une liste à PLUSIEURS choix : son
 #       état est un résumé (« 2 chosen », « 2 choisi(s) · 2 chosen » avant le 24/10/2026), ses options « ✓ Salon · media_player.x »
 #       (choisi : le toucher le retire) et « ○ Salon · media_player.x » (le toucher l'ajoute, 6
@@ -52,7 +53,7 @@
 #       de musique, capteurs suivis, réfrigérateurs et congélateurs : jamais devinés.
 # @i18n Noms en anglais depuis le 24/10/2026 (décision d'Axel : noms et options en
 #       anglais, identifiants gardés ; « français · english » du 29/09/2026 avant) :
-#       c'est eux que cherche un utilisateur non francophone. Les ÉTATS (« none »,
+#       c'est eux que cherche un utilisateur non francophone. Les ÉTATS (« Not set »,
 #       entity_id, noms de pipeline) restent ceux que les packages lisent.
 # @ai_warning L'entity_id de chaque entité modèle est fixé par `default_entity_id` :
 #       sans lui, il dériverait du nom (à la première installation), et les packages la
@@ -118,7 +119,7 @@ input_text:
     name: "Tab5 · memory · freezers"
     icon: mdi:content-save-outline
     max: 255
-  # Plage de l'extinction de nuit, « HH:MM-HH:MM » ou « none » ; une plage écrite ici à
+  # Plage de l'extinction de nuit, « HH:MM-HH:MM » ou « Not set » ; une plage écrite ici à
   # la main (même format) devient une option de la liste.
   tab5_choix_extinction_nuit:
     name: "Tab5 · memory · night screen off"
@@ -233,10 +234,10 @@ template:
         # comme des rendez-vous.
         options: >-
           {%- set m = states('input_text.tab5_choix_agenda_travail') -%}
-          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['none'] }}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_agenda_travail') -%}
-          {{ m if m.startswith('calendar.') else 'none' }}
+          {{ m if m.startswith('calendar.') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -250,10 +251,10 @@ template:
         # Rendez-vous du popup calendrier, annonces et briefing du réveil.
         options: >-
           {%- set m = states('input_text.tab5_choix_agenda_rdv') -%}
-          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['none'] }}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_agenda_rdv') -%}
-          {{ m if m.startswith('calendar.') else 'none' }}
+          {{ m if m.startswith('calendar.') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -266,10 +267,10 @@ template:
         icon: mdi:cake-variant
         options: >-
           {%- set m = states('input_text.tab5_choix_agenda_anniversaires') -%}
-          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['none'] }}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_agenda_anniversaires') -%}
-          {{ m if m.startswith('calendar.') else ('none' if m in ['none', 'None', 'Aucun', 'Aucune'] or auto_anniversaires | count != 1 else auto_anniversaires[0]) }}
+          {{ m if m.startswith('calendar.') else ('Not set' if m in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] or auto_anniversaires | count != 1 else auto_anniversaires[0]) }}
         select_option:
           - action: input_text.set_value
             target:
@@ -285,10 +286,10 @@ template:
         # intitulés de la liste blanche de packages/tab5_calendar.yaml.
         options: >-
           {%- set m = states('input_text.tab5_choix_agenda_feries') -%}
-          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['none'] }}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_agenda_feries') -%}
-          {{ m if m.startswith('calendar.') else ('none' if m in ['none', 'None', 'Aucun', 'Aucune'] or auto_feries | count != 1 else auto_feries[0]) }}
+          {{ m if m.startswith('calendar.') else ('Not set' if m in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] or auto_feries | count != 1 else auto_feries[0]) }}
         select_option:
           - action: input_text.set_value
             target:
@@ -304,10 +305,10 @@ template:
         # le 29/09/2026 : un agenda suit l'année scolaire et le pays de chacun.
         options: >-
           {%- set m = states('input_text.tab5_choix_agenda_vacances') -%}
-          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['none'] }}
+          {{ agendas + ([m] if m.startswith('calendar.') and m not in agendas else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_agenda_vacances') -%}
-          {{ m if m.startswith('calendar.') else ('none' if m in ['none', 'None', 'Aucun', 'Aucune'] or auto_vacances | count != 1 else auto_vacances[0]) }}
+          {{ m if m.startswith('calendar.') else ('Not set' if m in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] or auto_vacances | count != 1 else auto_vacances[0]) }}
         select_option:
           - action: input_text.set_value
             target:
@@ -321,10 +322,10 @@ template:
         # Allume l'écran à son retour, l'éteint à son départ (packages/tab5_push.yaml).
         options: >-
           {%- set m = states('input_text.tab5_choix_telephone') -%}
-          {{ suivis + ([m] if '.' in m and m not in suivis else []) + ['none'] }}
+          {{ suivis + ([m] if '.' in m and m not in suivis else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_telephone') -%}
-          {{ m if m.startswith('device_tracker.') or m.startswith('person.') else ('none' if m in ['none', 'None', 'Aucun', 'Aucune'] or auto_telephones | count != 1 else auto_telephones[0]) }}
+          {{ m if m.startswith('device_tracker.') or m.startswith('person.') else ('Not set' if m in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] or auto_telephones | count != 1 else auto_telephones[0]) }}
         select_option:
           - action: input_text.set_value
             target:
@@ -338,10 +339,10 @@ template:
         # Allume l'écran à la détection, l'éteint après 15 min sans présence.
         options: >-
           {%- set m = states('input_text.tab5_choix_presence') -%}
-          {{ presences + ([m] if m.startswith('binary_sensor.') and m not in presences else []) + ['none'] }}
+          {{ presences + ([m] if m.startswith('binary_sensor.') and m not in presences else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_presence') -%}
-          {{ m if m.startswith('binary_sensor.') else 'none' }}
+          {{ m if m.startswith('binary_sensor.') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -489,7 +490,7 @@ template:
   # Pipeline du mode « Discussion » de l'écran (bouton « Discu ») : un des pipelines
   # Assist de HA. Modèle ORDINAIRE, sans déclencheurs : il ne lit que le select de
   # pipeline de la tablette et sa mémoire, et suit ainsi un pipeline créé ou renommé
-  # (ses options changent sans entity_registry_updated). Jamais deviné : « none »
+  # (ses options changent sans entity_registry_updated). Jamais deviné : « Not set »
   # masque les boutons Domo / Discu d'un firmware qui connaît la zone « discussion »
   # (blueprint), et le mode Discussion retombe sur le pipeline préféré
   # (tab5_evenements.yaml). Avant le 29/09/2026, le firmware demandait un pipeline
@@ -503,10 +504,10 @@ template:
           {%- set s = state_attr('sensor.tab5_tablette', 'pipeline') or '' -%}
           {%- set p = ((state_attr(s, 'options') or []) | reject('eq', 'preferred') | list) if s else [] -%}
           {%- set m = states('input_text.tab5_choix_pipeline_discussion') -%}
-          {{ p + ([m] if m not in ['', 'unknown', 'unavailable', 'none', 'None', 'Aucun', 'Aucune'] and m not in p else []) + ['none'] }}
+          {{ p + ([m] if m not in ['', 'unknown', 'unavailable', 'Not set', 'none', 'None', 'Aucun', 'Aucune'] and m not in p else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_pipeline_discussion') -%}
-          {{ m if m not in ['', 'unknown', 'unavailable', 'none', 'None', 'Aucun', 'Aucune'] else 'none' }}
+          {{ m if m not in ['', 'unknown', 'unavailable', 'Not set', 'none', 'None', 'Aucun', 'Aucune'] else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -521,7 +522,7 @@ template:
   # l'interrupteur « Tab5 Nuit (écran éteint) » de la tablette). Modèle ORDINAIRE : il ne lit
   # que sa mémoire et celle du capteur de présence. Proposée par défaut (liste jamais
   # réglée) : 00:00-06:00, sauf pour qui a choisi un capteur de présence, qui éteint déjà
-  # l'écran d'une pièce vide : « none », son écran se comporte comme avant.
+  # l'écran d'une pièce vide : « Not set », son écran se comporte comme avant.
   - select:
       - name: "Tab5 · night screen off"
         unique_id: tab5_extinction_de_nuit
@@ -530,15 +531,15 @@ template:
         options: >-
           {%- set plages = ['00:00-06:00', '00:00-07:00', '23:00-06:00', '23:00-07:00', '22:00-06:00', '22:00-07:00', '01:00-07:00'] -%}
           {%- set m = states('input_text.tab5_choix_extinction_nuit') | trim -%}
-          {{ plages + ([m] if m is match('^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$') and m not in plages else []) + ['none'] }}
+          {{ plages + ([m] if m is match('^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$') and m not in plages else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_extinction_nuit') | trim -%}
-          {%- if m in ['none', 'None', 'Aucun', 'Aucune'] -%}
-            none
+          {%- if m in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] -%}
+            Not set
           {%- elif m is match('^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$') -%}
             {{ m }}
           {%- else -%}
-            {{ 'none' if states('input_text.tab5_choix_presence').startswith('binary_sensor.') else '00:00-06:00' }}
+            {{ 'Not set' if states('input_text.tab5_choix_presence').startswith('binary_sensor.') else '00:00-06:00' }}
           {%- endif %}
         select_option:
           - action: input_text.set_value
@@ -646,8 +647,8 @@ template:
       # Dans la plage de « Tab5 · night screen off » (heure locale, plage à cheval sur
       # minuit comprise ; début = fin : jamais). Recalculé chaque minute (now()) : son
       # changement fait partir « Tab5 — night screen off » (tab5_push.yaml).
-      # Indisponible sur « none ».
-      - name: "Tab5 · screen night"
+      # Indisponible sur « Not set ».
+      - name: "Tab5 · night screen off now"
         unique_id: tab5_nuit_de_l_ecran
         default_entity_id: binary_sensor.tab5_nuit_de_l_ecran
         icon: mdi:weather-night

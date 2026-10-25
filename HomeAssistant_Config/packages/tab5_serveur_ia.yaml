@@ -7,9 +7,9 @@
 #       (packages/tab5_llm.yaml pour le serveur, Glances, System Monitor, une prise
 #       mesurée, nvidia-smi par une commande…), assemble un payload et le pousse.
 #         - Les capteurs : dix listes « Tab5 · AI server, … » ci-dessous,
-#           un choix chacune, « none » par défaut (jamais devinés) ; leurs mémoires
+#           un choix chacune, « Not set » par défaut (jamais devinés) ; leurs mémoires
 #           input_text.tab5_choix_ia_*. Chaque liste ne propose que les capteurs qui
-#           conviennent (voir `variables:`). « none » partout : payload vide, la tablette
+#           conviennent (voir `variables:`). « Not set » partout : payload vide, la tablette
 #           dit où choisir et la roue de navigation ne propose pas le popup.
 #         - Poussée : au changement du payload (sensor.tab5_poussee_serveur_ia, attribut
 #           `payload`), DEUX SECONDES AU MOINS entre deux poussées (automatisation
@@ -55,7 +55,7 @@
 # ============================================================================
 
 input_text:
-  # Mémoires des dix listes (une entité choisie, ou « none ») : écrites par les listes.
+  # Mémoires des dix listes (une entité choisie, ou « Not set ») : écrites par les listes.
   tab5_choix_ia_etat:
     name: "Tab5 · memory · AI server, status"
     icon: mdi:content-save-outline
@@ -164,10 +164,10 @@ template:
         icon: mdi:lan-connect
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_etat') -%}
-          {{ ia_etats + ([m] if m is match('(binary_)?sensor[.]') and m not in ia_etats else []) + ['none'] }}
+          {{ ia_etats + ([m] if m is match('(binary_)?sensor[.]') and m not in ia_etats else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_etat') -%}
-          {{ m if m is match('(binary_)?sensor[.]') else 'none' }}
+          {{ m if m is match('(binary_)?sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -180,10 +180,10 @@ template:
         icon: mdi:brain
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_modele') -%}
-          {{ ia_textes + ([m] if m is match('sensor[.]') and m not in ia_textes else []) + ['none'] }}
+          {{ ia_textes + ([m] if m is match('sensor[.]') and m not in ia_textes else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_modele') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -196,10 +196,10 @@ template:
         icon: mdi:speedometer
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_tokens') -%}
-          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['none'] }}
+          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_tokens') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -212,10 +212,10 @@ template:
         icon: mdi:progress-clock
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_en_cours') -%}
-          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['none'] }}
+          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_en_cours') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -228,10 +228,10 @@ template:
         icon: mdi:tray-full
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_en_file') -%}
-          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['none'] }}
+          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_en_file') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -244,10 +244,10 @@ template:
         icon: mdi:expansion-card
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_vram') -%}
-          {{ ia_donnees + ([m] if m is match('sensor[.]') and m not in ia_donnees else []) + ['none'] }}
+          {{ ia_donnees + ([m] if m is match('sensor[.]') and m not in ia_donnees else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_vram') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -261,10 +261,10 @@ template:
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_vram_totale') -%}
           {%- set l = ia_donnees | reject('in', ia_pourcents) | list -%}
-          {{ l + ([m] if m is match('sensor[.]') and m not in l else []) + ['none'] }}
+          {{ l + ([m] if m is match('sensor[.]') and m not in l else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_vram_totale') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -277,10 +277,10 @@ template:
         icon: mdi:thermometer
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_temperature') -%}
-          {{ ia_temperatures + ([m] if m is match('sensor[.]') and m not in ia_temperatures else []) + ['none'] }}
+          {{ ia_temperatures + ([m] if m is match('sensor[.]') and m not in ia_temperatures else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_temperature') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -293,10 +293,10 @@ template:
         icon: mdi:memory
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_ram') -%}
-          {{ ia_pourcents + ([m] if m is match('sensor[.]') and m not in ia_pourcents else []) + ['none'] }}
+          {{ ia_pourcents + ([m] if m is match('sensor[.]') and m not in ia_pourcents else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_ram') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -309,10 +309,10 @@ template:
         icon: mdi:flash
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_puissance') -%}
-          {{ ia_puissances + ([m] if m is match('sensor[.]') and m not in ia_puissances else []) + ['none'] }}
+          {{ ia_puissances + ([m] if m is match('sensor[.]') and m not in ia_puissances else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_puissance') -%}
-          {{ m if m is match('sensor[.]') else 'none' }}
+          {{ m if m is match('sensor[.]') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:

@@ -216,7 +216,7 @@ Other settings: 4 melodies (a tap picks one and plays it), a **dedicated alarm v
 
 The microphone icon on the home screen is the visual interface for the voice assistant; its colour follows the pipeline state (`assist_set_pipeline_state()`): standby (wake word off), idle, listening, processing (STT + intent), speaking (TTS), error. The colours, the wake-word button, the two mode buttons (Home Assistant's conversation agent, or an LLM-backed conversation pipeline) and the microphone's tap and long press: [user manual, voice](notice/voice.md).
 
-When the list « Tab5 · chat pipeline » is set to « none » (no conversation pipeline), the two mode buttons (home screen and assistant popup) disappear and the tablet stays in Home Assistant mode (zone `discussion`, [installation](installation/adapt-to-your-home.md#other-zones)).
+When the list « Tab5 · chat pipeline » is set to « Not set » (no conversation pipeline), the two mode buttons (home screen and assistant popup) disappear and the tablet stays in Home Assistant mode (zone `discussion`, [installation](installation/adapt-to-your-home.md#other-zones)).
 
 The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 
@@ -668,7 +668,7 @@ Autres réglages : 4 mélodies (un tap en choisit une et la joue), un **volume d
 
 L'icône microphone sur l'écran d'accueil est l'interface visuelle de l'assistant vocal ; sa couleur suit l'état du pipeline (`assist_set_pipeline_state()`) : veille (mot de réveil coupé), repos, écoute, traitement (STT + intention), synthèse (TTS), erreur. Les couleurs, le bouton du mot de réveil, les deux boutons de mode (agent de conversation de Home Assistant, ou pipeline de discussion basé sur un LLM) et le tap et l'appui long du micro : [notice, voix](notice/voice.md#version-française).
 
-Quand la liste « Tab5 · chat pipeline » vaut « none » (pas de pipeline de discussion), les deux boutons de mode (accueil et popup assistant) disparaissent et la tablette reste en mode Home Assistant (zone `discussion`, [installation](installation/adapt-to-your-home.md#autres-zones)).
+Quand la liste « Tab5 · chat pipeline » vaut « Not set » (pas de pipeline de discussion), les deux boutons de mode (accueil et popup assistant) disparaissent et la tablette reste en mode Home Assistant (zone `discussion`, [installation](installation/adapt-to-your-home.md#autres-zones)).
 
 Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`select.m5stack_tab5_home_assistant_hmi_assistant`).
 

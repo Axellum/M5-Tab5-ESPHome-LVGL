@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistent · agenda's en personen",
-        "description": "De lijsten “Tab5 · …” (Instellingen → Apparaten & diensten → Entiteiten). Een al gemaakte keuze blijft. Een lijst die nog op “none” (geen) staat, krijgt een voorstel als er precies één entiteit past (een agenda waarvan de naam “werk” of “afspraak” zegt, de enige aanwezigheids- of bezettingssensor, de voorkeurspipeline). Er wordt niets ingesteld vóór het overzicht; je kunt alles terugzetten op “Geen”.",
+        "description": "De lijsten “Tab5 · …” (Instellingen → Apparaten & diensten → Entiteiten). Een al gemaakte keuze blijft. Een lijst die nog op “Not set” (geen) staat, krijgt een voorstel als er precies één entiteit past (een agenda waarvan de naam “werk” of “afspraak” zegt, de enige aanwezigheids- of bezettingssensor, de voorkeurspipeline). Er wordt niets ingesteld vóór het overzicht; je kunt alles terugzetten op “Geen”.",
         "data": {
           "agenda_travail": "Werkagenda",
           "agenda_rdv": "Afsprakenagenda",
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistent · agenda's en personen",
-            "description": "De lijsten “Tab5 · …” (Instellingen → Apparaten & diensten → Entiteiten). Een al gemaakte keuze blijft. Een lijst die nog op “none” (geen) staat, krijgt een voorstel als er precies één entiteit past (een agenda waarvan de naam “werk” of “afspraak” zegt, de enige aanwezigheids- of bezettingssensor, de voorkeurspipeline). Er wordt niets ingesteld vóór het overzicht; je kunt alles terugzetten op “Geen”.",
+            "description": "De lijsten “Tab5 · …” (Instellingen → Apparaten & diensten → Entiteiten). Een al gemaakte keuze blijft. Een lijst die nog op “Not set” (geen) staat, krijgt een voorstel als er precies één entiteit past (een agenda waarvan de naam “werk” of “afspraak” zegt, de enige aanwezigheids- of bezettingssensor, de voorkeurspipeline). Er wordt niets ingesteld vóór het overzicht; je kunt alles terugzetten op “Geen”.",
             "data": {
               "agenda_travail": "Werkagenda",
               "agenda_rdv": "Afsprakenagenda",

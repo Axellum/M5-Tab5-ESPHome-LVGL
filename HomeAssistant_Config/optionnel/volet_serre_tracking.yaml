@@ -12,7 +12,7 @@
 # @ai_warning Pas dans packages/ : le volet nomme dans la liste « Tab5 · volet a
 #       course simulee » recoit les commandes de ce script au lieu de celles du
 #       blueprint (variables `volet_suivi` et `volet_par_package`). Depuis le
-#       06/10/2026, liste sur « none » = aucun effet ; avant, la seule presence du
+#       06/10/2026, liste sur « Not set » = aucun effet ; avant, la seule presence du
 #       script rendait muet le volet de l'entree Volet (discussion #278).
 #
 # @architecture_constraint Le moteur ne renvoie NI position NI fin de course. On
@@ -42,7 +42,7 @@
 
 template:
   # Liste « Tab5 · shutter with simulated travel » (même principe que
-  # packages/tab5_reglages.yaml) : les volets (cover.*) présents, ou « none ».
+  # packages/tab5_reglages.yaml) : les volets (cover.*) présents, ou « Not set ».
   - triggers:
       - trigger: homeassistant
         event: start
@@ -73,10 +73,10 @@ template:
         icon: mdi:window-shutter
         options: >-
           {%- set m = states('input_text.tab5_choix_volet') -%}
-          {{ volets + ([m] if m.startswith('cover.') and m not in volets else []) + ['none'] }}
+          {{ volets + ([m] if m.startswith('cover.') and m not in volets else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_volet') -%}
-          {{ m if m.startswith('cover.') else 'none' }}
+          {{ m if m.startswith('cover.') else 'Not set' }}
         select_option:
           - action: input_text.set_value
             target:

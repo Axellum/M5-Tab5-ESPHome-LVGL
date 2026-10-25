@@ -29,7 +29,7 @@
 #       annoncer. Aucun agenda choisi : liste vide poussée (aucun rappel).
 # @ai_warning L'HEURE du réveil vient des horaires de l'agenda de travail, poussés
 #       par packages/tab5_push.yaml (prévisions jours) et gardés par la tablette.
-#       « Tab5 · work calendar » sur « none » = tous les jours en repos : le
+#       « Tab5 · work calendar » sur « Not set » = tous les jours en repos : le
 #       réveil ne sonne plus que les jours de repos si « Réveil : sonner les jours
 #       de repos » est actif. À régler AVANT de recharger les automatisations lors
 #       d'une migration depuis les placeholders.

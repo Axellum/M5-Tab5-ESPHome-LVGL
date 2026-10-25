@@ -104,7 +104,7 @@ AGENDA = "calendar.travail_ci"
 
 # Sources choisies dans les listes « Tab5 · … » (ADR-0024 : plus de placeholder, tout se
 # règle à la souris), comme le fait docs/installation.md, étape 4. Le reste (téléphone,
-# présence, TV, autres agendas) reste sur « none » : un HA neuf doit marcher sans.
+# présence, TV, autres agendas) reste sur « Not set » : un HA neuf doit marcher sans.
 SOURCES = {
     "select.tab5_source_des_previsions": "weather.ville_ci",
     "select.tab5_agenda_de_travail": AGENDA,
@@ -262,7 +262,7 @@ TUILES_DETAILS = {
 CLIM_DE_TUILE = "t24"
 # Texte du capteur « Zones masquées » attendu (zones_texte_masquees(), tab5_zones.cpp :
 # ordre de kCles, séparateur « , »). « discussion » : un HA neuf n'a choisi aucun pipeline
-# de discussion (« Tab5 · chat pipeline » = « none », ADR-0026).
+# de discussion (« Tab5 · chat pipeline » = « Not set », ADR-0026).
 ZONES_ABSENTES = "pot_4, pot_5, discussion"
 ZONES_ENTITE = f"sensor.{PREFIXE_ENTITES}_zones_masquees"
 
