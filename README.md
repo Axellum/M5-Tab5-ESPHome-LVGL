@@ -40,7 +40,7 @@
 - **Twenty-one themes, light or dark.** Colours, shapes and the fonts of the clock change at once, without a restart, from Home Assistant or the tablet's console; « Auto » turns light at sunrise and dark at sunset ([themes](docs/installation/settings.md#theme-light-or-dark)).
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
 - **Lots of notes and tests.** 71 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome. All written with AI, and tried on real screens one at a time.
-- **Runs on the ST7123 and ST7121 revisions of the Tab5**, builds for the original ILI9881C, and runs, as an experiment, on the 7-inch [Waveshare ESP32-P4 7B](docs/waveshare-7b.md).
+- **Runs on the ST7123 and ST7121 revisions of the Tab5**, builds for the original ILI9881C, and runs on the 7-inch [Waveshare ESP32-P4 7B](docs/waveshare-7b.md).
 
 ## What it does
 
@@ -82,7 +82,7 @@ What the screen was first made for: seeing at a glance whether rain is coming be
 
 ## Before you start
 
-- A Tab5: the **ST7123** display chip is the author's; the ST7121 runs on another user's unit, the original ILI9881C is built but untested — see [hardware compatibility](#hardware-compatibility). Or a **Waveshare ESP32-P4 7B** (7-inch, 1024×600): experimental, without the games by default; its firmware installs from the browser too, in the beta channel for now ([Waveshare 7B](docs/waveshare-7b.md)).
+- A Tab5: the **ST7123** display chip is the author's; the ST7121 runs on another user's unit, the original ILI9881C is built but untested — see [hardware compatibility](#hardware-compatibility). Or a **Waveshare ESP32-P4 7B** (7-inch, 1024×600), without the games by default; its firmware installs from the browser too, from 3.9.0 ([Waveshare 7B](docs/waveshare-7b.md)).
 - Home Assistant 2026.8 or later. A ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0** (2026.9.1 for the Waveshare).
 - The screen speaks French, English, German, Dutch, Spanish, Italian or Turkish, switched from Home Assistant — all written by an AI like the rest of the project; the author checked the French, the others are not reviewed yet. Only the quiz questions stay in French ([translations](docs/translations.md)).
 - The layout started from the author's home. You pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen. The tiles at the bottom are rooms; the other zones have a single place each: the climate card, the TV, the phone, two temperatures, up to 5 plants ([adapt to your home](docs/installation/adapt-to-your-home.md)).
@@ -115,7 +115,7 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 | **ST7123** | 14 Oct 2025 → 28 Apr 2026 | ✅ Supported — the author's device, in daily use (default) |
 | **ST7121** | from 28 Apr 2026 | ✅ Runs on another user's unit since October 2026: display, touch and wake word ([Discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)); the author has none — add `tab5_ecran: st7121` to `Tab5/user_entities.yaml` |
 | **ILI9881C** + GT911 touch | 9 May 2025 → 14 Oct 2025 | 🧪 Compiles, untested — add `tab5_ecran: ili9881c` to `Tab5/user_entities.yaml` |
-| **Waveshare ESP32-P4 7B** (another board: 7-inch, 1024×600) | — | 🧪 Experimental — runs on the author's board since 14 Oct 2026, the games not adapted to its screen yet; install it from the browser (beta channel, from 3.9.0-rc.6) or build it with `tab5_carte: waveshare-7b` and ESPHome 2026.9.1 ([Waveshare 7B](docs/waveshare-7b.md)) |
+| **Waveshare ESP32-P4 7B** (another board: 7-inch, 1024×600) | — | ✅ Supported — runs on the author's board since 14 Oct 2026, the games not adapted to its screen and left out by default; install it from the browser (from 3.9.0) or build it with `tab5_carte: waveshare-7b` and ESPHome 2026.9.1 or newer ([Waveshare 7B](docs/waveshare-7b.md)) |
 
 "Compiles, untested": the CI builds this variant on every display change, and the install page offers it, but this firmware has not been run on that chip yet. The ST7121 is built the same way, and has run on a user's unit since October 2026. How to identify your unit, and the ST7121 reports: [hardware revisions](docs/hardware.md#hardware-revisions). Tried one? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
@@ -245,7 +245,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **Vingt et un thèmes, clairs ou sombres.** Couleurs, formes et polices de l'horloge changent aussitôt, sans redémarrer, depuis Home Assistant ou la console de la tablette ; « Auto » passe en clair au lever du soleil et en sombre à son coucher ([thèmes](docs/installation/settings.md#thème-clair-ou-sombre)).
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
 - **Beaucoup de notes et de tests.** 71 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome. Le tout écrit avec l'IA, et essayé sur de vrais écrans, un à la fois.
-- **Tourne sur les révisions ST7123 et ST7121 du Tab5**, compile pour l'ILI9881C d'origine, et tourne, à l'essai, sur la [Waveshare ESP32-P4 7B](docs/waveshare-7b.md#version-française) de 7 pouces.
+- **Tourne sur les révisions ST7123 et ST7121 du Tab5**, compile pour l'ILI9881C d'origine, et tourne sur la [Waveshare ESP32-P4 7B](docs/waveshare-7b.md#version-française) de 7 pouces.
 
 ## Ce que ça fait
 
@@ -287,7 +287,7 @@ Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuv
 
 ## Avant de commencer
 
-- Une Tab5 : la puce écran **ST7123** est celle de l'auteur ; la ST7121 tourne chez un autre utilisateur, l'ILI9881C d'origine est compilée mais pas essayée — voir la [compatibilité matérielle](#compatibilité-matérielle). Ou une **Waveshare ESP32-P4 7B** (7 pouces, 1024×600) : expérimentale, sans les jeux par défaut ; son firmware s'installe aussi depuis le navigateur, dans le canal bêta pour l'instant ([Waveshare 7B](docs/waveshare-7b.md#version-française)).
+- Une Tab5 : la puce écran **ST7123** est celle de l'auteur ; la ST7121 tourne chez un autre utilisateur, l'ILI9881C d'origine est compilée mais pas essayée — voir la [compatibilité matérielle](#compatibilité-matérielle). Ou une **Waveshare ESP32-P4 7B** (7 pouces, 1024×600), sans les jeux par défaut ; son firmware s'installe aussi depuis le navigateur, dès la 3.9.0 ([Waveshare 7B](docs/waveshare-7b.md#version-française)).
 - Home Assistant 2026.8 ou plus récent. Un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0** (2026.9.1 pour la Waveshare).
 - L'écran parle français, anglais, allemand, néerlandais, espagnol, italien ou turc, au choix depuis Home Assistant — toutes écrites par une IA comme le reste du projet ; l'auteur a relu le français, les autres ne sont pas encore relues. Seules les questions du quiz restent en français ([traductions](docs/translations.md#version-française)).
 - La disposition est partie de la maison de l'auteur. Vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran. Les tuiles du bas sont des pièces ; les autres zones ont une seule place chacune : la carte clim, la TV, le téléphone, deux températures, jusqu'à 5 plantes ([adapter à sa maison](docs/installation/adapt-to-your-home.md#version-française)).
@@ -320,7 +320,7 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 | **ST7123** | du 14/10/2025 au 28/04/2026 | ✅ Prise en charge — la tablette de l'auteur, utilisée tous les jours (défaut) |
 | **ST7121** | depuis le 28/04/2026 | ✅ Tourne chez un autre utilisateur depuis octobre 2026 : écran, tactile et mot d'activation ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) ; l'auteur n'en a pas — ajouter `tab5_ecran: st7121` dans `Tab5/user_entities.yaml` |
 | **ILI9881C** + tactile GT911 | du 09/05/2025 au 14/10/2025 | 🧪 Compile, non testée — ajouter `tab5_ecran: ili9881c` dans `Tab5/user_entities.yaml` |
-| **Waveshare ESP32-P4 7B** (une autre carte : 7 pouces, 1024×600) | — | 🧪 Expérimentale — tourne sur la carte de l'auteur depuis le 14/10/2026, les jeux pas encore adaptés à son écran ; à installer depuis le navigateur (canal bêta, depuis la 3.9.0-rc.6) ou à compiler avec `tab5_carte: waveshare-7b` et ESPHome 2026.9.1 ([Waveshare 7B](docs/waveshare-7b.md#version-française)) |
+| **Waveshare ESP32-P4 7B** (une autre carte : 7 pouces, 1024×600) | — | ✅ Prise en charge — tourne sur la carte de l'auteur depuis le 14/10/2026, les jeux non adaptés à son écran et absents par défaut ; à installer depuis le navigateur (dès la 3.9.0) ou à compiler avec `tab5_carte: waveshare-7b` et ESPHome 2026.9.1 au moins ([Waveshare 7B](docs/waveshare-7b.md#version-française)) |
 
 « Compile, non testée » : la CI compile cette variante à chaque changement de l'écran, et la page d'installation la propose, mais ce firmware n'a encore jamais tourné sur cette puce. La ST7121 est compilée de la même façon, et tourne chez un utilisateur depuis octobre 2026. Comment identifier votre appareil, et les retours sur la ST7121 : [révisions matérielles](docs/hardware.md#révisions-matérielles). Vous en avez essayé une ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 

@@ -1,4 +1,4 @@
-# Waveshare ESP32-P4 7B (experimental)
+# Waveshare ESP32-P4 7B
 
 ## English · [Français](#version-française)
 
@@ -6,7 +6,7 @@
 
 The same firmware also runs on a second board, the **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B**: a 7-inch, 1024×600 touch screen built around the same chips as the Tab5 (an ESP32-P4, an ESP32-C6 for Wi-Fi, an ES7210 for the microphones). It is a cheaper and bigger screen, with less on board: no motion sensor, no clock chip, no battery gauge (it does have a battery connector, which this firmware does not use yet).
 
-**Status: experimental.** The author's board has been the daily screen of their home since 2026-10-14: display, touch, backlight, sound and Wi-Fi work, and Home Assistant sees it like a Tab5. One board only, though, and one energy page is not adapted to its screen yet ([what is left](#what-is-not-done-yet)); the games are left out by default. If you try it, say how it went in [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility): it helps a lot.
+**Status: supported.** The author's board has been the daily screen of their home since 2026-10-14: display, touch, backlight, sound and Wi-Fi work, and Home Assistant sees it like a Tab5. One board only, though, and one energy page is not adapted to its screen yet ([what is left](#what-is-not-done-yet)); the games are left out by default. If you try it, say how it went in [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility): it helps a lot.
 
 The choice of the board is one line at build time ([ADR-0061](decisions/0061-board-and-screen-size.md)); on the Tab5, nothing changes.
 
@@ -29,7 +29,7 @@ What the board does not have, and what it means on screen:
 
 ## Install it
 
-**From the browser**, since 3.9.0-rc.6 (in the beta channel until the next stable one): on the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), pick « Waveshare ESP32-P4 7B » and plug in the USB-C port of the ESP32-P4; the steps are those of a Tab5 ([install the firmware](installation/flash.md)). This firmware is built and signed by the project with ESPHome 2026.9.1, for a board mounted either way (« Screen direction », below) and without the games; its updates then come from Home Assistant, from this board's own folder of the site, never from the Tab5's. Not tried from the install page on a real board yet: the author's board runs a firmware built on a PC. The [Home Assistant steps](installation/README.md) stay the same (files, adding the device, sources, the blueprint).
+**From the browser**, since 3.9.0 (the pre-releases since 3.9.0-rc.6): on the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), pick « Waveshare ESP32-P4 7B » and plug in the USB-C port of the ESP32-P4; the steps are those of a Tab5 ([install the firmware](installation/flash.md)). This firmware is built and signed by the project with ESPHome 2026.9.1, for a board mounted either way (« Screen direction », below) and without the games; its updates then come from Home Assistant, from this board's own folder of the site, never from the Tab5's. Not tried from the install page on a real board yet: the author's board runs the published firmware since 21 Oct 2026, put on it as an over-the-air update. The [Home Assistant steps](installation/README.md) stay the same (files, adding the device, sources, the blueprint).
 
 **Or build it yourself**, to add the games: the [Build your own firmware](installation/build.md) page with three differences.
 
@@ -141,7 +141,7 @@ Sources: Waveshare's board support package and schematic, ESPHome's display mode
 
 Le même firmware tourne aussi sur une deuxième carte, la **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B** : un écran tactile de 7 pouces en 1024×600, construit autour des mêmes puces que le Tab5 (un ESP32-P4, un ESP32-C6 pour le Wi-Fi, un ES7210 pour les micros). Un écran moins cher et plus grand, avec moins de choses à bord : pas de capteur de mouvement, pas de puce d'horloge, pas de jauge de batterie (elle a bien un connecteur de batterie, dont ce firmware ne se sert pas encore).
 
-**Statut : expérimental.** La carte de l'auteur est l'écran de tous les jours de sa maison depuis le 14/10/2026 : écran, tactile, rétroéclairage, son et Wi-Fi marchent, et Home Assistant la voit comme un Tab5. Une seule carte, cela dit, et une page de l'énergie n'est pas encore adaptée à son écran ([ce qui reste](#ce-qui-reste-à-faire)) ; les jeux sont laissés de côté par défaut. Si vous l'essayez, racontez ce que ça a donné dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility) : ça aide beaucoup.
+**Statut : prise en charge.** La carte de l'auteur est l'écran de tous les jours de sa maison depuis le 14/10/2026 : écran, tactile, rétroéclairage, son et Wi-Fi marchent, et Home Assistant la voit comme un Tab5. Une seule carte, cela dit, et une page de l'énergie n'est pas encore adaptée à son écran ([ce qui reste](#ce-qui-reste-à-faire)) ; les jeux sont laissés de côté par défaut. Si vous l'essayez, racontez ce que ça a donné dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility) : ça aide beaucoup.
 
 Le choix de la carte tient en une ligne à la compilation ([ADR-0061](decisions/0061-board-and-screen-size.md)) ; sur le Tab5, rien ne change.
 
@@ -164,7 +164,7 @@ Ce que la carte n'a pas, et ce que ça donne à l'écran :
 
 ## L'installer
 
-**Depuis le navigateur**, depuis la 3.9.0-rc.6 (dans le canal bêta jusqu'à la prochaine stable) : sur la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), choisissez « Waveshare ESP32-P4 7B » et branchez le port USB-C de l'ESP32-P4 ; les étapes sont celles d'un Tab5 ([installer le firmware](installation/flash.md#version-française)). Ce firmware est compilé et signé par le projet avec ESPHome 2026.9.1, pour une carte montée dans un sens ou dans l'autre (« Screen direction », plus bas) et sans les jeux ; ses mises à jour arrivent ensuite par Home Assistant, depuis le dossier de cette carte sur le site, jamais depuis celui du Tab5. Pas encore essayé depuis la page d'installation sur une vraie carte : celle de l'auteur tourne avec un firmware compilé sur un PC. Les [étapes Home Assistant](installation/README.md#version-française) restent les mêmes (fichiers, ajout de l'appareil, sources, blueprint).
+**Depuis le navigateur**, depuis la 3.9.0 (les pré-releases depuis la 3.9.0-rc.6) : sur la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), choisissez « Waveshare ESP32-P4 7B » et branchez le port USB-C de l'ESP32-P4 ; les étapes sont celles d'un Tab5 ([installer le firmware](installation/flash.md#version-française)). Ce firmware est compilé et signé par le projet avec ESPHome 2026.9.1, pour une carte montée dans un sens ou dans l'autre (« Screen direction », plus bas) et sans les jeux ; ses mises à jour arrivent ensuite par Home Assistant, depuis le dossier de cette carte sur le site, jamais depuis celui du Tab5. Pas encore essayé depuis la page d'installation sur une vraie carte : celle de l'auteur tourne avec le firmware publié depuis le 21/10/2026, posé par une mise à jour sans fil. Les [étapes Home Assistant](installation/README.md#version-française) restent les mêmes (fichiers, ajout de l'appareil, sources, blueprint).
 
 **Ou compilez-le vous-même**, pour ajouter les jeux : la page [Compiler son propre firmware](installation/build.md#version-française) avec trois différences.
 

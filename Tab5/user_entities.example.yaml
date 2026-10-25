@@ -23,8 +23,8 @@
 # tab5_ecran: st7123
 
 # --- Carte : tab5 (défaut si la ligne reste commentée, le M5Stack Tab5) ou
-#     waveshare-7b (Waveshare ESP32-P4 7B, 1024×600 : EXPÉRIMENTALE, compilée par la CI
-#     mais jamais testée, interface pas encore adaptée à son écran). Voir
+#     waveshare-7b (Waveshare ESP32-P4 7B, 1024×600 : prise en charge, l'écran de
+#     l'auteur depuis le 14/10/2026, sans les jeux par défaut). Voir
 #     docs/hardware.md et docs/decisions/0061-board-and-screen-size.md. ---
 # tab5_carte: tab5
 
