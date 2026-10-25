@@ -181,13 +181,22 @@ automation:
       # les premiers appels partaient alors en « Authenticated connection not ready
       # yet » à chaque reboot (704 occurrences dans les logs HA entre le 02 et le
       # 08/09/2026). `wait_template` passe immédiatement si l'entité est déjà `on`.
+      # Plusieurs écrans (25/10/2026) : sur tab5_connected, la liaison de L'ÉCRAN qui se
+      # connecte (`appareil`), et les envois ne vont qu'à lui ; avant, l'attente passait
+      # dès qu'un autre écran était connecté et la 7B redémarrée n'était pas servie.
+      # Les scripts appelés reçoivent `appareil` ; vide (autres déclencheurs) : chaque
+      # écran connecté, comme avant.
+      - variables:
+          appareil: >-
+            {%- from 'tab5_tablette.jinja' import tab5_appareil_connexion -%}
+            {{ tab5_appareil_connexion(trigger) }}
       - if:
           - condition: trigger
             id: tab5_connected
         then:
           - wait_template: &tab5_connectee >-
-              {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-              {{ tab5_connectee() == 'oui' }}
+              {%- from 'tab5_tablette.jinja' import tab5_pret -%}
+              {{ tab5_pret(appareil | default('')) == 'oui' }}
             timeout: "00:00:10"
             continue_on_timeout: true
       # Tablette absente (pas encore ajoutée dans HA, packages installés d'abord comme
@@ -205,6 +214,7 @@ automation:
         continue_on_error: true
         data:
           vigilance_seule: false
+          appareil: "{{ appareil }}"
 
       # ====== 3-4. METEO ACTUELLE + PROBABILITES : seulement à la (re)connexion ======
       # (ou au démarrage de HA). Au changement : tab5_ha_hmi_meteo_push. Avant le
@@ -216,12 +226,16 @@ automation:
         then:
           - action: script.tab5_push_meteo
             continue_on_error: true
+            data:
+              appareil: "{{ appareil }}"
 
       # ====== 4b. METEO PLUIE 1H (9 barres en UN appel : 0,5,10,15,20,25 puis 35,45,55) ======
       # Script partagé avec la poussée légère, qui l'appelle au changement du code ou
       # des barres de pluie (section `script:`).
       - action: script.tab5_push_pluie
         continue_on_error: true
+        data:
+          appareil: "{{ appareil }}"
 
       # ====== 5. PREVISIONS JOURS (BULK - 1 seul appel au lieu de 15) ======
       # Source des prévisions (lot 4c-3) : l'entité weather.* choisie dans HA, lue sur
@@ -386,6 +400,8 @@ automation:
         then:
           - action: script.tab5_push_volet
             continue_on_error: true
+            data:
+              appareil: "{{ appareil }}"
 
       # ====== Y. PLANNING HORAIRE ======
       # SUPPRIMÉ : bandeau dérivé sur le Tab depuis le bulk jours
@@ -800,6 +816,9 @@ script:
         default: false
         selector:
           boolean:
+      appareil:
+        name: "Écran"
+        description: "device_id de l'écran qui vient de se connecter (poussée complète) : lui seul ; vide : chaque écran connecté."
     sequence:
       # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
       # complète, section 0).
@@ -928,6 +947,10 @@ script:
       pluie (tab5_ha_hmi_alerts_push, 07/10/2026).
     mode: queued
     max: 10
+    fields:
+      appareil:
+        name: "Écran"
+        description: "device_id de l'écran qui vient de se connecter (poussée complète) : lui seul ; vide : chaque écran connecté."
     sequence:
       # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
       # complète, section 0).
@@ -957,6 +980,10 @@ script:
       du Tab5 (tab5_ha_hmi_updater).
     mode: queued
     max: 10
+    fields:
+      appareil:
+        name: "Écran"
+        description: "device_id de l'écran qui vient de se connecter (poussée complète) : lui seul ; vide : chaque écran connecté."
     sequence:
       # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
       # complète, section 0).
@@ -1006,6 +1033,10 @@ script:
       pousse le volet lui-même, ou la tablette masque sa tuile (zone « volet »).
     mode: queued
     max: 10
+    fields:
+      appareil:
+        name: "Écran"
+        description: "device_id de l'écran qui vient de se connecter (poussée complète) : lui seul ; vide : chaque écran connecté."
     sequence:
       # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
       # complète, section 0).

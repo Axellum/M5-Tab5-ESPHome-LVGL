@@ -181,7 +181,7 @@ class Maison:
         trig = {"event": {"data": donnees}}
         self.memoire = {"niveau": _rendre(tenv, capteur["state"], {"trigger": trig}),
                         "appareils": _rendre(tenv, capteur["attributes"]["appareils"], {"trigger": trig})}
-        assert seq[5]["condition"] == "template" and "tab5_connectee() == 'oui'" in seq[5]["value_template"]
+        assert seq[5]["condition"] == "template" and "tab5_pret(appareil | default('')) == 'oui'" in seq[5]["value_template"]
         pousse = envoi_tablettes(seq[6])
         assert pousse["action"] == "esphome.{{ tablette }}_tab5_maj_froid" and pousse["continue_on_error"] is True
         return demandes, str(_rendre(env, pousse["data"]["payload"], ctx))

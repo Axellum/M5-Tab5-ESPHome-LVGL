@@ -113,7 +113,7 @@ def _pousser(etats, choix, stats=None):
     etats = list(etats) + [EtatHA("input_text.tab5_choix_suivis", choix)]
     env = _env(etats)
     seq = _script()["sequence"]
-    assert seq[0]["condition"] == "template" and "tab5_connectee() == 'oui'" in seq[0]["value_template"]
+    assert seq[0]["condition"] == "template" and "tab5_pret(appareil | default('')) == 'oui'" in seq[0]["value_template"]
     ctx = {}
     for nom, v in seq[1]["variables"].items():
         ctx[nom] = _rendre(env, v, ctx)

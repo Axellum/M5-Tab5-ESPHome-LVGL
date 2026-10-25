@@ -60,14 +60,20 @@ script:
       mode restart : si deux déclencheurs tombent en même temps, seule la
       dernière demande compte.
     mode: restart
+    fields:
+      appareil:
+        name: "Écran"
+        description: "device_id de l'écran qui vient de se connecter : lui seul ; vide : chaque écran connecté."
     sequence:
       # Tablette absente (pas encore ajoutée dans HA) ou hors ligne : rien à pousser,
       # pas d'erreur « Action … not found » / « Not connected » (test « HA neuf »,
       # 28/09/2026). Tablette trouvée par le modèle de l'appareil, pas par son nom.
+      # `appareil` (l'écran qui vient de se connecter, passé par « Tab5 — push the upcoming
+      # appointments ») : lui seul, sa liaison ; vide : chaque écran connecté.
       - condition: template
         value_template: &tab5_connectee >-
-          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-          {{ tab5_connectee() == 'oui' }}
+          {%- from 'tab5_tablette.jinja' import tab5_pret -%}
+          {{ tab5_pret(appareil | default('')) == 'oui' }}
       - variables:
           debut: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
           fin: "{{ (now() + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S') }}"
@@ -312,7 +318,15 @@ automation:
       # « Authenticated connection not ready yet » — 66 fois les 25-26/09/2026).
       # Même attente que la poussée complète : passe tout de suite si la liaison
       # est `on`, sinon s'arrête sans erreur après 10 s ; la reconnexion relance.
+      # Plusieurs écrans (25/10/2026) : sur tab5_connected, la liaison de l'écran qui se
+      # connecte, et la liste ne va qu'à lui (tab5_tablette.jinja, tab5_pret).
+      - variables:
+          appareil: >-
+            {%- from 'tab5_tablette.jinja' import tab5_appareil_connexion -%}
+            {{ tab5_appareil_connexion(trigger) }}
       - wait_template: *tab5_connectee
         timeout: "00:00:10"
         continue_on_timeout: false
       - action: script.tab5_rdv_prochains
+        data:
+          appareil: "{{ appareil }}"
