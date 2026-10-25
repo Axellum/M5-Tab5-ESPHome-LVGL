@@ -27,7 +27,7 @@ body:
     id: firmware_version
     attributes:
       label: "Firmware release or commit · Release ou commit du firmware"
-      placeholder: "v3.8.1 or/ou d42927c"
+      placeholder: "v3.9.0 or/ou 44a7f46"
     validations:
       required: true
   - type: input
