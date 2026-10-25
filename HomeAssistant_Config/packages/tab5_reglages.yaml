@@ -581,21 +581,21 @@ template:
         attributes:
           api: "{{ api }}"
           ecran: "{{ entites | select('match', 'light[.].*_display_backlight(_[0-9]+)?$') | first | default('') }}"
-          reveil_en_cours: "{{ entites | select('match', 'binary_sensor[.].*_reveil_en_cours(_[0-9]+)?$') | first | default('') }}"
-          raison: "{{ entites | select('match', 'sensor[.].*_raison_du_redemarrage(_[0-9]+)?$') | first | default('') }}"
+          reveil_en_cours: "{{ entites | select('match', 'binary_sensor[.].*_(reveil_en_cours|alarm_ringing)(_[0-9]+)?$') | first | default('') }}"
+          raison: "{{ entites | select('match', 'sensor[.].*_(raison_du_redemarrage|restart_reason)(_[0-9]+)?$') | first | default('') }}"
           demarrage: "{{ entites | select('match', 'sensor[.].*_uptime(_[0-9]+)?$') | first | default('') }}"
           micro: "{{ entites | select('match', 'switch[.].*_wake_word_active(_[0-9]+)?$') | first | default('') }}"
           satellite: "{{ entites | select('match', 'assist_satellite[.]') | first | default('') }}"
-          rdv_avant: "{{ entites | select('match', 'number[.].*_rendez_vous_annoncer_avant(_[0-9]+)?$') | first | default('') }}"
+          rdv_avant: "{{ entites | select('match', 'number[.].*_(rendez_vous_annoncer_avant|appointments_announce_before)(_[0-9]+)?$') | first | default('') }}"
           # Select « Langue » du firmware (Français, English, Deutsch…) : langue du
           # briefing parlé du réveil (tab5_reveil.yaml).
-          langue: "{{ entites | select('match', 'select[.].*_langue(_[0-9]+)?$') | first | default('') }}"
+          langue: "{{ entites | select('match', 'select[.].*_(langue|language)(_[0-9]+)?$') | first | default('') }}"
           # Interrupteur « Nuit (thème auto) » du firmware : mode Auto du thème de
           # l'écran, réglé d'après le soleil (tab5_push.yaml, « Tab5 — thème jour/nuit »).
-          theme_nuit: "{{ entites | select('match', 'switch[.].*_nuit_theme_auto(_[0-9]+)?$') | first | default('') }}"
+          theme_nuit: "{{ entites | select('match', 'switch[.].*_(nuit_theme_auto|night_auto_theme)(_[0-9]+)?$') | first | default('') }}"
           # Interrupteur « Tab5 Nuit (écran éteint) » du firmware (16/10/2026), tenu d'après
           # « Tab5 · extinction de nuit » (tab5_push.yaml, « Tab5 — extinction de nuit »).
-          nuit_ecran: "{{ entites | select('match', 'switch[.].*_nuit_ecran_eteint(_[0-9]+)?$') | first | default('') }}"
+          nuit_ecran: "{{ entites | select('match', 'switch[.].*_(nuit_ecran_eteint|night_screen_off)(_[0-9]+)?$') | first | default('') }}"
           # Select de pipeline de la tablette (AssistPipelineSelect de HA : ses options
           # commencent par « preferred ») ; depuis HA 2025.10, un second (« Assistant
           # 2 ») a les mêmes options : le premier par ordre d'entity_id, comme

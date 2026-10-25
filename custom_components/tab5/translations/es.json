@@ -281,6 +281,17 @@
           "trop_de_tuiles": "Veinte mosaicos como máximo."
         }
       }
+    },
+    "migrer_entites": {
+      "title": "Tab5: pasar las entidades a sus nombres en inglés",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Migrar las entidades de Tab5",
+            "description": "Las entidades de la tableta tienen ahora nombres en inglés en Home Assistant, y {nombre} entidades llevan todavía su antiguo nombre o ID en francés. Confirme para renombrarlas: conservan su historial, y la tableta sus ajustes. Sus propios paneles y automatizaciones que las nombran por su ID antiguo deben actualizarse."
+          }
+        }
+      }
     }
   }
 }

@@ -11,8 +11,9 @@ import re
 from tests.commun import REPO
 
 HA = REPO / "HomeAssistant_Config"
-# Une recherche par la fin d'un entity_id : 'domaine[.].*_fin…$'.
-RECHERCHE = re.compile(r"'([a-z_]+)\[\.\]\.\*_([a-z0-9_]+)([^']*)\$'")
+# Une recherche par la fin d'un entity_id : 'domaine[.].*_fin…$', la fin pouvant être « (avant|anglais) »
+# (custom_components/tab5/renommage.py, tests/test_renommage.py).
+RECHERCHE = re.compile(r"'([a-z_]+)\[\.\]\.\*_(\([a-z0-9_|]+\)|[a-z0-9_]+)([^']*)\$'")
 SUFFIXE = "(_[0-9]+)?"
 # Météo-France : ses capteurs sont nommés par la ville, pas par un appareil du projet.
 HORS_TABLETTE = {"tab5_meteo_sources.yaml"}

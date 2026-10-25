@@ -22,7 +22,7 @@ from homeassistant.components.repairs import ConfirmRepairFlow, RepairsFlow, Rep
 from homeassistant.core import HomeAssistant
 
 from .assistant_flux import AssistantFlux
-from .const import ISSUE_ASSISTANT, ISSUE_CONFIGURATION, ISSUE_REDEMARRAGE
+from .const import DOMAIN, ISSUE_ASSISTANT, ISSUE_CONFIGURATION, ISSUE_MIGRATION, ISSUE_REDEMARRAGE
 
 
 class RedemarrageFlow(ConfirmRepairFlow):
@@ -34,6 +34,16 @@ class RedemarrageFlow(ConfirmRepairFlow):
                 return self.async_create_entry(data={})
             erreurs["base"] = ISSUE_CONFIGURATION
         return self.async_show_form(step_id="confirm", data_schema=vol.Schema({}), errors=erreurs)
+
+
+class MigrationFlow(ConfirmRepairFlow):
+    """« Migrer les entités Tab5 » : un clic applique renommage.py (Gestionnaire.async_migrer)."""
+
+    async def async_step_confirm(self, user_input: dict[str, Any] | None = None) -> RepairsFlowResult:
+        if user_input is not None:
+            for entree in self.hass.config_entries.async_loaded_entries(DOMAIN):
+                await entree.runtime_data.async_migrer()
+        return await super().async_step_confirm(user_input)
 
 
 class AssistantReparation(AssistantFlux, RepairsFlow):
@@ -50,4 +60,6 @@ async def async_create_fix_flow(hass: HomeAssistant, issue_id: str,
         return RedemarrageFlow()
     if issue_id == ISSUE_ASSISTANT:
         return AssistantReparation()
+    if issue_id == ISSUE_MIGRATION:
+        return MigrationFlow()
     return ConfirmRepairFlow()

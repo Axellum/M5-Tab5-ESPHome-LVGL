@@ -281,6 +281,17 @@
           "trop_de_tuiles": "Maximaal twintig tegels."
         }
       }
+    },
+    "migrer_entites": {
+      "title": "Tab5: entiteiten naar hun Engelse namen omzetten",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5-entiteiten migreren",
+            "description": "De entiteiten van de tablet hebben in Home Assistant nu Engelse namen, en {nombre} entiteiten hebben nog hun oude Franse naam of ID. Bevestig om ze te hernoemen: hun geschiedenis blijft behouden, en de tablet houdt zijn instellingen. Eigen dashboards en automatiseringen die ze met hun oude entiteit-ID noemen, moeten worden bijgewerkt."
+          }
+        }
+      }
     }
   }
 }
