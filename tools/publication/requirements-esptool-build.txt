@@ -12,8 +12,8 @@
 #
 # Régénérer (monter la version : la changer dans la commande), depuis la racine du dépôt,
 # en bash ou en PowerShell, puis remplacer tout ce qui suit cet en-tête par la sortie :
-#   "setuptools==84.0.0" | uv pip compile - --generate-hashes --python-version 3.13 --python-platform x86_64-manylinux_2_28 --no-header -o <fichier temporaire>
+#   "setuptools==84.1.0" | uv pip compile - --generate-hashes --python-version 3.13 --python-platform x86_64-manylinux_2_28 --no-header -o <fichier temporaire>
 
-setuptools==84.0.0 \
+setuptools==84.1.0 \
     --hash=sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670 \
     --hash=sha256:f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73
