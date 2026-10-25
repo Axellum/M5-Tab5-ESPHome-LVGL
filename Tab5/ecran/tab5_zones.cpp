@@ -643,7 +643,8 @@ std::string zones_texte_masquees() {
         if (!t.empty()) t += ", ";
         t += kCles[i];
     }
-    return t.empty() ? std::string("aucune") : t;
+    // « none » (« aucune » avant le 24/10/2026) : l'état est lu par HA, en anglais (ADR-0070).
+    return t.empty() ? std::string("none") : t;
 }
 
 

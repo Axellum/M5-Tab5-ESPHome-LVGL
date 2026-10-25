@@ -77,7 +77,7 @@ struct AlarmCfg {
   // les scripts et le rendu lisent une valeur déjà gardée contre le NaN d'un
   // `number` pas encore restauré, au lieu de refaire la garde à chaque usage
   // (audit du 26/09/2026, lot 7.3). Défauts = ceux des entités.
-  int melody = 1;             // index de alarm_melody_name() (« Classique »)
+  int melody = 1;             // index de alarm_melody_rtttl() (« Classique »)
   float volume = 0.8f;        // 0..1 (l'entité est en %)
   int rdv_lead_min = 15;      // annonce d'un rendez-vous : minutes avant
 };
@@ -151,12 +151,12 @@ std::string alarm_next_detail(time_t now);
 // ═══════════════════════════════════════════════════════════════════════════
 // Préréglages de jours — le select exposé à HA, les 7 chips sur la dalle
 // ═══════════════════════════════════════════════════════════════════════════
-// Home Assistant reçoit un select lisible (« Lundi-Vendredi ») plutôt que sept
+// Home Assistant reçoit un select lisible (« Monday-Friday ») plutôt que sept
 // interrupteurs ; le réglage fin jour par jour se fait sur la tablette. Les deux
-// écrivent le MÊME masque, et le select retombe sur « Personnalisé » dès que le
-// masque ne correspond à aucun préréglage.
+// écrivent le MÊME masque, et le select retombe sur « Custom » (« Personnalisé ») dès
+// que le masque ne correspond à aucun préréglage. Le select est lu et publié par son
+// INDEX : ses options sont le texte de HA (anglais, ADR-0070), ce module n'en a aucun.
 constexpr int ALARM_DAYS_PRESET_COUNT = 5;
-const char* alarm_days_preset_name(int idx);
 // Masque du préréglage, -1 pour « Personnalisé » (qui ne change rien).
 int alarm_days_preset_mask(int idx);
 // Index du préréglage qui correspond au masque, sinon celui de « Personnalisé ».
@@ -167,10 +167,10 @@ int alarm_days_preset_index(uint8_t mask);
 // Mélodies RTTTL embarquées (aucun octet de flash : ce sont des chaînes)
 // ═══════════════════════════════════════════════════════════════════════════
 constexpr int ALARM_MELODY_COUNT = 4;
-// Nom affiché (popup + select HA). Index borné en interne.
-const char* alarm_melody_name(int idx);
-// Partition RTTTL jouée par `rtttl.play`. Modifier une mélodie = éditer cette
-// table, rien d'autre (ni police, ni flash, ni réglage HA).
+// Partition RTTTL jouée par `rtttl.play`, par l'INDEX du select « Réveil : sonnerie »
+// (Douce, Classique, Insistante, Carillon ; ses options sont le texte de HA, ADR-0070).
+// Index borné en interne. Modifier une mélodie = éditer cette table, rien d'autre (ni
+// police, ni flash, ni réglage HA).
 const char* alarm_melody_rtttl(int idx);
 
 // Volume d'un cycle de sonnerie (0..1) : `base` au premier cycle puis montée

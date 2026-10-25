@@ -847,10 +847,10 @@ def _nabu(nabu) -> tuple:
 NABU_DE_LA_DEMO = _nabu(NABU)[:1]
 # Thème à la police de date la plus large (valeurs de 45 px, comme la date ; « 612 ppm » :
 # 191 px en IBM Plex Serif 700 contre 188 en Nunito 800, celle de Relief doux, le défaut).
-THEME_POLICE_LARGE = "Almanach imprimé"
+THEME_POLICE_LARGE = "Printed almanac"  # Almanach imprimé ; options en anglais (ADR-0070)
 # Thème au cadre le plus serré : une gélule (rayon 45, bordure de 4 px).
 THEME_CADRE_GELULE = "Capsule"
-THEME_PAR_DEFAUT = "Relief doux"
+THEME_PAR_DEFAUT = "Soft relief"  # Relief doux
 
 
 # Popup Musique (ADR-0050, lecteur_popup.yaml) : trois lecteurs choisis, le premier en
@@ -899,7 +899,7 @@ MUSIQUE_PIECES_MA = Service("tab5_maj_musique_pieces", (
     ("contexte", "1|0|12|Sous la pluie — Clara Lune"),
 ))
 # La plus petite installation à plusieurs lecteurs, sans Music Assistant : trois lecteurs de
-# « Tab5 · lecteurs de musique », aucun groupe, ni transfert ni bibliothèque.
+# « Tab5 · music players », aucun groupe, ni transfert ni bibliothèque.
 MUSIQUE_PIECES_SANS_MA = Service("tab5_maj_musique_pieces", (
     ("pieces", "Salon|e|j|45|0|-1|vmos|Le vent du large — Les Marées;Apple TV|t|r|30|0|-1|vmo|;Freebox|x|e||0|-1|o|"),
     ("contexte", "0|0|0|"),
@@ -1346,12 +1346,12 @@ ECRANS: tuple[Ecran, ...] = (
     # l'accueil, ou la première qui en a ; Lumières : « aller-lumieres », plus bas), la page
     # suivante d'un glissement, une pièce par son nom, la roue d'une ligne ; une seule pièce
     # de volets (ni noms ni glissement).
-    Ecran("lumieres-page-suivante", (Aller("Lumières"), LUMIERES_SUIVANTE)),
-    Ecran("lumieres-onglet", (Aller("Lumières"), Toucher(*LUMIERES_ONGLET_3))),
-    Ecran("lumieres-roue", (Aller("Lumières"), Long(*LUMIERES_LIGNE_0)), (ROUE_FERMER,)),
-    Ecran("aller-volet", (Aller("Volet"),)),
-    Ecran("volets-page-suivante", (Aller("Volet"), VOLETS_SUIVANTE)),
-    Ecran("volets-une-piece", (MAISON_DEUX_PIECES, Aller("Volet")), MAISON_DE_LA_DEMO),
+    Ecran("lumieres-page-suivante", (Aller("Lights"), LUMIERES_SUIVANTE)),
+    Ecran("lumieres-onglet", (Aller("Lights"), Toucher(*LUMIERES_ONGLET_3))),
+    Ecran("lumieres-roue", (Aller("Lights"), Long(*LUMIERES_LIGNE_0)), (ROUE_FERMER,)),
+    Ecran("aller-volet", (Aller("Shutter"),)),
+    Ecran("volets-page-suivante", (Aller("Shutter"), VOLETS_SUIVANTE)),
+    Ecran("volets-une-piece", (MAISON_DEUX_PIECES, Aller("Shutter")), MAISON_DE_LA_DEMO),
     # Roue d'actions rapides (ADR-0036) : la lampe, ses luminosités dépliées (50 % marqué)
     # puis ses couleurs ; le volet, ses positions dépliées (50 % marqué). Fermer : un
     # toucher replie le second anneau, le suivant ferme la roue. Celle de la clim est la
@@ -1421,20 +1421,20 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("roue-navigation-bureau", (Long(*CARTE_CENTRALE), nav(NAV_PIECES), NAV_BUREAU), RETOUR_PIECE_CLIMAT),
     # Les popups d'une tuile ouverts sans tuile (ADR-0042) : les lumières de la pièce
     # affichée (l'accueil : la Chambre et le Salon), par « Aller à l'écran ».
-    Ecran("aller-lumieres", (Aller("Lumières"),)),
+    Ecran("aller-lumieres", (Aller("Lights"),)),
     # Popup Maison (ADR-0037) : les cinq pièces de la démo par « Aller à l'écran », puis par
     # un tap sur le titre de la pièce en mode HA, puis deux pièces (colonnes plus larges).
-    Ecran("maison", (Aller("Maison"),)),
+    Ecran("maison", (Aller("House"),)),
     Ecran("maison-par-le-titre", (Toucher(*BOUTON_HA), Toucher(*CARTE_CENTRALE)),
           (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA))),
-    Ecran("maison-2-pieces", (MAISON_DEUX_PIECES, Aller("Maison")), MAISON_DE_LA_DEMO),
+    Ecran("maison-2-pieces", (MAISON_DEUX_PIECES, Aller("House")), MAISON_DE_LA_DEMO),
     # Roue d'actions rapides (ADR-0036) ouverte par l'appui long d'une ligne, devant le popup
     # Maison qui reste derrière : la lampe d'ambiance du Salon (variateur), ancrée sur la
     # pastille de sa ligne, sans le lien « Maison ». Toucher ailleurs ne ferme que la roue.
-    Ecran("maison-roue", (Aller("Maison"), Long(*MAISON_LAMPE)), (ROUE_FERMER,)),
+    Ecran("maison-roue", (Aller("House"), Long(*MAISON_LAMPE)), (ROUE_FERMER,)),
     # Un Salon de onze éléments (ADR-0066) : trois pages de cinq lignes, « 1–5 » puis « 6–10 ».
-    Ecran("maison-11-elements", salon_de(11) + (Aller("Maison"),), SALON_DE_LA_DEMO),
-    Ecran("maison-11-elements-page-2", salon_de(11) + (Aller("Maison"), MAISON_PAGE_SUIVANTE), SALON_DE_LA_DEMO),
+    Ecran("maison-11-elements", salon_de(11) + (Aller("House"),), SALON_DE_LA_DEMO),
+    Ecran("maison-11-elements-page-2", salon_de(11) + (Aller("House"), MAISON_PAGE_SUIVANTE), SALON_DE_LA_DEMO),
 
     # Huit pièces (ADR-0066) : voir HUIT_PIECES.
     Ecran("pieces-8-ha-atelier", HUIT_PIECES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE),
@@ -1446,10 +1446,10 @@ ECRANS: tuple[Ecran, ...] = (
           (Toucher(*BOUTON_HA),) + (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
     Ecran("pieces-8-meteo-garage-11-elements", HUIT_PIECES + GARAGE_COUPE + (VERS_LA_GAUCHE,) * 3,
           (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
-    Ecran("pieces-8-lumieres", HUIT_PIECES + (Aller("Lumières"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
-    Ecran("pieces-8-volets", HUIT_PIECES + (Aller("Volet"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
-    Ecran("pieces-8-maison", HUIT_PIECES + (Aller("Maison"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
-    Ecran("pieces-8-maison-page-2", HUIT_PIECES + (Aller("Maison"), MAISON_PAGE_SUIVANTE),
+    Ecran("pieces-8-lumieres", HUIT_PIECES + (Aller("Lights"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
+    Ecran("pieces-8-volets", HUIT_PIECES + (Aller("Shutter"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
+    Ecran("pieces-8-maison", HUIT_PIECES + (Aller("House"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
+    Ecran("pieces-8-maison-page-2", HUIT_PIECES + (Aller("House"), MAISON_PAGE_SUIVANTE),
           (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
     Ecran("pieces-8-roue", HUIT_PIECES + (Long(*CARTE_CENTRALE), nav(NAV_PIECES)),
           (ROUE_FERMER, ROUE_FERMER) + CINQ_PIECES),
@@ -1476,19 +1476,19 @@ ECRANS: tuple[Ecran, ...] = (
           ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
     Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_PRODUCTION,
           ENERGIE_RETOUR_PRODUCTION + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
-    Ecran("energie-jours", (Aller("Énergie"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["jours"]),),
+    Ecran("energie-jours", (Aller("Energy"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["jours"]),),
           ENERGIE_RETOUR_PRODUCTION),
-    Ecran("energie-mois", (Aller("Énergie"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["mois"]),),
+    Ecran("energie-mois", (Aller("Energy"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["mois"]),),
           ENERGIE_RETOUR_PRODUCTION),
     # Bilan en kWh (ADR-0062) : la « Batterie réseau » de juin à gauche, le net par jour du
     # mois civil puis par mois de l'année à droite (une maison sans compteur d'achat ni de
     # vente : estimés, sans prix) ; puis la même maison avec ses compteurs et un prix
     # (« Économies » en euros), poussée par-dessus et rendue à la fin.
-    Ecran("energie-bilan-jours", (Aller("Énergie"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["jours"]),),
+    Ecran("energie-bilan-jours", (Aller("Energy"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["jours"]),),
           (Toucher(*ENERGIE_BILAN_VUES["heures"]),) + ENERGIE_RETOUR_BILAN),
-    Ecran("energie-bilan-mois", (Aller("Énergie"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["mois"]),),
+    Ecran("energie-bilan-mois", (Aller("Energy"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["mois"]),),
           (Toucher(*ENERGIE_BILAN_VUES["heures"]),) + ENERGIE_RETOUR_BILAN),
-    Ecran("energie-bilan-prix", (Aller("Énergie"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["jours"]),
+    Ecran("energie-bilan-prix", (Aller("Energy"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["jours"]),
                                                                             BILAN_AVEC_PRIX),
           (BILAN_SANS_PRIX, Toucher(*ENERGIE_BILAN_VUES["heures"])) + ENERGIE_RETOUR_BILAN),
     # Température (ADR-0032) : la pièce sur 24 h ; la seconde température, une serre avec
@@ -1514,54 +1514,54 @@ ECRANS: tuple[Ecran, ...] = (
            _historique("salon", "semaine"), Toucher(*TEMPERATURE_ONGLETS["p3"]), _historique("p3", "semaine"))),
     # Popup Météo (ADR-0043) : ses trois pages, avec des données qui varient ; la page
     # « 10 jours » par un geste dans le popup, « Détails » par son nom en haut.
-    Ecran("meteo-aujourdhui", METEO_DONNEES + (Aller("Météo"),), METEO_SCENE_3),
-    Ecran("meteo-jours", METEO_DONNEES + (Aller("Météo"), METEO_GLISSER), METEO_SCENE_3),
-    Ecran("meteo-details", METEO_DONNEES + (Aller("Météo"), Toucher(*METEO_PAGES["details"])), METEO_SCENE_3),
+    Ecran("meteo-aujourdhui", METEO_DONNEES + (Aller("Weather"),), METEO_SCENE_3),
+    Ecran("meteo-jours", METEO_DONNEES + (Aller("Weather"), METEO_GLISSER), METEO_SCENE_3),
+    Ecran("meteo-details", METEO_DONNEES + (Aller("Weather"), Toucher(*METEO_PAGES["details"])), METEO_SCENE_3),
     # Popup Musique (ADR-0050) : vide (« En attente de Home Assistant »), en pause avec ses
     # trois lecteurs, éteint ; la barre « en lecture » de l'accueil, sur le cadre Ok Nabu.
-    Ecran("musique-vide", (Aller("Musique"),), (LECTEUR_VOILE,)),
-    Ecran("musique", (LECTEUR_EN_PAUSE, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
-    Ecran("musique-eteint", (LECTEUR_ETEINT, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    Ecran("musique-vide", (Aller("Music"),), (LECTEUR_VOILE,)),
+    Ecran("musique", (LECTEUR_EN_PAUSE, Aller("Music")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    Ecran("musique-eteint", (LECTEUR_ETEINT, Aller("Music")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
     # Musique de toute la maison (ADR-0067) : la page Lecture avec Music Assistant (noms des
     # pages, « + 1 », « À suivre »), Pièces avec un groupe, Bibliothèque en attente puis avec
     # ses favoris, les sources d'une pièce, la petite installation sans Music Assistant.
-    Ecran("musique-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique")),
+    Ecran("musique-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music")),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
-    Ecran("musique-pieces", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE),
+    Ecran("musique-pieces", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-bibliotheque-chargement",
-          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-bibliotheque",
-          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE,
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE,
            MUSIQUE_FAVORIS),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-sources",
-          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE, Long(*MUSIQUE_SALON_ICONE),
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, Long(*MUSIQUE_SALON_ICONE),
            MUSIQUE_SOURCE, MUSIQUE_SOURCES),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
-    Ecran("musique-pieces-sans-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_SANS_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE),
+    Ecran("musique-pieces-sans-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_SANS_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     # Playlists favorites (ADR-0068) : les noms des pages contre la croix sur la page Lecture,
     # puis la page Playlists (deux colonnes de boutons).
-    Ecran("musique-avec-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Musique")),
+    Ecran("musique-avec-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Music")),
           (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
-    Ecran("musique-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Musique"), PLAYLISTS_PAGE),
+    Ecran("musique-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Music"), PLAYLISTS_PAGE),
           (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     # Les quatre pages ensemble (ADR-0067 et ADR-0068, une seule brique de pages) : leurs
     # noms sur la ligne du titre de la page Lecture, puis Playlists et Pièces par glissements.
-    Ecran("musique-quatre-pages", (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique")),
+    Ecran("musique-quatre-pages", (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music")),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-quatre-pages-playlists",
-          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-quatre-pages-pieces",
-          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE,
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE,
            MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     # Retour sur Playlists depuis Pièces, qui avait masqué la pochette et les pastilles.
     Ecran("musique-quatre-pages-retour",
-          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE,
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE,
            MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_PRECEDENTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
@@ -1579,22 +1579,22 @@ ECRANS: tuple[Ecran, ...] = (
     # « Toutes », première page, sur le Portail, quel que soit l'ordre des écrans (pièce,
     # caméra et vue sont gardées en NVS, la page tant que la tablette tourne ; « Toutes »
     # garde la caméra montrée : Entrée d'abord, qui montre le Portail).
-    Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"), Attendre(1.5))),
+    Ecran("cameras", (CAMERAS_DONNEES, Aller("Cameras"), Attendre(1.5))),
     Ecran("cameras-mosaique-page-2",
-          (CAMERAS_DONNEES, Aller("Caméras"), Attendre(0.6), CAMERAS_SUIVANTE, Attendre(1.5)),
+          (CAMERAS_DONNEES, Aller("Cameras"), Attendre(0.6), CAMERAS_SUIVANTE, Attendre(1.5)),
           (CAMERAS_PRECEDENTE,)),
     Ecran("cameras-plein-ecran",
-          (CAMERAS_DONNEES, Aller("Caméras"), Attendre(0.6), _camera_vignette(0), Attendre(1.0)),
+          (CAMERAS_DONNEES, Aller("Cameras"), Attendre(0.6), _camera_vignette(0), Attendre(1.0)),
           (CAMERAS_MOSAIQUE,)),
     Ecran("cameras-piece-hors-ligne",
-          (CAMERAS_DONNEES, Aller("Caméras"), _camera_puce(2), Attendre(0.6), _camera_vignette(2, 3),
+          (CAMERAS_DONNEES, Aller("Cameras"), _camera_puce(2), Attendre(0.6), _camera_vignette(2, 3),
            Attendre(1.0)),
           (CAMERAS_MOSAIQUE, _camera_puce(1), _camera_puce(0))),
     # Capteurs suivis (ADR-0054) : le popup avant toute poussée (« En attente de Home
     # Assistant »), avec quatre capteurs (deux rangées : 3 colonnes au plus), puis la carte
     # du premier dans la zone à gauche de l'horloge, dans le thème par défaut et en gélule.
-    Ecran("suivi-vide", (Aller("Suivi"),)),
-    Ecran("suivi", (SUIVI_DONNEES, Aller("Suivi"))),
+    Ecran("suivi-vide", (Aller("Tracking"),)),
+    Ecran("suivi", (SUIVI_DONNEES, Aller("Tracking"))),
     Ecran("accueil-zone-capteur", (SUIVI_DONNEES, ZONE_CAPTEUR), (ZONE_VOCAL,)),
     Ecran("accueil-zone-capteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), SUIVI_DONNEES, ZONE_CAPTEUR),
           (ZONE_VOCAL, Choisir("Thème", THEME_PAR_DEFAUT))),
@@ -1602,20 +1602,20 @@ ECRANS: tuple[Ecran, ...] = (
     # attente de Home Assistant »), avec un réfrigérateur au niveau grave (porte mal
     # fermée) et un congélateur conforme, puis l'accueil, où l'icône clignote dans le coin
     # de l'horloge (capturée à un instant quelconque du clignotement : pas comparée).
-    Ecran("froid-vide", (Aller("Froid"),)),
-    Ecran("froid", (FROID_DONNEES, Aller("Froid")), (FROID_CONFORME,)),
+    Ecran("froid-vide", (Aller("Fridges"),)),
+    Ecran("froid", (FROID_DONNEES, Aller("Fridges")), (FROID_CONFORME,)),
     Ecran("accueil-froid", (FROID_DONNEES,), (FROID_CONFORME,), stable=False),
     # Serveur IA (ADR-0059) : un serveur qui génère (courbe des 24 dernières poussées), le
     # même hors ligne, puis aucun capteur choisi (où les choisir).
-    Ecran("serveur-ia", SERVEUR_IA_COURBE + (Aller("Serveur IA"),), (SERVEUR_IA_REMISE,)),
-    Ecran("serveur-ia-hors-ligne", SERVEUR_IA_COURBE + (SERVEUR_IA_HORS_LIGNE, Aller("Serveur IA")),
+    Ecran("serveur-ia", SERVEUR_IA_COURBE + (Aller("AI server"),), (SERVEUR_IA_REMISE,)),
+    Ecran("serveur-ia-hors-ligne", SERVEUR_IA_COURBE + (SERVEUR_IA_HORS_LIGNE, Aller("AI server")),
           (SERVEUR_IA_REMISE,)),
-    Ecran("serveur-ia-vide", (SERVEUR_IA_AUCUN, Aller("Serveur IA")), (SERVEUR_IA_REMISE,)),
+    Ecran("serveur-ia-vide", (SERVEUR_IA_AUCUN, Aller("AI server")), (SERVEUR_IA_REMISE,)),
     # Actions (ADR-0060) : les trois boutons (un grisé), puis « Confirmer ? » sur
     # Redémarrer après un premier tap (capturé dans les 4 s de la confirmation).
-    Ecran("serveur-ia-actions", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("Serveur IA")),
+    Ecran("serveur-ia-actions", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("AI server")),
           (SERVEUR_IA_REMISE,)),
-    Ecran("serveur-ia-confirmer", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("Serveur IA"),
+    Ecran("serveur-ia-confirmer", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("AI server"),
                                                        SERVEUR_IA_REDEMARRER),
           (SERVEUR_IA_REMISE,)),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),

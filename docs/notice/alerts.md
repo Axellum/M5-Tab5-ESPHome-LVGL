@@ -12,7 +12,7 @@
 - **Bright dot**: still to read. **Faded dot**: read, still going on. **Grey text**: ended.
 - **Mark all as read**, top right: every alert still to read is read at once, also those that did not fit on the central card. The button is hidden when nothing is left to read.
 
-Only the alerts you subscribed to show here, as on the central card: the « Tab5 · alertes … » lists of Home Assistant, in the « Alerts » section of the tablet's settings view. Before Home Assistant answers, the window says it is waiting.
+Only the alerts you subscribed to show here, as on the central card: the « Tab5 · alerts: … » lists of Home Assistant, in the « Alerts » section of the tablet's settings view. Before Home Assistant answers, the window says it is waiting.
 
 ---
 
@@ -28,4 +28,4 @@ Only the alerts you subscribed to show here, as on the central card: the « Tab5
 - **Pastille vive** : à lire. **Pastille pâle** : lue, toujours en cours. **Texte gris** : terminée.
 - **Tout marquer comme lu**, en haut à droite : toutes les alertes à lire sont lues d'un coup, même celles qui ne tenaient pas sur la carte centrale. Le bouton disparaît quand il ne reste rien à lire.
 
-Seules les alertes auxquelles vous êtes abonné s'affichent ici, comme sur la carte centrale : les listes « Tab5 · alertes … » de Home Assistant, dans la section « Alertes » de la vue des réglages de la tablette. Avant que Home Assistant réponde, la fenêtre dit qu'elle attend.
+Seules les alertes auxquelles vous êtes abonné s'affichent ici, comme sur la carte centrale : les listes « Tab5 · alerts: … » de Home Assistant, dans la section « Alertes » de la vue des réglages de la tablette. Avant que Home Assistant réponde, la fenêtre dit qu'elle attend.

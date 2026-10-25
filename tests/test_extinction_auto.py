@@ -21,7 +21,8 @@ from tests.commun import ChargeurBalisesBrutes as _Chargeur, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
-OPTIONS = ["Jamais", "1 min", "2 min", "5 min", "10 min", "30 min"]
+# En anglais, lues par HA (ADR-0070 ; « Jamais » avant le 24/10/2026).
+OPTIONS = ["Never", "1 min", "2 min", "5 min", "10 min", "30 min"]
 
 
 def _yaml(nom):
@@ -55,7 +56,7 @@ def test_select_options_et_defaut_jamais():
     s = _select()
     assert s["name"] == "Tab5 Extinction auto de l'écran"
     assert s["options"] == OPTIONS
-    assert s["initial_option"] == "Jamais", "défaut : comportement d'avant inchangé"
+    assert s["initial_option"] == "Never", "défaut : comportement d'avant inchangé"
     assert s["restore_value"] is True and s["optimistic"] is True
     assert s["entity_category"] == "config"
 
@@ -100,8 +101,7 @@ def test_eteint_comme_ha_et_compte_depuis_l_allumage():
 
 
 def test_nuit_tenue_par_ha():
-    """« Tab5 Nuit (écran éteint) » (16/10/2026) : tenu par HA d'après « Tab5 · extinction de
-    nuit », éteint au démarrage (HA le renvoie à la connexion). Allumé, 1 min sans toucher
+    """« Tab5 Nuit (écran éteint) » (16/10/2026) : tenu par HA d'après « Tab5 · night screen off », éteint au démarrage (HA le renvoie à la connexion). Allumé, 1 min sans toucher
     éteint l'écran même sur « Jamais » ou sur secteur, avec les mêmes exceptions ; l'écran
     éteint par la nuit se rallume quand elle finit."""
     s = next(s for s in _yaml("tab5-ha-controls.yaml")["switch"] if s.get("id") == "tab5_nuit_ecran")

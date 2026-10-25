@@ -139,7 +139,7 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ### Waveshare 7B: boot loop after a software reboot, Wi-Fi link down (2026-10-16)
 
-**Symptom:** after a reboot from Home Assistant (« Redémarrage Système »), an OTA or any software reboot, the board restarts every ~17 s, never reaches Wi-Fi, and after 10 boots ESPHome enters safe mode (frozen screen). Rebooting again does not help.
+**Symptom:** after a reboot from Home Assistant (« Restart »), an OTA or any software reboot, the board restarts every ~17 s, never reaches Wi-Fi, and after 10 boots ESPHome enters safe mode (frozen screen). Rebooting again does not help.
 
 **What the serial console shows** (COM port of the board, `tools/capture_serie.py --mac …`, no reset): each boot gets past `ESP-Hosted link not yet up` (harmless, printed on every boot), then the SDIO reads from the C6 time out and the P4 restarts by itself, `rst:0xc (SW_CPU_RESET)`, with no panic:
 
@@ -169,7 +169,7 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### Crash alert after a press on the power button (2026-10-06)
 
-**Symptom:** a short press on the power button reboots the tablet in about 10 s, then Home Assistant sends « Tab5 : journal du démarrage (plantage (chien de garde)) » to the phone. The journal has only the usual boot lines (ESP-Hosted « not yet up », touch polling, Wi-Fi associating), no `esp32.crash` line. Meanwhile `Tab5 Raison du redémarrage` shows `Reboot request from esphome.ota`, although the last update was hours earlier. Reported in discussion #278 (tablet with a battery, 3.7.0-rc.2), reproduced the same day on a tablet powered by USB.
+**Symptom:** a short press on the power button reboots the tablet in about 10 s, then Home Assistant sends « Tab5 : journal du démarrage (plantage (chien de garde)) » to the phone. The journal has only the usual boot lines (ESP-Hosted « not yet up », touch polling, Wi-Fi associating), no `esp32.crash` line. Meanwhile `Restart reason` shows `Reboot request from esphome.ota`, although the last update was hours earlier. Reported in discussion #278 (tablet with a battery, 3.7.0-rc.2), reproduced the same day on a tablet powered by USB.
 
 **Root cause:** not a crash. The firmware does not handle the power button: the hardware resets the chip, and `esp_reset_reason()` reads `ESP_RST_WDT`, a reason the journal counted as a crash. ESPHome's `debug` component, for that reason, shows the source stored by the last *requested* reboot (`components/debug/debug_esp32.cpp`), which it never clears: a stale text.
 
@@ -201,7 +201,7 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 **Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → System → Repairs* shows a message whose title starts with « Tab5 ».
 
-**Root cause:** at start, the integration puts the files of its version in place, checks the configuration, reloads the YAML, then checks that the sensor « Tab5 · version des fichiers HA » shows the new version ([updates](installation/updates.md#home-assistant-files)). When a step does not end as expected, it says so in Repairs.
+**Root cause:** at start, the integration puts the files of its version in place, checks the configuration, reloads the YAML, then checks that the sensor « Tab5 · HA files version » shows the new version ([updates](installation/updates.md#home-assistant-files)). When a step does not end as expected, it says so in Repairs.
 
 **Fix**, by message:
 
@@ -248,7 +248,7 @@ More than 30 minutes since the tablet's start: restart it first (a short press o
 - the backlight: brightness at 100 %, where its 1 kHz PWM no longer chops, hiss unchanged (that change coincided with a brownout reboot at 09:42, on a PC's USB port; cause not proven);
 - the microphone: muted, hiss unchanged.
 
-**Root cause:** the battery charger. Since 3.6.0 (PR #303, 2026-10-04), the firmware sets CHG_EN (PI4IOE 0x44 P7) to 1 at every boot. Without a battery, the charger charges into nothing: the voltage read by the INA226 swings between 4.2 and 8.39 V, or stays around 5.70–5.76 V, and « Tab5 Batterie en charge » says yes. With a trial firmware that exposed CHG_EN, switching the charger off made the hiss go away; the INA226 then read 1.83 to 1.94 V (four readings, 09:55 to 09:58) and the charging status went to « not charging ». One more observation, a single one: during the 2 minutes when the voltage read 8.39 V, the hiss could not be heard; it came back with 5.70 V.
+**Root cause:** the battery charger. Since 3.6.0 (PR #303, 2026-10-04), the firmware sets CHG_EN (PI4IOE 0x44 P7) to 1 at every boot. Without a battery, the charger charges into nothing: the voltage read by the INA226 swings between 4.2 and 8.39 V, or stays around 5.70–5.76 V, and « Battery charging » says yes. With a trial firmware that exposed CHG_EN, switching the charger off made the hiss go away; the INA226 then read 1.83 to 1.94 V (four readings, 09:55 to 09:58) and the charging status went to « not charging ». One more observation, a single one: during the 2 minutes when the voltage read 8.39 V, the hiss could not be heard; it came back with 5.70 V.
 
 **Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». Since 2026-10-10 it does not even switch the charger on while it boots when the previous boot saw no battery. How it decides: [battery](hardware.md#power).
 
@@ -277,7 +277,7 @@ A plain `lambda:` action is still written inside `setup()`, after the includes, 
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
 - **A cover entity showing `unknown` in Home Assistant**: this can be real on the HA side while being irrelevant to the Tab5 firmware, if the corresponding UI card drives its own internal state via globals + a script rather than reading that entity's state directly. Check what the specific `ui_components/*.yaml` card actually binds to before assuming the firmware is affected.
-- **`Tab5 Uptime` about a minute away from the actual reboot**: not a clock problem. An ESPHome sensor state is a 32-bit float, which rounds a Unix timestamp to the nearest multiple of 128 s (±64 s). The health guard in `packages/tab5_health.yaml` allows 5 min for it.
+- **`Uptime` about a minute away from the actual reboot**: not a clock problem. An ESPHome sensor state is a 32-bit float, which rounds a Unix timestamp to the nearest multiple of 128 s (±64 s). The health guard in `packages/tab5_health.yaml` allows 5 min for it.
 - **Touch "overlap" between two adjacent buttons flagged by a static audit**: verify the actual pixel geometry (`x`/`y`/`width`/`height`) before trusting a reported overlap — a past report was off by roughly a dozen pixels and wasn't a real overlap.
 
 ---
@@ -390,7 +390,7 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 
 ### Waveshare 7B : boucle de redémarrages après un redémarrage logiciel, lien Wi-Fi absent (16/10/2026)
 
-**Symptôme :** après un redémarrage depuis Home Assistant (« Redémarrage Système »), une OTA ou tout redémarrage logiciel, la carte redémarre toutes les ~17 s, n'atteint jamais le Wi-Fi, et au bout de 10 démarrages ESPHome passe en mode sans échec (écran figé). La redémarrer encore n'y change rien.
+**Symptôme :** après un redémarrage depuis Home Assistant (« Restart » ; « Redémarrage Système » avant la migration des entités), une OTA ou tout redémarrage logiciel, la carte redémarre toutes les ~17 s, n'atteint jamais le Wi-Fi, et au bout de 10 démarrages ESPHome passe en mode sans échec (écran figé). La redémarrer encore n'y change rien.
 
 **Ce que montre la console série** (port COM de la carte, `tools/capture_serie.py --mac …`, sans reset) : chaque démarrage passe `ESP-Hosted link not yet up` (sans conséquence, écrit à chaque démarrage), puis les lectures SDIO du C6 partent en timeout et le P4 redémarre de lui-même, `rst:0xc (SW_CPU_RESET)`, sans panique :
 
@@ -418,7 +418,7 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### Alerte de plantage après un appui sur le bouton d'alimentation (06/10/2026)
 
-**Symptôme :** un appui court sur le bouton d'alimentation redémarre la tablette en ~10 s, puis Home Assistant envoie « Tab5 : journal du démarrage (plantage (chien de garde)) » sur le téléphone. Le journal ne contient que les lignes habituelles du démarrage (ESP-Hosted « not yet up », tactile, Wi-Fi qui s'associe), aucune ligne `esp32.crash`. En même temps, `Tab5 Raison du redémarrage` affiche `Reboot request from esphome.ota`, alors que la dernière mise à jour date de plusieurs heures. Signalé dans la discussion #278 (tablette avec batterie, 3.7.0-rc.2), reproduit le même jour sur une tablette alimentée par l'USB.
+**Symptôme :** un appui court sur le bouton d'alimentation redémarre la tablette en ~10 s, puis Home Assistant envoie « Tab5 : journal du démarrage (plantage (chien de garde)) » sur le téléphone. Le journal ne contient que les lignes habituelles du démarrage (ESP-Hosted « not yet up », tactile, Wi-Fi qui s'associe), aucune ligne `esp32.crash`. En même temps, `Restart reason` affiche `Reboot request from esphome.ota`, alors que la dernière mise à jour date de plusieurs heures. Signalé dans la discussion #278 (tablette avec batterie, 3.7.0-rc.2), reproduit le même jour sur une tablette alimentée par l'USB.
 
 **Cause racine :** pas un plantage. Le firmware ne gère pas le bouton d'alimentation : c'est le matériel qui réinitialise la puce, et `esp_reset_reason()` lit `ESP_RST_WDT`, une raison que le journal comptait comme un plantage. Pour cette raison, le composant `debug` d'ESPHome affiche la source enregistrée par le dernier redémarrage *demandé* (`components/debug/debug_esp32.cpp`), qu'il n'efface jamais : un texte périmé.
 
@@ -444,7 +444,7 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 **Symptôme :** après une mise à jour de l'intégration « Tab5 — fichiers HA · HA files » et un redémarrage, *Paramètres → Système → Corrections* montre un message dont le titre commence par « Tab5 ».
 
-**Cause racine :** au démarrage, l'intégration pose les fichiers de sa version, vérifie la configuration, recharge le YAML, puis vérifie que le capteur « Tab5 · version des fichiers HA » donne la nouvelle version ([mises à jour](installation/updates.md#fichiers-home-assistant)). Quand une étape ne finit pas comme prévu, elle le dit dans Corrections.
+**Cause racine :** au démarrage, l'intégration pose les fichiers de sa version, vérifie la configuration, recharge le YAML, puis vérifie que le capteur « Tab5 · HA files version » donne la nouvelle version ([mises à jour](installation/updates.md#fichiers-home-assistant)). Quand une étape ne finit pas comme prévu, elle le dit dans Corrections.
 
 **Correctif**, selon le message :
 
@@ -487,7 +487,7 @@ Plus de 30 minutes depuis le démarrage de la tablette : redémarrez-la d'abord 
 - le rétroéclairage : luminosité à 100 %, où sa PWM à 1 kHz ne hache plus, souffle inchangé (ce changement a coïncidé avec un redémarrage par sous-tension à 09:42, sur un port USB de PC ; cause non prouvée) ;
 - le micro : coupé, souffle inchangé.
 
-**Cause racine :** le chargeur de la batterie. Depuis la 3.6.0 (PR #303, 04/10/2026), le firmware met CHG_EN (PI4IOE 0x44 P7) à 1 à chaque démarrage. Sans batterie, le chargeur charge dans le vide : la tension lue par l'INA226 oscille entre 4,2 et 8,39 V, ou reste vers 5,70-5,76 V, et « Tab5 Batterie en charge » dit oui. Avec un firmware d'essai qui exposait CHG_EN, couper le chargeur a fait disparaître le souffle ; l'INA226 lisait alors 1,83 à 1,94 V (quatre lectures, de 09:55 à 09:58) et l'état de charge est passé à « pas en charge ». Une observation de plus, une seule : pendant les 2 minutes où la tension lue était à 8,39 V, on n'entendait plus le souffle ; il est revenu avec les 5,70 V.
+**Cause racine :** le chargeur de la batterie. Depuis la 3.6.0 (PR #303, 04/10/2026), le firmware met CHG_EN (PI4IOE 0x44 P7) à 1 à chaque démarrage. Sans batterie, le chargeur charge dans le vide : la tension lue par l'INA226 oscille entre 4,2 et 8,39 V, ou reste vers 5,70-5,76 V, et « Battery charging » dit oui. Avec un firmware d'essai qui exposait CHG_EN, couper le chargeur a fait disparaître le souffle ; l'INA226 lisait alors 1,83 à 1,94 V (quatre lectures, de 09:55 à 09:58) et l'état de charge est passé à « pas en charge ». Une observation de plus, une seule : pendant les 2 minutes où la tension lue était à 8,39 V, on n'entendait plus le souffle ; il est revenu avec les 5,70 V.
 
 **Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Depuis le 10/10/2026, il ne l'allume même plus pendant le démarrage quand le démarrage précédent n'a vu aucune batterie. Comment il décide : [batterie](hardware.md#alimentation).
 
@@ -512,5 +512,5 @@ Une action `lambda:` ordinaire reste écrite dans `setup()`, après les inclusio
 
 - **Pagination prévisions sans bouclage** : intentionnel (0↔4), déjà "corrigé à tort" une fois par un audit LLM puis reverté. Voir [`docs/decisions/`](decisions/README.md).
 - **Entité `cover` à `unknown` côté HA** : peut être réel côté HA sans affecter le firmware si la carte concernée pilote son propre état via des globals + un script plutôt que de lire cette entité.
-- **`Tab5 Uptime` décalé d'environ une minute par rapport au vrai reboot** : pas un problème d'horloge. L'état d'un capteur ESPHome est un float 32 bits, qui arrondit un horodatage Unix au multiple de 128 s le plus proche (±64 s). La garde de `packages/tab5_health.yaml` prévoit 5 min de marge pour cela.
+- **`Uptime` décalé d'environ une minute par rapport au vrai reboot** : pas un problème d'horloge. L'état d'un capteur ESPHome est un float 32 bits, qui arrondit un horodatage Unix au multiple de 128 s le plus proche (±64 s). La garde de `packages/tab5_health.yaml` prévoit 5 min de marge pour cela.
 - **"Chevauchement" tactile signalé par un audit statique** : vérifier la géométrie pixel réelle avant de faire confiance au rapport — un cas signalé était décalé d'une douzaine de pixels, pas un vrai chevauchement.

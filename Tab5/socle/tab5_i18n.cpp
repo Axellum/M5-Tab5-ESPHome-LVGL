@@ -27,6 +27,20 @@ const char* i18n_language_code(size_t lang) {
     return (lang < kI18nLangCount) ? kI18nLangCodes[lang] : "";
 }
 
+// L'anglais par son code, pas par un index écrit en dur : `_index` vient de lang/en.yaml.
+// Sans anglais dans les tables (impossible aujourd'hui : c'est la langue de repli),
+// la langue de l'écran reste.
+I18nPourHa::I18nPourHa() : avant_(s_lang) {
+    for (size_t i = 0; i < kI18nLangCount; i++) {
+        if (strcmp(kI18nLangCodes[i], "en") == 0) {
+            s_lang = static_cast<uint8_t>(i);
+            return;
+        }
+    }
+}
+
+I18nPourHa::~I18nPourHa() { s_lang = avant_; }
+
 const char* tr_ctx(const char* ctx, const char* fr) {
     if (s_lang == 0 || fr == nullptr || kI18nKeyCount == 0) return fr;
     if (ctx == nullptr) ctx = "";

@@ -60,7 +60,7 @@ def test_popup_du_registre_dernier_des_popup():
     ajouts = re.findall(r'ModalRegistry::add\(id\((\w+)\),\s+(?:"[^"]*"|nullptr),\s+ModalRegistry::(\w+)[,)]', scripts)
     popups = [obj for obj, genre in ajouts if genre == "POPUP"]
     assert popups[-1] == "maison_popup", "« Maison » à la fin du bloc des POPUP"
-    assert re.search(r'ModalRegistry::add\(id\(maison_popup\),\s+"Maison",\s+ModalRegistry::POPUP,'
+    assert re.search(r'ModalRegistry::add\(id\(maison_popup\),\s+"House",\s+ModalRegistry::POPUP,'
                      r'\s+\[\] \{ id\(tab5_maison_ouvrir\)\.execute\(\); \}\);', scripts)
     # Ceux qu'une ligne ouvre sont inscrits avant lui : visibles devant lui, ils sont nommés.
     for avant in ("light_options_popup", "volet_popup", "appareil_popup", "clim_options_popup",
@@ -77,15 +77,16 @@ def test_option_maison_du_select_a_la_fin():
     # de la roue de navigation (ADR-0042), du popup Météo (ADR-0043), du lecteur de musique
     # (ADR-0050), du popup Caméras (ADR-0049), du popup Suivi (ADR-0054) et du popup Froid
     # (ADR-0055) sont venues après elle.
-    assert options[12] == "Maison", "à la fin : les index des autres options ne bougent pas"
+    # En anglais depuis le 24/10/2026 (ADR-0070), dans le même ordre (« Maison », « Lumières »…).
+    assert options[12] == "House", "à la fin : les index des autres options ne bougent pas"
     # Puis celle du popup Serveur IA (ADR-0059).
-    assert options[13:] == ["Lumières", "Volet", "Température", "Météo", "Musique", "Caméras", "Suivi", "Froid",
-                            "Serveur IA"]
+    assert options[13:] == ["Lights", "Shutter", "Temperature", "Weather", "Music", "Cameras", "Tracking",
+                            "Fridges", "AI server"]
     # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le
     # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
     enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", contrat(), re.S).group(1)
     valeurs = re.findall(r"\b([A-Z]+),", re.sub(r"//[^\n]*", "", enum))
-    assert valeurs.index("MAISON") == options.index("Maison")
+    assert valeurs.index("MAISON") == options.index("House")
     script = controles.split("- id: tab5_ecran_ouvrir", 1)[1].split("\ntext_sensor:", 1)[0]
     # Ouverture : celle que le registre donne à « Maison » (test plus haut).
     assert "ModalRegistry::ouvrir(target)" in script

@@ -36,8 +36,9 @@ def test_select_de_la_7b():
     # Gardé en NVS d'un démarrage et d'une mise à jour à l'autre ; une carte neuve dans le sens
     # du fabricant (la rotation de repos de la carte).
     assert s["restore_value"] is True and s["initial_option"] == "Normal"
-    # L'index est lu par le lambda (i == 1 : Retourné) : l'ordre des options ne change pas.
-    assert s["options"] == ["Normal", "Retourné"]
+    # L'index est lu par le lambda (i == 1 : Upside down, « Retourné » avant le 24/10/2026,
+    # ADR-0070) : l'ordre des options ne change pas.
+    assert s["options"] == ["Normal", "Upside down"]
     lambdas = [a["lambda"] for a in s["on_value"] if "lambda" in a]
     assert lambdas == ["dalle_sens_choisir(id(tab5_lvgl), i == 1);"]
 
@@ -97,4 +98,6 @@ def test_le_firmware_publie_garde_la_rotation_de_la_carte():
 def test_documente():
     for chemin in (("docs", "waveshare-7b.md"), ("docs", "installation", "settings.md")):
         texte = lire(*chemin)
-        assert texte.count("Sens de l'écran") >= 2, "/".join(chemin)  # EN et FR
+        # EN et FR, sous le nom que Home Assistant montre (« Sens de l'écran » avant la
+        # migration des entités, #540 ; le firmware garde ce nom-là).
+        assert texte.count("Screen direction") >= 2, "/".join(chemin)

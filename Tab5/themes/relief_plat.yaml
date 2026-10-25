@@ -11,6 +11,7 @@
 # Non repris : l'état « bouton actif » dessiné par l'esquisse (Domo, mode et ventilation
 # actifs) ; ces boutons gardent la bordure d'accent de l'interface.
 nom: Relief plat
+nom_ha: Flat relief   # option lue par Home Assistant (ADR-0070)
 ordre: 3
 herite: ardoise
 zones_sombres: [bandeau]

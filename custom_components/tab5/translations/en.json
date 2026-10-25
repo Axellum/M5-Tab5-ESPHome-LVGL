@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistant · calendars and people",
-        "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Aucun » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « Aucun ».",
+        "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Not set » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « None ».",
         "data": {
           "agenda_travail": "Work calendar",
           "agenda_rdv": "Appointments calendar",
@@ -110,7 +110,7 @@
           "agenda_anniversaires": "Birthdays, holidays and phone: the list already guesses by itself when there is a single candidate.",
           "telephone_suivi": "Turns the screen on when back, off when gone.",
           "presence": "Turns the screen on on detection, off after 15 min without presence.",
-          "pipeline": "The « Chat » mode of the screen; « Aucun » hides its buttons."
+          "pipeline": "The « Chat » mode of the screen; « None » hides its buttons."
         }
       },
       "recapitulatif": {
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistant · calendars and people",
-            "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Aucun » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « Aucun ».",
+            "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Not set » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « None ».",
             "data": {
               "agenda_travail": "Work calendar",
               "agenda_rdv": "Appointments calendar",
@@ -258,7 +258,7 @@
               "agenda_anniversaires": "Birthdays, holidays and phone: the list already guesses by itself when there is a single candidate.",
               "telephone_suivi": "Turns the screen on when back, off when gone.",
               "presence": "Turns the screen on on detection, off after 15 min without presence.",
-              "pipeline": "The « Chat » mode of the screen; « Aucun » hides its buttons."
+              "pipeline": "The « Chat » mode of the screen; « None » hides its buttons."
             }
           },
           "recapitulatif": {

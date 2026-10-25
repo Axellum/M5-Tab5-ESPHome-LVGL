@@ -105,29 +105,38 @@ def _definies() -> set[str]:
     return definies
 
 
-def test_listes_bilingues_gardent_leur_entity_id():
-    """Une liste « Tab5 · … » au nom bilingue (« français · english ») fixe son entity_id
-    par default_entity_id : sinon, une installation neuve le tirerait du nom complet et
-    les packages ne la trouveraient plus. Celles d'avant gardent l'entity_id d'avant."""
+def test_entites_modeles_fixent_leur_entity_id():
+    """Chaque entité modèle des packages fixe son entity_id par default_entity_id : sans lui,
+    une installation neuve le tirerait du NOM, et les packages, le blueprint et le tableau
+    de bord ne la trouveraient plus. Depuis le 24/10/2026, les noms sont en anglais
+    (« Tab5 · work calendar ») et les entity_id d'avant restent (décision d'Axel : noms et
+    options en anglais, identifiants gardés) : aucun ne dérive plus de son nom."""
     fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
-    bilingues = {}
+    fixes = {}
     for fichier in fichiers:
         paquet = yaml.load(fichier.read_text(encoding="utf-8"), Loader=_Chargeur) or {}
         for bloc in paquet.get("template") or []:
-            for domaine in ("sensor", "binary_sensor", "select"):
-                for entite in bloc.get(domaine) or []:
-                    if entite["name"].count(" · ") >= 2:
-                        assert entite.get("default_entity_id"), entite["name"]
-                        bilingues[entite["default_entity_id"]] = entite["name"]
+            for domaine, entites in bloc.items():
+                if not isinstance(entites, list):
+                    continue
+                for entite in entites:
+                    if isinstance(entite, dict) and "name" in entite:
+                        assert entite.get("default_entity_id"), f"{fichier.name} : {entite['name']}"
+                        fixes[entite["default_entity_id"]] = entite["name"]
+    # Des entity_id d'avant, lus partout, aux noms anglais.
+    assert fixes["select.tab5_agenda_de_travail"] == "Tab5 · work calendar"
+    assert fixes["sensor.tab5_signature_du_froid"] == "Tab5 · cold storage signature"
+    assert fixes["sensor.tab5_pluie_dans_l_heure"] == "Tab5 Rain in the next hour"
     assert {"select.tab5_agenda_de_travail", "select.tab5_source_des_previsions", "select.tab5_tv_samsung",
-            "select.tab5_telephone", "select.tab5_capteur_de_presence",
-            "select.tab5_agenda_des_vacances_scolaires", "select.tab5_pipeline_de_discussion"} <= set(bilingues)
+            "select.tab5_telephone", "select.tab5_capteur_de_presence", "sensor.tab5_tablette",
+            "sensor.tab5_meteo", "sensor.tab5_vigilance", "binary_sensor.tab5_connectee",
+            "select.tab5_agenda_des_vacances_scolaires", "select.tab5_pipeline_de_discussion"} <= set(fixes)
 
 
 def test_entites_tab5_lues_sont_definies():
     """Les packages se lisent entre eux par entity_id (listes « Tab5 · … », miroirs de
     tab5_reglages.yaml, capteurs météo). Celui d'un modèle vient de son NOM : une faute
-    (« select.tab5_agenda_travail » pour « Tab5 · agenda de travail ») ne se verrait
+    (« select.tab5_agenda_travail » pour « Tab5 · work calendar ») ne se verrait
     qu'à l'exécution, en silence."""
     definies = _definies()
     fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
@@ -155,8 +164,7 @@ def test_entrees_du_blueprint_et_zones_attendues():
     # n'est pas choisie. Nom de l'entrée → clé de zone.
     vers_zone = {"salon_temperature": "salon", "serre_temperature": "serre", "agenda_travail": "planning"}
     presentes = {vers_zone.get(e, e) for e in choisies}
-    # « discussion » n'est pas une entrée (29/09/2026) : absente quand la liste « Tab5 ·
-    # pipeline de discussion » vaut « Aucun », présente sans cette liste. Tant qu'aucun
+    # « discussion » n'est pas une entrée (29/09/2026) : absente quand la liste « Tab5 · chat pipeline » vaut « Aucun », présente sans cette liste. Tant qu'aucun
     # package ne la définit, le HA neuf du job ne l'a pas : la zone reste. Une fois la
     # liste livrée, un HA neuf n'a choisi aucun pipeline (« Aucun ») : ZONES_ABSENTES de
     # verifier_installation.py doit alors finir par « discussion ».
@@ -470,7 +478,7 @@ def test_volet_simule_un_seul_chrono_regle_dans_ha():
     """Audit du 07/10/2026, HA-4 (optionnel/volet_serre_tracking.yaml) : la course du volet
     simulé n'est chronométrée qu'à un endroit (script.tab5_volet_course), appelé par le
     script de la tablette et par le suivi des commandes directes ; sa durée est le réglage
-    « Tab5 · course du volet », 26 s tant que personne ne l'a changé (la valeur d'avant)."""
+    « Tab5 · shutter travel time », 26 s tant que personne ne l'a changé (la valeur d'avant)."""
     with open(os.path.join(REPO, "HomeAssistant_Config", "optionnel", "volet_serre_tracking.yaml"),
               encoding="utf-8") as f:
         paquet = yaml.load(f.read(), Loader=_Chargeur)
@@ -522,7 +530,7 @@ def test_listes_ignorent_le_bruit_du_registre():
             assert len(bloc.get("conditions") or []) == 1, fichier.name
             filtres.append(fichier.name)
             conditions.add(bloc["conditions"][0]["value_template"])
-    # tab5_llm.yaml : la liste « Tab5 · serveur IA, redémarrage » (ADR-0060).
+    # tab5_llm.yaml : la liste « Tab5 · AI server, restart » (ADR-0060).
     assert sorted(filtres) == ["tab5_llm.yaml", "tab5_meteo_sources.yaml", "tab5_reglages.yaml",
                                "tab5_serveur_ia.yaml", "tab5_tv.yaml", "volet_serre_tracking.yaml"]
     assert len(conditions) == 1, "la même condition partout"

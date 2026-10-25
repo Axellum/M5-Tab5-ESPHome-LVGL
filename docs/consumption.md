@@ -66,7 +66,7 @@ The second board of the firmware ([Waveshare 7B](waveshare-7b.md), 7 inches, 102
 ### How it was measured
 
 - A **FNIRSI FNB58** USB tester between the supply and the board, read by the computer through its micro-USB « PC » port: 100 samples per second (about 37 new values per second, the others repeat), voltage and current to 0.01 mV / 0.01 mA. The power is measured **at the board's USB input**, so it includes its regulators; the Tab5 figures above are at its battery. The tester's accuracy is not given by its maker.
-- The board is driven by its own API while the tester records ([`tools/campagne_mesures.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/campagne_mesures.py), reader [`tools/fnb58.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/fnb58.py)): 20 s per backlight level after 6 s to settle; for each of the 20 screens of the « Aller à l'écran » select, the first 3 s (opening) then 15 s once open; three restarts with the « Redémarrage Système » button, 50 s each. No measure falls within −5 s / +30 s of a minute that is a multiple of 5, when Home Assistant sends its grouped updates. Everything is put back at the end.
+- The board is driven by its own API while the tester records ([`tools/campagne_mesures.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/campagne_mesures.py), reader [`tools/fnb58.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/fnb58.py)): 20 s per backlight level after 6 s to settle; for each of the 20 screens of the « Go to screen » select, the first 3 s (opening) then 15 s once open; three restarts with the « Restart » button, 50 s each. No measure falls within −5 s / +30 s of a minute that is a multiple of 5, when Home Assistant sends its grouped updates. Everything is put back at the end.
 - Firmware `main` 46ad7f03, theme Ardoise douce in dark mode, full animations, Okay Nabu and the speaker on, Wi-Fi eco off, the home screen. One board, one run (156,988 samples). Inside a segment, the power varies by about ±0.08 W (median to 95th percentile): **a difference of a few hundredths of a watt between two segments means nothing**.
 
 ### Results
@@ -196,7 +196,7 @@ Première vraie mesure de ce que consomme le Tab5, faite le **10/10/2026** sur u
 | Ampli du haut-parleur coupé | 2,58 W | −0,05 W | 5,7 h |
 | Écran à 50 % | 1,74 W | −0,89 W (−34 %) | 8,5 h |
 | Écran à 10 % | 1,73 W | −0,90 W | 8,6 h |
-| Économie d'énergie « Toujours » | 1,73 W | −0,90 W | 8,6 h |
+| Économie d'énergie « Always » | 1,73 W | −0,90 W | 8,6 h |
 | Écran éteint | 1,23 W | −1,40 W (−53 %) | 12,0 h |
 | Thème sombre (Obsidienne), écran 100 % | 2,63 W | 0,00 W | 5,6 h |
 | Même thème en mode clair | 2,65 W | +0,02 W | 5,6 h |
@@ -209,7 +209,7 @@ La batterie est donnée pour 7,4 V × 2000 mAh = 14,8 Wh ([documentation M5Stack
 
 1. **Le rétroéclairage est le seul grand levier.** 100 % → 50 % économise 0,89 W, un tiers du total. Éteindre l'écran en économise 1,4 W, plus de la moitié.
 2. **Sous 50 %, il n'y a plus rien à gagner** : 50 % et 10 % donnent la même puissance (1,74 et 1,73 W). La cause n'est pas établie (un plancher du pilote de rétroéclairage est la première piste) ; une mesure à 75 % et 25 % trancherait.
-3. **Le mode économie d'énergie, c'est en pratique son plafond à 50 %.** « Toujours » (plafond 50 %, 10 % après 30 s sans toucher, aucune animation, 30 images/s) consomme comme l'écran à 10 % : pas de gain mesurable des animations ni de la cadence.
+3. **Le mode économie d'énergie, c'est en pratique son plafond à 50 %.** « Always » (plafond 50 %, 10 % après 30 s sans toucher, aucune animation, 30 images/s) consomme comme l'écran à 10 % : pas de gain mesurable des animations ni de la cadence.
 4. **Le thème ne change rien** : sombre ou clair, 0,02 W. L'écran est rétroéclairé, un pixel noir n'éteint pas la lumière (le type de dalle n'a pas été vérifié sur sa fiche). Un thème sombre sur batterie est une affaire de goût, pas d'autonomie.
 5. **La voix ne coûte presque rien.** Le micro (Okay Nabu) et l'ampli du haut-parleur consomment chacun environ 0,05 W, soit le bruit de la mesure. Couper Okay Nabu pour économiser renonce à l'assistant vocal pour rien.
 6. **Le reste de la tablette consomme 1,2 W** avec tout coupé (processeur, Wi-Fi par l'ESP32-C6, mémoire) : le plancher de l'appareil tel qu'il tourne aujourd'hui.
@@ -241,7 +241,7 @@ La deuxième carte du firmware ([Waveshare 7B](waveshare-7b.md), 7 pouces, 1024�
 ### Comment c'est mesuré
 
 - Un testeur USB **FNIRSI FNB58** entre l'alimentation et la carte, lu par l'ordinateur par son port micro-USB « PC » : 100 échantillons par seconde (environ 37 valeurs nouvelles par seconde, les autres répètent), tension et courant au 0,01 mV / 0,01 mA près. La puissance est mesurée **à l'entrée USB de la carte**, régulateurs compris ; les chiffres du Tab5 ci-dessus sont pris à sa batterie. Le fabricant du testeur ne donne pas sa précision.
-- La carte est pilotée par sa propre API pendant l'enregistrement ([`tools/campagne_mesures.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/campagne_mesures.py), lecteur [`tools/fnb58.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/fnb58.py)) : 20 s par niveau de rétroéclairage après 6 s de stabilisation ; pour chacun des 20 écrans du select « Aller à l'écran », les 3 premières secondes (ouverture) puis 15 s une fois ouvert ; trois redémarrages par le bouton « Redémarrage Système », 50 s chacun. Aucune mesure ne tombe entre −5 s et +30 s autour d'une minute multiple de 5, quand Home Assistant envoie ses mises à jour groupées. Tout est remis en place à la fin.
+- La carte est pilotée par sa propre API pendant l'enregistrement ([`tools/campagne_mesures.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/campagne_mesures.py), lecteur [`tools/fnb58.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/fnb58.py)) : 20 s par niveau de rétroéclairage après 6 s de stabilisation ; pour chacun des 20 écrans du select « Go to screen », les 3 premières secondes (ouverture) puis 15 s une fois ouvert ; trois redémarrages par le bouton « Restart », 50 s chacun. Aucune mesure ne tombe entre −5 s et +30 s autour d'une minute multiple de 5, quand Home Assistant envoie ses mises à jour groupées. Tout est remis en place à la fin.
 - Firmware `main` 46ad7f03, thème Ardoise douce en mode sombre, animations complètes, Okay Nabu et haut-parleur actifs, Wi-Fi éco désactivé, écran d'accueil. Une carte, un passage (156 988 échantillons). Dans un segment, la puissance varie d'environ ±0,08 W (de la médiane au 95e centile) : **quelques centièmes de watt d'écart entre deux segments ne veulent rien dire**.
 
 ### Résultats
@@ -306,9 +306,9 @@ Même testeur, même carte, la nuit des [mesures de vitesse](performance.md#wave
 | Chacun des 21 thèmes, sombre | 1,944 à 1,968 W | aucun |
 | Chacun des 21 thèmes, clair | 1,995 à 2,013 W | environ +0,05 W (+2,5 %) |
 | Obsidienne, sombre / clair | 1,955 / 2,003 W | clair +2,5 % |
-| Animations « Aucune » / « Essentielles » | 1,950 / 1,959 W | aucun |
-| Économie d'énergie « Toujours » | 1,238 W | −37 % |
-| Wi-Fi éco « Toujours » | 1,781 W | −9 % |
+| Animations « None » / « Essential » | 1,950 / 1,959 W | aucun |
+| Économie d'énergie « Always » | 1,238 W | −37 % |
+| Wi-Fi éco « Always » | 1,781 W | −9 % |
 | Ok Nabu coupé | 1,938 W | −1 % |
 | Haut-parleur coupé | 1,946 W | −0,5 % |
 | Micro et haut-parleur coupés | 1,905 W | −2,6 % |
@@ -317,14 +317,14 @@ Même testeur, même carte, la nuit des [mesures de vitesse](performance.md#wave
 | La nuit, écran allumé (0 h 03 → 6 h 15) | 1,957 W | |
 
 1. **Ni le thème ni les animations ne changent la puissance.** Les 21 thèmes sombres tiennent dans 0,024 W (le bruit) ; le mode clair ajoute environ 0,05 W, quel que soit le thème.
-2. **L'économie d'énergie « Toujours » ramène la carte à son plancher** : 1,238 W, comme le rétroéclairage à 1 % ou éteint. Sur un accueil laissé seul, ce mode baisse la luminosité au minimum après 30 s sans toucher ([réglages](notice/settings.md)). L'écran restait-il lisible ? Pas vérifié.
-3. **Le Wi-Fi éco « Toujours » économise 0,18 W** (−9 %), environ 1,5 kWh par an s'il reste toujours actif ; les réponses peuvent arriver un peu plus tard, ce qui n'est pas mesuré.
+2. **L'économie d'énergie « Always » ramène la carte à son plancher** : 1,238 W, comme le rétroéclairage à 1 % ou éteint. Sur un accueil laissé seul, ce mode baisse la luminosité au minimum après 30 s sans toucher ([réglages](notice/settings.md)). L'écran restait-il lisible ? Pas vérifié.
+3. **Le Wi-Fi éco « Always » économise 0,18 W** (−9 %), environ 1,5 kWh par an s'il reste toujours actif ; les réponses peuvent arriver un peu plus tard, ce qui n'est pas mesuré.
 4. **Le micro et le haut-parleur coûtent peu** : 0,05 W pour les deux.
 5. **Aucune dérive sur la nuit** : 12,79 Wh en 6 h 43 min (1,90 W en moyenne, dont une demi-heure écran éteint) ; écran allumé, la moyenne de chaque heure est restée entre 1,956 et 1,958 W.
 
 ## Quoi en faire
 
-Réglages qui existent déjà : **Luminosité** (50 % est le bon compromis), **Extinction auto** (5 min) avec **Extinction auto sur batterie seulement** pour qu'elle ne joue que débranchée, **Économie d'énergie** (« Sur batterie » est l'état d'origine), **Limite de charge** à 80 % pour une tablette toujours branchée, **Rallumer l'écran à « Okay Nabu »** et **d'une tape** pour le retrouver.
+Réglages qui existent déjà : **Luminosité** (50 % est le bon compromis), **Extinction auto** (5 min) avec **Extinction auto sur batterie seulement** pour qu'elle ne joue que débranchée, **Économie d'énergie** (« On battery » est l'état d'origine), **Limite de charge** à 80 % pour une tablette toujours branchée, **Rallumer l'écran à « Okay Nabu »** et **d'une tape** pour le retrouver.
 
 Inutile d'après la mesure : le thème sombre sur batterie (0 W), couper Okay Nabu (0,05 W et plus de voix).
 

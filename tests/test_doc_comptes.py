@@ -321,8 +321,9 @@ def _themes():
     (README, r"([\w-]+(?: et un)?) thèmes, clairs ou sombres"),
     (REPO / "docs" / "screens.md", r"([\w-]+) themes, each with a dark and a light mode"),
     (REPO / "docs" / "screens.md", r"([\w-]+(?: et un)?) thèmes, chacun en sombre et en clair"),
-    (REPO / "docs" / "installation" / "settings.md", r"\| Thème \| (\d+) themes"),
-    (REPO / "docs" / "installation" / "settings.md", r"\| Thème \| (\d+) thèmes"),
+    # « Theme » : le nom de l'entité dans Home Assistant (« Thème » avant la migration, #540).
+    (REPO / "docs" / "installation" / "settings.md", r"\| Theme \| (\d+) themes"),
+    (REPO / "docs" / "installation" / "settings.md", r"\| Theme \| (\d+) thèmes"),
 ], ids=["readme-en", "readme-fr", "ecrans-en", "ecrans-fr", "installation-en", "installation-fr"])
 def test_nombre_de_themes(chemin, motif):
     assert len(_themes()) > 10, "Tab5/themes/ ne contient plus les fichiers de thème"

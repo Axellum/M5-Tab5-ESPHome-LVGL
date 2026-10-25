@@ -6,6 +6,7 @@
 # couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
 # texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
 nom: Béton brut
+nom_ha: Raw concrete   # option lue par Home Assistant (ADR-0070)
 ordre: 10
 herite: ardoise
 zones_sombres: [bandeau, horloge]

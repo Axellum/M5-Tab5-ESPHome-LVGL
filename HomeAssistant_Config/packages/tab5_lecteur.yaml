@@ -4,7 +4,7 @@
 # @role Popup « Musique » de la tablette (ADR-0050, 10/10/2026) : un lecteur de musique
 #       façon Spotify pour n'importe quel media_player de Home Assistant (Apple TV, TV,
 #       Freebox, enceinte, la tablette elle-même…).
-#         - Les lecteurs proposés : la liste « Tab5 · lecteurs de musique · music
+#         - Les lecteurs proposés : la liste « Tab5 · music players · music
 #           players » (packages/tab5_reglages.yaml, plusieurs choix, 6 au plus, jamais
 #           devinés) ; sa mémoire input_text.tab5_choix_lecteurs.
 #         - Le lecteur montré : input_text.tab5_lecteur_actif (une pastille touchée,
@@ -83,7 +83,7 @@ input_text:
   # Mémoire du lecteur montré : écrite par une pastille du popup (choisir), par une
   # tuile med ouverte (blueprint), ou quand un lecteur de la liste se met à jouer.
   tab5_lecteur_actif:
-    name: "Tab5 · mémoire · lecteur montré"
+    name: "Tab5 · memory · shown player"
     icon: mdi:content-save-outline
     max: 255
 
@@ -92,8 +92,9 @@ template:
   # dit quel lecteur montrer ; le second change dès que ce lecteur change (état, morceau,
   # volume…) ou qu'un lecteur de la liste se met à jouer.
   - sensor:
-      - name: "Tab5 · lecteur montré"
+      - name: "Tab5 · shown player"
         unique_id: tab5_lecteur_montre
+        default_entity_id: sensor.tab5_lecteur_montre
         icon: mdi:music
         state: >-
           {%- set liste = states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
@@ -105,8 +106,9 @@ template:
           {%- elif liste -%}{{ liste | first }}
           {%- else -%}Aucun
           {%- endif -%}
-      - name: "Tab5 · signature du lecteur"
+      - name: "Tab5 · player signature"
         unique_id: tab5_lecteur_signature
+        default_entity_id: sensor.tab5_signature_du_lecteur
         icon: mdi:music-circle-outline
         state: >-
           {%- set a = states('sensor.tab5_lecteur_montre') -%}
@@ -140,10 +142,10 @@ template:
 
 automation:
   - id: tab5_lecteur
-    alias: "Tab5 — lecteur de musique (poussée)"
+    alias: "Tab5 — music player (push)"
     description: >-
       Pousse vers la tablette le lecteur de musique montré par son popup Musique quand il
-      change, quand la liste « Tab5 · lecteurs de musique » change et à la connexion de la
+      change, quand la liste « Tab5 · music players » change et à la connexion de la
       tablette (ADR-0050).
     mode: queued
     max: 5
@@ -186,7 +188,7 @@ automation:
 
 script:
   tab5_lecteur_pousser:
-    alias: "Tab5 — lecteur de musique : pousser l'état"
+    alias: "Tab5 — music player: push the state"
     description: >-
       Pousse la liste des lecteurs choisis et l'état du lecteur montré (action
       tab5_maj_lecteur). Mode restart et 0,4 s d'attente : une rafale de changements
@@ -259,10 +261,10 @@ script:
                 etat: "{{ etat }}"
 
   tab5_lecteur_commande:
-    alias: "Tab5 — lecteur de musique : commande de la tablette"
+    alias: "Tab5 — music player: tablet command"
     description: >-
       Lancé par packages/tab5_evenements.yaml à l'événement esphome.tab5_lecteur.
-      N'agit que sur un lecteur de la liste « Tab5 · lecteurs de musique » ou sur le
+      N'agit que sur un lecteur de la liste « Tab5 · music players » ou sur le
       lecteur montré (ADR-0050).
     mode: queued
     max: 10
@@ -372,7 +374,7 @@ script:
           # script.tab5_lecteur_playlist.
 
   tab5_lecteur_montrer:
-    alias: "Tab5 — lecteur de musique : montrer le lecteur d'une tuile"
+    alias: "Tab5 — music player: show a tile's player"
     description: >-
       Lancé par le blueprint « Tab5 — emplacements » quand la tablette ouvre le lecteur
       depuis une tuile med : ce media_player devient le lecteur montré (ADR-0050).
@@ -394,11 +396,11 @@ script:
           entity_id: script.tab5_lecteur_pousser
 
   tab5_lecteur_playlist:
-    alias: "Tab5 — lecteur de musique : lancer une playlist favorite"
+    alias: "Tab5 — music player: start a favourite playlist"
     description: >-
       Lancé par le blueprint « Tab5 — emplacements » quand la tablette touche une playlist
       de la page Playlists du popup Musique (ADR-0068) : lance le lien YouTube ou YouTube
-      Music dans l'appli YouTube d'une Apple TV de la liste « Tab5 · lecteurs de musique ».
+      Music dans l'appli YouTube d'une Apple TV de la liste « Tab5 · music players ».
       Méthode vérifiée le 18/10/2026 (en-tête du package).
     mode: restart
     fields:
@@ -461,10 +463,9 @@ script:
               notification_id: tab5_lecteur_playlist
               title: "{{ titre_notif }}"
               message: >-
-                Aucune Apple TV avec l'appli YouTube dans la liste « Tab5 · lecteurs de
-                musique » : ajoutez-y votre Apple TV (intégration Apple TV) et installez
+                Aucune Apple TV avec l'appli YouTube dans la liste « Tab5 · music players » : ajoutez-y votre Apple TV (intégration Apple TV) et installez
                 l'appli YouTube sur l'Apple TV. No Apple TV with the YouTube app in the
-                « Tab5 · lecteurs de musique » list: add your Apple TV (Apple TV
+                « Tab5 · music players » list: add your Apple TV (Apple TV
                 integration) and install the YouTube app on it.
           - stop: "Aucune Apple TV"
       - if: "{{ is_state(cible, 'unavailable') }}"

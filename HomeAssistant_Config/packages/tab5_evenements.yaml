@@ -16,7 +16,7 @@
 #       tab5_alertes_historique            → script.tab5_push_alertes_historique (tab5_push.yaml)
 #       tab5_voix_stop                     → media_player.media_stop, lecteur de la tablette
 #       tab5_mode_assistant (option)       → select.select_option, select de pipeline de la tablette
-#                                            (Discussion : « Tab5 · pipeline de discussion »)
+#                                            (Discussion : « Tab5 · chat pipeline »)
 #       tab5_maj_ecran                     → automation.trigger (id tab5_ha_hmi_updater)
 #       tab5_recharger_automatisations     → automation.reload
 #       tab5_redemarrage_ha_confirme       → homeassistant.restart (émis seulement par
@@ -69,7 +69,7 @@
 
 automation:
   - id: tab5_evenements
-    alias: "Tab5 — demandes de la tablette (événements)"
+    alias: "Tab5 — tablet requests (events)"
     description: >-
       Traduit les événements esphome.tab5_* du firmware en une liste blanche d'actions
       (annonces, calendrier, alertes lues, voix, pipeline, console système), pour une
@@ -249,15 +249,17 @@ automation:
             sequence:
               - variables:
                   # « preferred » (Domotique) ou « Discussion LLM » (Discussion, nom fixé
-                  # par le firmware). Discussion = le pipeline choisi dans « Tab5 · pipeline
-                  # de discussion » (tab5_reglages.yaml) ; « Aucun » = le pipeline préféré
-                  # (les boutons sont alors masqués sur un firmware qui le sait). Liste
+                  # par le firmware). Discussion = le pipeline choisi dans « Tab5 · chat
+                  # pipeline » (tab5_reglages.yaml) ; « Not set » (« Aucun » avant le
+                  # 24/10/2026 ; jamais « None », que HA relirait comme le None de
+                  # Python) = le pipeline préféré (les boutons sont alors masqués sur
+                  # un firmware qui le sait). Liste
                   # absente (tab5_reglages.yaml plus ancien) : le nom tel quel, comme avant
                   # le 29/09/2026.
                   demande: "{{ trigger.event.data.option | default('') | string }}"
                   choisi: "{{ states('select.tab5_pipeline_de_discussion') }}"
                   option: >-
-                    {%- if demande == 'preferred' or choisi == 'Aucun' -%}preferred
+                    {%- if demande == 'preferred' or choisi in [none, 'Not set', 'none', 'None', 'Aucun', 'Aucune'] -%}preferred
                     {%- elif choisi in ['unknown', 'unavailable'] -%}{{ demande }}
                     {%- else -%}{{ choisi }}
                     {%- endif -%}
@@ -312,7 +314,7 @@ automation:
               - action: automation.reload
 
           # Lecteur de musique (ADR-0050) : la commande part au script du package, qui ne
-          # touche qu'un lecteur de la liste « Tab5 · lecteurs de musique » ou le lecteur
+          # touche qu'un lecteur de la liste « Tab5 · music players » ou le lecteur
           # montré. Aucune entité ne vient de l'événement (un index, une clé de tuile).
           - alias: "Lecteur de musique : commande du popup Musique"
             conditions:

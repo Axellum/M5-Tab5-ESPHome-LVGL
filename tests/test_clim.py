@@ -548,7 +548,7 @@ def test_ouverture_et_fermeture_du_popup():
     assert popup.count('close_lambda: "animate_popup_close(id(clim_options_popup)); clim_afficher_blueprint();"') == 2
     carte = _lire("Tab5", "ui_components", "climate_card.yaml")
     assert "clim_afficher_blueprint();\n                    animate_popup_open(id(clim_options_popup));" in carte
-    assert re.search(r'"Climatisation",\s+ModalRegistry::POPUP,\s+\[\] \{ clim_afficher_blueprint\(\);',
+    assert re.search(r'"Air conditioning",\s+ModalRegistry::POPUP,\s+\[\] \{ clim_afficher_blueprint\(\);',
                      _lire("Tab5", "paquets", "tab5-navigation.yaml"))
     # Popup refermé par close_all() (inactivité) : la clim affichée revient au premier
     # retour de HA, avant qu'il ne soit rangé.
@@ -757,6 +757,8 @@ def _absentes(*etats, trigger=None):
 
 
 def test_discussion_absente_seulement_sur_aucun():
+    assert "discussion" in _absentes(Etat("select.tab5_pipeline_de_discussion", "Not set"))
+    # « Aucun » d'un package d'avant le 24/10/2026.
     assert "discussion" in _absentes(Etat("select.tab5_pipeline_de_discussion", "Aucun"))
     assert "discussion" not in _absentes(Etat("select.tab5_pipeline_de_discussion", "Mon LLM"))
     # Package plus ancien, sans la liste : les boutons restent.
@@ -769,7 +771,7 @@ def test_le_pipeline_change_renvoie_les_zones():
     assert declencheur == [{"trigger": "state", "entity_id": "select.tab5_pipeline_de_discussion",
                             "id": "pipeline_discussion"}]
     avant = Etat("select.tab5_pipeline_de_discussion", "Mon LLM")
-    apres = Etat("select.tab5_pipeline_de_discussion", "Aucun")
+    apres = Etat("select.tab5_pipeline_de_discussion", "Not set")
     p = Passage({}, [apres], _declencheur("pipeline_discussion", avant, apres))
     assert p.conditions(), "le passage continue (tablette connectée)"
     branche = _chercher(p.corps["actions"], lambda d: d.get("alias") == "La tablette demande quelles zones sont absentes")

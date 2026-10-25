@@ -29,8 +29,8 @@
 #       lancement ne répond 201 que pour Netflix (404 ailleurs) : inutilisable.
 #
 # @ai_instruction La TV et son adresse se choisissent dans HA (ADR-0024), jamais
-#       dans ce fichier public : liste « Tab5 · TV Samsung » (par défaut la seule
-#       TV de l'intégration Samsung Smart TV) et texte « Tab5 · adresse de la TV »
+#       dans ce fichier public : liste « Tab5 · Samsung TV » (par défaut la seule
+#       TV de l'intégration Samsung Smart TV) et texte « Tab5 · TV address »
 #       (adresse IP locale ou nom d'hôte). Adresse vide : celle que donne un suivi réseau
 #       (device_tracker d'un routeur, attribut `ip`) de la même adresse MAC que la
 #       TV, s'il y en a un. La télécommande (remote.*) est celle du même appareil.
@@ -52,24 +52,24 @@
 # @install Nécessite homeassistant.packages: !include_dir_named packages. Rien
 #       à écrire dans secrets.yaml ; sans TV Samsung, le package reste inerte.
 #       Migration depuis la 3.1 : l'IP de la ligne `tab5_tv_app_url` de secrets.yaml
-#       va dans « Tab5 · adresse de la TV » ; la ligne peut ensuite partir.
+#       va dans « Tab5 · TV address » ; la ligne peut ensuite partir.
 # ============================================================================
 
 input_text:
   # IP ou nom de la TV, tapé dans HA (Paramètres → Appareils et services →
   # Entrées, ou sur un tableau de bord). Le port 8001 est ajouté s'il manque.
   tab5_tv_adresse:
-    name: "Tab5 · adresse de la TV · TV address"
+    name: "Tab5 · TV address"
     icon: mdi:ip-network
     max: 100
-  # Mémoire de la liste « Tab5 · TV Samsung » : écrite par la liste.
+  # Mémoire de la liste « Tab5 · Samsung TV » : écrite par la liste.
   tab5_choix_tv:
-    name: "Tab5 · mémoire · TV Samsung"
+    name: "Tab5 · memory · Samsung TV"
     icon: mdi:content-save-outline
     max: 255
 
 template:
-  # Liste « Tab5 · TV Samsung » : à déclencheurs, comme celles de tab5_reglages.yaml.
+  # Liste « Tab5 · Samsung TV » : à déclencheurs, comme celles de tab5_reglages.yaml.
   # Par défaut, la seule TV de l'intégration Samsung Smart TV (samsungtv).
   - triggers:
       - trigger: homeassistant
@@ -96,16 +96,16 @@ template:
       tvs: "{{ states.media_player | map(attribute='entity_id') | list }}"
       samsung: "{{ integration_entities('samsungtv') | select('match', 'media_player[.]') | list }}"
     select:
-      - name: "Tab5 · TV Samsung · Samsung TV"
+      - name: "Tab5 · Samsung TV"
         unique_id: tab5_tv_samsung
         default_entity_id: select.tab5_tv_samsung
         icon: mdi:television
         options: >-
           {%- set m = states('input_text.tab5_choix_tv') -%}
-          {{ tvs + ([m] if m.startswith('media_player.') and m not in tvs else []) + ['Aucune'] }}
+          {{ tvs + ([m] if m.startswith('media_player.') and m not in tvs else []) + ['Not set'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_tv') -%}
-          {{ m if m.startswith('media_player.') else ('Aucune' if m == 'Aucune' or samsung | count != 1 else samsung[0]) }}
+          {{ m if m.startswith('media_player.') else ('Not set' if m in ['Not set', 'none', 'None', 'Aucun', 'Aucune'] or samsung | count != 1 else samsung[0]) }}
         select_option:
           - action: input_text.set_value
             target:
@@ -125,7 +125,7 @@ rest_command:
 
 script:
   tab5_tv_app:
-    alias: "Tab5 — lancer une application sur la TV"
+    alias: "Tab5 — launch an app on the TV"
     description: >-
       Appelé par le popup télécommande du Tab5. Prend un nom court, le traduit
       en app_id Tizen et déclenche le POST REST. Allume la TV d'abord si elle
@@ -197,7 +197,7 @@ script:
           cible: "{{ app | lower | trim }}"
           app_id: "{{ catalogue.get(cible, '') }}"
           sequence_touches: "{{ sequences.get(cible, []) }}"
-          # TV choisie dans HA (« Tab5 · TV Samsung »), '' si aucune ou disparue.
+          # TV choisie dans HA (« Tab5 · Samsung TV »), '' si aucune ou disparue.
           tv: >-
             {%- set t = states('select.tab5_tv_samsung') -%}
             {{ t if t.startswith('media_player.') and expand(t) | count > 0 else '' }}
@@ -206,7 +206,7 @@ script:
             {%- set r = (device_entities(device_id(tv)) | select('match', 'remote[.]') | first | default('')) if tv else '' -%}
             {%- set n = 'remote.' ~ tv.split('.', 1)[1] if tv else '' -%}
             {{ r if r else (n if n and expand(n) | count > 0 else '') }}
-          # hôte:port de l'API REST Tizen : « Tab5 · adresse de la TV » (schéma et chemin
+          # hôte:port de l'API REST Tizen : « Tab5 · TV address » (schéma et chemin
           # retirés, port 8001 par défaut), sinon l'`ip` d'un suivi réseau qui porte
           # l'adresse MAC de la TV.
           hote: >-
@@ -241,8 +241,8 @@ script:
               notification_id: tab5_tv_reglages
               title: "Tab5 : TV à régler dans Home Assistant"
               message: >-
-                {{ "Aucune TV choisie dans la liste « Tab5 · TV Samsung »." if tv == '' else
-                   ("Adresse de la TV inconnue : renseignez « Tab5 · adresse de la TV » (son adresse IP sur le réseau local)." if app_id != '' and hote == ''
+                {{ "Aucune TV choisie dans la liste « Tab5 · Samsung TV »." if tv == '' else
+                   ("Adresse de la TV inconnue : renseignez « Tab5 · TV address » (son adresse IP sur le réseau local)." if app_id != '' and hote == ''
                     else "Pas de télécommande (remote.*) pour " ~ tv ~ " : l'intégration Samsung Smart TV la crée.") }}
           - stop: "TV ou adresse à régler (notification tab5_tv_reglages)"
 
