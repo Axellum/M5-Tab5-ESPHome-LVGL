@@ -238,7 +238,7 @@ L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus 
 
 | Événement | Données | Émis par | Consommateur (HA) → action |
 |---|---|---|---|
-| `tab5_connected` | — | connexion de HA (`on_boot`, `on_client_connected`) | `tab5_push.yaml`, `tab5_reveil.yaml`, `tab5_lecteur.yaml`, `tab5_suivi.yaml`, `tab5_froid.yaml`, `tab5_serveur_ia.yaml`, `tab5_musique.yaml`, blueprint : poussées complètes ; `tab5_reglages.yaml` : retrouve la tablette (`sensor.tab5_tablette`) |
+| `tab5_connected` | — | connexion de HA (`on_boot`, `on_client_connected`) | `tab5_push.yaml`, `tab5_reveil.yaml`, `tab5_lecteur.yaml`, `tab5_suivi.yaml`, `tab5_froid.yaml`, `tab5_serveur_ia.yaml`, `tab5_musique.yaml`, blueprint : poussées complètes ; `tab5_reglages.yaml` : retrouve la tablette (`sensor.tab5_tablette`) ; `tab5_health.yaml` : redémarrage inattendu de cet écran ; `tab5_micro_absence.yaml` : micro de nouveau coupé ou rallumé selon l'absence |
 | `tab5_zones` | zones | `tab5_zones_demande` | blueprint → `tab5_maj_zones` |
 | `tab5_action` | emplacement, action, valeur | script `tab5_action` | blueprint → entité de l'emplacement |
 | `tab5_energie` | vue | `tab5_energie_demande` (ouverture du popup Énergie, boutons de vue) | blueprint → `script.tab5_energie` (package `tab5_energie.yaml`) → `tab5_maj_energie` / `tab5_maj_energie_historique` |

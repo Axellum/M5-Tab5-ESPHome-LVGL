@@ -47,11 +47,13 @@
 # `binary_sensor.tab5_ha_hmi_ha_api_status`, qui N'EXISTAIENT PAS : les gardes
 # (b) et (c) étaient `on` dans HA et ne pouvaient JAMAIS se déclencher — un
 # filet de sécurité muet est pire que pas de filet. Depuis le 28/09/2026
-# (ADR-0024), plus aucun id écrit ici : la tablette est trouvée par le modèle de
-# son appareil (sensor.tab5_tablette, packages/tab5_reglages.yaml), et les gardes
-# se déclenchent sur ses miroirs `sensor.tab5_demarrage` (« Tab5 Uptime ») et
-# `binary_sensor.tab5_connectee` (« HA API Status »). Vérification : les attributs
-# de « Tab5 · tablet » dans Outils de développement → États.
+# (ADR-0024), plus aucun id écrit ici : chaque écran est trouvé par le modèle de
+# son appareil. Depuis le 25/10/2026 (ADR-0071, plusieurs écrans), la garde (b) part
+# de l'événement esphome.tab5_connected de l'écran et lit ses entités par
+# tab5_entite() (custom_templates/tab5_tablette.jinja), la garde (c) suit le registre
+# sensor.tab5_ecrans (packages/tab5_reglages.yaml). Vérification : les attributs de
+# « Tab5 · screens » dans Outils de développement → États. Les statistiques longues
+# (fin de ce fichier) suivent encore un seul écran, celui de sensor.tab5_demarrage.
 #
 # Reste à adapter si vous réutilisez ce package ailleurs :
 #   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)
@@ -156,38 +158,54 @@ automation:
       Alerte quand l'heure de démarrage du Tab5 change sans que le redémarrage ait
       été demandé : brownout, crash firmware, coupure d'alimentation. Une mise à
       jour, un redémarrage demandé ou un changement de langue ne notifient pas.
-    mode: single
+    # Un passage par écran (ADR-0071, 25/10/2026) : chaque tablette émet
+    # esphome.tab5_connected à chaque connexion de l'API ; c'est un démarrage si son
+    # « Tab5 Uptime » (heure du démarrage) a moins de 5 min à cet instant. Une coupure
+    # du Wi-Fi ou un redémarrage de HA reconnectent une tablette démarrée depuis
+    # longtemps : rien. Avant, le déclencheur était le miroir sensor.tab5_demarrage,
+    # qui ne suit qu'un écran (et changeait quand il passait de l'un à l'autre).
+    # parallel : deux écrans peuvent redémarrer ensemble (coupure de courant).
+    mode: parallel
+    max: 10
     triggers:
-      # Miroir de « Tab5 Uptime » (tab5_reglages.yaml) : mêmes états, même
-      # indisponibilité, au même instant.
-      - trigger: state
-        entity_id: sensor.tab5_demarrage
+      - trigger: event
+        event_type: esphome.tab5_connected
     conditions:
-      # Précédent état sans attribut `source` : le miroir n'avait pas encore de
-      # tablette (HA neuf, tablette ajoutée à l'instant). Comme la création de
-      # l'entité d'origine (from_state absent), ce n'est pas un redémarrage.
+      - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
+        condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
+      - variables:
+          appareil: "{{ trigger.event.data.device_id | default('', true) | string }}"
+          nom: "{% from 'tab5_tablette.jinja' import tab5_nom %}{{ tab5_nom(appareil) }}"
+          e_demarrage: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'demarrage') }}"
+          e_raison: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'raison') }}"
+          connexion: "{{ as_timestamp(trigger.event.time_fired) }}"
+      # Juste après la connexion, HA reçoit les états de la tablette : on attend son
+      # heure de démarrage (une minute au plus). Démarrée depuis plus de 5 min : simple
+      # reconnexion, on s'arrête là.
+      - wait_template: >-
+          {{ as_timestamp(states(e_demarrage), 0) >= connexion - 300 }}
+        timeout: "00:01:00"
+        continue_on_timeout: true
+      # Écran ajouté à HA il y a moins de 10 min (HA neuf, installation) : son arrivée
+      # n'est pas un redémarrage, comme l'ancien attribut `source` vide du miroir.
       - condition: template
         value_template: >-
-          {% set to_ts = as_timestamp(trigger.to_state.state, none)
-             if trigger.to_state is not none else none %}
-          {% set from_ts = as_timestamp(trigger.from_state.state, none)
-             if trigger.from_state is not none else none %}
-          {% set connue = trigger.from_state is not none
-             and (trigger.from_state.attributes.get('source') or '') != '' %}
-          {% if to_ts is none or not connue %}false
-          {% elif from_ts is not none %}{{ to_ts > from_ts + 60 }}
-          {% else %}{{ to_ts >= as_timestamp(trigger.from_state.last_changed) - 300 }}
-          {% endif %}
-    actions:
-      # « Raison du redémarrage » de la tablette détectée (sensor.tab5_tablette).
+          {{ wait.completed and as_timestamp(device_attr(appareil, 'created_at'), connexion) <= connexion - 600 }}
+      - variables:
+          demarrage: "{{ states(e_demarrage) }}"
+      # « Raison du redémarrage » de CET écran, reçue après la connexion.
       - wait_template: >-
-          {% set r = expand(state_attr('sensor.tab5_tablette', 'raison') or '') | first | default(none) %}
+          {% set r = expand(e_raison) | first | default(none) %}
           {{ r is not none and r.state not in ['unavailable', 'unknown']
-             and as_timestamp(r.last_changed) >= as_timestamp(trigger.to_state.last_changed) - 60 }}
+             and as_timestamp(r.last_changed) >= connexion - 60 }}
         timeout: "00:01:00"
         continue_on_timeout: true
       - variables:
-          raison: "{{ states(state_attr('sensor.tab5_tablette', 'raison') or '') }}"
+          raison: "{{ states(e_raison) }}"
           demande: >-
             {{ wait.completed and (raison is match('Reboot request from ')
                or raison is match('First boot after install')
@@ -204,21 +222,18 @@ automation:
         value_template: "{{ not demande }}"
       - action: script.tab5_health_notify
         data:
-          notification_id: tab5_health_reboot
-          title: "⚠️ Tab5 : reboot inattendu détecté"
-          titre_court: "⚠️ Tab5 : reboot inattendu"
+          # Une notification par écran : celle d'un écran ne remplace pas celle de l'autre.
+          notification_id: "tab5_health_reboot_{{ appareil }}"
+          title: "⚠️ {{ nom }} : reboot inattendu détecté"
+          titre_court: "⚠️ {{ nom }} : reboot inattendu"
           message: >-
-            Le Tab5 a redémarré le
-            {{ as_timestamp(trigger.to_state.state) | timestamp_custom('%d/%m à %H:%M:%S') }}
-            (démarrage précédent : {{
-              as_timestamp(trigger.from_state.state) | timestamp_custom('%d/%m à %H:%M:%S')
-              if as_timestamp(trigger.from_state.state, none) is not none
-              else 'inconnu' }}).
+            L'écran « {{ nom }} » a redémarré le
+            {{ as_timestamp(demarrage) | timestamp_custom('%d/%m à %H:%M:%S') }}.
             Raison : {{ raison if wait.completed else 'pas encore reçue' }}.
             Vérifier l'alimentation et les logs ESPHome.
           message_court: >-
             Redémarré à
-            {{ as_timestamp(trigger.to_state.state) | timestamp_custom('%H:%M:%S') }}
+            {{ as_timestamp(demarrage) | timestamp_custom('%H:%M:%S') }}
             ({{ raison if wait.completed else 'raison inconnue' }})
             — vérifier alimentation / logs ESPHome.
 
@@ -228,35 +243,50 @@ automation:
   # Le capteur `platform: status` passe à `off` quand la connexion API native
   # tombe ; selon les versions/configurations, l'intégration ESPHome peut
   # aussi marquer l'entité `unavailable` quand l'appareil disparaît du réseau.
-  # Son miroir `binary_sensor.tab5_connectee` (tab5_reglages.yaml) vaut `off`
-  # dans les deux cas, et n'est indisponible que sans tablette dans HA : pas
-  # d'alerte sur un HA où la tablette n'est pas encore ajoutée.
+  # Les deux cas comptent « hors ligne » dans l'attribut `hors_ligne` du registre
+  # sensor.tab5_ecrans (tab5_reglages.yaml, ADR-0071) : une alerte par écran, pour
+  # chaque écran entré dans la liste et resté hors ligne 2 min. Rien au démarrage de
+  # HA (le registre n'avait pas encore d'attribut) : un écran resté dans HA sans être
+  # rebranché n'alerte pas à chaque redémarrage.
   # ==========================================================================
   - id: tab5_health_api_off_2min
     alias: "Tab5 — health: ESPHome API disconnected for 2 min"
     description: >-
-      Alerte si le Tab5 est déconnecté de l'API native Home Assistant depuis
-      plus de 2 minutes : toutes les poussées échouent pendant ce temps.
-    mode: single
+      Alerte si un écran Tab5 est déconnecté de l'API native Home Assistant depuis
+      plus de 2 minutes (une alerte par écran) : toutes ses poussées échouent pendant ce temps.
+    mode: queued
+    max: 5
     triggers:
       - trigger: state
-        entity_id: binary_sensor.tab5_connectee
-        to: "off"
+        entity_id: sensor.tab5_ecrans
+        attribute: hors_ligne
         for: "00:02:00"
+    variables:
+      nouveaux: >-
+        {%- set avant = trigger.from_state.attributes.get('hors_ligne') if trigger.from_state is not none else none -%}
+        {%- set apres = trigger.to_state.attributes.get('hors_ligne') if trigger.to_state is not none else none -%}
+        {{ (apres or []) | reject('in', avant) | list if avant is not none else [] }}
+    conditions:
+      - condition: template
+        value_template: "{{ nouveaux | count > 0 }}"
     actions:
-      - action: script.tab5_health_notify
-        data:
-          notification_id: tab5_health_api
-          title: "⚠️ Tab5 : API Home Assistant déconnectée"
-          titre_court: "⚠️ Tab5 : API déconnectée"
-          message: >-
-            Le Tab5 est déconnecté de l'API native depuis plus de 2 minutes
-            (état : {{ states(state_attr('sensor.tab5_tablette', 'api') or '') }}). Vérifier le Wi-Fi,
-            l'alimentation, ou si l'appareil a planté. Toutes les poussées
-            vers l'écran échouent pendant la coupure.
-          message_court: >-
-            Tab5 hors ligne (API ESPHome) depuis plus de 2 min — vérifier
-            Wi-Fi / alimentation.
+      - repeat:
+          for_each: "{{ nouveaux }}"
+          sequence:
+            - variables:
+                nom: "{% from 'tab5_tablette.jinja' import tab5_nom %}{{ tab5_nom(repeat.item) }}"
+            - action: script.tab5_health_notify
+              data:
+                notification_id: "tab5_health_api_{{ repeat.item }}"
+                title: "⚠️ {{ nom }} : API Home Assistant déconnectée"
+                titre_court: "⚠️ {{ nom }} : API déconnectée"
+                message: >-
+                  L'écran « {{ nom }} » est déconnecté de l'API native depuis plus de
+                  2 minutes. Vérifier le Wi-Fi, l'alimentation, ou si l'appareil a
+                  planté. Toutes les poussées vers cet écran échouent pendant la coupure.
+                message_court: >-
+                  {{ nom }} hors ligne (API ESPHome) depuis plus de 2 min — vérifier
+                  Wi-Fi / alimentation.
 
   # ==========================================================================
   # (d) Erreur de rendu d'un template dans une poussée vers l'écran
@@ -556,11 +586,26 @@ template:
         device_class: update
         state: >-
           {%- set f = states('sensor.tab5_version_des_fichiers_ha') | regex_findall('^(\\d+)\\.(\\d+)') -%}
-          {%- set t = (state_attr('sensor.tab5_tablette', 'version') or '') | regex_findall('^(\\d+)\\.(\\d+)') -%}
-          {{ (f | count > 0 and t | count > 0) and (t[0] | map('int') | list) > (f[0] | map('int') | list) }}
+          {%- set ns = namespace(retard=false) -%}
+          {#- Plusieurs écrans (ADR-0071) : allumé si l'un d'eux est plus récent. -#}
+          {%- for e in state_attr('sensor.tab5_ecrans', 'ecrans') or [] -%}
+            {%- set t = (e.version | default('') | string) | regex_findall('^(\\d+)\\.(\\d+)') -%}
+            {%- if f | count > 0 and t | count > 0 and (t[0] | map('int') | list) > (f[0] | map('int') | list) -%}
+              {%- set ns.retard = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ ns.retard }}
         attributes:
           fichiers: "{{ states('sensor.tab5_version_des_fichiers_ha') }}"
-          tablette: "{{ state_attr('sensor.tab5_tablette', 'version') or '' }}"
+          # « 3.9.0-rc.8 » avec un écran, comme avant ; « Salon 3.9.0 · Chambre 3.8.1 » avec plusieurs.
+          tablette: >-
+            {%- set l = state_attr('sensor.tab5_ecrans', 'ecrans') or [] -%}
+            {%- if l | count == 1 -%}{{ l[0].version }}
+            {%- else -%}
+              {%- set ns = namespace(l=[]) -%}
+              {%- for e in l -%}{%- set ns.l = ns.l + [e.nom ~ ' ' ~ e.version] -%}{%- endfor -%}
+              {{ ns.l | join(' · ') }}
+            {%- endif -%}
 
   # ==========================================================================
   # Statistiques longues de fiabilité (lot K, 09/10/2026)

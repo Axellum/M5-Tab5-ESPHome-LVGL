@@ -157,15 +157,29 @@ def test_automatisation_tient_l_interrupteur():
     assert any(t.get("event_type") == "esphome.tab5_connected" for t in auto["triggers"])
     # Pas de déclencheur sur l'attribut de la tablette : il part pendant l'ajout, liaison pas prête.
     assert not any(t.get("entity_id") == "sensor.tab5_tablette" for t in auto["triggers"])
-    attente = auto["actions"][0]
-    assert "tab5_connectee()" in attente["wait_template"] and "nuit_ecran" in attente["wait_template"]
-    action = auto["actions"][-1]
+    attente, action = _boucle(auto)
+    assert "nuit_ecran" in attente
     assert action["action"] == "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
-    assert action["target"] == {"entity_id": "{{ state_attr('sensor.tab5_tablette', 'nuit_ecran') }}"}
+    assert action["target"] == {"entity_id": "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(repeat.item, 'nuit_ecran') }}"}
     assert action["continue_on_error"] is True
-    attribut = _modele("sensor", "Tab5 · tablet")["attributes"]["nuit_ecran"]
-    # « (_[0-9]+)? » : le « _2 » de HA (tests/test_entites_suffixees.py).
-    assert "_(nuit_ecran_eteint|night_screen_off)(_[0-9]+)?$" in attribut, "fin de l'entity_id de « Tab5 Nuit (écran éteint) »"
+    macro = (HA / "custom_templates" / "tab5_tablette.jinja").read_text(encoding="utf-8")
+    # Motif de tab5_entite() ; « (_[0-9]+)? » y est ajouté pour le « _2 » de HA (tests/test_entites_suffixees.py).
+    assert "'nuit_ecran': 'switch[.].*_(nuit_ecran_eteint|night_screen_off)'" in macro, "fin de l'entity_id de « Tab5 Nuit (écran éteint) »"
+
+
+def _boucle(auto):
+    """La boucle sur les écrans (ADR-0071) : chaque écran attend sa propre liaison et son
+    interrupteur (tab5_entite(repeat.item, …)), puis l'appel, dans un `if` : un écran pas
+    prêt ne bloque pas les suivants."""
+    (boucle,) = auto["actions"]
+    assert "tab5_cibles(" in boucle["repeat"]["for_each"]
+    assert "tab5_connected" in boucle["repeat"]["for_each"], "sur une connexion : l'écran qui se connecte seul"
+    attente, si = boucle["repeat"]["sequence"]
+    assert "tab5_entite(repeat.item, 'api')" in attente["wait_template"]
+    assert attente["continue_on_timeout"] is True
+    assert si["if"][0]["value_template"] == attente["wait_template"]
+    (action,) = si["then"]
+    return attente["wait_template"], action
 
 
 @pytest.mark.parametrize("ident, attribut", [("tab5_theme_jour_nuit", "theme_nuit"), ("tab5_extinction_nuit", "nuit_ecran")])
@@ -179,8 +193,7 @@ def test_aucun_appel_pendant_l_ajout_de_la_tablette(ident, attribut):
     auto = next(a for a in push["automation"] if a["id"] == ident)
     assert not any(t.get("entity_id") == "sensor.tab5_tablette" for t in auto["triggers"])
     assert any(t.get("event_type") == "esphome.tab5_connected" for t in auto["triggers"])
-    attente = auto["actions"][0]["wait_template"]
-    assert "tab5_connectee()" in attente and attribut in attente
-    action = auto["actions"][-1]
+    attente, action = _boucle(auto)
+    assert f"tab5_entite(repeat.item, '{attribut}')" in attente
     assert action["continue_on_error"] is True
-    assert action["target"] == {"entity_id": f"{{{{ state_attr('sensor.tab5_tablette', '{attribut}') }}}}"}
+    assert action["target"] == {"entity_id": f"{{% from 'tab5_tablette.jinja' import tab5_entite %}}{{{{ tab5_entite(repeat.item, '{attribut}') }}}}"}

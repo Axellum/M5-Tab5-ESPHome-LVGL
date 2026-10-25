@@ -43,6 +43,18 @@
       Chaque poussée boucle dessus :
         {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
         {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+  tab5_cibles(appareil), tab5_entite(appareil, role), tab5_nom(appareil)
+      Registre des écrans (ADR-0071, 25/10/2026) : ce qui lit les entités d'UN écran
+      (allumer à la présence, thème et nuit, micro, santé, briefing) boucle sur les
+      écrans au lieu de suivre `sensor.tab5_tablette`, qui n'en voit qu'un.
+      tab5_cibles : les device_id à servir, séparés par des virgules, comme
+      tab5_destinataires (la tablette `appareil` si c'en est une, sinon chaque tablette
+      connectée). tab5_entite : l'entity_id d'un rôle (ecran, reveil_en_cours, raison,
+      demarrage, micro, satellite, rdv_avant, langue, theme_nuit, nuit_ecran, api,
+      pipeline) de cet appareil, '' s'il n'en a pas — les motifs n'existent qu'ici.
+      tab5_nom : son nom dans HA. Une boucle :
+        {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
+        {{ tab5_cibles(appareil | default('')).split(',') | select | list }}
 
   Une macro rend toujours du texte : 'oui' ou '' comme couvre() de tab5_calendar.jinja.
   Une condition compare donc : `{{ tab5_connectee() == 'oui' }}` (un « oui » nu ne vaut
@@ -89,24 +101,71 @@
         | map('states') | reject('in', ['unknown', 'unavailable', 'none']) | select('match', '^[a-z0-9_]+$') | list -%}
   {{- lisibles | first | default('tab5_ha_hmi', true) -}}
 {%- endmacro -%}
-{%- macro tab5_destinataires(appareil) -%}
-  {#- Préfixes à qui envoyer, séparés par des virgules (ADR-0063, plusieurs écrans ; lire
-      avec `.split(',') | select | list`, du Jinja pur, sans filtre propre à HA) : la tablette `appareil` (device_id de l'événement qui demande une
-      réponse : un mois du calendrier, une vue d'un popup) si c'en est une ; sinon chaque
-      tablette connectée (même affichage partout). '' : aucune. -#}
+{%- macro tab5_cibles(appareil) -%}
+  {#- device_id à servir, séparés par des virgules (lire avec `.split(',') | select | list`) :
+      la tablette `appareil` (device_id de l'événement qui demande une réponse) si c'en est
+      une, même hors ligne ; sinon chaque tablette connectée. '' : aucune. -#}
   {%- set d = appareil | default('', true) | string -%}
   {%- if d and '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' -%}
-    {{- tab5_prefixe(d) -}}
+    {{- d -}}
   {%- else -%}
     {%- set ns = namespace(l=[]) -%}
     {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') | select('is_state', 'on') -%}
-      {%- if device_attr(e, 'model') == 'tab5-ha-hmi' -%}
-        {%- set p = tab5_prefixe(device_id(e)) -%}
-        {%- if p and p not in ns.l -%}
-          {%- set ns.l = ns.l + [p] -%}
-        {%- endif -%}
+      {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and device_id(e) and device_id(e) not in ns.l -%}
+        {%- set ns.l = ns.l + [device_id(e)] -%}
       {%- endif -%}
     {%- endfor -%}
     {{- ns.l | join(',') -}}
   {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_destinataires(appareil) -%}
+  {#- Préfixes à qui envoyer, séparés par des virgules (ADR-0063, plusieurs écrans ; lire
+      avec `.split(',') | select | list`, du Jinja pur, sans filtre propre à HA) : ceux de
+      tab5_cibles (la tablette `appareil` (device_id de l'événement qui demande une
+      réponse : un mois du calendrier, une vue d'un popup) si c'en est une ; sinon chaque
+      tablette connectée, même affichage partout), sans doublon. '' : aucune. -#}
+  {%- set ns = namespace(l=[]) -%}
+  {%- for d in tab5_cibles(appareil).split(',') | select -%}
+    {%- set p = tab5_prefixe(d) -%}
+    {%- if p and p not in ns.l -%}
+      {%- set ns.l = ns.l + [p] -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {{- ns.l | join(',') -}}
+{%- endmacro -%}
+{%- macro tab5_entite(appareil, role) -%}
+  {#- entity_id du rôle `role` de l'appareil `appareil` ('' sinon). Noms français (avant
+      la 3.9) et anglais (ADR-0070), suffixe « _2 » d'un second écran. Le pipeline est le
+      select dont les options commencent par « preferred » (AssistPipelineSelect) ; deux
+      depuis HA 2025.10, le premier par ordre d'entity_id, comme tab5_evenements.yaml. -#}
+  {%- set fins = {
+        'api': 'binary_sensor[.].*_ha_api_status',
+        'ecran': 'light[.].*_display_backlight',
+        'reveil_en_cours': 'binary_sensor[.].*_(reveil_en_cours|alarm_ringing)',
+        'raison': 'sensor[.].*_(raison_du_redemarrage|restart_reason)',
+        'demarrage': 'sensor[.].*_uptime',
+        'micro': 'switch[.].*_wake_word_active',
+        'satellite': 'assist_satellite[.].*',
+        'rdv_avant': 'number[.].*_(rendez_vous_annoncer_avant|appointments_announce_before)',
+        'langue': 'select[.].*_(langue|language)',
+        'theme_nuit': 'switch[.].*_(nuit_theme_auto|night_auto_theme)',
+        'nuit_ecran': 'switch[.].*_(nuit_ecran_eteint|night_screen_off)',
+      } -%}
+  {%- set d = appareil | default('', true) | string -%}
+  {%- set entites = device_entities(d) if d and '.' not in d else [] -%}
+  {%- if role == 'pipeline' -%}
+    {%- set ns = namespace(l=[]) -%}
+    {%- for e in entites | select('match', 'select[.]') -%}
+      {%- if 'preferred' in (state_attr(e, 'options') or []) -%}
+        {%- set ns.l = ns.l + [e] -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{- (ns.l | sort | first) if ns.l else '' -}}
+  {%- elif role in fins -%}
+    {{- entites | select('match', fins[role] ~ '(_[0-9]+)?$') | first | default('') -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_nom(appareil) -%}
+  {%- set d = appareil | default('', true) | string -%}
+  {{- (device_attr(d, 'name_by_user') or device_attr(d, 'name') or 'Tab5') if d and '.' not in d else 'Tab5' -}}
 {%- endmacro -%}
