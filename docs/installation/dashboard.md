@@ -21,7 +21,7 @@ Every setting of the tablet in one Home Assistant dashboard, written for your ho
    ```jinja
    {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
    ```
-   Another address: `tab5_dashboard('dashboard-xxx')`. The labels and explanations follow the tablet's screen language (French, English, German, Dutch, Spanish, Italian or Turkish; English for any other); `tab5_dashboard(langue='English')` forces a language.
+   Another address: `tab5_dashboard('dashboard-xxx')`. The labels and explanations follow the tablet's screen language (French, English, German, Dutch, Spanish, Italian or Turkish; English for any other); `tab5_dashboard(langue='English')` forces a language. **Several screens:** `{% from 'tab5_dashboard.jinja' import tab5_dashboard_ecrans %}{{ tab5_dashboard_ecrans() }}` writes the three views for each screen, named after it, on a path taken from its action prefix (`tab5`, `tab5-ha-hmi`…); with one screen it gives the same result as the line above.
 
     ![The line typed in Developer tools → Template, and its Result: the YAML of the dashboard, starting with views:](../images/installation/ha_modele_en.png)
 
@@ -62,7 +62,7 @@ Tous les réglages de la tablette dans un tableau de bord Home Assistant, écrit
    ```jinja
    {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
    ```
-   Autre adresse : `tab5_dashboard('dashboard-xxx')`. Les libellés et les explications suivent la langue de l'écran de la tablette (français, anglais, allemand, néerlandais, espagnol, italien ou turc ; l'anglais pour une autre) ; `tab5_dashboard(langue='English')` force une langue.
+   Autre adresse : `tab5_dashboard('dashboard-xxx')`. Les libellés et les explications suivent la langue de l'écran de la tablette (français, anglais, allemand, néerlandais, espagnol, italien ou turc ; l'anglais pour une autre) ; `tab5_dashboard(langue='English')` force une langue. **Plusieurs écrans :** `{% from 'tab5_dashboard.jinja' import tab5_dashboard_ecrans %}{{ tab5_dashboard_ecrans() }}` écrit les trois vues pour chaque écran, à son nom, sur un chemin tiré du préfixe de ses actions (`tab5`, `tab5-ha-hmi`…) ; avec un seul écran, le résultat est celui de la ligne ci-dessus.
 
     ![La ligne tapée dans Outils de développement → Modèle, et son Résultat : le YAML du tableau de bord, qui commence par views:](../images/installation/ha_modele_fr.png)
 

@@ -25,7 +25,8 @@
       « Nouveau tableau de bord à partir de zéro », titre « Tab5 » (adresse /dashboard-tab5).
       2. Outils de développement → Modèle : remplacez le contenu de l'éditeur par
       {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
-      (autre adresse : tab5_dashboard('dashboard-xxx') ; plusieurs tablettes :
+      (autre adresse : tab5_dashboard('dashboard-xxx') ; plusieurs tablettes : les vues de
+      chacune avec tab5_dashboard_ecrans('dashboard-tab5') à la place, ou une seule avec
       tab5_dashboard('dashboard-tab5', appareil='<nom de l'appareil>')), copiez le résultat (à droite).
       3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → « Éditeur de configuration
       brute », remplacez tout par le résultat, enregistrez. À refaire après une mise à
@@ -33,7 +34,8 @@
       ENGLISH — 1. Settings → Dashboards → "Add dashboard" → "New dashboard from scratch",
       title "Tab5" (address /dashboard-tab5). 2. Developer tools → Template: replace the
       editor content with the line above (other address: tab5_dashboard('dashboard-xxx');
-      several tablets: tab5_dashboard('dashboard-tab5', appareil='<device name>')),
+      several tablets: the views of each with tab5_dashboard_ecrans('dashboard-tab5') instead,
+      or one with tab5_dashboard('dashboard-tab5', appareil='<device name>')),
       copy the result (right). 3. Open the Tab5 dashboard → pencil → ⋮ → "Raw
       configuration editor", replace everything with the result, save. Redo after an
       update that adds entities.
@@ -62,7 +64,7 @@
       utilisez « … ». Le contenu de la carte Markdown « En bref » est du Jinja rendu
       par la carte elle-même, à garder entre {% raw %} et {% endraw %}.
 ============================================================================ -#}
-{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='') -%}
+{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='', chemin='tab5', titre='', vues_seules=false) -%}
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
 {#- Plusieurs tablettes : appareil = l'identifiant ou le nom de celle à montrer
@@ -214,10 +216,12 @@
 # {{ t("Tablette introuvable : ajoutez-la dans Home Assistant (intégration ESPHome), puis recommencez.",
        "Tablet not found: add it to Home Assistant (ESPHome integration), then try again.") }}
 {%- else -%}
+{%- if not vues_seules %}
 views:
+{%- endif %}
   # ─── Vue principale : l'usage courant ───
-  - title: Tab5
-    path: tab5
+  - title: "{{ titre or 'Tab5' }}"
+    path: {{ chemin }}
     icon: mdi:tablet-dashboard
     type: sections
     max_columns: 4
@@ -280,7 +284,7 @@ views:
             icon: mdi:cog
             tap_action:
               action: navigate
-              navigation_path: /{{ adresse }}/tab5-reglages
+              navigation_path: /{{ adresse }}/{{ chemin }}-reglages
             grid_options:
               columns: 6
           - type: shortcut
@@ -290,7 +294,7 @@ views:
             color: red
             tap_action:
               action: navigate
-              navigation_path: /{{ adresse }}/tab5-sante
+              navigation_path: /{{ adresse }}/{{ chemin }}-sante
             grid_options:
               columns: 6
 {%- if T.retroeclairage %}
@@ -521,13 +525,13 @@ views:
 {%- endif %}
 
   # ─── Sous-vue Réglages : ce qu'on règle une fois ───
-  - title: "{{ t('Réglages Tab5', 'Tab5 settings') }}"
-    path: tab5-reglages
+  - title: "{{ t('Réglages Tab5', 'Tab5 settings') }}{{ (' · ' ~ titre) if titre else '' }}"
+    path: {{ chemin }}-reglages
     icon: mdi:cog
     type: sections
     max_columns: 4
     subview: true
-    back_path: /{{ adresse }}/tab5
+    back_path: /{{ adresse }}/{{ chemin }}
     sections:
       - type: grid
         cards:
@@ -1166,13 +1170,13 @@ views:
 {%- endif %}
 
   # ─── Sous-vue Santé : quand quelque chose cloche ───
-  - title: "{{ t('Santé Tab5', 'Tab5 health') }}"
-    path: tab5-sante
+  - title: "{{ t('Santé Tab5', 'Tab5 health') }}{{ (' · ' ~ titre) if titre else '' }}"
+    path: {{ chemin }}-sante
     icon: mdi:heart-pulse
     type: sections
     max_columns: 4
     subview: true
-    back_path: /{{ adresse }}/tab5
+    back_path: /{{ adresse }}/{{ chemin }}
     sections:
       - type: grid
         cards:
@@ -1531,6 +1535,40 @@ views:
               columns: 12
 {%- endif %}
 {%- endif %}
+{%- endmacro -%}
+{%- macro tab5_dashboard_ecrans(adresse='dashboard-tab5', langue='') -%}
+  {#- Un jeu de vues (Tab5, Réglages, Santé) PAR ÉCRAN (ADR-0071, 25/10/2026). Chaque
+      appareil de modèle tab5-ha-hmi qui a un « HA API Status », connecté ou non, trié par
+      nom. Un seul écran : exactement tab5_dashboard(adresse, langue). Plusieurs : chaque
+      écran prend pour chemin le préfixe de ses actions, « _ » devenu « - » (stable : il
+      vient du nom ESPHome ; « tab5 », « tab5-ha-hmi », « tab5-salon-7b » pour salon_7b),
+      puis -reglages et -sante ; chaque vue porte le nom de l'écran. Les réglages de la maison (agendas, météo,
+      listes « Tab5 · … ») sont communs : ils apparaissent dans la vue Réglages de chaque
+      écran. -#}
+  {%- from 'tab5_tablette.jinja' import tab5_prefixe -%}
+  {%- set ns = namespace(l=[]) -%}
+  {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
+    {%- set d = device_id(e) -%}
+    {%- if d and device_attr(e, 'model') == 'tab5-ha-hmi' and d not in ns.l | map(attribute='d') | list -%}
+      {%- set ns.l = ns.l + [{'d': d, 'nom': device_attr(d, 'name_by_user') or device_attr(d, 'name') or 'Tab5'}] -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- set ecrans = ns.l | sort(attribute='nom') -%}
+  {%- if ecrans | count <= 1 -%}
+    {{- tab5_dashboard(adresse, langue) -}}
+  {%- else -%}
+    {%- set vu = namespace(chemins=[]) -%}
+views:
+    {%- for e in ecrans -%}
+      {%- set chemin = tab5_prefixe(e.d) | replace('_', '-') -%}
+      {%- set chemin = chemin if chemin.startswith('tab5') else 'tab5-' ~ chemin -%}
+      {%- if chemin in vu.chemins -%}
+        {%- set chemin = chemin ~ '-' ~ loop.index -%}
+      {%- endif -%}
+      {%- set vu.chemins = vu.chemins + [chemin] -%}
+      {{- tab5_dashboard(adresse, langue, appareil=e.d, chemin=chemin, titre=e.nom, vues_seules=true) -}}
+    {%- endfor -%}
+  {%- endif -%}
 {%- endmacro -%}
 {#- ── Traductions : allemand, néerlandais, espagnol, italien, turc ─────────────────────────────
     Clé = le texte français passé à t(), à l'identique (espaces insécables compris) ; valeurs dans
