@@ -788,7 +788,7 @@ def test_geometrie_du_volet_dessine():
 def test_popup_du_volet_inscrit_et_branche():
     scripts = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     # Ouvert aussi sans tuile touchée (« Aller à l'écran », roue de navigation, ADR-0042).
-    assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP,'
+    assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Shutter",\s+ModalRegistry::POPUP,'
                      r'\s+\[\] \{ tuiles_ecran_ouvrir\(Ecran::VOLET\); \}\);', scripts)
     assert "- !include ../ui_components/volet_popup.yaml" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
@@ -871,7 +871,7 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
 
 def test_popup_d_un_appareil_inscrit_et_branche():
     scripts = _lire("Tab5", "paquets", "tab5-navigation.yaml")
-    assert re.search(r'ModalRegistry::add\(id\(appareil_popup\),\s+"Appareil",\s+ModalRegistry::POPUP\);', scripts)
+    assert re.search(r'ModalRegistry::add\(id\(appareil_popup\),\s+"Device",\s+ModalRegistry::POPUP\);', scripts)
     assert "- !include ../ui_components/appareil_popup.yaml" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     popup = _lire("Tab5", "ui_components", "appareil_popup.yaml")

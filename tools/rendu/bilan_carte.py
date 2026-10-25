@@ -2,8 +2,8 @@
 """tools/rendu/bilan_carte.py — Les écrans d'une autre carte contre ceux du Tab5 (ADR-0061).
 
 tools/rendu/capturer.py écrit, pour chaque capture, ce que le rendu en dit lui-même
-(Tab5/rendu/rendu_mesure.h) : l'écran affiché (« Accueil », un popup, « Arcade »,
-« Jeu · … »), les objets COUPÉS (qui dessinent et ne tiennent pas dans leur zone
+(Tab5/rendu/rendu_mesure.h) : l'écran affiché (« Home », un popup, « Arcade »,
+« Game · … » ; « Accueil » et « Jeu · … » avant le 24/10/2026, ADR-0070), les objets COUPÉS (qui dessinent et ne tiennent pas dans leur zone
 visible) et, parmi eux, ceux HORS de l'écran, les BARRES de défilement dessinées
 (18/10/2026), plus la capture identique qui la précède.
 Un fichier par carte : `ecrans-tab5.json` (tâche « fr ») et `ecrans-waveshare-7b.json`
@@ -41,9 +41,9 @@ def famille(ecran: str | None) -> str:
     """« jeux » (Arcade et consoles), « accueil » ou « popups »."""
     if ecran is None:
         return "inconnu"
-    if ecran == "Arcade" or ecran.startswith("Jeu"):
+    if ecran == "Arcade" or ecran.startswith(("Game · ", "Jeu · ")):
         return "jeux"
-    return "accueil" if ecran == "Accueil" else "popups"
+    return "accueil" if ecran in ("Home", "Accueil") else "popups"
 
 
 def ouvert(nom: str, tab5: dict[str, dict], carte: dict[str, dict]) -> bool:

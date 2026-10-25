@@ -20,6 +20,7 @@
 # Non repris : l'état « bouton choisi » (bordure d'accent de 3 px au lieu de 2) ; le texte du
 # bandeau prend le texte courant de la palette sombre (zone sombre), pas color_banner_text.
 nom: Bonbon
+nom_ha: Candy   # option lue par Home Assistant (ADR-0070)
 ordre: 19
 herite: ardoise
 zones_sombres: [bandeau]

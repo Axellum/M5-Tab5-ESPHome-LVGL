@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** « Agenda ▸ Caméras » on the [navigation wheel](home.md) (long press on the central card), with the « Caméras » entry of the tablet's « Aller à l'écran » list in Home Assistant (an automation can open it, for instance when the doorbell rings), or with a tap or a long press of the clock or of a button top right when the blueprint gives it « Caméras · Cameras » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+**Opens with** « Agenda ▸ Caméras » on the [navigation wheel](home.md) (long press on the central card), with the « Cameras » entry of the tablet's « Aller à l'écran » list in Home Assistant (an automation can open it, for instance when the doorbell rings), or with a tap or a long press of the clock or of a button top right when the blueprint gives it « Caméras · Cameras » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 A still image of each camera you picked in the « Caméras · Cameras » section of the blueprint « Tab5 — emplacements », in that order (sixteen at most): no video, new images while the window is open (one at a time), nothing downloaded once it is closed.
 
@@ -31,7 +31,7 @@ Images are downloaded and decoded in the background: the screen does not freeze.
 
 ---
 
-**S'ouvre par** « Agenda ▸ Caméras » de la [roue de navigation](home.md#version-française) (appui long sur la carte centrale), par l'entrée « Caméras » de la liste « Aller à l'écran » de la tablette dans Home Assistant (une automatisation peut l'ouvrir, par exemple quand on sonne), ou par un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Caméras · Cameras » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+**S'ouvre par** « Agenda ▸ Caméras » de la [roue de navigation](home.md#version-française) (appui long sur la carte centrale), par l'entrée « Cameras » de la liste « Aller à l'écran » de la tablette dans Home Assistant (une automatisation peut l'ouvrir, par exemple quand on sonne), ou par un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Caméras · Cameras » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 Une image fixe de chaque caméra choisie dans la section « Caméras · Cameras » du blueprint « Tab5 — emplacements », dans cet ordre (seize au plus) : pas de vidéo, des images neuves tant que la fenêtre est ouverte (une à la fois), plus rien de téléchargé une fois fermée.
 

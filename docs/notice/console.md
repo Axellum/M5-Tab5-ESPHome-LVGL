@@ -4,7 +4,7 @@
 
 ---
 
-Since 2026-10-08 the system console is the **System** page of the [settings](settings.md), their fourth page. **Opens with** a long press on the gear button, top right of the home screen (a tap opens the settings on their Screen page), unless the blueprint gives that long press another screen ([home screen](home.md#the-three-buttons-top-right-6-to-8)); then with the tablet's « Aller à l'écran » entity in Home Assistant, option « Console système ». From another page of the settings: a tap on **System** at the top, or slide left or right.
+Since 2026-10-08 the system console is the **System** page of the [settings](settings.md), their fourth page. **Opens with** a long press on the gear button, top right of the home screen (a tap opens the settings on their Screen page), unless the blueprint gives that long press another screen ([home screen](home.md#the-three-buttons-top-right-6-to-8)); then with the tablet's « Aller à l'écran » entity in Home Assistant, option « System console ». From another page of the settings: a tap on **System** at the top, or slide left or right.
 
 ![The system console: memory, network, system with the volume, and the management buttons](../images/notice/console-systeme-en.webp)
 
@@ -33,7 +33,7 @@ The theme, light or dark and the language are in the [settings](settings.md). To
 
 ---
 
-Depuis le 08/10/2026, la console système est la page **Système** des [réglages](settings.md#version-française), leur quatrième page. **S'ouvre par** un appui long sur le bouton engrenage, en haut à droite de l'accueil (un tap ouvre les réglages sur leur page Écran), sauf si le blueprint donne un autre écran à cet appui long ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)) ; alors par l'entité « Aller à l'écran » de la tablette dans Home Assistant, option « Console système ». Depuis une autre page des réglages : une tape sur **Système** en haut, ou glisser à gauche ou à droite.
+Depuis le 08/10/2026, la console système est la page **Système** des [réglages](settings.md#version-française), leur quatrième page. **S'ouvre par** un appui long sur le bouton engrenage, en haut à droite de l'accueil (un tap ouvre les réglages sur leur page Écran), sauf si le blueprint donne un autre écran à cet appui long ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)) ; alors par l'entité « Aller à l'écran » de la tablette dans Home Assistant, option « System console ». Depuis une autre page des réglages : une tape sur **Système** en haut, ou glisser à gauche ou à droite.
 
 ![La console système : mémoire, réseau, système avec le volume, et les boutons de gestion](../images/notice/console-systeme-fr.webp)
 

@@ -16,6 +16,7 @@
 # d'Anton (text_letter_space 2 à 3 px) : `polices:` ne le règle pas. Le texte du bandeau
 # prend le texte courant de la palette sombre (zone sombre), pas color_banner_text.
 nom: Ultraviolet
+nom_ha: Ultraviolet   # option lue par Home Assistant (ADR-0070)
 ordre: 21
 herite: ardoise
 zones_sombres: [bandeau]

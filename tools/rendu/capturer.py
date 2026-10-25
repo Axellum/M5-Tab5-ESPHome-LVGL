@@ -93,15 +93,21 @@ ATTENTE_RETOUR = 1.0
 ATTENTE_BASCULE = 1.0
 SELECT_MODE_THEME = "Clair ou sombre"
 SELECT_THEME = "Thème"
+# Les modes par leur nom français (arguments, noms des captures « theme-<fichier>-sombre »,
+# rendu-host.yml) ; l'option envoyée au select est celle de son INDEX dans la liste de la
+# tablette : « Dark », « Light », « Auto » depuis le 24/10/2026 (ADR-0070), « Sombre »,
+# « Clair », « Auto » avant.
 MODES_THEME = ("Sombre", "Clair")
+INDEX_MODE_THEME = {"Sombre": 0, "Clair": 1, "Auto": 2}
 
 
 def combinaisons_galerie() -> list[tuple[str, str, str]]:
-    """(nom du thème, fichier, mode) de chaque capture de la galerie, dans l'ordre du select."""
+    """(option du thème, fichier, mode) de chaque capture de la galerie, dans l'ordre du
+    select. L'option est le nom anglais du thème (`nom_ha`, ADR-0070)."""
     sys.path.insert(0, str(RACINE))
     import gen_themes
 
-    return [(t.nom, t.fichier, m) for t in gen_themes.charger() for m in MODES_THEME]
+    return [(t.nom_ha, t.fichier, m) for t in gen_themes.charger() for m in MODES_THEME]
 
 
 def nom_galerie(fichier: str, mode: str) -> str:
@@ -208,7 +214,10 @@ class Rendu:
         await _appeler(self.client, self.services, nom, **data)
 
     def choisir(self, select: str, option: str) -> None:
-        self.client.select_command(self.selects[select].key, option)
+        info = self.selects[select]
+        if select == SELECT_MODE_THEME and option in INDEX_MODE_THEME and option not in info.options:
+            option = info.options[INDEX_MODE_THEME[option]]
+        self.client.select_command(info.key, option)
 
     async def capturer(self, nom: str) -> None:
         fichier = f"{nom}-{self.suffixe}" if self.suffixe else nom
@@ -270,7 +279,7 @@ class Rendu:
 
     async def accueil(self) -> None:
         """Referme tout (fenêtres, sous-fenêtres, jeu en cours) : même chemin que HA."""
-        self.choisir("Aller à l'écran", "Accueil")
+        self.choisir("Aller à l'écran", "Home")
         await asyncio.sleep(ATTENTE_RETOUR)
 
     async def galerie(self, prefixe: str) -> None:

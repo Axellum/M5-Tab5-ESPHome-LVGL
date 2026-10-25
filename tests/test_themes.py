@@ -304,7 +304,8 @@ def test_options_du_select_dans_l_ordre_des_themes():
     texte = THEMES_YAML.read_text(encoding="utf-8")
     bloc = re.search(r"# >>> themes[^\n]*\n(.*?)# <<< themes", texte, re.S).group(1)
     options = re.findall(r'- "([^"]+)"', bloc)
-    assert options == [t.nom for t in gen_themes.charger()]
+    # Une option est le nom anglais du thème (`nom_ha`, lu par HA, ADR-0070) ; l'écran montre `nom`.
+    assert options == [t.nom_ha for t in gen_themes.charger()]
 
 
 def test_theme_par_defaut_existe():
@@ -313,7 +314,10 @@ def test_theme_par_defaut_existe():
     texte = (REPO / "Tab5" / "paquets" / "tab5-themes.yaml").read_text(encoding="utf-8")
     bloc = re.split(r"id: tab5_theme\r?\n", texte, maxsplit=1)[1].split("on_value:", 1)[0]
     m = re.search(r'initial_option: "([^"]+)"', bloc)
-    assert m and m.group(1) in [t.nom for t in gen_themes.charger()]
+    themes = gen_themes.charger()
+    assert m and m.group(1) in [t.nom_ha for t in themes]
+    # Le défaut d'une tablette neuve reste « Relief doux » (choix d'Axel, 05/10/2026).
+    assert next(t.nom for t in themes if t.nom_ha == m.group(1)) == "Relief doux"
 
 
 def _luminance(c: int) -> float:

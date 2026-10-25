@@ -8,6 +8,7 @@
 # couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
 # texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
 nom: Almanach imprimé
+nom_ha: Printed almanac   # option lue par Home Assistant (ADR-0070)
 ordre: 5
 herite: ardoise
 polices:

@@ -171,19 +171,19 @@ select:
     id: tab5_mode_charge
     optimistic: true
     options:
-      - "Classique"
-      - "Rapide"
-    initial_option: "Classique"
+      - "Classic"
+      - "Fast"
+    initial_option: "Classic"
     on_value:
       - script.execute: tab5_reglages_sync_ui
   - platform: template
     id: tab5_wifi_eco
     optimistic: true
     options:
-      - "Jamais"
-      - "Sur batterie"
-      - "Toujours"
-    initial_option: "Jamais"
+      - "Never"
+      - "On battery"
+      - "Always"
+    initial_option: "Never"
     on_value:
       - script.execute: tab5_reglages_sync_ui
 
@@ -212,11 +212,11 @@ api:
             lv_obj_t* racine = nullptr;
             if (!id(page_main)->is_showing()) {
               const char* jeu = GameRegistry::open_name();
-              if (jeu != nullptr) snprintf(ecran, sizeof ecran, "Jeu · %s", jeu);
+              if (jeu != nullptr) snprintf(ecran, sizeof ecran, "Game · %s", jeu);
               else snprintf(ecran, sizeof ecran, "Arcade");
             } else {
               const char* modal = ModalRegistry::visible_name();
-              snprintf(ecran, sizeof ecran, "%s", modal != nullptr ? modal : "Accueil");
+              snprintf(ecran, sizeof ecran, "%s", modal != nullptr ? modal : "Home");
               if (modal != nullptr) racine = ModalRegistry::find(modal);
             }
             const RenduCoupes r = rendu_mesurer(racine, fichier.c_str());

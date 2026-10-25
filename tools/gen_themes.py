@@ -2,7 +2,7 @@
 """tools/gen_themes.py — catalogue des thèmes de l'écran (ADR-0029, lots 2 et 3).
 
 [AI-CONTEXT] Source unique : Tab5/themes/<thème>.yaml (un fichier par thème : `nom`,
-`ordre`, un mode `sombre` et un mode `clair`, chacun avec tous les rôles de
+`nom_ha`, `ordre`, un mode `sombre` et un mode `clair`, chacun avec tous les rôles de
 `struct Palette` ; en option `zones_sombres:`, `formes:` et `polices:`), plus les rôles
 eux-mêmes (`struct Palette`, Tab5/socle/tab5_tokens.h), les styles partagés
 (Tab5/paquets/tab5-styles.yaml) et les polices mesurées (Tab5/themes/_polices.yaml, écrit par
@@ -17,7 +17,8 @@ tools/police_theme.py). Écrit :
       et tab5_reglages.cpp seulement ;
   (b) Tab5/paquets/tab5-themes.yaml — les options du select « Thème », entre `# >>> themes` et
       `# <<< themes`, dans l'ordre des `ordre:` (la tablette garde l'INDEX : un thème
-      s'ajoute à la fin) ;
+      s'ajoute à la fin). Une option est le `nom_ha` du thème, son nom anglais, celui que
+      lit Home Assistant (ADR-0070, 24/10/2026) ; l'écran montre `nom` (THEMES[]) ;
   (c) Tab5/paquets/tab5-themes.yaml — la repeinture des styles partagés après un changement
       de thème, entre `# >>> styles` et `# <<< styles` : chaque couleur de
       `style_definitions:` et du `theme:` (une lambda qui lit `UIColor.X`, ou
@@ -194,6 +195,9 @@ class Theme:
     # mode → style → propriété → (genre, valeur), formes du fichier seulement (sans SUIT).
     formes: dict[str, dict[str, dict[str, tuple]]] = field(default_factory=dict)
     polices: dict[str, str] = field(default_factory=dict)
+    # Nom anglais, l'option du select « Thème » que lit Home Assistant (ADR-0070) ; `nom`
+    # reste celui de l'écran.
+    nom_ha: str = ""
 
 
 def _lire(chemin: Path) -> dict:
@@ -300,12 +304,17 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
 
     themes = []
     for stem, brut in bruts.items():
-        inconnues = set(brut) - {"nom", "ordre", "herite", "zones_sombres", "formes", "polices", *MODES}
+        inconnues = set(brut) - {"nom", "nom_ha", "ordre", "herite", "zones_sombres", "formes", "polices",
+                                 *MODES}
         if inconnues:
             raise ErreurTheme(f"{stem}.yaml : clé(s) inconnue(s) {sorted(inconnues)}")
         nom, ordre = brut.get("nom"), brut.get("ordre")
         if not isinstance(nom, str) or not RE_NOM.match(nom):
             raise ErreurTheme(f"{stem}.yaml : `nom` (1 à 24 caractères, sans guillemet) attendu")
+        nom_ha = brut.get("nom_ha")
+        if not isinstance(nom_ha, str) or not RE_NOM.match(nom_ha):
+            raise ErreurTheme(f"{stem}.yaml : `nom_ha` (nom anglais lu par Home Assistant, 1 à 24 "
+                              "caractères, sans guillemet) attendu")
         if isinstance(ordre, bool) or not isinstance(ordre, int) or ordre < 1:
             raise ErreurTheme(f"{stem}.yaml : `ordre` (entier à partir de 1) attendu")
         modes = modes_de(stem)
@@ -337,7 +346,7 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
             raise ErreurTheme(f"{stem}.yaml : `polices` = {{horloge|date|titre: \"Famille@graisse\"}}, "
                               f"lu {polices!r}")
         themes.append(Theme(stem, nom, ordre, modes, tuple(z for z in ZONES if z in zones),
-                            _formes_de(stem, brut.get("formes"), connus), dict(polices)))
+                            _formes_de(stem, brut.get("formes"), connus), dict(polices), nom_ha))
 
     themes.sort(key=lambda t: t.ordre)
     ordres = [t.ordre for t in themes]
@@ -346,6 +355,9 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
     noms = [t.nom for t in themes]
     if len(set(noms)) != len(noms):
         raise ErreurTheme(f"noms de thème en double : {noms}")
+    noms_ha = [t.nom_ha for t in themes]
+    if len(set(noms_ha)) != len(noms_ha):
+        raise ErreurTheme(f"`nom_ha` de thème en double : {noms_ha}")
     premier = themes[0]
     if premier.zones or any(premier.formes[m] for m in MODES) or premier.polices:
         raise ErreurTheme(f"{premier.fichier}.yaml : le premier thème est l'état compilé de "
@@ -776,7 +788,7 @@ def cibles(themes: list[Theme]) -> list[tuple[Path, str, str]]:
     attendu_tokens = _remplacer(tokens, MARQUES_CPP, rendre_palette_sombre(themes), "tab5_tokens.h")
     donnees, _ = _lire_texte(THEMES_DATA)
     firmware, _ = _lire_texte(FIRMWARE)
-    attendu_fw = _remplacer(firmware, MARQUES_OPTIONS, [f'- "{t.nom}"' for t in themes], "tab5-themes.yaml")
+    attendu_fw = _remplacer(firmware, MARQUES_OPTIONS, [f'- "{t.nom_ha}"' for t in themes], "tab5-themes.yaml")
     attendu_fw = _remplacer(attendu_fw, MARQUES_STYLES,
                             rendre_styles(STYLES, set(roles())) + formes_yaml + polices_yaml, "tab5-themes.yaml")
     attendu_fw = _remplacer(attendu_fw, MARQUES_POLICES, font_yaml, "tab5-themes.yaml")

@@ -159,10 +159,15 @@ class Campagne:
     def ecran(self, nom):
         self.cli.select_command(self.k["aller___l__cran"], nom)
 
+    def accueil(self):
+        # La deuxième option, « Home » (« Accueil » pour un firmware d'avant le 24/10/2026 :
+        # options en anglais, ADR-0070) : lue dans la liste de la tablette, pas écrite ici.
+        self.ecran(self.options[1] if len(self.options) > 1 else "Home")
+
     async def lancer(self, redemarrages):
         await self.connecter()
         depart = self.lum_depart or 189
-        self.ecran("Accueil")
+        self.accueil()
         self.lumiere(depart)
         await asyncio.sleep(10)
         await self.fenetre(30)
@@ -176,9 +181,7 @@ class Campagne:
         self.lumiere(depart)
         await asyncio.sleep(5)
 
-        for nom in self.options:
-            if nom in ("—", "Accueil"):
-                continue
+        for nom in self.options[2:]:  # ni « — » ni l'accueil
             await self.fenetre(24)
             t = time.time()
             self.ecran(nom)
@@ -186,7 +189,7 @@ class Campagne:
             self.segments.append({"nom": f"ouverture:{nom}", "t0": round(t, 3), "t1": round(time.time(), 3)})
             await asyncio.sleep(3)
             await self.segment(f"ecran:{nom}", 15)
-            self.ecran("Accueil")
+            self.accueil()
             await asyncio.sleep(4)
 
         for i in range(redemarrages):
@@ -201,7 +204,7 @@ class Campagne:
             await self.connecter()
             await asyncio.sleep(25)
 
-        self.ecran("Accueil")
+        self.accueil()
         self.lumiere(depart)
         await asyncio.sleep(3)
         await self.deconnecter()

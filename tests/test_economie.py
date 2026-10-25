@@ -24,7 +24,8 @@ from tests.commun import ChargeurBalisesBrutes as _Chargeur, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
-OPTIONS = ["Jamais", "Sur batterie", "Toujours"]
+# En anglais, lues par HA (ADR-0070 ; « Jamais », « Sur batterie », « Toujours » avant le 24/10/2026).
+OPTIONS = ["Never", "On battery", "Always"]
 SCRIPT = "tab5_economie_appliquer"
 
 
@@ -48,7 +49,7 @@ def test_select_options_dans_l_ordre_de_l_enum_et_defaut_sur_batterie():
     s = next(s for s in _yaml("tab5-economie.yaml")["select"] if s.get("id") == "tab5_economie")
     assert s["name"] == "Tab5 Économie d'énergie"
     assert s["options"] == OPTIONS
-    assert s["initial_option"] == "Sur batterie", "défaut : rien ne change sur secteur"
+    assert s["initial_option"] == "On battery", "défaut : rien ne change sur secteur"
     assert s["restore_value"] is True and s["optimistic"] is True
     assert s["entity_category"] == "config"
     assert {"script.execute": SCRIPT} in s["on_value"]
@@ -64,8 +65,8 @@ def test_select_animations_dans_l_ordre_de_l_enum_et_defaut_completes():
     (un seul point de décision, testé par tools/test_alarm_clock.cpp)."""
     s = next(s for s in _yaml("tab5-economie.yaml")["select"] if s.get("id") == "tab5_animations")
     assert s["name"] == "Tab5 Animations"
-    assert s["options"] == ["Complètes", "Essentielles", "Aucune"]
-    assert s["initial_option"] == "Complètes", "défaut : le comportement d'avant"
+    assert s["options"] == ["Full", "Essential", "None"]
+    assert s["initial_option"] == "Full", "défaut : le comportement d'avant"
     assert s["restore_value"] is True and s["optimistic"] is True
     assert s["entity_category"] == "config"
     assert {"script.execute": SCRIPT} in s["on_value"]

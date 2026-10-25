@@ -1,6 +1,6 @@
 # ═══════════════════════════════════════════════════════════════════════════
 # [AI-CONTEXT] Thèmes de l'écran (ADR-0029, lot 2) : le select « Thème », le select
-# « Clair ou sombre » (Sombre, Clair, Auto), l'interrupteur « Nuit (thème auto) » que
+# « Clair ou sombre » (Dark, Light, Auto), l'interrupteur « Nuit (thème auto) » que
 # Home Assistant règle d'après le soleil (packages/tab5_push.yaml, mode Auto), et la
 # repeinture après un changement de palette.
 # - Les palettes : Tab5/themes/<thème>.yaml, écrites dans tab5_tokens.h (THEMES[]) par
@@ -18,8 +18,8 @@
 #   compare la bascule à chaud au démarrage à froid dans le même thème, au pixel près
 #   (tools/rendu/, .github/workflows/rendu-host.yml, tâches « clair » et « galerie »).
 # - Le select « Thème » garde l'INDEX (restore_value) : un nouveau thème s'ajoute à la
-#   fin (`ordre:`). Home Assistant lit les options : jamais traduites (le nom d'un
-#   thème est un nom propre, les modes sont des valeurs que HA écrit).
+#   fin (`ordre:`). HA lit les options : en anglais (`nom_ha` du thème, Dark, Light ; ADR-0070,
+#   24/10/2026), jamais traduites ; l'écran montre le `nom` du thème (THEMES[]).
 # - Les jeux restent sombres (PALETTE_SOMBRE, ADR-0014) : leurs pages naissent avec
 #   le `bg_color` de `lvgl:` (tab5-styles.yaml), évalué avant la restauration du
 #   thème ; seule la page principale est repeinte ici.
@@ -277,36 +277,36 @@ select:
     entity_category: config
     optimistic: true
     restore_value: true
-    # Thème d'une tablette neuve (choix d'Axel, 05/10/2026) ; un thème déjà choisi reste.
-    initial_option: "Relief doux"
+    # Thème d'une tablette neuve (Relief doux, choix d'Axel, 05/10/2026) ; un thème choisi reste.
+    initial_option: "Soft relief"
     options:
       # >>> themes (généré par tools/gen_themes.py, ne pas éditer)
-      - "Ardoise"
-      - "Relief doux"
-      - "Relief plat"
+      - "Slate"
+      - "Soft relief"
+      - "Flat relief"
       - "Graphite"
-      - "Almanach imprimé"
-      - "Ardoise douce"
-      - "Terre cuite"
-      - "Craie et ardoise"
-      - "Almanach"
-      - "Béton brut"
-      - "Néon calme"
+      - "Printed almanac"
+      - "Soft slate"
+      - "Terracotta"
+      - "Chalk and slate"
+      - "Almanac"
+      - "Raw concrete"
+      - "Calm neon"
       - "Zen Sumi"
       - "Bento"
-      - "Obsidienne"
-      - "Platine et or"
-      - "Signalisation"
+      - "Obsidian"
+      - "Platinum and gold"
+      - "Signage"
       - "Capsule"
       - "Pixel"
-      - "Bonbon"
+      - "Candy"
       - "Sorbet"
       - "Ultraviolet"
       # <<< themes
     on_value:
       - script.execute: tab5_theme_choisir
 
-  # Sombre / Clair : le mode du thème choisi. Auto : clair le jour, sombre la nuit,
+  # Dark / Light (Sombre / Clair) : le mode du thème choisi. Auto : clair le jour, sombre la nuit,
   # d'après l'interrupteur « Nuit (thème auto) » que HA tient à jour.
   - platform: template
     id: tab5_theme_mode
@@ -316,10 +316,10 @@ select:
     optimistic: true
     restore_value: true
     options:
-      - "Sombre"
-      - "Clair"
+      - "Dark"
+      - "Light"
       - "Auto"
-    initial_option: "Sombre"
+    initial_option: "Dark"
     on_value:
       - script.execute: tab5_theme_choisir
 

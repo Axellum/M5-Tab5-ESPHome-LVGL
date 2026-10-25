@@ -509,7 +509,7 @@ def test_clignotement_sans_fondu():
 
 def test_registre_et_libelle_des_alertes():
     nav = _lire(NAVIGATION)
-    assert re.search(r'ModalRegistry::add\(id\(froid_popup\),\s+"Froid",\s+ModalRegistry::POPUP', nav)
+    assert re.search(r'ModalRegistry::add\(id\(froid_popup\),\s+"Fridges",\s+ModalRegistry::POPUP', nav)
     assert "id(tab5_froid_ouvrir).execute();" in nav
     central = _lire(CENTRAL_CPP)
     bloc = central.split("case AlerteTexteCode::FROID:", 1)[1].split("default: return normalize_text_utf8(brut);", 1)[0]

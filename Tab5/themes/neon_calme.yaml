@@ -10,6 +10,7 @@
 # Non repris : l'état « bouton actif » dessiné par l'esquisse (Domo, mode et ventilation
 # actifs) ; ces boutons gardent la bordure d'accent de l'interface.
 nom: Néon calme
+nom_ha: Calm neon   # option lue par Home Assistant (ADR-0070)
 ordre: 11
 herite: ardoise
 zones_sombres: [bandeau]

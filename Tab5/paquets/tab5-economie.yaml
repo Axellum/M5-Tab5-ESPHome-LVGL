@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file tab5-economie.yaml
 # @role Mode économie d'énergie (06/10/2026, demande d'Axel) : le select « Tab5 Économie
-#       d'énergie » (Jamais / Sur batterie, le défaut / Toujours), l'état « Tab5 Sur
+#       d'énergie » (Never / On battery, le défaut / Always), l'état « Tab5 Sur
 #       batterie », et le script qui applique la décision de tab5_economie.h. Actif :
 #         - luminosité plafonnée à 50 %, au plus bas (10 %, le minimum du curseur des
 #           Réglages) après 30 s sans toucher ou à 35 % de batterie ou moins ;
@@ -11,7 +11,7 @@
 #       « Sur batterie » se décide au courant de l'INA226 (tab5-sensors-diagnostics.yaml) :
 #       sans batterie détectée, ou en charge, jamais.
 #       Le select « Tab5 Animations » (09/10/2026, ADR-0045) est ici aussi : le niveau
-#       appliqué sort de la même décision (« Aucune » imposé par le mode actif).
+#       appliqué sort de la même décision (« None » imposé par le mode actif).
 # @architecture_constraint Ce fichier ne lit que des entités, des globals et des
 #       fonctions C++ : il est aussi chargé par le rendu hors tablette, où rien ne
 #       l'enclenche (pas de batterie, « Sur batterie » par défaut). Ses entrées :
@@ -23,7 +23,9 @@
 #           (tab5-hardware.yaml) : le plafond s'applique à la sortie, HA et le curseur
 #           des Réglages gardent la luminosité choisie. Le toucher et l'allumage relancent
 #           le script tout de suite (même fichier).
-# @ai_instruction Les options sont lues par HA : jamais traduites. La tablette garde
+# @ai_instruction Les options sont lues par HA : en anglais (ADR-0070, 24/10/2026 ;
+#       « Jamais », « Sur batterie », « Toujours », « Complètes », « Essentielles »,
+#       « Aucune » avant), jamais traduites dans la langue de l'écran. La tablette garde
 #       l'INDEX choisi : une option nouvelle s'ajoute à la fin, avec sa valeur dans
 #       ChoixEconomie (tab5_economie.h ; tests/test_economie.py relit les deux).
 # ============================================================================
@@ -37,21 +39,21 @@ select:
     optimistic: true
     restore_value: true
     options:
-      - "Jamais"
-      - "Sur batterie"
-      - "Toujours"
+      - "Never"
+      - "On battery"
+      - "Always"
     # Sur secteur, rien ne change : seule une tablette qui tourne sur sa batterie
     # passe en économie.
-    initial_option: "Sur batterie"
+    initial_option: "On battery"
     on_value:
       - script.execute: tab5_economie_appliquer
       # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
       - script.execute: tab5_reglages_sync_ui
 
-  # Animations de l'interface (09/10/2026, demande d'Axel ; ADR-0045) : « Complètes »
-  # (le défaut, le comportement d'avant), « Essentielles » (seule la rotation de la carte
-  # centrale et de la rangée sous l'horloge) ou « Aucune ». Le mode économie actif impose
-  # « Aucune » : un seul point de décision, economie_decider() (tab5_economie.h), appliqué
+  # Animations de l'interface (09/10/2026, demande d'Axel ; ADR-0045) : « Full »
+  # (le défaut, le comportement d'avant), « Essential » (seule la rotation de la carte
+  # centrale et de la rangée sous l'horloge) ou « None ». Le mode économie actif impose
+  # « None » : un seul point de décision, economie_decider() (tab5_economie.h), appliqué
   # par le script plus bas. Gardé en mémoire : la tablette garde l'INDEX, une option
   # nouvelle s'ajoute à la fin, avec sa valeur dans ChoixAnimations.
   - platform: template
@@ -62,10 +64,10 @@ select:
     optimistic: true
     restore_value: true
     options:
-      - "Complètes"
-      - "Essentielles"
-      - "Aucune"
-    initial_option: "Complètes"
+      - "Full"
+      - "Essential"
+      - "None"
+    initial_option: "Full"
     on_value:
       - script.execute: tab5_economie_appliquer
       # Page Apparence des Réglages : repeinte s'il a déjà été ouvert.
