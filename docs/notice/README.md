@@ -33,7 +33,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 
 ## Everywhere
 
-- **Screen off**: a touch turns it back on. So does a knock on the case, while the device switch « Tab5 Tap-to-Wake » is on (it is by default), and « Okay Nabu », while « Tab5 Rallumer l'écran à Okay Nabu » is on (it is by default). It goes off by itself only if you pick a delay in « Tab5 Extinction auto de l'écran » (« Never » by default): after that long without a touch, but never while the alarm rings, the voice assistant is busy or a game is open. At night, the « Tab5 · night screen off » list in Home Assistant (00:00-06:00 by default) turns it off after 1 min without a touch, and back on in the morning. These four settings and the brightness are also in the [settings](settings.md) of the tablet.
+- **Screen off**: a touch turns it back on. So does a knock on the case, while the device switch « Tap to wake » is on (it is by default), and « Okay Nabu », while « Wake screen on Okay Nabu » is on (it is by default). It goes off by itself only if you pick a delay in « Screen auto-off » (« Never » by default): after that long without a touch, but never while the alarm rings, the voice assistant is busy or a game is open. At night, the « Tab5 · night screen off » list in Home Assistant (00:00-06:00 by default) turns it off after 1 min without a touch, and back on in the morning. These four settings and the brightness are also in the [settings](settings.md) of the tablet.
 - **A window** (lights, climate, calendar…) closes with its **×**, top right, or with a tap on the dark area around it. Left alone 45 s without a touch, it closes by itself; a game never does.
 - **Another forecast page** comes back to the home page after 25 s without a touch.
 - What you don't have is not shown: no TV, no remote on the long press of the gamepad button; no solar production, no Energy window on the long press of the Home Assistant button; no conversation pipeline, no Domo / Discu buttons; no greenhouse sensor, a carousel icon in its place, still switching the area left of the clock; no plants and no sensor line, nothing under the clock.
@@ -42,8 +42,8 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 
 | Window | Opens from | Page |
 |---|---|---|
-| Lights | long press on a light, or « Aller à l'écran » | [Lights](lights.md) |
-| Shutters | long press on a shutter, or « Aller à l'écran » | [Shutters](shutters.md) |
+| Lights | long press on a light, or « Go to screen » | [Lights](lights.md) |
+| Shutters | long press on a shutter, or « Go to screen » | [Shutters](shutters.md) |
 | Climate | the climate target, or a climate card | [Climate](climate.md) |
 | TV remote | long press on the gamepad button, or on a TV | [TV remote](tv.md) |
 | Calendar | long press on the date | [Calendar](calendar.md) |
@@ -53,17 +53,17 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Temperature | long press on one of the two temperatures | [Temperature](temperature.md) |
 | Plants | long press on the plants line, under the clock | [Plants](plants.md) |
 | Alerts | long press on the central card | [Alerts](alerts.md) |
-| Music | long press on a media player, the « now playing » bar, or « Aller à l'écran » | [Music](music.md) |
-| Tracking | the tracked sensor left of the clock, or « Aller à l'écran » | [Tracking](tracking.md) |
-| Fridges and freezers | the icon blinking on the clock, « Agenda ▸ Frigos » on the navigation wheel, or « Aller à l'écran » | [Fridges and freezers](fridge.md) |
-| AI server | « Agenda ▸ Serveur IA » on the navigation wheel, or « Aller à l'écran » | [AI server](ai-server.md) |
+| Music | long press on a media player, the « now playing » bar, or « Go to screen » | [Music](music.md) |
+| Tracking | the tracked sensor left of the clock, or « Go to screen » | [Tracking](tracking.md) |
+| Fridges and freezers | the icon blinking on the clock, « Agenda ▸ Frigos » on the navigation wheel, or « Go to screen » | [Fridges and freezers](fridge.md) |
+| AI server | « Agenda ▸ Serveur IA » on the navigation wheel, or « Go to screen » | [AI server](ai-server.md) |
 | House | in device mode, tap on the room's name in the central card | [House](house.md) |
-| Cameras | « Agenda ▸ Caméras » on the navigation wheel, « Aller à l'écran » (Home Assistant), or a button given « Caméras · Cameras » by the blueprint | [Cameras](cameras.md) |
+| Cameras | « Agenda ▸ Caméras » on the navigation wheel, « Go to screen » (Home Assistant), or a button given « Caméras · Cameras » by the blueprint | [Cameras](cameras.md) |
 | Settings | the gear button | [Settings](settings.md) |
 | System console (System page of the settings) | long press on the gear button | [System console](console.md) |
 | Arcade | the gamepad button, or « Jeux » in the navigation wheel | [Arcade](arcade.md) |
 
-Home Assistant can also open a window with the tablet's « Aller à l'écran » list (go to screen).
+Home Assistant can also open a window with the tablet's « Go to screen » list.
 
 These pictures are drawn by the project's CI from the firmware itself, with the [demo mode](../demo_mode.md) data; [screens and features](../screens.md) explains how each part works.
 
@@ -102,7 +102,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 
 ## Partout
 
-- **Écran éteint** : un toucher le rallume. Un petit coup sur le boîtier aussi, tant que l'interrupteur « Tab5 Tap-to-Wake » de l'appareil est allumé (il l'est d'origine), et « Okay Nabu », tant que « Tab5 Rallumer l'écran à Okay Nabu » est allumé (il l'est d'origine). Il ne s'éteint seul que si vous choisissez un délai dans « Tab5 Extinction auto de l'écran » (« Never », jamais, d'origine) : après ce délai sans toucher, mais jamais pendant que le réveil sonne, que l'assistant vocal travaille ou qu'un jeu est ouvert. La nuit, la liste « Tab5 · night screen off » de Home Assistant (00:00-06:00 d'origine) l'éteint après 1 min sans toucher, et le rallume au matin. Ces réglages et la luminosité sont aussi dans les [réglages](settings.md#version-française) de la tablette.
+- **Écran éteint** : un toucher le rallume. Un petit coup sur le boîtier aussi, tant que l'interrupteur « Tap to wake » de l'appareil est allumé (il l'est d'origine), et « Okay Nabu », tant que « Wake screen on Okay Nabu » est allumé (il l'est d'origine). Il ne s'éteint seul que si vous choisissez un délai dans « Screen auto-off » (« Never », jamais, d'origine) : après ce délai sans toucher, mais jamais pendant que le réveil sonne, que l'assistant vocal travaille ou qu'un jeu est ouvert. La nuit, la liste « Tab5 · night screen off » de Home Assistant (00:00-06:00 d'origine) l'éteint après 1 min sans toucher, et le rallume au matin. Ces réglages et la luminosité sont aussi dans les [réglages](settings.md#version-française) de la tablette.
 - **Une fenêtre** (lumières, clim, calendrier…) se ferme avec sa **×**, en haut à droite, ou d'un tap sur la zone sombre autour. Laissée 45 s sans toucher, elle se ferme seule ; un jeu, jamais.
 - **Une autre page de prévisions** revient à la page d'accueil après 25 s sans toucher.
 - Ce que vous n'avez pas n'apparaît pas : sans TV, pas de télécommande à l'appui long du bouton manette ; sans production solaire, pas de fenêtre Énergie à l'appui long du bouton Home Assistant ; sans pipeline de discussion, pas de boutons Domo / Discu ; sans capteur de serre, une icône de carrousel à sa place, qui change toujours la zone à gauche de l'horloge ; sans plantes ni ligne de capteurs, rien sous l'horloge.
@@ -111,8 +111,8 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 
 | Fenêtre | S'ouvre depuis | Page |
 |---|---|---|
-| Lumières | appui long sur une lumière, ou « Aller à l'écran » | [Lumières](lights.md#version-française) |
-| Volets | appui long sur un volet, ou « Aller à l'écran » | [Volets](shutters.md#version-française) |
+| Lumières | appui long sur une lumière, ou « Go to screen » | [Lumières](lights.md#version-française) |
+| Volets | appui long sur un volet, ou « Go to screen » | [Volets](shutters.md#version-française) |
 | Clim | la consigne de la clim, ou une carte clim | [Clim](climate.md#version-française) |
 | Télécommande TV | appui long sur le bouton manette, ou sur une TV | [Télécommande TV](tv.md#version-française) |
 | Calendrier | appui long sur la date | [Calendrier](calendar.md#version-française) |
@@ -122,16 +122,16 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Température | appui long sur l'une des deux températures | [Température](temperature.md#version-française) |
 | Plantes | appui long sur la ligne des plantes, sous l'horloge | [Plantes](plants.md#version-française) |
 | Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |
-| Musique | appui long sur un lecteur multimédia, la barre « en lecture », ou « Aller à l'écran » | [Musique](music.md#version-française) |
-| Suivi | le capteur suivi à gauche de l'horloge, ou « Aller à l'écran » | [Suivi](tracking.md#version-française) |
-| Frigos et congélateurs | l'icône qui clignote sur l'horloge, « Agenda ▸ Frigos » de la roue de navigation, ou « Aller à l'écran » | [Frigos et congélateurs](fridge.md#version-française) |
-| Serveur IA | « Agenda ▸ Serveur IA » de la roue de navigation, ou « Aller à l'écran » | [Serveur IA](ai-server.md#version-française) |
+| Musique | appui long sur un lecteur multimédia, la barre « en lecture », ou « Go to screen » | [Musique](music.md#version-française) |
+| Suivi | le capteur suivi à gauche de l'horloge, ou « Go to screen » | [Suivi](tracking.md#version-française) |
+| Frigos et congélateurs | l'icône qui clignote sur l'horloge, « Agenda ▸ Frigos » de la roue de navigation, ou « Go to screen » | [Frigos et congélateurs](fridge.md#version-française) |
+| Serveur IA | « Agenda ▸ Serveur IA » de la roue de navigation, ou « Go to screen » | [Serveur IA](ai-server.md#version-française) |
 | Maison | en mode appareils, tap sur le nom de la pièce dans la carte centrale | [Maison](house.md#version-française) |
-| Caméras | « Agenda ▸ Caméras » de la roue de navigation, « Aller à l'écran » (Home Assistant), ou un bouton auquel le blueprint donne « Caméras · Cameras » | [Caméras](cameras.md#version-française) |
+| Caméras | « Agenda ▸ Caméras » de la roue de navigation, « Go to screen » (Home Assistant), ou un bouton auquel le blueprint donne « Caméras · Cameras » | [Caméras](cameras.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |
 | Console système (page Système des réglages) | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
 | Arcade | le bouton manette, ou « Jeux » dans la roue de navigation | [Arcade](arcade.md#version-française) |
 
-Home Assistant peut aussi ouvrir une fenêtre par la liste « Aller à l'écran » de la tablette.
+Home Assistant peut aussi ouvrir une fenêtre par la liste « Go to screen » de la tablette (« Aller à l'écran » avant la migration des entités).
 
 Ces images sont dessinées par la CI du projet à partir du firmware lui-même, avec les données du [mode démo](../demo_mode.md#version-française) ; [écrans et fonctions](../screens.md#version-française) explique comment marche chaque partie.
