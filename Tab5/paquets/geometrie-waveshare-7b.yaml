@@ -17,8 +17,8 @@
 # @architecture_constraint Mêmes clés que geometrie-tab5.yaml (voir son en-tête).
 #       `carte_rotation` sert aussi à la rotation des captures du rendu
 #       (tools/rendu/capturer.py --carte), qui n'a pas le select.
-# @ai_instruction EXPÉRIMENTAL : seule la taille vient d'ici. La mise en page des écrans
-#       reste au pixel pour 1280×720 (lots suivants) ; polices à 0,82 (≈ 1024 / 1280 et
+# @ai_instruction Seule la taille vient d'ici : les jetons de mise en page et
+#       kEcranL/kEcranH en dérivent ; polices à 0,82 (≈ 1024 / 1280 et
 #       600 / 720), arrondies.
 # ============================================================================
 substitutions:

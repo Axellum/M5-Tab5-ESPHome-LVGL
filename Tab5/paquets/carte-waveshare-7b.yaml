@@ -4,9 +4,10 @@
 # @role Carte Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (ADR-0061) : 7", 1024×600 paysage
 #       natif, P4 v3 (`engineering_sample: false`), 32 Mo de flash, PSRAM hex. Choisie par
 #       `tab5_carte: waveshare-7b` (Tab5/user_entities.yaml ou `-s tab5_carte waveshare-7b`).
-#       EXPÉRIMENTALE : compilée par la CI (job build-carte-7b) ; écran, tactile et
-#       rétroéclairage essayés sur une vraie carte le 14/10/2026 (essais/waveshare-p4-7b.yaml),
-#       l'interface reste au pixel pour 1280×720 (lots suivants).
+#       Prise en charge depuis la 3.9.0 : compilée par la CI (job build-carte-7b) et
+#       publiée avec les releases ; écran, tactile et rétroéclairage essayés sur une
+#       vraie carte le 14/10/2026 (essais/waveshare-p4-7b.yaml), l'écran de l'auteur
+#       depuis ; l'accueil et les popups suivent sa taille, les jeux non (ADR-0065).
 # @architecture_constraint Remplace carte-tab5.yaml, donc tab5-hardware.yaml et
 #       ecran-<révision>.yaml, qu'elle ne charge pas. Principe : les autres packages
 #       nomment le matériel par ses id ; cette carte fournit LES MÊMES id.

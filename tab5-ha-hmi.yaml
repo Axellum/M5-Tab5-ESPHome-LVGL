@@ -491,8 +491,8 @@ packages:
   # Carte (ADR-0061) : `tab5_carte:` dans Tab5/user_entities.yaml (ou `-s tab5_carte …`)
   # = tab5 (défaut : M5Stack Tab5, son matériel tab5-hardware.yaml et la révision de sa
   # dalle, `tab5_ecran:`, voir carte-tab5.yaml) ou waveshare-7b (Waveshare
-  # ESP32-P4-WIFI6-Touch-LCD-7B, 1024×600, EXPÉRIMENTALE : jamais lancée sur une vraie
-  # carte, interface pas encore adaptée). Chaque carte porte la taille de son écran
+  # ESP32-P4-WIFI6-Touch-LCD-7B, 1024×600, prise en charge : l'écran de l'auteur depuis
+  # le 14/10/2026, sans les jeux par défaut). Chaque carte porte la taille de son écran
   # (geometrie-<carte>.yaml). Même place dans la liste que les deux packages qu'elle
   # regroupe : l'ordre de la configuration du Tab5 ne change pas.
   tab5_carte: !include Tab5/paquets/carte-${ tab5_carte | default('tab5') | lower }.yaml

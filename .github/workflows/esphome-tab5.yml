@@ -28,7 +28,7 @@ name: ESPHome Tab5 Compilation
 #     quand l'écran, le matériel, l'entrée ou ce workflow changent ; check NON requis.
 #     Les deux révisions en parallèle, 5 à 8 min. `build-min` : ~6 min.
 #   - build-carte-7b : la même compilation pour la carte Waveshare ESP32-P4-WIFI6-Touch-
-#     LCD-7B (`tab5_carte: waveshare-7b`, ADR-0061), EXPÉRIMENTALE : la carte de l'auteur
+#     LCD-7B (`tab5_carte: waveshare-7b`, ADR-0061), prise en charge : la carte de l'auteur
 #     depuis le 14/10/2026, publiée avec les releases (publication.yml). Mêmes déclencheurs
 #     que `build` ; check NON requis.
 #

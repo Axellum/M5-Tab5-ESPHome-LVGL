@@ -22,7 +22,7 @@ The display chip is printed on the sticker on the back of the tablet, just above
 
 A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, then the other.
 
-**A Waveshare ESP32-P4 7B** (another board, 7-inch, experimental): pick « Waveshare ESP32-P4 7B », in the **Beta** channel for now, and plug in the USB-C port of its ESP32-P4 ([Waveshare 7B](../waveshare-7b.md)).
+**A Waveshare ESP32-P4 7B** (another board, 7-inch, from 3.9.0): pick « Waveshare ESP32-P4 7B » and plug in the USB-C port of its ESP32-P4 ([Waveshare 7B](../waveshare-7b.md)).
 
 ## 3. Pick the channel
 
@@ -86,7 +86,7 @@ La puce d'écran est écrite sur l'autocollant au dos de la tablette, juste au-d
 
 Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, essayez l'une, puis l'autre.
 
-**Une Waveshare ESP32-P4 7B** (une autre carte, 7 pouces, expérimentale) : choisissez « Waveshare ESP32-P4 7B », dans le canal **Bêta** pour l'instant, et branchez le port USB-C de son ESP32-P4 ([Waveshare 7B](../waveshare-7b.md#version-française)).
+**Une Waveshare ESP32-P4 7B** (une autre carte, 7 pouces, dès la 3.9.0) : choisissez « Waveshare ESP32-P4 7B » et branchez le port USB-C de son ESP32-P4 ([Waveshare 7B](../waveshare-7b.md#version-française)).
 
 ## 3. Choisir le canal
 
