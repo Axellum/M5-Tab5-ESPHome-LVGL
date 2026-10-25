@@ -775,7 +775,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t("Retourné : carte montée à l'envers ; l'image et le tactile tournent aussitôt", 'Retourné: board mounted upside down; the picture and the touch turn at once') }}"
+            heading: "{{ t("Upside down : carte montée à l'envers ; l'image et le tactile tournent aussitôt", 'Upside down: board mounted upside down; the picture and the touch turn at once') }}"
             heading_style: subtitle
 {%- endif %}
 {#- Économie d'énergie (firmware du 06/10/2026) : « Sur batterie » d'après le courant de l'INA226. #}
@@ -803,7 +803,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t('Essentielles : seule la carte du centre tourne ; Aucune : tout est instantané', 'Essentielles: only the centre card turns; Aucune: everything is instant') }}"
+            heading: "{{ t('Essential : seule la carte du centre tourne ; « None » : tout est instantané', 'Essential: only the centre card turns; « None »: everything is instant') }}"
             heading_style: subtitle
 {%- endif %}
 {#- Limite de charge (firmware du 08/10/2026) : « 100 % » ou « 80 % », pour une tablette toujours branchée. #}
@@ -831,7 +831,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t('Rapide : la charge rapide du chargeur, seulement quand il est allumé', 'Rapide: the charger’s quick charge, only while it is on') }}"
+            heading: "{{ t('Fast : la charge rapide du chargeur, seulement quand il est allumé', 'Fast: the charger’s quick charge, only while it is on') }}"
             heading_style: subtitle
 {%- endif %}
 {%- if T.wifi_eco %}
@@ -2227,12 +2227,12 @@ views:
     'es': 'Orientación de la pantalla',
     'it': 'Orientamento dello schermo',
     'tr': 'Ekran yönü'},
-  "Retourné : carte montée à l'envers ; l'image et le tactile tournent aussitôt": {
-    'de': 'Retourné: Platine kopfüber montiert; Bild und Touch drehen sich sofort',
-    'nl': 'Retourné: bord ondersteboven gemonteerd; beeld en aanraking draaien meteen',
-    'es': 'Retourné: placa montada al revés; la imagen y el táctil giran al instante',
-    'it': 'Retourné: scheda montata capovolta; immagine e tocco ruotano subito',
-    'tr': 'Retourné: kart ters monte edilmiş; görüntü ve dokunma hemen döner'},
+  "Upside down : carte montée à l'envers ; l'image et le tactile tournent aussitôt": {
+    'de': 'Upside down: Platine kopfüber montiert; Bild und Touch drehen sich sofort',
+    'nl': 'Upside down: bord ondersteboven gemonteerd; beeld en aanraking draaien meteen',
+    'es': 'Upside down: placa montada al revés; la imagen y el táctil giran al instante',
+    'it': 'Upside down: scheda montata capovolta; immagine e tocco ruotano subito',
+    'tr': 'Upside down: kart ters monte edilmiş; görüntü ve dokunma hemen döner'},
   "Extinction auto de l'écran": {
     'de': 'Bildschirm automatisch aus',
     'nl': 'Scherm automatisch uit',
@@ -2335,24 +2335,24 @@ views:
     'es': 'Animaciones',
     'it': 'Animazioni',
     'tr': 'Animasyonlar'},
-  'Essentielles : seule la carte du centre tourne ; Aucune : tout est instantané': {
-    'de': 'Essentielles: nur die mittlere Karte dreht sich; Aucune: alles sofort',
-    'nl': 'Essentielles: alleen de middelste kaart draait; Aucune: alles direct',
-    'es': 'Essentielles: solo gira la tarjeta central; Aucune: todo es instantáneo',
-    'it': 'Essentielles: ruota solo la scheda centrale; Aucune: tutto è istantaneo',
-    'tr': 'Essentielles: yalnızca ortadaki kart döner; Aucune: her şey anında'},
+  'Essential : seule la carte du centre tourne ; « None » : tout est instantané': {
+    'de': 'Essential: nur die mittlere Karte dreht sich; « None »: alles sofort',
+    'nl': 'Essential: alleen de middelste kaart draait; « None »: alles direct',
+    'es': 'Essential: solo gira la tarjeta central; « None »: todo es instantáneo',
+    'it': 'Essential: ruota solo la scheda centrale; « None »: tutto è istantaneo',
+    'tr': 'Essential: yalnızca ortadaki kart döner; « None »: her şey anında'},
   'Mode de charge': {
     'de': 'Lademodus',
     'nl': 'Laadmodus',
     'es': 'Modo de carga',
     'it': 'Modalità di carica',
     'tr': 'Şarj modu'},
-  'Rapide : la charge rapide du chargeur, seulement quand il est allumé': {
-    'de': 'Rapide: die Schnellladung des Ladegeräts, nur wenn es eingeschaltet ist',
-    'nl': 'Rapide: het snelladen van de lader, alleen als die aan staat',
-    'es': 'Rapide: la carga rápida del cargador, solo cuando está encendido',
-    'it': 'Rapide: la carica rapida del caricatore, solo quando è acceso',
-    'tr': 'Rapide: şarj cihazının hızlı şarjı, yalnızca açıkken'},
+  'Fast : la charge rapide du chargeur, seulement quand il est allumé': {
+    'de': 'Fast: die Schnellladung des Ladegeräts, nur wenn es eingeschaltet ist',
+    'nl': 'Fast: het snelladen van de lader, alleen als die aan staat',
+    'es': 'Fast: la carga rápida del cargador, solo cuando está encendido',
+    'it': 'Fast: la carica rapida del caricatore, solo quando è acceso',
+    'tr': 'Fast: şarj cihazının hızlı şarjı, yalnızca açıkken'},
   'Wi-Fi éco': {
     'de': 'WLAN sparen',
     'nl': 'Zuinige wifi',

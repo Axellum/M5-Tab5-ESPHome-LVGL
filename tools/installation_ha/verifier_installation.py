@@ -1421,7 +1421,7 @@ async def demandes_de_la_tablette(ha: HA, ws: WS, rapport: Rapport) -> None:
     # Calendrier : le mois affiché et ses voisins, demandés par événement ; HA lance
     # script.tab5_calendrier_mois, qui répond à la tablette (tab5_maj_calendrier_mois).
     debut = time.time()
-    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Calendrier"})
+    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Calendar"})
     evt = await ws.attendre_evenement(EVT_MOIS, debut, 30)
     if rapport.verifier(evt is not None, f"calendrier ouvert : la tablette demande le mois par un événement ({EVT_MOIS})",
                         "rien en 30 s (tab5_cal_request, tab5-calendar.yaml)"):
@@ -1432,7 +1432,7 @@ async def demandes_de_la_tablette(ha: HA, ws: WS, rapport: Rapport) -> None:
                 rapport.info(f"script.tab5_calendrier_mois lancé par l'événement — {resume_passage(t)}")
 
     # « MAJ Écran » : HA remet le garde-fou à on et relance la poussée complète.
-    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Console système"})
+    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "System console"})
     await asyncio.sleep(2)
     debut = time.time()
     await ha.post(f"/api/services/esphome/{PREFIXE_ACTIONS}_rendu_toucher",
@@ -1446,7 +1446,7 @@ async def demandes_de_la_tablette(ha: HA, ws: WS, rapport: Rapport) -> None:
         rapport.verifier(declenchee >= debut - TOLERANCE_CLE,
                          "« MAJ Écran » relance la poussée complète (automation.trigger fait par HA)",
                          f"{poussee.get('entity_id')} : dernier déclenchement {declenchee - debut:+.1f} s")
-    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Accueil"})
+    await ha.post("/api/services/select/select_option", {"entity_id": SELECT_ECRAN, "option": "Home"})
 
     # Un autre appareil qui enverrait l'événement de redémarrage : ignoré par la garde du
     # modèle. Un événement tiré par l'API porte le device_id qu'on lui donne.

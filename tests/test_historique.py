@@ -805,7 +805,7 @@ def test_appuis_longs_et_registre():
     navigation = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-navigation.yaml"))
     # Ouvert aussi sans appui long (« Aller à l'écran », roue de navigation, ADR-0042) : la
     # même clé que l'appui long de gauche, sinon celle de droite.
-    ligne = re.search(r'ModalRegistry::add\(id\(historique_popup\),\s+"Température",\s+ModalRegistry::POPUP,'
+    ligne = re.search(r'ModalRegistry::add\(id\(historique_popup\),\s+"Temperature",\s+ModalRegistry::POPUP,'
                       r'\s+\[\] \{(.*?)\}\);', navigation, re.S)
     assert ligne, "Température : ouverture par le registre"
     assert re.findall(r"accueil_historique_cle\((\w+)\)", ligne.group(1)) == ["false", "true"]

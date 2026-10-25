@@ -13,6 +13,7 @@
 # Le premier thème (`ordre: 1`) en sombre est PALETTE_SOMBRE, celle des jeux : ses
 # valeurs ne changent pas sans changer l'écran (le rendu hors tablette le voit).
 nom: Ardoise
+nom_ha: Slate   # option lue par Home Assistant (ADR-0070)
 ordre: 1
 
 sombre:

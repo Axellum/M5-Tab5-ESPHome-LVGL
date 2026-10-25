@@ -197,6 +197,22 @@ static void test_heure_fixe_jours_coches() {
     now = now_is(at(2026, 9, 27, 22, 0));
     expect_str(alarm_next_label(now), "Demain 07:00", "dimanche soir → « Demain »");
 
+    // « Prochain réveil » publié vers HA : en anglais quelle que soit la langue de l'écran
+    // (I18nPourHa, ADR-0070), puis la langue de l'écran revient à la sortie de la garde.
+    i18n_set_language(0);
+    {
+        const I18nPourHa en;
+        expect_str(alarm_next_label(now), "Tomorrow 07:00", "état pour HA : en anglais sur un écran en français");
+    }
+    expect_str(alarm_next_label(now), "Demain 07:00", "garde refermée : l'écran retrouve le français");
+    i18n_set_language(2);
+    {
+        const I18nPourHa en;
+        expect(i18n_language() == 1, "garde : l'anglais, même depuis une autre langue");
+    }
+    expect(i18n_language() == 2, "garde refermée : la langue de l'écran revient");
+    i18n_set_language(0);
+
     // Détail du popup : « 1er » pour le premier du mois (audit du 26/09/2026, §2.2 —
     // le détail refaisait son propre libellé et écrivait « jeudi 1 octobre »).
     now = now_is(at(2026, 9, 30, 20, 0));  // mercredi soir → jeudi 1er octobre

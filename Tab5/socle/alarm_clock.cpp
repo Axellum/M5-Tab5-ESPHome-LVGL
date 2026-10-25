@@ -341,24 +341,22 @@ std::string alarm_next_detail(time_t now) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Préréglages de jours + noms des modes
+// Préréglages de jours
 // ═══════════════════════════════════════════════════════════════════════════
 namespace {
+// Masque de chaque préréglage, dans l'ordre des options du select « Réveil : jours »
+// (tab5-alarm.yaml) : Every day, Monday-Friday, Monday-Saturday, Weekend, Custom. Le
+// select est lu et publié par son INDEX (24/10/2026, ADR-0070 : ses options sont le
+// texte de HA, en anglais ; les noms français de cette table sont partis avec).
+// -1 = « Custom » (« Personnalisé ») : sélectionner cette entrée ne change rien. Elle
+// DOIT rester la dernière : alarm_days_preset_index() s'en sert comme valeur de repli
+// quand aucun masque ne correspond.
 struct DaysPreset {
-  const char* name;
-  int mask;  // -1 = « Personnalisé » : sélectionner cette entrée ne change rien
+    int mask;
 };
-// L'entrée « Personnalisé » DOIT rester la dernière : alarm_days_preset_index()
-// s'en sert comme valeur de repli quand aucun masque ne correspond.
-const DaysPreset kPresets[ALARM_DAYS_PRESET_COUNT] = {
-    {"Tous les jours", 0x7F}, {"Lundi-Vendredi", 0x1F}, {"Lundi-Samedi", 0x3F},
-    {"Week-end", 0x60},       {"Personnalis\xC3\xA9", -1},
-};
+const DaysPreset kPresets[ALARM_DAYS_PRESET_COUNT] = {{0x7F}, {0x1F}, {0x3F}, {0x60}, {-1}};
 }  // namespace
 
-const char* alarm_days_preset_name(int idx) {
-  return kPresets[clamp_i(idx, 0, ALARM_DAYS_PRESET_COUNT - 1)].name;
-}
 int alarm_days_preset_mask(int idx) {
   return kPresets[clamp_i(idx, 0, ALARM_DAYS_PRESET_COUNT - 1)].mask;
 }
@@ -376,25 +374,25 @@ int alarm_days_preset_index(uint8_t mask) {
 // Éditer une ligne suffit — aucune police, aucun octet de flash, aucun réglage
 // HA ne dépend de leur contenu (seul le NOMBRE d'entrées est repris par le
 // select exposé à HA, cf. ALARM_MELODY_COUNT).
+// Une ligne par option du select « Réveil : sonnerie », dans son ordre : Gentle (Douce),
+// Classic (Classique), Insistent (Insistante), Chime (Carillon). Le select est lu par son
+// INDEX (g_alarm_cfg.melody) : ses options sont le texte de HA (anglais depuis le
+// 24/10/2026, ADR-0070) ; le nom en tête de partition ne sert qu'au format RTTTL.
 namespace {
-struct Melody {
-  const char* name;
-  const char* score;
-};
 // Pas de durée : le cycle de sonnerie s'arrête sur `rtttl.is_playing`, pas sur
 // une estimation (le champ `ms` et alarm_melody_ms(), jamais lus, sont retirés
 // le 25/09/2026, audit lot 8a).
+struct Melody {
+    const char* score;
+};
 const Melody kMelodies[ALARM_MELODY_COUNT] = {
-    {"Douce", "Douce:d=8,o=6,b=92:c,e,g,c7,p,g,e,c,2p"},
-    {"Classique", "Reveil:d=16,o=6,b=140:c7,c7,p,c7,c7,4p,c7,c7,p,c7,c7,4p"},
-    {"Insistante", "Urgence:d=32,o=7,b=180:c,c,c,c,8p,c,c,c,c,8p,c,c,c,c,4p"},
-    {"Carillon", "Carillon:d=4,o=5,b=90:e,c,d,1g4,2p,g4,d,e,1c"},
+    {"Douce:d=8,o=6,b=92:c,e,g,c7,p,g,e,c,2p"},
+    {"Reveil:d=16,o=6,b=140:c7,c7,p,c7,c7,4p,c7,c7,p,c7,c7,4p"},
+    {"Urgence:d=32,o=7,b=180:c,c,c,c,8p,c,c,c,c,8p,c,c,c,c,4p"},
+    {"Carillon:d=4,o=5,b=90:e,c,d,1g4,2p,g4,d,e,1c"},
 };
 }  // namespace
 
-const char* alarm_melody_name(int idx) {
-  return kMelodies[clamp_i(idx, 0, ALARM_MELODY_COUNT - 1)].name;
-}
 const char* alarm_melody_rtttl(int idx) {
   return kMelodies[clamp_i(idx, 0, ALARM_MELODY_COUNT - 1)].score;
 }

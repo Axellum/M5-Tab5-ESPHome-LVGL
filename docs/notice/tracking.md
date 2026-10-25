@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a tap on the tracked sensor left of the clock, the « Suivi » entry of the tablet's « Aller à l'écran » list in Home Assistant, or a tap or a long press of the clock or of a button top right when the blueprint gives it « Suivi (capteurs suivis) · Tracking (tracked sensors) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+**Opens with** a tap on the tracked sensor left of the clock, the « Tracking » entry of the tablet's « Aller à l'écran » list in Home Assistant, or a tap or a long press of the clock or of a button top right when the blueprint gives it « Suivi (capteurs suivis) · Tracking (tracked sensors) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 ![The tracking window: one card per followed sensor, its value, its change and its 24-hour curve](../images/notice/suivi-en.webp)
 
@@ -29,7 +29,7 @@ Like every window, it closes with its **×**, a tap on the dark area around it, 
 
 ---
 
-**S'ouvre par** un tap sur le capteur suivi à gauche de l'horloge, l'entrée « Suivi » de la liste « Aller à l'écran » de la tablette dans Home Assistant, ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Suivi (capteurs suivis) · Tracking (tracked sensors) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+**S'ouvre par** un tap sur le capteur suivi à gauche de l'horloge, l'entrée « Tracking » de la liste « Aller à l'écran » de la tablette dans Home Assistant, ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Suivi (capteurs suivis) · Tracking (tracked sensors) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 ![La fenêtre du suivi : une carte par capteur suivi, sa valeur, sa variation et sa courbe sur 24 heures](../images/notice/suivi-fr.webp)
 

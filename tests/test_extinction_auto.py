@@ -21,7 +21,8 @@ from tests.commun import ChargeurBalisesBrutes as _Chargeur, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
-OPTIONS = ["Jamais", "1 min", "2 min", "5 min", "10 min", "30 min"]
+# En anglais, lues par HA (ADR-0070 ; « Jamais » avant le 24/10/2026).
+OPTIONS = ["Never", "1 min", "2 min", "5 min", "10 min", "30 min"]
 
 
 def _yaml(nom):
@@ -55,7 +56,7 @@ def test_select_options_et_defaut_jamais():
     s = _select()
     assert s["name"] == "Tab5 Extinction auto de l'écran"
     assert s["options"] == OPTIONS
-    assert s["initial_option"] == "Jamais", "défaut : comportement d'avant inchangé"
+    assert s["initial_option"] == "Never", "défaut : comportement d'avant inchangé"
     assert s["restore_value"] is True and s["optimistic"] is True
     assert s["entity_category"] == "config"
 

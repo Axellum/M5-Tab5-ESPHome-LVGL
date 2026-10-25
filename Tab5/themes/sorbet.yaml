@@ -17,6 +17,7 @@
 # reste à plat sur BG ; le texte du bandeau prend le texte courant de la palette sombre
 # (zone sombre), pas color_banner_text.
 nom: Sorbet
+nom_ha: Sorbet   # option lue par Home Assistant (ADR-0070)
 ordre: 20
 herite: ardoise
 zones_sombres: [bandeau]

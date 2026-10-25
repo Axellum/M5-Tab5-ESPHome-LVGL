@@ -13,10 +13,13 @@
  *       widgets (textes posés par le YAML) est dans tab5_text.cpp :
  *       i18n_apply_boot(), appelé une fois en fin de setup (on_boot -100).
  * @ai_instruction Traduire ce que l'écran AFFICHE ou que la tablette DIT, jamais ce
- *       que Home Assistant lit : noms d'entités, options de select, états exposés,
- *       codes des payloads restent en français (les renommer casse l'historique et
- *       les automatisations). Une valeur HA affichée à l'écran se traduit au moment
- *       de l'affichage : `tr(etat.c_str())`.
+ *       que Home Assistant lit : les noms d'entités (`name:`) et les codes des payloads
+ *       ne changent jamais (les renommer casse l'historique et les automatisations).
+ *       Les options de select et les états texte que HA lit sont en ANGLAIS depuis le
+ *       24/10/2026 (ADR-0070), dans toutes les langues de l'écran : écrits tels quels
+ *       dans le YAML, ou calculés par tr() sous la garde I18nPourHa ci-dessous. Une
+ *       valeur HA affichée à l'écran se traduit au moment de l'affichage :
+ *       `tr(etat.c_str())`.
  * @memory_constraint Tables en flash (const). Aucune allocation dans tr() ; la
  *       langue change par redémarrage (select « Langue », tab5-ha-controls.yaml).
  */
@@ -48,3 +51,20 @@ constexpr const char* tr_noop(const char* fr) { return fr; }
 // Chaque {nom} du modèle (traduit) est remplacé ; un nom inconnu reste tel quel.
 std::string tr_fill(const char* pattern_fr,
                     std::initializer_list<std::pair<const char*, std::string>> vars);
+
+// Un texte de la tablette publié vers Home Assistant (état d'un text_sensor : « Prochain
+// réveil ») est en anglais quelle que soit la langue de l'écran (24/10/2026, ADR-0070).
+// Garde de portée : tr() rend l'anglais tant qu'elle vit, puis la langue de l'écran
+// revient. Rien d'affiché dans sa portée (un widget peint là serait en anglais) : on y
+// calcule le texte, on le publie, c'est tout.
+//   { const I18nPourHa en; s = alarm_next_label(now); }
+class I18nPourHa {
+public:
+    I18nPourHa();
+    ~I18nPourHa();
+    I18nPourHa(const I18nPourHa&) = delete;
+    I18nPourHa& operator=(const I18nPourHa&) = delete;
+
+private:
+    uint8_t avant_;
+};

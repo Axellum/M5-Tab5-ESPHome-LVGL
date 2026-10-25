@@ -235,9 +235,11 @@ touchscreen:
             then:
               - light.turn_on: backlight
 
-# Sens de l'écran (ADR-0069) : « Retourné » = carte montée à l'envers, 180° de plus que
-# `carte_rotation` (180 → 0, sans rotation par image), choisi dans HA, gardé en NVS, restauré
-# avant la barre et LVGL. [AI-WARNING] Jamais avec `-s carte_rotation 0` : double demi-tour.
+# Sens de l'écran (ADR-0069) : « Upside down » (« Retourné » avant le 24/10/2026) = carte
+# montée à l'envers, 180° de plus que `carte_rotation` (180 → 0, sans rotation par image),
+# choisi dans HA, gardé en NVS, restauré avant la barre et LVGL. Options en anglais, lues par
+# HA (ADR-0070) : la tablette garde l'INDEX, l'ordre ne change jamais.
+# [AI-WARNING] Jamais avec `-s carte_rotation 0` : double demi-tour.
 select:
   - platform: template
     id: tab5_sens_ecran
@@ -247,7 +249,7 @@ select:
     optimistic: true
     restore_value: true
     initial_option: "Normal"
-    options: ["Normal", "Retourné"]
+    options: ["Normal", "Upside down"]
     on_value:
       - lambda: 'dalle_sens_choisir(id(tab5_lvgl), i == 1);'
 

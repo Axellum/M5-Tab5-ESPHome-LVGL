@@ -56,3 +56,8 @@ Constraints: the defaults keep the behaviour of the previous firmware; no new se
 - Three new config entities in Home Assistant: `select.*_tab5_mode_de_charge`, `select.*_tab5_animations`, `select.*_tab5_wi_fi_eco`.
 - `animations_reduites(bool)` is replaced by `animations_niveau(ChoixAnimations)`; `DecisionEconomie::animations` replaces `animations_reduites`.
 - To check on the tablet: the « Charge rapide allumee / arretee » and « Wi-Fi eco actif / coupe » log lines (tags `tab5.batterie`, `tab5.wifi`), and a refusal from the C6 in a `W` line. The current drawn and the latency stay to be measured.
+
+## Update (2026-10-24)
+
+The options of the selects named here are English since [ADR-0070](0070-home-assistant-reads-english.md) (« Classic / Fast », « Full / Essential / None », « Never / On battery / Always »); same order, the tablet keeps the index. The decision above stands.
+
