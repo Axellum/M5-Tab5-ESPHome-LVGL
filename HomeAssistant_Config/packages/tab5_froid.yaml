@@ -7,8 +7,7 @@
 #       par appareil), ses alertes de la carte centrale (source « froid » de
 #       custom_templates/tab5_alertes.jinja) et l'icône qui clignote dans le coin de
 #       l'horloge au niveau grave.
-#         - Les appareils : listes « Tab5 · réfrigérateurs · fridges » et « Tab5 ·
-#           congélateurs · freezers » (packages/tab5_reglages.yaml, plusieurs choix,
+#         - Les appareils : listes « Tab5 · fridges » et « Tab5 · freezers » (packages/tab5_reglages.yaml, plusieurs choix,
 #           quatre appareils au plus en tout, jamais devinés) ; leurs mémoires
 #           input_text.tab5_choix_frigos et input_text.tab5_choix_congelateurs. Seuls les
 #           capteurs de température à state_class measurement y sont (statistiques).
@@ -66,8 +65,9 @@ template:
   # Miroir : un déclencheur `state:` exige un entity_id écrit dans le YAML. Son état est
   # le nombre d'appareils déclarés, son attribut `signature` change dès qu'un d'eux change.
   - sensor:
-      - name: "Tab5 · signature du froid"
+      - name: "Tab5 · cold storage signature"
         unique_id: tab5_froid_signature
+        default_entity_id: sensor.tab5_signature_du_froid
         icon: mdi:fridge-outline
         state: >-
           {{ ((states('input_text.tab5_choix_frigos') ~ ',' ~ states('input_text.tab5_choix_congelateurs'))
@@ -87,7 +87,7 @@ template:
       - trigger: event
         event_type: tab5_froid_bilan
     sensor:
-      - name: "Tab5 · froid"
+      - name: "Tab5 · cold storage"
         unique_id: tab5_froid
         default_entity_id: sensor.tab5_froid
         icon: mdi:fridge-outline
@@ -100,7 +100,7 @@ automation:
   # single : les changements de cette attente sont ignorés en silence), puis un dernier
   # calcul si la signature a bougé entre-temps.
   - id: tab5_froid
-    alias: "Tab5 — froid (calcul au changement)"
+    alias: "Tab5 — cold storage (compute on change)"
     description: >-
       Recalcule l'état des réfrigérateurs et congélateurs des listes « Tab5 · … » quand
       un de leurs capteurs change, une minute au plus entre deux calculs (ADR-0055).
@@ -126,7 +126,7 @@ automation:
   # Toutes les cinq minutes (les durées « depuis 30 min » avancent sans changement), et
   # tout de suite : liste changée, tablette (re)connectée, « MAJ Écran », démarrage de HA.
   - id: tab5_froid_immediat
-    alias: "Tab5 — froid (calcul périodique et immédiat)"
+    alias: "Tab5 — cold storage (periodic and immediate compute)"
     description: >-
       Recalcule l'état des réfrigérateurs et congélateurs toutes les cinq minutes, quand
       une des listes change, à la connexion de la tablette, à « MAJ Écran » et au
@@ -160,7 +160,7 @@ automation:
 
 script:
   tab5_froid_calculer:
-    alias: "Tab5 — froid : calculer et pousser"
+    alias: "Tab5 — cold storage: compute and push"
     description: >-
       Calcule l'état des réfrigérateurs et congélateurs (niveau, cause, depuis, extrêmes
       et courbe des 24 h, dernier incident), le garde dans sensor.tab5_froid et le pousse

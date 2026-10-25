@@ -283,7 +283,7 @@ class AssistantFlux:
                 self._propositions[liste.cle] = valeur
                 self._proposees.add(liste.cle)
             aucun = assistant.TEXTES[assistant.langue_de(self.hass.config.language)]["aucun"]
-            libelles = [{"value": o, "label": aucun if o == assistant.AUCUN
+            libelles = [{"value": o, "label": aucun if o in assistant.AUCUNS
                          else f"{self._inv.noms[o]} ({o})" if self._inv.noms.get(o, o) != o else o}
                         for o in options]
             champs[_champ(liste.cle, valeur)] = SelectSelector({"options": libelles, "mode": "dropdown"})

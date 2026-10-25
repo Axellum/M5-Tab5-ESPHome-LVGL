@@ -11,7 +11,7 @@
 #           Rouge, attribut `phenomenes` = 11 niveaux séparés par « | » (les 9 cases
 #           Météo-France, puis Brouillard et Feux de forêt).
 #       La source se choisit dans HA, sans toucher au YAML : input_select
-#       « Tab5 · source de la pluie dans l'heure » et « Tab5 · source des vigilances ».
+#       « Tab5 · next-hour rain source » et « Tab5 · weather warnings source ».
 #       Depuis le 03/10/2026 (discussion #278), aussi dans la section « Météo » du
 #       blueprint tab5_emplacements : remplie, elle ÉCRIT son choix dans ces listes et dans
 #       input_text.tab5_meteo_previsions (une liste changée à la main y revient, avec une
@@ -49,17 +49,17 @@
 #       Sans ces intégrations (données de test du CI), les mêmes formes sont
 #       reconnues à leurs attributs.
 #       Une source choisie sans entité donne « pas de données » (pluie) ou aucune
-#       vigilance ; « Aucune » masque la carte. Les sources de pluie sans clé n'ont
+#       vigilance ; « None » masque la carte. Les sources de pluie sans clé n'ont
 #       rien à trouver : hors de leur zone, elles donnent « pas de données ».
 # @defaut Météo-France est le premier choix des deux listes, donc celui d'une
 #       installation neuve. Sans capteur de pluie Météo-France, la pluie laissée sur
 #       Météo-France passe sur Open-Meteo, seul service qui répond partout (variable
 #       `source` du capteur de pluie ; 02/10/2026, retour d'un utilisateur en Turquie,
 #       discussion #278). Les vigilances laissées sur Météo-France sans l'intégration
-#       restent toutes vertes, comme « Aucune ». La liste garde le choix de
+#       restent toutes vertes, comme « None ». La liste garde le choix de
 #       l'utilisateur : Météo-France ajouté plus tard reprend la main tout seul.
 # @install `homeassistant: packages: !include_dir_named packages`, puis ce fichier
-#       dans config/packages/. Rien à renseigner. « Tab5 Météo » importe
+#       dans config/packages/. Rien à renseigner. « Tab5 Weather » importe
 #       custom_templates/tab5_meteo.jinja (repli, 08/10/2026) : le déployer et
 #       recharger les modèles Jinja personnalisés AVANT ce fichier.
 # @ai_warning Les options des input_select sont lues par les modèles ci-dessous :
@@ -68,7 +68,7 @@
 
 input_select:
   tab5_source_pluie:
-    name: "Tab5 · source de la pluie dans l'heure · next-hour rain source"
+    name: "Tab5 · next-hour rain source"
     icon: mdi:weather-pouring
     options:
       - "Météo-France"
@@ -77,31 +77,30 @@ input_select:
       - "DWD"
       - "Met.no"
       - "Open-Meteo"
-      - "Aucune"
+      - "None"
   tab5_source_vigilance:
-    name: "Tab5 · source des vigilances · weather warnings source"
+    name: "Tab5 · weather warnings source"
     icon: mdi:alert-outline
     options:
       - "Météo-France"
       - "MeteoAlarm"
       - "DWD"
       - "CAP Alerts"
-      - "Aucune"
+      - "None"
 
 # Source des prévisions (lot 4c-3) : mémorise l'entité weather.* choisie dans la
-# liste « Tab5 · source des prévisions » (template select plus bas, dont les options
+# liste « Tab5 · forecast source » (template select plus bas, dont les options
 # sont les entités météo présentes), ou écrite par la section « Météo » du blueprint
 # quand elle est remplie. Sans `initial` : HA garde le choix au redémarrage.
 # Vide ou entité disparue : la première entité Météo-France, sinon la première
 # entité météo (sensor.tab5_sources_meteo, attribut `meteo`).
 input_text:
   tab5_meteo_previsions:
-    name: "Tab5 · entité météo choisie"
+    name: "Tab5 · chosen weather entity"
     icon: mdi:weather-partly-cloudy
     max: 255
 
-# Pluie dans l'heure des sources radar sans clé (29/09/2026), appelée par « Tab5 Pluie
-# dans l'heure » seulement quand l'une d'elles est choisie (Open-Meteo aussi quand la
+# Pluie dans l'heure des sources radar sans clé (29/09/2026), appelée par « Tab5 Rain in the next hour » seulement quand l'une d'elles est choisie (Open-Meteo aussi quand la
 # liste est restée sur Météo-France sans l'intégration, voir @defaut). Coordonnées du domicile
 # (zone.home) arrondies à 0,01° (~1 km, la maille des radars), envoyées au seul
 # service choisi. Réponses vérifiées le 29/09/2026 :
@@ -194,8 +193,9 @@ template:
         {{ l if l else (states.sensor | selectattr('attributes.incident_platform_version', 'defined')
                         | map(attribute='entity_id') | list) }}
     sensor:
-      - name: "Tab5 · sources météo"
+      - name: "Tab5 · weather sources"
         unique_id: tab5_sources_meteo
+        default_entity_id: sensor.tab5_sources_meteo
         icon: mdi:weather-cloudy-clock
         state: >-
           {%- set l = (['Météo-France'] if mf_ville else []) + (['OpenWeatherMap'] if owm_meteos else [])
@@ -232,8 +232,9 @@ template:
   # (état et `forecast_time_ref`, toutes les 5 min) et déclenche le capteur de pluie
   # aussitôt, comme le faisait un déclencheur `state:` sur sensor.<ville>_next_rain.
   - sensor:
-      - name: "Tab5 · relevé pluie Météo-France"
+      - name: "Tab5 · Météo-France rain reading"
         unique_id: tab5_releve_pluie_meteo_france
+        default_entity_id: sensor.tab5_releve_pluie_meteo_france
         icon: mdi:weather-rainy
         state: >-
           {%- set e = state_attr('sensor.tab5_sources_meteo', 'mf_pluie') or '' -%}
@@ -274,9 +275,11 @@ template:
       owm_meteo: "{{ state_attr('sensor.tab5_sources_meteo', 'owm') or '' }}"
       # Source effective, lue par les actions ET par les modèles du capteur (jamais la
       # liste elle-même) : Météo-France sans capteur de pluie → Open-Meteo (@defaut).
+      # « None » de la liste (« Aucune » avant le 24/10/2026) → « none » : HA relirait un
+      # rendu « None » comme le None de Python (Template._parse_result).
       source: >-
         {%- set choix = states('input_select.tab5_source_pluie') -%}
-        {{ 'Open-Meteo' if choix == 'Météo-France' and mf_pluie == '' else choix }}
+        {{ 'Open-Meteo' if choix == 'Météo-France' and mf_pluie == '' else 'none' if choix in ['None', 'Aucune'] else choix }}
       lat: "{{ state_attr('zone.home', 'latitude') }}"
       lon: "{{ state_attr('zone.home', 'longitude') }}"
     actions:
@@ -368,17 +371,19 @@ template:
             {%- endif -%}
             {{ ns.l if ns.l else none }}
     sensor:
-      - name: "Tab5 Pluie dans l'heure"
+      - name: "Tab5 Rain in the next hour"
         unique_id: tab5_pluie_dans_l_heure
+        default_entity_id: sensor.tab5_pluie_dans_l_heure
         icon: mdi:weather-rainy
         # Code « @niveau,début » lu par la tablette (lot 4c) : niveau -1 pas de
         # données, 0 temps sec, 1 à 4 pluie faible à très forte, 5 intensité
         # inconnue ; début = epoch UTC du début de la pluie, 0 s'il pleut déjà ;
         # « @- » = aucune source (phrase et carte masquées). La tablette compose la
         # phrase dans sa langue et décompte les minutes elle-même.
-        # `source` = la source effective (variables plus haut), pas la liste.
+        # `source` = la source effective (variables plus haut), pas la liste : « none »
+        # pour « None » (« Aucune » avant le 24/10/2026).
         state: >
-          {% if source == 'Aucune' %}
+          {% if source == 'none' %}
             @-
           {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo'] %}
             {# Série commune (variables des actions). Seuils en mm/h : < 0,1 sec,
@@ -416,7 +421,7 @@ template:
             {% if ent == '' %}
               {# Sans capteur de pluie Météo-France, la source effective est Open-Meteo
                  (@defaut, 02/10/2026) : branche gardée pour un état inattendu de la
-                 liste. Aucune source, comme « Aucune » — et non « temps sec » (lot 5b). #}
+                 liste. Aucune source, comme « None » — et non « temps sec » (lot 5b). #}
               @-
             {% elif not has_value(ent) %}
               @0,0
@@ -477,8 +482,9 @@ template:
   # MeteoAlarm marchent sans le fichier.
   # ──────────────────────────────────────────────────────────────────────────
   - sensor:
-      - name: "Tab5 Vigilance"
+      - name: "Tab5 Weather warnings"
         unique_id: tab5_vigilance
+        default_entity_id: sensor.tab5_vigilance
         icon: mdi:alert-outline
         # Niveau global : Vert, Jaune, Orange ou Rouge (codes lus par la tablette
         # et par le bandeau info, jamais traduits).
@@ -538,13 +544,17 @@ template:
             {% else %}
               {{ (['Vert'] * 11) | join('|') }}
             {% endif %}
-          source: "{{ states('input_select.tab5_source_vigilance') }}"
+          # « none » pour « None » (« Aucune » avant le 24/10/2026) : un rendu « None »
+          # serait relu par HA comme le None de Python.
+          source: >-
+            {%- set s = states('input_select.tab5_source_vigilance') -%}
+            {{ 'none' if s in ['None', 'Aucune'] else s }}
 
   # ──────────────────────────────────────────────────────────────────────────
   # Prévisions et météo du moment (lot 4c-3) : n'importe quelle entité weather.*.
   # ──────────────────────────────────────────────────────────────────────────
   - select:
-      - name: "Tab5 · source des prévisions · forecast source"
+      - name: "Tab5 · forecast source"
         unique_id: tab5_source_previsions
         default_entity_id: select.tab5_source_des_previsions
         icon: mdi:weather-partly-cloudy
@@ -557,8 +567,9 @@ template:
             data:
               value: "{{ option }}"
     sensor:
-      - name: "Tab5 Météo"
+      - name: "Tab5 Weather"
         unique_id: tab5_meteo
+        default_entity_id: sensor.tab5_meteo
         icon: mdi:weather-partly-cloudy
         # État = condition du moment de l'entité EFFECTIVE (codes HA standard : sunny,
         # rainy… — ce que lit la tablette). Attributs : ce que lisent les poussées.
@@ -572,7 +583,7 @@ template:
           {%- set e = tab5_meteo_effective() -%}
           {{ states(e if e else (state_attr('sensor.tab5_sources_meteo', 'meteo') or '')) }}
         attributes:
-          # La source choisie (le select « Tab5 · source des prévisions » l'affiche) ;
+          # La source choisie (le select « Tab5 · forecast source » l'affiche) ;
           # entite_effective : celle qui sert vraiment (poussées, diagnostic).
           entite: "{{ state_attr('sensor.tab5_sources_meteo', 'meteo') or '' }}"
           entite_effective: >-

@@ -6,7 +6,7 @@
 Ce fichier rend les VRAIS modèles (custom_templates/tab5_musique.jinja,
 packages/tab5_musique.yaml) dans le bac à sable de Jinja, avec de fausses maisons :
 
-- la plus petite (sans Music Assistant : la liste « Tab5 · lecteurs de musique ») ;
+- la plus petite (sans Music Assistant : la liste « Tab5 · music players ») ;
 - Music Assistant avec un groupe, un lecteur « groupe », la tablette enveloppée par le
   fournisseur « Home Assistant MediaPlayers », neuf lecteurs (huit gardés) ;
 - des noms avec « | » et « ; », des adresses d'image à réduire, des refs à refuser.

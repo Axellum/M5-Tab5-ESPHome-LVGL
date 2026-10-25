@@ -3,9 +3,9 @@
 
 Le recorder de HA ne garde les états que quelques jours ; « Tab5 Uptime » (horodatage) et
 « Raison du redémarrage » (texte) n'ont pas de statistiques. Trois capteurs à state_class
-les remplacent : « Tab5 · redémarrages », « Tab5 · redémarrages inattendus » (comptés par
+les remplacent : « Tab5 · restarts », « Tab5 · unexpected restarts » (comptés par
 l'événement tab5_sante_redemarrage de la garde (b), même classement que sa notification)
-et « Tab5 · fonctionnement continu » (heures depuis le dernier démarrage, sans now()).
+et « Tab5 · continuous uptime » (heures depuis le dernier démarrage, sans now()).
 Ce test tient le câblage et rend les modèles comme HA ; la validation par le moteur de
 modèles de HA (POST /api/template) est décrite dans la PR."""
 import datetime as dt

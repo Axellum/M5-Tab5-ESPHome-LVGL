@@ -7,7 +7,7 @@
 #         - Les pièces : custom_templates/tab5_musique.jinja (tab5_musique_entites), UNE
 #           liste lue par la poussée ET par la commande (un index = la même pièce) : avec
 #           Music Assistant ses media_player triés par nom (8 au plus) ; sans, la liste
-#           « Tab5 · lecteurs de musique » (packages/tab5_reglages.yaml, 6 au plus).
+#           « Tab5 · music players » (packages/tab5_reglages.yaml, 6 au plus).
 #           Music Assistant est trouvé par integration_entities('music_assistant') et son
 #           config_entry_id par config_entry_id() : rien n'est écrit ici.
 #         - Poussée des pièces : script.tab5_musique_pieces_pousser (action
@@ -67,7 +67,7 @@ template:
   # est la liste poussée elle-même (plus le lecteur montré) : elle change exactement
   # quand la tablette doit être prévenue.
   - sensor:
-      - name: "Tab5 · signature de la musique"
+      - name: "Tab5 · music signature"
         unique_id: tab5_musique_signature
         default_entity_id: sensor.tab5_musique_signature
         icon: mdi:speaker-multiple
@@ -86,7 +86,7 @@ template:
       - trigger: state
         entity_id: sensor.tab5_musique_signature
     sensor:
-      - name: "Tab5 · musique récente"
+      - name: "Tab5 · recent music"
         unique_id: tab5_musique_recente
         default_entity_id: sensor.tab5_musique_recente
         icon: mdi:history
@@ -101,7 +101,7 @@ template:
 
 automation:
   - id: tab5_musique
-    alias: "Tab5 — musique de la maison (poussée des pièces)"
+    alias: "Tab5 — home music (rooms push)"
     description: >-
       Pousse vers la tablette les pièces de la maison (pages Pièces et Bibliothèque du
       popup Musique, ADR-0067) quand l'une change et à la connexion de la tablette.
@@ -126,7 +126,7 @@ automation:
 
 script:
   tab5_musique_pieces_pousser:
-    alias: "Tab5 — musique de la maison : pousser les pièces"
+    alias: "Tab5 — home music: push the rooms"
     description: >-
       Pousse les pièces de la maison et le contexte (Music Assistant présent, lecteur
       montré, sa file) : action tab5_maj_musique_pieces, envoyée même vide. Mode restart et
@@ -195,7 +195,7 @@ script:
                 contexte: "{{ contexte }}"
 
   tab5_musique_liste_envoyer:
-    alias: "Tab5 — musique de la maison : envoyer une liste"
+    alias: "Tab5 — home music: send a list"
     description: >-
       Envoie une liste de la Bibliothèque ou des sources (action tab5_maj_musique_liste) à
       la tablette qui l'a demandée. À part de la commande : un firmware qui n'a pas encore
@@ -228,7 +228,7 @@ script:
                 elements: "{{ elements | default('') | string }}"
 
   tab5_musique_commande:
-    alias: "Tab5 — musique de la maison : commande de la tablette"
+    alias: "Tab5 — home music: tablet command"
     description: >-
       Lancé par packages/tab5_evenements.yaml à l'événement esphome.tab5_musique (pages
       Pièces et Bibliothèque, ADR-0067). N'agit que sur une pièce de la liste (son index)

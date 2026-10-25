@@ -59,12 +59,12 @@ A long press on one of the two home-screen temperatures opens its history ([ADR-
 | Plants (0 to 5) | Pot 1 to 5: the moisture sensor; conductivity, light, temperature and battery are taken from the same device | Up to 4 plants: one slot each; 5: the « driest / median / wettest » summary. Popup cards, re-centred |
 | Climate | Climatisation | − / setpoint / + and the popup |
 | Work planning | Agenda de travail | Planning panel of the central card |
-| Voice « Discussion » mode | none: the list « Tab5 · pipeline de discussion » set to « Aucun » (without the list, the zone stays) | Domo / Discu buttons of the home page and of the assistant popup; the tablet goes back to Domo |
+| Voice « Discussion » mode | none: the list « Tab5 · chat pipeline » set to « Not set » (without the list, the zone stays) | Domo / Discu buttons of the home page and of the assistant popup; the tablet goes back to Domo |
 | Lights (3.x setup) | Lumière 1 to 3 · Light 1 to 3 (« Ancien accueil » section) | Icons of tiles 3 to 5, card of the « HA » layer, rows of the Lights popup, « Tout éteindre » |
 | PC (3.x setup) | PC (a switch turns it on; a presence tracker only shows it) | Status icon, « PC Bureau » card; the first tile too if there is no TV either |
 | Shutter (3.x setup) | Volet (and the optional `volet_serre_tracking.yaml` package, `tab5_optionnel/` of the archive, for a shutter that doesn't report its travel) | Icons of tile 2, card of the « HA » layer |
 
-The « 3.x setup » rows (blueprint section « Ancien accueil · Former home page ») are the home page of a 3.0 or 3.1 firmware, and of a 3.2 firmware while room 1 is empty. The planning hours and the alarm time come from the list « Tab5 · agenda de travail » ([step 5](sources.md)); leave the blueprint's « Agenda de travail » empty and it takes the same one.
+The « 3.x setup » rows (blueprint section « Ancien accueil · Former home page ») are the home page of a 3.0 or 3.1 firmware, and of a 3.2 firmware while room 1 is empty. The planning hours and the alarm time come from the list « Tab5 · work calendar » ([step 5](sources.md)); leave the blueprint's « Agenda de travail » empty and it takes the same one.
 
 ## Limits
 
@@ -73,7 +73,7 @@ The « 3.x setup » rows (blueprint section « Ancien accueil · Former home pag
 - **Renaming an entity**: its tile follows at the tablet's next connection, or as soon as the automation is saved again.
 - **Climate** ([ADR-0026](../decisions/0026-climate-from-device.md)): any brand. The blueprint sends the unit's bounds, step, unit (°C or °F, that of your weather entity) and modes; the popup takes its name as title, and a button the unit cannot do disappears. **Several units** ([ADR-0027](../decisions/0027-climate-per-tile.md)): put each one in a room; its tile opens the popup for it, with its own bounds, modes and name. A change made outside the screen (remote, app) shows in the popup at once for the setpoint and the mode, within 5 minutes for fan, swing, preset and room temperature. With a firmware older than the blueprint, such a tile only shows its temperature. The screen has buttons for cool, heat, dry, fan and off, Éco, Boost, Silence, Oscillation and Brise only: other modes (heat/cool, auto, fan speeds, sleep…) stay in Home Assistant (a unit in heat/cool or auto lights no mode button). With a blueprint older than the firmware, the popup stays as before (16-30 °C, steps of 0.5, every button).
 - **A shutter followed by `volet_serre_tracking.yaml`** (it doesn't report its travel): keep it in the « Volet » input of the 3.x section too, even if it is in a room; its tile then shows the state the package keeps, and its commands go through the package's script.
-- **One calendar per role**: work, appointments, birthdays, public holidays and school holidays are the five « Tab5 · agenda … » lists.
+- **One calendar per role**: work, appointments, birthdays, public holidays and school holidays are the five « Tab5 · … calendar » lists.
 - **Spoken morning briefing**: in the screen's language (French, English, German, Dutch, Spanish, Italian, Turkish); only the French text has been reviewed.
 - To see a smaller home without touching yours: [demo mode](../demo_mode.md#minimal-home-optional-zones), option `--maison-minimale`.
 
@@ -140,12 +140,12 @@ Un appui long sur l'une des deux températures de l'accueil ouvre son historique
 | Pots (0 à 5) | Pot 1 à 5 : le capteur d'humidité ; conductivité, éclairement, température et batterie sont pris sur le même appareil | Jusqu'à 4 pots : un emplacement chacun ; à 5 : le résumé « plus secs / médiane / plus humide ». Cartes du popup, recentrées |
 | Clim | Climatisation | − / consigne / + et le popup |
 | Planning de travail | Agenda de travail | Panneau planning de la carte centrale |
-| Mode vocal « Discussion » | aucune : la liste « Tab5 · pipeline de discussion » à « Aucun » (sans la liste, la zone reste) | Boutons Domo / Discu de l'accueil et du popup assistant ; la tablette repasse en Domo |
+| Mode vocal « Discussion » | aucune : la liste « Tab5 · chat pipeline » à « Not set » (sans la liste, la zone reste) | Boutons Domo / Discu de l'accueil et du popup assistant ; la tablette repasse en Domo |
 | Lumières (réglage 3.x) | Lumière 1 à 3 · Light 1 to 3 (section « Ancien accueil ») | Icônes des tuiles 3 à 5, carte du calque « HA », lignes du popup Lumières, « Tout éteindre » |
 | PC (réglage 3.x) | PC (un interrupteur l'allume ; un suivi de présence l'affiche seulement) | Icône d'état, carte « PC Bureau » ; la première tuile aussi s'il n'y a pas non plus de TV |
 | Volet (réglage 3.x) | Volet (et le package optionnel `volet_serre_tracking.yaml`, `tab5_optionnel/` de l'archive, pour un volet qui ne signale pas sa course) | Icônes de la tuile 2, carte du calque « HA » |
 
-Les lignes « réglage 3.x » (section « Ancien accueil » du blueprint) sont l'accueil d'un firmware 3.0 ou 3.1, et d'un firmware 3.2 tant que la pièce 1 est vide. Les horaires du planning et l'heure du réveil viennent de la liste « Tab5 · agenda de travail » ([étape 5](sources.md#version-française)) ; laissez vide l'« Agenda de travail » du blueprint et il prend le même.
+Les lignes « réglage 3.x » (section « Ancien accueil » du blueprint) sont l'accueil d'un firmware 3.0 ou 3.1, et d'un firmware 3.2 tant que la pièce 1 est vide. Les horaires du planning et l'heure du réveil viennent de la liste « Tab5 · work calendar » ([étape 5](sources.md#version-française)) ; laissez vide l'« Agenda de travail » du blueprint et il prend le même.
 
 ## Limites
 
@@ -154,6 +154,6 @@ Les lignes « réglage 3.x » (section « Ancien accueil » du blueprint) sont l
 - **Renommer une entité** : sa tuile suit à la prochaine connexion de la tablette, ou dès que l'automatisation est de nouveau enregistrée.
 - **Clim** ([ADR-0026](../decisions/0026-climate-from-device.md)) : toutes marques. Le blueprint envoie les bornes, le pas, l'unité (°C ou °F, celle de votre entité météo) et les modes de l'appareil ; le popup prend son nom pour titre, et un bouton que l'appareil ne sait pas faire disparaît. **Plusieurs appareils** ([ADR-0027](../decisions/0027-climate-per-tile.md)) : placez chacun dans une pièce ; sa tuile ouvre le popup pour lui, avec ses bornes, ses modes et son nom. Un changement fait hors de l'écran (télécommande, application) se voit tout de suite dans le popup pour la consigne et le mode, en 5 minutes au plus pour la ventilation, l'oscillation, le préréglage et la température de la pièce. Avec un firmware plus ancien que le blueprint, une telle tuile montre seulement sa température. L'écran n'a de boutons que pour froid, chaud, sec, ventilation et arrêt, Éco, Boost, Silence, Oscillation et Brise : les autres modes (chaud/froid, auto, vitesses de ventilation, nuit…) restent dans Home Assistant (un appareil en chaud/froid ou auto n'allume aucun bouton de mode). Avec un blueprint plus ancien que le firmware, le popup reste comme avant (16-30 °C, pas de 0,5, tous les boutons).
 - **Un volet suivi par `volet_serre_tracking.yaml`** (il ne signale pas sa course) : laissez-le aussi dans l'entrée « Volet » de la section 3.x, même s'il est dans une pièce ; sa tuile montre alors l'état que tient le package, et ses commandes passent par le script du package.
-- **Un agenda par rôle** : travail, rendez-vous, anniversaires, jours fériés et vacances scolaires sont les cinq listes « Tab5 · agenda … ».
+- **Un agenda par rôle** : travail, rendez-vous, anniversaires, jours fériés et vacances scolaires sont les cinq listes « Tab5 · … calendar ».
 - **Briefing parlé du matin** : dans la langue de l'écran (français, anglais, allemand, néerlandais, espagnol, italien, turc) ; seul le texte français a été relu.
 - Pour voir une maison plus petite sans toucher à la vôtre : [mode démo](../demo_mode.md#maison-minimale-zones-optionnelles), option `--maison-minimale`.

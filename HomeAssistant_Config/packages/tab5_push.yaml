@@ -26,7 +26,7 @@
 #       configuration.yaml, puis ce fichier dans config/packages/. Rien à renseigner
 #       (ADR-0024) : l'agenda de travail, le téléphone et le capteur de présence se
 #       choisissent dans HA (listes « Tab5 · … », packages/tab5_reglages.yaml), la
-#       source des prévisions aussi (« Tab5 · source des prévisions »), et les
+#       source des prévisions aussi (« Tab5 · forecast source »), et les
 #       entités de la tablette sont trouvées par le modèle de l'appareil
 #       (sensor.tab5_tablette), quel que soit son nom.
 #       Modèles importés : custom_templates/tab5_calendar.jinja (jour travaillé des
@@ -73,7 +73,7 @@
 # garde (a) de tab5_health.yaml. Ne pas le remettre : tests/test_sans_secret.py.
 
 automation:
-  - alias: "Tab5 — poussée complète de l'écran"
+  - alias: "Tab5 — full screen push"
     # queued, plus single (audit du 07/10/2026, HA-1) : un passage dure plusieurs
     # secondes (calendar.get_events, weather.get_forecasts, attente de la liaison
     # jusqu'à 10 s). En single, un esphome.tab5_connected arrivé pendant ce temps était
@@ -126,13 +126,13 @@ automation:
       - trigger: homeassistant
         event: start
         id: demarrage_ha
-      # Agenda de travail choisi (« Tab5 · agenda de travail ») : un événement commence,
+      # Agenda de travail choisi (« Tab5 · work calendar ») : un événement commence,
       # finit, ou le suivant change. Miroir sensor.tab5_agendas (tab5_reglages.yaml) :
       # un déclencheur `state:` ne prend pas d'entity_id calculé.
       - trigger: state
         entity_id: sensor.tab5_agendas
         attribute: travail
-      # Autre source des prévisions choisie (« Tab5 · source des prévisions »), ou repli
+      # Autre source des prévisions choisie (« Tab5 · forecast source »), ou repli
       # sur une autre source pendant que la choisie est indisponible, et retour : les
       # tuiles jours et heures suivent tout de suite, pas au passage des 10 min.
       - trigger: state
@@ -230,7 +230,7 @@ automation:
       # Jamais un type non géré : HA lèverait une erreur à chaque passage (rattrapée
       # par continue_on_error, mais écrite dans le journal). Variables AU NIVEAU de la
       # séquence : une variable posée dans un if/then n'en sortirait pas.
-      # Agenda de travail : celui de la liste « Tab5 · agenda de travail », vide s'il
+      # Agenda de travail : celui de la liste « Tab5 · work calendar », vide s'il
       # n'est pas choisi ou n'existe plus (tous les jours en repos, planning vide).
       # Chaque appel est sous un `if` : une cible vide lève une erreur que
       # continue_on_error ne rattrape pas (script.py de HA : NoEntitySpecifiedError).
@@ -250,7 +250,7 @@ automation:
           agenda: >-
             {%- set a = states('select.tab5_agenda_de_travail') -%}
             {{ a if a.startswith('calendar.') and expand(a) | count > 0 else '' }}
-          # Mots des événements de travail (« Tab5 · mot des événements de travail »,
+          # Mots des événements de travail (« Tab5 · work event keyword »,
           # tab5_reglages.yaml), en minuscules ; liste vide = tout l'agenda de travail.
           mots_travail: >-
             {%- set m = states('input_text.tab5_mot_travail') -%}
@@ -498,7 +498,7 @@ automation:
   # mode: queued pour ne pas perdre un dismiss derrière le tick minute.
   # ============================================================================
   - id: tab5_ha_hmi_alerts_push
-    alias: "Tab5 — poussée légère (alertes, vigilance, pluie)"
+    alias: "Tab5 — light push (alerts, weather warnings, rain)"
     mode: queued
     max: 5
     triggers:
@@ -538,7 +538,7 @@ automation:
   # que le popup « Alertes » d'une tablette est ouvert (« Écran courant », mis à jour
   # toutes les 5 s) : on le repousse. Popup fermé : rien, il est demandé à l'ouverture.
   - id: tab5_ha_hmi_alertes_historique_push
-    alias: "Tab5 — historique des alertes (popup ouvert)"
+    alias: "Tab5 — alerts history (popup open)"
     mode: queued
     max: 3
     max_exceeded: silent
@@ -549,7 +549,7 @@ automation:
     conditions:
       - condition: template
         value_template: >-
-          {{ integration_entities('esphome') | select('match', 'sensor[.].*_ecran_courant(_[0-9]+)?$')
+          {{ integration_entities('esphome') | select('match', 'sensor[.].*_(ecran_courant|current_screen)(_[0-9]+)?$')
              | select('is_state', 'Alertes') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
              | list | count > 0 }}
     actions:
@@ -563,7 +563,7 @@ automation:
   # part quand même ; le reste est ignoré sans avertissement (max_exceeded: silent).
   # ============================================================================
   - id: tab5_ha_hmi_meteo_push
-    alias: "Tab5 — météo actuelle (au changement)"
+    alias: "Tab5 — current weather (on change)"
     mode: queued
     max: 2
     max_exceeded: silent
@@ -579,15 +579,15 @@ automation:
       - action: script.tab5_push_meteo
 
   - id: tab5_screen_presence_wifi
-    alias: "Tab5 — écran selon la présence et le téléphone"
+    alias: "Tab5 — screen by presence and phone"
     # Allume l'écran à la détection d'une présence (ou au retour du téléphone) s'il
     # est éteint ; l'éteint après 15 min sans présence dans la pièce (ou au départ du
     # téléphone) s'il est allumé et que le réveil ne sonne pas. Écran éteint, le
     # firmware met LVGL en pause ; un toucher ou une tape sur la dalle le rallume.
     # Remis en place le 26/09/2026 : la version de production avait perdu les
     # déclencheurs du capteur, et n'éteignait plus qu'au départ du téléphone.
-    # Capteur et téléphone choisis dans HA (« Tab5 · capteur de présence »,
-    # « Tab5 · téléphone ») et lus sur leurs miroirs (tab5_reglages.yaml) : sans choix,
+    # Capteur et téléphone choisis dans HA (« Tab5 · presence sensor »,
+    # « Tab5 · phone ») et lus sur leurs miroirs (tab5_reglages.yaml) : sans choix,
     # les miroirs restent indisponibles et rien ne se déclenche. L'écran et « réveil en
     # cours » sont ceux de la tablette détectée (sensor.tab5_tablette).
     description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
@@ -646,7 +646,7 @@ automation:
 
 
   - id: tab5_theme_jour_nuit
-    alias: "Tab5 — thème jour/nuit"
+    alias: "Tab5 — day/night theme"
     # Mode « Auto » du thème de l'écran (ADR-0029) : la tablette passe en clair le jour,
     # en sombre la nuit, d'après son interrupteur « Nuit (thème auto) », que cette
     # automatisation tient à jour sur sun.sun : au lever et au coucher, à chaque
@@ -680,7 +680,7 @@ automation:
       - condition: template
         value_template: "{{ states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
     actions:
-      # Comme « Tab5 — extinction de nuit » : la liaison et l'interrupteur détecté
+      # Comme « Tab5 — night screen off » : la liaison et l'interrupteur détecté
       # (sensor.tab5_tablette, mis à jour par le même tab5_connected) peuvent arriver un peu
       # après ; on les attend 10 s, sinon on s'arrête sans erreur (la connexion suivante
       # relancera ce passage). Une liaison qui tombe pendant l'appel n'arrête rien.
@@ -697,24 +697,22 @@ automation:
           entity_id: "{{ state_attr('sensor.tab5_tablette', 'theme_nuit') }}"
 
   - id: tab5_extinction_nuit
-    alias: "Tab5 — extinction de nuit"
+    alias: "Tab5 — night screen off"
     # Extinction de nuit de l'écran (16/10/2026, audit anti-casse) : tient l'interrupteur
-    # « Tab5 Nuit (écran éteint) » de la tablette d'après la plage choisie dans « Tab5 ·
-    # extinction de nuit » (tab5_reglages.yaml, lue sur son miroir « Tab5 · nuit de
-    # l'écran ») : allumé dans la plage, éteint hors de la plage, au changement de plage, à
+    # « Tab5 Nuit (écran éteint) » de la tablette d'après la plage choisie dans « Tab5 · night screen off » (tab5_reglages.yaml, lue sur son miroir « Tab5 · night screen off now ») : allumé dans la plage, éteint hors de la plage, au changement de plage, à
     # chaque connexion de la tablette (l'interrupteur repart éteint à son démarrage ; une
     # tablette qu'on ajoute se connecte aussi) et au démarrage de HA. Pas de déclencheur sur
     # l'attribut de sensor.tab5_tablette, contrairement au thème : il part pendant l'ajout de
     # l'appareil, quand la liaison bascule encore (« Not connected », test « Installation
     # dans un HA neuf » du 16/10/2026). La tablette fait le reste : écran éteint après 1 min sans toucher
-    # pendant la nuit, rallumé à la fin s'il a été éteint par la nuit. « Aucune » : le
+    # pendant la nuit, rallumé à la fin s'il a été éteint par la nuit. « Not set » : le
     # miroir est indisponible, l'interrupteur est éteint (même en pleine nuit).
-    description: "Allume l'interrupteur « Tab5 Nuit (écran éteint) » de la tablette pendant la plage de « Tab5 · extinction de nuit », l'éteint à la fin"
+    description: "Allume l'interrupteur « Tab5 Nuit (écran éteint) » de la tablette pendant la plage de « Tab5 · night screen off », l'éteint à la fin"
     mode: queued
     max: 3
     max_exceeded: silent
     triggers:
-      # Tout changement d'état, indisponible compris (« Aucune » choisi en pleine nuit).
+      # Tout changement d'état, indisponible compris (« Not set » choisi en pleine nuit).
       - trigger: state
         entity_id: binary_sensor.tab5_nuit_de_l_ecran
         to: ~
@@ -759,7 +757,7 @@ script:
   # ─────────────────────────────────────────────────────────────────────────────
 
   tab5_push_alertes:
-    alias: "Tab5 — pousser vigilance, bandeau info et alertes HA"
+    alias: "Tab5 — push weather warnings, info banner and HA alerts"
     description: >-
       Sections 1 (code de pluie + vigilance, capteurs normalisés), 7 (bandeau info :
       la vigilance à lire) et 7b (les 4 premières alertes à lire) de l'écran Tab5,
@@ -871,7 +869,7 @@ script:
   # l'appelle donc jamais (une action absente arrêterait le script, « Action not
   # found » n'est pas rattrapé par continue_on_error).
   tab5_push_alertes_historique:
-    alias: "Tab5 — pousser l'historique des alertes"
+    alias: "Tab5 — push the alerts history"
     description: >-
       Les 20 dernières alertes abonnées de sensor.tab5_alertes (packages/tab5_alerts.yaml),
       pour le popup « Alertes » de la tablette : « apparue|lue|terminée|gravité|libellé »
@@ -895,7 +893,7 @@ script:
                   {% from 'tab5_alertes.jinja' import tab5_alertes_historique %}{{ tab5_alertes_historique('payload') }}
 
   tab5_push_pluie:
-    alias: "Tab5 — pousser les barres de pluie dans l'heure"
+    alias: "Tab5 — push the next-hour rain bars"
     description: >-
       Les 9 barres du graphe de pluie (section 4b). Appelé par la poussée complète à
       chaque passage et par la poussée légère au changement du code ou des barres de
@@ -924,7 +922,7 @@ script:
                   {{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or '0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}
 
   tab5_push_meteo:
-    alias: "Tab5 — pousser la météo actuelle et les probabilités"
+    alias: "Tab5 — push the current weather and probabilities"
     description: >-
       Carte météo (condition, température, humidité) et probabilités (UV, gel,
       neige). Appelé au changement (tab5_ha_hmi_meteo_push) et à la (re)connexion
@@ -971,12 +969,12 @@ script:
                 neige: "{{ state_attr('sensor.tab5_meteo', 'neige') | int(0) }}"
 
   tab5_push_volet:
-    alias: "Tab5 — pousser l'état du volet de la serre"
+    alias: "Tab5 — push the greenhouse shutter state"
     description: >-
       En_mouvement pendant la course, sinon l'état mémorisé. Appelé au changement
       (tab5_volet_updater) et à la (re)connexion (tab5_ha_hmi_updater). Seulement avec
       le package optionnel volet_serre_tracking.yaml ET un volet choisi dans
-      « Tab5 · volet à course simulée » ; sinon le blueprint « Tab5 — emplacements »
+      « Tab5 · shutter with simulated travel » ; sinon le blueprint « Tab5 — emplacements »
       pousse le volet lui-même, ou la tablette masque sa tuile (zone « volet »).
     mode: queued
     max: 10
@@ -1002,7 +1000,7 @@ script:
                 etat_physique: >-
                   {{ 'En_mouvement' if is_state('input_boolean.volet_serre_mouvement', 'on') else states('input_text.volet_serre_etat') }}
 
-# Le capteur « Tab5 Pluie dans l'heure » (code « @niveau,début ») vit depuis le
-# lot 4c-2 dans packages/tab5_meteo_sources.yaml, avec « Tab5 Vigilance » : même
+# Le capteur « Tab5 Rain in the next hour » (code « @niveau,début ») vit depuis le
+# lot 4c-2 dans packages/tab5_meteo_sources.yaml, avec « Tab5 Weather warnings » : même
 # unique_id, même entité, mais sa source se choisit dans HA (Météo-France,
 # OpenWeatherMap ou aucune).

@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistent · Kalender und Personen",
-        "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Aucun“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Aucun“ setzen.",
+        "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Not set“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Keine“ setzen.",
         "data": {
           "agenda_travail": "Arbeitskalender",
           "agenda_rdv": "Terminkalender",
@@ -110,7 +110,7 @@
           "agenda_anniversaires": "Geburtstage, Feiertage, Ferien und Handy: Die Liste rät schon selbst, wenn es nur einen Kandidaten gibt.",
           "telephone_suivi": "Schaltet den Bildschirm bei der Rückkehr ein, beim Weggehen aus.",
           "presence": "Schaltet den Bildschirm bei Erkennung ein, nach 15 min ohne Anwesenheit aus.",
-          "pipeline": "Der Chat-Modus des Bildschirms; „Aucun“ blendet seine Tasten aus."
+          "pipeline": "Der Chat-Modus des Bildschirms; „Keine“ blendet seine Tasten aus."
         }
       },
       "recapitulatif": {
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistent · Kalender und Personen",
-            "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Aucun“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Aucun“ setzen.",
+            "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Not set“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Keine“ setzen.",
             "data": {
               "agenda_travail": "Arbeitskalender",
               "agenda_rdv": "Terminkalender",
@@ -258,7 +258,7 @@
               "agenda_anniversaires": "Geburtstage, Feiertage, Ferien und Handy: Die Liste rät schon selbst, wenn es nur einen Kandidaten gibt.",
               "telephone_suivi": "Schaltet den Bildschirm bei der Rückkehr ein, beim Weggehen aus.",
               "presence": "Schaltet den Bildschirm bei Erkennung ein, nach 15 min ohne Anwesenheit aus.",
-              "pipeline": "Der Chat-Modus des Bildschirms; „Aucun“ blendet seine Tasten aus."
+              "pipeline": "Der Chat-Modus des Bildschirms; „Keine“ blendet seine Tasten aus."
             }
           },
           "recapitulatif": {
@@ -279,6 +279,17 @@
           "aucune_piece_choisie": "Wählen Sie mindestens einen Raum.",
           "trop_de_pieces": "Höchstens zehn Räume.",
           "trop_de_tuiles": "Höchstens zwanzig Kacheln."
+        }
+      }
+    },
+    "migrer_entites": {
+      "title": "Tab5: Entitäten auf ihre englischen Namen umstellen",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5-Entitäten migrieren",
+            "description": "Die Entitäten des Tablets haben in Home Assistant jetzt englische Namen, und {nombre} Entitäten tragen noch ihren alten französischen Namen oder ihre alte ID. Bestätigen, um sie umzubenennen: Ihr Verlauf bleibt erhalten, und das Tablet behält seine Einstellungen. Eigene Dashboards und Automatisierungen, die sie mit ihrer alten Entitäts-ID nennen, müssen angepasst werden."
+          }
         }
       }
     }

@@ -7,7 +7,7 @@
 #       utilisateur aurait (Météo-France, capteurs de plantes…) par des modèles à
 #       valeurs FIXES : la capture d'écran se relit d'un run à l'autre.
 # @contrat Les noms donnent les entity_id choisis par verifier_installation.py (liste
-#       « Tab5 · source des prévisions » = weather.ville_ci, SOURCES) et par le
+#       « Tab5 · forecast source » = weather.ville_ci, SOURCES) et par le
 #       blueprint (EMPLACEMENTS) ; les capteurs Météo-France sont TROUVÉS par
 #       packages/tab5_meteo_sources.yaml (sensor.tab5_sources_meteo) : sans
 #       l'intégration, ceux qui portent le nom de l'entité météo choisie

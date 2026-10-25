@@ -37,7 +37,7 @@
 
 script:
   tab5_mesure_consommation:
-    alias: "Tab5 — consumption test · test de consommation"
+    alias: "Tab5 — consumption test"
     icon: mdi:battery-clock
     description: >-
       Measures the power drawn by the Tab5 on its battery in 11 cases (screen
@@ -72,19 +72,19 @@ script:
             {%- from 'tab5_tablette.jinja' import tab5_api -%}
             {{ tab5_api() }}
           ent: "{{ device_entities(device_id(api)) if api else [] }}"
-          e_conso: "{{ ent | select('match', 'sensor[.].*_tab5_consommation(_[0-9]+)?$') | first | default('') }}"
-          e_sur_batterie: "{{ ent | select('match', 'binary_sensor[.].*_tab5_sur_batterie(_[0-9]+)?$') | first | default('') }}"
-          e_mesure: "{{ ent | select('match', 'switch[.].*_tab5_mesure_de_consommation(_[0-9]+)?$') | first | default('') }}"
+          e_conso: "{{ ent | select('match', 'sensor[.].*_(tab5_consommation|power_draw)(_[0-9]+)?$') | first | default('') }}"
+          e_sur_batterie: "{{ ent | select('match', 'binary_sensor[.].*_(tab5_sur_batterie|on_battery)(_[0-9]+)?$') | first | default('') }}"
+          e_mesure: "{{ ent | select('match', 'switch[.].*_(tab5_mesure_de_consommation|power_measurement)(_[0-9]+)?$') | first | default('') }}"
           e_ecran: "{{ ent | select('match', 'light[.].*_display_backlight(_[0-9]+)?$') | first | default('') }}"
           e_micro: "{{ ent | select('match', 'switch[.].*_wake_word_active(_[0-9]+)?$') | first | default('') }}"
           e_hp: "{{ ent | select('match', 'switch[.].*_speaker_enable(_[0-9]+)?$') | first | default('') }}"
-          e_eco: "{{ ent | select('match', 'select[.].*_tab5_economie_d_energie(_[0-9]+)?$') | first | default('') }}"
-          e_extinction: "{{ ent | select('match', 'select[.].*_tab5_extinction_auto_de_l_ecran(_[0-9]+)?$') | first | default('') }}"
+          e_eco: "{{ ent | select('match', 'select[.].*_(tab5_economie_d_energie|power_saving)(_[0-9]+)?$') | first | default('') }}"
+          e_extinction: "{{ ent | select('match', 'select[.].*_(tab5_extinction_auto_de_l_ecran|screen_auto_off)(_[0-9]+)?$') | first | default('') }}"
           e_theme: "{{ ent | select('match', 'select[.].*_theme(_[0-9]+)?$') | first | default('') }}"
-          e_mode: "{{ ent | select('match', 'select[.].*_clair_ou_sombre(_[0-9]+)?$') | first | default('') }}"
-          e_niveau: "{{ ent | select('match', 'sensor[.].*_tab5_batterie(_[0-9]+)?$') | first | default('') }}"
-          e_tension: "{{ ent | select('match', 'sensor[.].*_tab5_tension_batterie(_[0-9]+)?$') | first | default('') }}"
-          e_temp: "{{ ent | select('match', 'sensor[.].*_tab5_core_temp(_[0-9]+)?$') | first | default('') }}"
+          e_mode: "{{ ent | select('match', 'select[.].*_(clair_ou_sombre|light_or_dark)(_[0-9]+)?$') | first | default('') }}"
+          e_niveau: "{{ ent | select('match', 'sensor[.].*_(tab5_batterie|battery)(_[0-9]+)?$') | first | default('') }}"
+          e_tension: "{{ ent | select('match', 'sensor[.].*_(tab5_tension_batterie|battery_voltage)(_[0-9]+)?$') | first | default('') }}"
+          e_temp: "{{ ent | select('match', 'sensor[.].*_(tab5_core_temp|core_temp)(_[0-9]+)?$') | first | default('') }}"
           version: "{{ ((device_attr(api, 'sw_version') or '?') | string).split(' ') | first if api else '?' }}"
           essai: "{{ essai | default(false) | bool }}"
           duree: "{{ 60 if essai else ([2, [15, minutes | default(5) | int(5)] | min] | max) * 60 }}"

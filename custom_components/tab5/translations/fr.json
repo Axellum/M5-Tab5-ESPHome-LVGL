@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistant · agendas et personnes",
-        "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Aucun » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
+        "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Not set » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
         "data": {
           "agenda_travail": "Agenda de travail",
           "agenda_rdv": "Agenda des rendez-vous",
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistant · agendas et personnes",
-            "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Aucun » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
+            "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Not set » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
             "data": {
               "agenda_travail": "Agenda de travail",
               "agenda_rdv": "Agenda des rendez-vous",
@@ -279,6 +279,17 @@
           "aucune_piece_choisie": "Choisissez au moins une pièce.",
           "trop_de_pieces": "Dix pièces au plus.",
           "trop_de_tuiles": "Vingt tuiles au plus."
+        }
+      }
+    },
+    "migrer_entites": {
+      "title": "Tab5 : passer les entités à leurs noms anglais",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Migrer les entités Tab5",
+            "description": "Les entités de la tablette ont maintenant des noms anglais dans Home Assistant, et {nombre} entités portent encore leur ancien nom ou identifiant français. Validez pour les renommer : elles gardent leur historique, et la tablette ses réglages. Vos propres tableaux de bord et automatisations qui les nomment par leur ancien identifiant sont à mettre à jour."
+          }
         }
       }
     }

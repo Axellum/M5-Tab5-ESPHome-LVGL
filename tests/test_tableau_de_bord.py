@@ -36,7 +36,7 @@ HA_DIR = REPO / "HomeAssistant_Config"
 SANS_CARTE = {
     ("number", "volume"): "doublon du volume du lecteur multimédia (« inconnu » tant qu'il n'a pas bougé)",
     ("sensor", "tab5_prefixe_des_actions"): "lu par les poussées de HA (ADR-0063), rien à régler ni à surveiller",
-    ("switch", "tab5_nuit_ecran_eteint"): "tenu par HA d'après « Tab5 · extinction de nuit », qui a sa carte",
+    ("switch", "tab5_nuit_ecran_eteint"): "tenu par HA d'après « Tab5 · night screen off », qui a sa carte",
 }
 # Aides de l'auteur hors packages : une carte seulement si elles existent.
 HORS_PACKAGES = {"input_text.tab5_annonce_vocale", "script.tab5_annonce_vocale"}
@@ -63,10 +63,12 @@ def _texte():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _table_entites():
-    """(clé, domaine, fin) de la table ENTITES du modèle."""
+    """(clé, domaine, fin) de la table ENTITES du modèle. Une fin « (avant|anglais) »
+    (custom_components/tab5/renommage.py) donne celle d'avant : le nom du firmware."""
     bloc = re.search(r"set ENTITES = \[(.*?)\] -%\}", _texte(), re.S)
     assert bloc, "table ENTITES introuvable"
-    return re.findall(r"\('(\w+)', '(\w+)', '(\w*)'\)", bloc.group(1))
+    return [(cle, domaine, fin.strip("()").split("|")[0])
+            for cle, domaine, fin in re.findall(r"\('(\w+)', '(\w+)', '(\(?[\w|]*\)?)'\)", bloc.group(1))]
 
 
 # Domaine ESPHome → domaine HA (`datetime` : selon son `type`).

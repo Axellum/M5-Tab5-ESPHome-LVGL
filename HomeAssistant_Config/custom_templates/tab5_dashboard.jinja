@@ -25,13 +25,15 @@
       « Nouveau tableau de bord à partir de zéro », titre « Tab5 » (adresse /dashboard-tab5).
       2. Outils de développement → Modèle : remplacez le contenu de l'éditeur par
       {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
-      (autre adresse : tab5_dashboard('dashboard-xxx')), copiez le résultat (à droite).
+      (autre adresse : tab5_dashboard('dashboard-xxx') ; plusieurs tablettes :
+      tab5_dashboard('dashboard-tab5', appareil='<nom de l'appareil>')), copiez le résultat (à droite).
       3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → « Éditeur de configuration
       brute », remplacez tout par le résultat, enregistrez. À refaire après une mise à
       jour qui ajoute des entités.
       ENGLISH — 1. Settings → Dashboards → "Add dashboard" → "New dashboard from scratch",
       title "Tab5" (address /dashboard-tab5). 2. Developer tools → Template: replace the
-      editor content with the line above (other address: tab5_dashboard('dashboard-xxx')),
+      editor content with the line above (other address: tab5_dashboard('dashboard-xxx');
+      several tablets: tab5_dashboard('dashboard-tab5', appareil='<device name>')),
       copy the result (right). 3. Open the Tab5 dashboard → pencil → ⋮ → "Raw
       configuration editor", replace everything with the result, save. Redo after an
       update that adds entities.
@@ -60,67 +62,72 @@
       utilisez « … ». Le contenu de la carte Markdown « En bref » est du Jinja rendu
       par la carte elle-même, à garder entre {% raw %} et {% endraw %}.
 ============================================================================ -#}
-{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='') -%}
+{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='') -%}
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
+{#- Plusieurs tablettes : appareil = l'identifiant ou le nom de celle à montrer
+    (tab5_dashboard('dashboard-tab5', appareil='Tab5 cuisine')) ; sinon la dernière
+    connectée. -#}
 {%- set ns = namespace(api='', t={}, a={}, p=[], m=[], v=[], e='', e_id='') -%}
 {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
-  {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
+  {%- if device_attr(e, 'model') == 'tab5-ha-hmi'
+        and (appareil == '' or appareil in [device_id(e), device_attr(e, 'name'), device_attr(e, 'name_by_user')])
+        and (ns.api == '' or is_state(e, 'on')) -%}
     {%- set ns.api = e -%}
   {%- endif -%}
 {%- endfor -%}
 {%- set present = states | map(attribute='entity_id') | list -%}
 {%- set tab = (device_entities(device_id(ns.api)) | select('in', present) | list) if ns.api else [] -%}
 {%- set ENTITES = [
-  ('api', 'binary_sensor', 'ha_api_status'), ('ecran_courant', 'sensor', 'ecran_courant'),
+  ('api', 'binary_sensor', 'ha_api_status'), ('ecran_courant', 'sensor', '(ecran_courant|current_screen)'),
   ('retroeclairage', 'light', 'display_backlight'), ('lecteur', 'media_player', ''),
-  ('aller_a', 'select', 'aller_a_l_ecran'), ('haut_parleur', 'switch', 'speaker_enable'),
-  ('calendrier', 'button', 'recharger_le_calendrier'), ('langue', 'select', 'langue'),
-  ('theme', 'select', 'theme'), ('theme_mode', 'select', 'clair_ou_sombre'),
-  ('sens_ecran', 'select', 'sens_de_l_ecran'),
-  ('theme_nuit', 'switch', 'nuit_theme_auto'),
-  ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
-  ('appareils_meteo', 'switch', 'tab5_appareils_sur_la_meteo'),
-  ('horloge_fond', 'switch', 'tab5_fond_de_l_horloge'),
-  ('okay_nabu', 'switch', 'tab5_rallumer_l_ecran_a_okay_nabu'),
-  ('extinction', 'select', 'tab5_extinction_auto_de_l_ecran'),
-  ('extinction_batterie', 'switch', 'tab5_extinction_auto_sur_batterie_seulement'),
-  ('economie', 'select', 'tab5_economie_d_energie'), ('sur_batterie', 'binary_sensor', 'tab5_sur_batterie'),
-  ('courant', 'sensor', 'tab5_courant_batterie'),
-  ('limite_charge', 'select', 'tab5_limite_de_charge'), ('consommation', 'sensor', 'tab5_consommation'),
-  ('mode_charge', 'select', 'tab5_mode_de_charge'), ('wifi_eco', 'select', 'tab5_wi_fi_eco'),
-  ('animations', 'select', 'tab5_animations'),
-  ('mesure_conso', 'switch', 'tab5_mesure_de_consommation'),
-  ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
-  ('zones', 'sensor', 'zones_masquees'),
-  ('reveil_en_cours', 'binary_sensor', 'reveil_en_cours'), ('prochain_reveil', 'sensor', 'prochain_reveil'),
-  ('reveil', 'switch', 'reveil'), ('reveil_mode', 'select', 'reveil_mode'),
-  ('reveil_heure', 'time', 'reveil_heure'), ('reveil_jours', 'select', 'reveil_jours'),
-  ('reveil_tester', 'button', 'reveil_tester'), ('reveil_arreter', 'button', 'reveil_arreter'),
-  ('reveil_repeter', 'button', 'reveil_repeter'), ('reveil_sonnerie', 'select', 'reveil_sonnerie'),
-  ('reveil_volume', 'number', 'reveil_volume'), ('reveil_progressif', 'switch', 'reveil_volume_progressif'),
-  ('reveil_annonce', 'switch', 'reveil_annonce_parlee'), ('reveil_repetition', 'number', 'reveil_repetition'),
-  ('reveil_duree', 'number', 'reveil_duree_max_de_sonnerie'),
-  ('reveil_url', 'text', 'reveil_url_de_sonnerie_option'),
-  ('reveil_delai', 'number', 'reveil_delai_avant_l_ouverture'),
-  ('reveil_avant', 'time', 'reveil_jamais_avant'), ('reveil_apres', 'time', 'reveil_jamais_apres'),
-  ('reveil_repos', 'number', 'reveil_repos_mini_apres_la_fermeture'),
-  ('reveil_jours_repos', 'switch', 'reveil_sonner_les_jours_de_repos'),
-  ('prochain_rdv', 'sensor', 'prochain_rendez_vous'), ('annonce_rdv', 'switch', 'annonce_des_rendez_vous'),
-  ('rdv_avant', 'number', 'rendez_vous_annoncer_avant'),
+  ('aller_a', 'select', '(aller_a_l_ecran|go_to_screen)'), ('haut_parleur', 'switch', 'speaker_enable'),
+  ('calendrier', 'button', '(recharger_le_calendrier|reload_calendar)'), ('langue', 'select', '(langue|language)'),
+  ('theme', 'select', 'theme'), ('theme_mode', 'select', '(clair_ou_sombre|light_or_dark)'),
+  ('sens_ecran', 'select', '(sens_de_l_ecran|screen_direction)'),
+  ('theme_nuit', 'switch', '(nuit_theme_auto|night_auto_theme)'),
+  ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', '(tab5_batterie_montee|battery_fitted)'),
+  ('appareils_meteo', 'switch', '(tab5_appareils_sur_la_meteo|devices_on_the_weather)'),
+  ('horloge_fond', 'switch', '(tab5_fond_de_l_horloge|clock_background)'),
+  ('okay_nabu', 'switch', '(tab5_rallumer_l_ecran_a_okay_nabu|wake_screen_on_okay_nabu)'),
+  ('extinction', 'select', '(tab5_extinction_auto_de_l_ecran|screen_auto_off)'),
+  ('extinction_batterie', 'switch', '(tab5_extinction_auto_sur_batterie_seulement|screen_auto_off_on_battery_only)'),
+  ('economie', 'select', '(tab5_economie_d_energie|power_saving)'), ('sur_batterie', 'binary_sensor', '(tab5_sur_batterie|on_battery)'),
+  ('courant', 'sensor', '(tab5_courant_batterie|battery_current)'),
+  ('limite_charge', 'select', '(tab5_limite_de_charge|charge_limit)'), ('consommation', 'sensor', '(tab5_consommation|power_draw)'),
+  ('mode_charge', 'select', '(tab5_mode_de_charge|charge_mode)'), ('wifi_eco', 'select', '(tab5_wi_fi_eco|wifi_power_saving)'),
+  ('animations', 'select', '(tab5_animations|animations)'),
+  ('mesure_conso', 'switch', '(tab5_mesure_de_consommation|power_measurement)'),
+  ('dac', 'select', '(tab5_dac_output|dac_output)'), ('antenne', 'select', 'wifi_antenna'),
+  ('zones', 'sensor', '(zones_masquees|hidden_zones)'),
+  ('reveil_en_cours', 'binary_sensor', '(reveil_en_cours|alarm_ringing)'), ('prochain_reveil', 'sensor', '(prochain_reveil|next_alarm)'),
+  ('reveil', 'switch', '(reveil|alarm)'), ('reveil_mode', 'select', '(reveil_mode|alarm_mode)'),
+  ('reveil_heure', 'time', '(reveil_heure|alarm_time)'), ('reveil_jours', 'select', '(reveil_jours|alarm_days)'),
+  ('reveil_tester', 'button', '(reveil_tester|alarm_test)'), ('reveil_arreter', 'button', '(reveil_arreter|alarm_stop)'),
+  ('reveil_repeter', 'button', '(reveil_repeter|alarm_snooze)'), ('reveil_sonnerie', 'select', '(reveil_sonnerie|alarm_ringtone)'),
+  ('reveil_volume', 'number', '(reveil_volume|alarm_volume)'), ('reveil_progressif', 'switch', '(reveil_volume_progressif|alarm_gradual_volume)'),
+  ('reveil_annonce', 'switch', '(reveil_annonce_parlee|alarm_spoken_briefing)'), ('reveil_repetition', 'number', '(reveil_repetition|alarm_snooze_time)'),
+  ('reveil_duree', 'number', '(reveil_duree_max_de_sonnerie|alarm_maximum_ring_time)'),
+  ('reveil_url', 'text', '(reveil_url_de_sonnerie_option|alarm_ringtone_url_optional)'),
+  ('reveil_delai', 'number', '(reveil_delai_avant_l_ouverture|alarm_delay_before_opening)'),
+  ('reveil_avant', 'time', '(reveil_jamais_avant|alarm_never_before)'), ('reveil_apres', 'time', '(reveil_jamais_apres|alarm_never_after)'),
+  ('reveil_repos', 'number', '(reveil_repos_mini_apres_la_fermeture|alarm_minimum_rest_after_closing)'),
+  ('reveil_jours_repos', 'switch', '(reveil_sonner_les_jours_de_repos|alarm_ring_on_days_off)'),
+  ('prochain_rdv', 'sensor', '(prochain_rendez_vous|next_appointment)'), ('annonce_rdv', 'switch', '(annonce_des_rendez_vous|appointment_announcements)'),
+  ('rdv_avant', 'number', '(rendez_vous_annoncer_avant|appointments_announce_before)'),
   ('satellite', 'assist_satellite', ''), ('micro', 'switch', 'wake_word_active'),
-  ('uptime', 'sensor', 'tab5_uptime'), ('raison', 'sensor', 'raison_du_redemarrage'),
-  ('chronologie', 'sensor', 'tab5_chronologie_du_demarrage'),
-  ('chronologie_suite', 'sensor', 'tab5_chronologie_du_demarrage_suite'),
-  ('firmware', 'update', 'firmware'), ('c6', 'sensor', 'tab5_c6_version'),
-  ('redemarrer', 'button', 'redemarrage_systeme'),
-  ('boucle', 'sensor', 'tab5_loop_time'), ('ram', 'sensor', 'tab5_free_ram'),
-  ('temperature', 'sensor', 'tab5_core_temp'), ('pile', 'sensor', 'tab5_stack_free_min'),
-  ('wifi', 'sensor', 'tab5_wifi_signal'), ('ssid', 'sensor', 'tab5_ssid'), ('ip', 'sensor', 'tab5_ip'),
-  ('casque', 'binary_sensor', 'headphone_detect'), ('batterie', 'sensor', 'tab5_batterie'),
-  ('tension', 'sensor', 'tab5_tension_batterie'), ('en_charge', 'binary_sensor', 'tab5_batterie_en_charge'),
-  ('batterie_detectee', 'binary_sensor', 'tab5_batterie_detectee'),
-  ('securite_chargeur', 'binary_sensor', 'tab5_securite_chargeur'),
+  ('uptime', 'sensor', '(tab5_uptime|uptime)'), ('raison', 'sensor', '(raison_du_redemarrage|restart_reason)'),
+  ('chronologie', 'sensor', '(tab5_chronologie_du_demarrage|boot_timeline)'),
+  ('chronologie_suite', 'sensor', '(tab5_chronologie_du_demarrage_suite|boot_timeline_continued)'),
+  ('firmware', 'update', 'firmware'), ('c6', 'sensor', '(tab5_c6_version|c6_version)'),
+  ('redemarrer', 'button', '(redemarrage_systeme|restart)'),
+  ('boucle', 'sensor', '(tab5_loop_time|loop_time)'), ('ram', 'sensor', '(tab5_free_ram|free_ram)'),
+  ('temperature', 'sensor', '(tab5_core_temp|core_temp)'), ('pile', 'sensor', '(tab5_stack_free_min|stack_free_min)'),
+  ('wifi', 'sensor', '(tab5_wifi_signal|wifi_signal)'), ('ssid', 'sensor', '(tab5_ssid|ssid)'), ('ip', 'sensor', '(tab5_ip|ip)'),
+  ('casque', 'binary_sensor', 'headphone_detect'), ('batterie', 'sensor', '(tab5_batterie|battery)'),
+  ('tension', 'sensor', '(tab5_tension_batterie|battery_voltage)'), ('en_charge', 'binary_sensor', '(tab5_batterie_en_charge|battery_charging)'),
+  ('batterie_detectee', 'binary_sensor', '(tab5_batterie_detectee|battery_detected)'),
+  ('securite_chargeur', 'binary_sensor', '(tab5_securite_chargeur|charger_safety)'),
 ] -%}
 {#- « (_[0-9]+)? » : HA ajoute « _2 », « _3 »… à l'entity_id déjà pris par un autre appareil.
     Un second écran (ADR-0063), ou un écran qui en remplace un resté dans HA, a des entités
@@ -581,7 +588,7 @@ views:
 {%- raw %}
               {%- macro choix(e) -%}
               {%- set v = states(e) -%}
-              {%- if v in ['Aucun', 'Aucune', 'unknown', 'unavailable', ''] -%}<font color="#ff9800">{% endraw %}{{ t('non choisi', 'not set') }}{% raw %}</font>
+              {%- if v | lower in ['not set', 'none', 'aucun', 'aucune', 'unknown', 'unavailable', ''] -%}<font color="#ff9800">{% endraw %}{{ t('non choisi', 'not set') }}{% raw %}</font>
               {%- elif v.startswith('weather.') and expand(v) | count > 0 -%}
               {%- set n = state_attr(v, 'friendly_name') or v -%}
               {{ device_attr(device_id(v), 'manufacturer') or '' }} · {{ n.split('for city ')[1].split(' - ')[0] if 'for city ' in n else n }}
@@ -728,7 +735,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « Aucune »: never') }}"
+            heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Not set » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « Not set »: never') }}"
             heading_style: subtitle
 {%- endif %}
 {%- for cle, fr_, en_, icone in [('extinction_batterie', 'Extinction sur batterie seulement', 'Auto-off on battery only', 'mdi:battery-clock'),
@@ -1080,7 +1087,7 @@ views:
             grid_options:
               columns: 12
 {%- for cle, e, fr_, en_, icone, ligne in [('pipeline', '', 'Mode en cours', 'Current mode', 'mdi:robot', false),
-                                           ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (Aucun = boutons masqués)', 'Discu mode pipeline (Aucun = buttons hidden)', 'mdi:chat-processing-outline', false),
+                                           ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (Not set = boutons masqués)', 'Discu mode pipeline (Not set = buttons hidden)', 'mdi:chat-processing-outline', false),
                                            ('mot', '', "Mot d'activation", 'Wake word', 'mdi:account-voice', false),
                                            ('mot_2', '', "2ᵉ mot d'activation", 'Second wake word', 'mdi:account-voice', false),
                                            ('pipeline_2', '', 'Pipeline du 2ᵉ mot', 'Second wake word pipeline', 'mdi:robot-outline', false),
@@ -2244,12 +2251,12 @@ views:
     'es': 'Apagado nocturno',
     'it': 'Spegnimento notturno',
     'tr': 'Gece ekran kapatma'},
-  'Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais': {
-    'de': 'Im Zeitfenster: aus nach 1 Min. ohne Berührung, am Ende wieder an; « Aucune »: nie',
-    'nl': 'Tijdens het venster: uit na 1 min zonder aanraking, aan het einde weer aan; « Aucune »: nooit',
-    'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « Aucune »: nunca',
-    'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « Aucune »: mai',
-    'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « Aucune »: asla'},
+  'Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Not set » : jamais': {
+    'de': 'Im Zeitfenster: aus nach 1 Min. ohne Berührung, am Ende wieder an; « Not set »: nie',
+    'nl': 'Tijdens het venster: uit na 1 min zonder aanraking, aan het einde weer aan; « Not set »: nooit',
+    'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « Not set »: nunca',
+    'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « Not set »: mai',
+    'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « Not set »: asla'},
   'Extinction sur batterie seulement': {
     'de': 'Automatisch aus nur im Akkubetrieb',
     'nl': 'Automatisch uit alleen op batterij',
@@ -2622,12 +2629,12 @@ views:
     'es': 'Modo actual',
     'it': 'Modalità attuale',
     'tr': 'Geçerli mod'},
-  'Pipeline du mode « Discu » (Aucun = boutons masqués)': {
-    'de': 'Pipeline des Modus „Discu“ (Aucun = Tasten ausgeblendet)',
-    'nl': 'Pipeline van de modus “Discu” (Aucun = knoppen verborgen)',
-    'es': 'Pipeline del modo «Discu» (Aucun = botones ocultos)',
-    'it': 'Pipeline della modalità «Discu» (Aucun = pulsanti nascosti)',
-    'tr': '“Discu” modu pipeline’ı (Aucun = düğmeler gizli)'},
+  'Pipeline du mode « Discu » (Not set = boutons masqués)': {
+    'de': 'Pipeline des Modus „Discu“ (Not set = Tasten ausgeblendet)',
+    'nl': 'Pipeline van de modus “Discu” (Not set = knoppen verborgen)',
+    'es': 'Pipeline del modo «Discu» (Not set = botones ocultos)',
+    'it': 'Pipeline della modalità «Discu» (Not set = pulsanti nascosti)',
+    'tr': '“Discu” modu pipeline’ı (Not set = düğmeler gizli)'},
   "Mot d'activation": {
     'de': 'Aktivierungswort',
     'nl': 'Activeringswoord',

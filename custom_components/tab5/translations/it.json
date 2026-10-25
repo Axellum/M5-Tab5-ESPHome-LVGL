@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Assistente · calendari e persone",
-        "description": "Le liste «Tab5 · …» (Impostazioni → Dispositivi e servizi → Entità). Una scelta già fatta resta. Una lista ancora su «Aucun» (nessuno) riceve una proposta quando una sola entità è adatta (un calendario il cui nome dice «lavoro» o «appuntamento», l'unico sensore di presenza o di occupazione, la pipeline preferita). Nulla viene impostato prima del riepilogo; puoi rimettere tutto su «Aucun».",
+        "description": "Le liste «Tab5 · …» (Impostazioni → Dispositivi e servizi → Entità). Una scelta già fatta resta. Una lista ancora su «Not set» (nessuno) riceve una proposta quando una sola entità è adatta (un calendario il cui nome dice «lavoro» o «appuntamento», l'unico sensore di presenza o di occupazione, la pipeline preferita). Nulla viene impostato prima del riepilogo; puoi rimettere tutto su «Nessuno».",
         "data": {
           "agenda_travail": "Calendario di lavoro",
           "agenda_rdv": "Calendario degli appuntamenti",
@@ -110,7 +110,7 @@
           "agenda_anniversaires": "Compleanni, festivi, vacanze e telefono: la lista indovina già da sola se c'è un solo candidato.",
           "telephone_suivi": "Accende lo schermo al ritorno, lo spegne alla partenza.",
           "presence": "Accende lo schermo al rilevamento, lo spegne dopo 15 min senza presenza.",
-          "pipeline": "La modalità conversazione dello schermo; «Aucun» nasconde i suoi pulsanti."
+          "pipeline": "La modalità conversazione dello schermo; «Nessuno» nasconde i suoi pulsanti."
         }
       },
       "recapitulatif": {
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Assistente · calendari e persone",
-            "description": "Le liste «Tab5 · …» (Impostazioni → Dispositivi e servizi → Entità). Una scelta già fatta resta. Una lista ancora su «Aucun» (nessuno) riceve una proposta quando una sola entità è adatta (un calendario il cui nome dice «lavoro» o «appuntamento», l'unico sensore di presenza o di occupazione, la pipeline preferita). Nulla viene impostato prima del riepilogo; puoi rimettere tutto su «Aucun».",
+            "description": "Le liste «Tab5 · …» (Impostazioni → Dispositivi e servizi → Entità). Una scelta già fatta resta. Una lista ancora su «Not set» (nessuno) riceve una proposta quando una sola entità è adatta (un calendario il cui nome dice «lavoro» o «appuntamento», l'unico sensore di presenza o di occupazione, la pipeline preferita). Nulla viene impostato prima del riepilogo; puoi rimettere tutto su «Nessuno».",
             "data": {
               "agenda_travail": "Calendario di lavoro",
               "agenda_rdv": "Calendario degli appuntamenti",
@@ -258,7 +258,7 @@
               "agenda_anniversaires": "Compleanni, festivi, vacanze e telefono: la lista indovina già da sola se c'è un solo candidato.",
               "telephone_suivi": "Accende lo schermo al ritorno, lo spegne alla partenza.",
               "presence": "Accende lo schermo al rilevamento, lo spegne dopo 15 min senza presenza.",
-              "pipeline": "La modalità conversazione dello schermo; «Aucun» nasconde i suoi pulsanti."
+              "pipeline": "La modalità conversazione dello schermo; «Nessuno» nasconde i suoi pulsanti."
             }
           },
           "recapitulatif": {
@@ -279,6 +279,17 @@
           "aucune_piece_choisie": "Scegli almeno una stanza.",
           "trop_de_pieces": "Al massimo dieci stanze.",
           "trop_de_tuiles": "Al massimo venti riquadri."
+        }
+      }
+    },
+    "migrer_entites": {
+      "title": "Tab5: passare le entità ai nomi inglesi",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Migrare le entità Tab5",
+            "description": "Le entità del tablet hanno ora nomi inglesi in Home Assistant, e {nombre} entità hanno ancora il vecchio nome o ID francese. Confermare per rinominarle: mantengono la loro cronologia, e il tablet le sue impostazioni. Le proprie plance e automazioni che le indicano con il vecchio ID entità vanno aggiornate."
+          }
         }
       }
     }

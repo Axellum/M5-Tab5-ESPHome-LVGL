@@ -11,7 +11,11 @@ name: Intégration HACS
 #   - ha : tools/installation_ha/verifier_integration.py dans un Home Assistant NEUF en
 #     conteneur : première installation sans redémarrage, mise à jour comme HACS, retour en
 #     arrière sur une configuration cassée, ligne `packages:` absente, et l'assistant de
-#     configuration (ADR-0052 : pièces → automatisation du blueprint, sans rien écraser).
+#     configuration (ADR-0052 : pièces → automatisation du blueprint, sans rien écraser) ;
+#   - banc : tests/test_integration_ha_registre.py avec le banc de test des intégrations
+#     (pytest-homeassistant-custom-component, qui installe Home Assistant) : la migration des
+#     noms anglais (renommage.py) contre les vrais registres de HA. Linux seulement (une roue
+#     de HA ne se compile pas sous Windows sans compilateur C) : sauté sur le PC.
 # Les images ghcr.io de hassfest et de HACS suivent leur dernière version exprès (comme
 # ESPHome `latest`, ADR-0016) : elles annoncent ce que HA et HACS refuseront demain.
 
@@ -71,6 +75,21 @@ jobs:
             -e INPUT_COMMENT=false -e GITHUB_REPOSITORY -e GITHUB_EVENT_PATH=/github/evenement.json \
             -v "$GITHUB_EVENT_PATH:/github/evenement.json:ro" \
             ghcr.io/hacs/action:main
+
+  banc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Banc de test des intégrations (installe Home Assistant)
+        run: bash tools/ci/pip_reessai.sh pytest-homeassistant-custom-component
+      - name: Migration des noms anglais contre les registres de HA
+        # -p no:cacheprovider : rien d'écrit dans le dépôt ; asyncio_mode=auto : comme les
+        # tests de Home Assistant eux-mêmes.
+        run: python -m pytest tests/test_integration_ha_registre.py -o asyncio_mode=auto -p no:cacheprovider -v
 
   ha:
     # Versions de Home Assistant du test, relevées à la main (même logique que ESPHOME_PUBLICATION

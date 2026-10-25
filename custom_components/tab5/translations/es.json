@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Asistente · calendarios y personas",
-        "description": "Las listas «Tab5 · …» (Ajustes → Dispositivos y servicios → Entidades). Una elección ya hecha se mantiene. Una lista que sigue en «Aucun» (ninguno) recibe una propuesta cuando una sola entidad encaja (un calendario cuyo nombre dice «trabajo» o «cita», el único sensor de presencia u ocupación, el pipeline preferido). No se ajusta nada antes del resumen; puede volver a poner todo en «Aucun».",
+        "description": "Las listas «Tab5 · …» (Ajustes → Dispositivos y servicios → Entidades). Una elección ya hecha se mantiene. Una lista que sigue en «Not set» (ninguno) recibe una propuesta cuando una sola entidad encaja (un calendario cuyo nombre dice «trabajo» o «cita», el único sensor de presencia u ocupación, el pipeline preferido). No se ajusta nada antes del resumen; puede volver a poner todo en «Ninguno».",
         "data": {
           "agenda_travail": "Calendario de trabajo",
           "agenda_rdv": "Calendario de citas",
@@ -110,7 +110,7 @@
           "agenda_anniversaires": "Cumpleaños, festivos, vacaciones y teléfono: la lista ya lo adivina sola si solo hay una candidata.",
           "telephone_suivi": "Enciende la pantalla al volver y la apaga al salir.",
           "presence": "Enciende la pantalla al detectar y la apaga tras 15 min sin presencia.",
-          "pipeline": "El modo de conversación de la pantalla; «Aucun» oculta sus botones."
+          "pipeline": "El modo de conversación de la pantalla; «Ninguno» oculta sus botones."
         }
       },
       "recapitulatif": {
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Asistente · calendarios y personas",
-            "description": "Las listas «Tab5 · …» (Ajustes → Dispositivos y servicios → Entidades). Una elección ya hecha se mantiene. Una lista que sigue en «Aucun» (ninguno) recibe una propuesta cuando una sola entidad encaja (un calendario cuyo nombre dice «trabajo» o «cita», el único sensor de presencia u ocupación, el pipeline preferido). No se ajusta nada antes del resumen; puede volver a poner todo en «Aucun».",
+            "description": "Las listas «Tab5 · …» (Ajustes → Dispositivos y servicios → Entidades). Una elección ya hecha se mantiene. Una lista que sigue en «Not set» (ninguno) recibe una propuesta cuando una sola entidad encaja (un calendario cuyo nombre dice «trabajo» o «cita», el único sensor de presencia u ocupación, el pipeline preferido). No se ajusta nada antes del resumen; puede volver a poner todo en «Ninguno».",
             "data": {
               "agenda_travail": "Calendario de trabajo",
               "agenda_rdv": "Calendario de citas",
@@ -258,7 +258,7 @@
               "agenda_anniversaires": "Cumpleaños, festivos, vacaciones y teléfono: la lista ya lo adivina sola si solo hay una candidata.",
               "telephone_suivi": "Enciende la pantalla al volver y la apaga al salir.",
               "presence": "Enciende la pantalla al detectar y la apaga tras 15 min sin presencia.",
-              "pipeline": "El modo de conversación de la pantalla; «Aucun» oculta sus botones."
+              "pipeline": "El modo de conversación de la pantalla; «Ninguno» oculta sus botones."
             }
           },
           "recapitulatif": {
@@ -279,6 +279,17 @@
           "aucune_piece_choisie": "Elija al menos una habitación.",
           "trop_de_pieces": "Diez habitaciones como máximo.",
           "trop_de_tuiles": "Veinte mosaicos como máximo."
+        }
+      }
+    },
+    "migrer_entites": {
+      "title": "Tab5: pasar las entidades a sus nombres en inglés",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Migrar las entidades de Tab5",
+            "description": "Las entidades de la tableta tienen ahora nombres en inglés en Home Assistant, y {nombre} entidades llevan todavía su antiguo nombre o ID en francés. Confirme para renombrarlas: conservan su historial, y la tableta sus ajustes. Sus propios paneles y automatizaciones que las nombran por su ID antiguo deben actualizarse."
+          }
         }
       }
     }

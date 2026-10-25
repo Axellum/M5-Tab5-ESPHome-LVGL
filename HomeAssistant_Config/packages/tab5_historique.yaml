@@ -55,7 +55,7 @@
 
 script:
   tab5_historique:
-    alias: "Tab5 — popup Température (historique et prévision)"
+    alias: "Tab5 — Temperature popup (history and forecast)"
     description: >-
       Appelé par le blueprint « Tab5 — emplacements » quand la tablette ouvre l'historique
       d'une de ses deux températures ou change de vue. Pousse la courbe de la vue demandée

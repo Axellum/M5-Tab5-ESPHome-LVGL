@@ -6,7 +6,7 @@
 #       carte du PREMIER capteur dans la zone à gauche de l'horloge (contenu « capteur »
 #       du blueprint, ADR-0051). N'importe quel capteur numérique : un cours de bourse,
 #       une température, une consommation…
-#         - Les capteurs proposés : la liste « Tab5 · capteurs suivis · tracked sensors »
+#         - Les capteurs proposés : la liste « Tab5 · tracked sensors »
 #           (packages/tab5_reglages.yaml, plusieurs choix, 6 au plus, jamais devinés) ;
 #           sa mémoire input_text.tab5_choix_suivis. Seuls les capteurs à state_class
 #           measurement y sont : les autres n'ont pas de statistiques, donc pas de courbe.
@@ -47,8 +47,9 @@ template:
   # le nombre de capteurs choisis, son attribut `signature` change dès qu'un d'eux change
   # (état, nom, unité, variation du jour).
   - sensor:
-      - name: "Tab5 · signature du suivi"
+      - name: "Tab5 · tracked sensors signature"
         unique_id: tab5_suivi_signature
+        default_entity_id: sensor.tab5_signature_du_suivi
         icon: mdi:chart-line
         state: >-
           {{ states('input_text.tab5_choix_suivis').split(',') | map('trim')
@@ -68,9 +69,9 @@ automation:
   # (mode single : les changements de cette attente sont ignorés en silence), puis une
   # dernière poussée si la signature a bougé entre-temps.
   - id: tab5_suivi
-    alias: "Tab5 — capteurs suivis (poussée au changement)"
+    alias: "Tab5 — tracked sensors (push on change)"
     description: >-
-      Pousse vers la tablette les capteurs de la liste « Tab5 · capteurs suivis » quand
+      Pousse vers la tablette les capteurs de la liste « Tab5 · tracked sensors » quand
       l'un d'eux change, cinq minutes au plus entre deux poussées (ADR-0054).
     mode: single
     max_exceeded: silent
@@ -94,10 +95,9 @@ automation:
   # Tout de suite : liste changée, tablette (re)connectée, « MAJ Écran », démarrage de HA,
   # et toutes les heures (la courbe avance d'une heure même sans changement).
   - id: tab5_suivi_immediat
-    alias: "Tab5 — capteurs suivis (poussée immédiate)"
+    alias: "Tab5 — tracked sensors (immediate push)"
     description: >-
-      Pousse vers la tablette les capteurs suivis quand la liste « Tab5 · capteurs
-      suivis » change, à la connexion de la tablette, à « MAJ Écran », au démarrage de
+      Pousse vers la tablette les capteurs suivis quand la liste « Tab5 · tracked sensors » change, à la connexion de la tablette, à « MAJ Écran », au démarrage de
       Home Assistant et toutes les heures (ADR-0054).
     mode: queued
     max: 3
@@ -126,9 +126,9 @@ automation:
 
 script:
   tab5_suivi_pousser:
-    alias: "Tab5 — capteurs suivis : pousser"
+    alias: "Tab5 — tracked sensors: push"
     description: >-
-      Pousse les capteurs de la liste « Tab5 · capteurs suivis » (action tab5_maj_suivi) :
+      Pousse les capteurs de la liste « Tab5 · tracked sensors » (action tab5_maj_suivi) :
       nom, valeur, unité, variation et courbe des 24 dernières heures. Mode restart :
       deux demandes rapprochées partent en une seule poussée.
     mode: restart

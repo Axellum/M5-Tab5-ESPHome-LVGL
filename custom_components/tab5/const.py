@@ -43,6 +43,9 @@ ISSUE_FIRMWARE = "firmware_echec"
 # Fichiers actifs et aucune automatisation du blueprint : « Configurer la tablette depuis
 # vos pièces ». Sa réparation EST l'assistant (assistant_flux.py, ADR-0052).
 ISSUE_ASSISTANT = "configurer_pieces"
+# La tablette donne déjà des noms anglais et le registre garde des entrées aux noms d'avant :
+# « Migrer les entités Tab5 », un clic (renommage.py).
+ISSUE_MIGRATION = "migrer_entites"
 
 # Paramètre {signaler} de « configuration_invalide » : hassfest refuse une URL écrite
 # dans les traductions.
