@@ -25,13 +25,15 @@
       « Nouveau tableau de bord à partir de zéro », titre « Tab5 » (adresse /dashboard-tab5).
       2. Outils de développement → Modèle : remplacez le contenu de l'éditeur par
       {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
-      (autre adresse : tab5_dashboard('dashboard-xxx')), copiez le résultat (à droite).
+      (autre adresse : tab5_dashboard('dashboard-xxx') ; plusieurs tablettes :
+      tab5_dashboard('dashboard-tab5', appareil='<nom de l'appareil>')), copiez le résultat (à droite).
       3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → « Éditeur de configuration
       brute », remplacez tout par le résultat, enregistrez. À refaire après une mise à
       jour qui ajoute des entités.
       ENGLISH — 1. Settings → Dashboards → "Add dashboard" → "New dashboard from scratch",
       title "Tab5" (address /dashboard-tab5). 2. Developer tools → Template: replace the
-      editor content with the line above (other address: tab5_dashboard('dashboard-xxx')),
+      editor content with the line above (other address: tab5_dashboard('dashboard-xxx');
+      several tablets: tab5_dashboard('dashboard-tab5', appareil='<device name>')),
       copy the result (right). 3. Open the Tab5 dashboard → pencil → ⋮ → "Raw
       configuration editor", replace everything with the result, save. Redo after an
       update that adds entities.
@@ -60,12 +62,17 @@
       utilisez « … ». Le contenu de la carte Markdown « En bref » est du Jinja rendu
       par la carte elle-même, à garder entre {% raw %} et {% endraw %}.
 ============================================================================ -#}
-{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='') -%}
+{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='') -%}
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
+{#- Plusieurs tablettes : appareil = l'identifiant ou le nom de celle à montrer
+    (tab5_dashboard('dashboard-tab5', appareil='Tab5 cuisine')) ; sinon la dernière
+    connectée. -#}
 {%- set ns = namespace(api='', t={}, a={}, p=[], m=[], v=[], e='', e_id='') -%}
 {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
-  {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
+  {%- if device_attr(e, 'model') == 'tab5-ha-hmi'
+        and (appareil == '' or appareil in [device_id(e), device_attr(e, 'name'), device_attr(e, 'name_by_user')])
+        and (ns.api == '' or is_state(e, 'on')) -%}
     {%- set ns.api = e -%}
   {%- endif -%}
 {%- endfor -%}
