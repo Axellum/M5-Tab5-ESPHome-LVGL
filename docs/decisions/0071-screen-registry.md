@@ -34,6 +34,8 @@ The full-push guard had the same flaw and was fixed alone by #543 (`tab5_api(app
     - Consumption test: an optional « Screen » field.
 - **Kept on purpose.** `sensor.tab5_tablette` (users' own automations, older HA files, the installation check), `binary_sensor.tab5_connectee` and `sensor.tab5_demarrage` (the long-term statistics, « Tab5 · continuous uptime », still follow one screen) stay. No package reads `sensor.tab5_tablette` any more except those mirrors and the options of the chat-pipeline list (`tests/test_plusieurs_ecrans.py`).
 
+- **A connecting screen is waited for and served alone** (added the same day, after restarting the 7B at 14:04). The tablet fires `esphome.tab5_connected` about 0.15 s before Home Assistant turns its « HA API Status » `on`. The pushes waited for « a tablet is connected » — true at once thanks to the other screen — and sent to the connected screens, so the 7B's full push went to the Tab5. `tab5_pret(appareil)` waits for that screen's link; `tab5_appareil_connexion(trigger)` names it; every push started by `tab5_connected` (full push and its scripts, appointments, player, music, tracked sensors, cold storage, AI server) waits for it and sends to it only, and the blueprint waits for it too. Other triggers still serve every connected screen.
+
 ## Home settings and screen settings
 
 Sorted with the author on 2026-10-25. Nothing moves in this decision: a « screen » setting that is a home-wide list today stays one, applied to every screen.

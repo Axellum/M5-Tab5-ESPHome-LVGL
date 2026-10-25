@@ -358,3 +358,72 @@ def test_plus_aucun_package_ne_suit_un_seul_ecran():
             assert chemin.name == "tab5_reglages.yaml" and any(g in ligne for g in GARDEES), (
                 f"{chemin.name}:{n} lit sensor.tab5_tablette, qui ne suit qu'un écran : "
                 "boucler sur tab5_cibles() et lire tab5_entite() (ADR-0071)")
+
+
+# ─── Connexion d'un écran (25/10/2026, 14:04) ────────────────────────────────
+# La 7B redémarrée émet esphome.tab5_connected ~0,15 s avant que HA passe son « HA API
+# Status » à on. L'attente « une tablette connectée » passait grâce au Tab5, la liste des
+# destinataires (écrans connectés) ne contenait que lui : la poussée complète de la 7B
+# partait au Tab5. Chaque poussée de connexion attend maintenant CET écran et ne sert que lui.
+
+def _7b_pas_encore_on():
+    maison = dict(MAISON)
+    modele, nom, ents = maison["d_7b"]
+    maison["d_7b"] = (modele, nom, {**ents, "binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status": "off"})
+    return maison
+
+
+CONNEXION_7B = {"id": "tab5_connected", "platform": "event",
+                "event": {"event_type": "esphome.tab5_connected", "data": {"device_id": "d_7b"}}}
+
+
+def test_pret_attend_l_ecran_qui_se_connecte():
+    assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_7b') }}", _7b_pas_encore_on()) == ""
+    assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_7b') }}") == "oui"
+    # Sans écran : une tablette connectée suffit, comme tab5_connectee().
+    assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('') }}", _7b_pas_encore_on()) == "oui"
+
+
+def test_appareil_de_la_connexion():
+    modele = "{% from 'tab5_tablette.jinja' import tab5_appareil_connexion %}{{ tab5_appareil_connexion(trigger) }}"
+    env = _env()
+    assert env.from_string(modele).render(trigger=CONNEXION_7B) == "d_7b"
+    autre = {"platform": "event", "event": {"event_type": "esphome.tab5_maj_ecran", "data": {"device_id": "d_7b"}}}
+    assert env.from_string(modele).render(trigger=autre) == ""
+    assert env.from_string(modele).render(trigger={"platform": "time_pattern"}) == ""
+
+
+def test_poussee_complete_de_l_ecran_qui_se_connecte():
+    auto = _automatisation("tab5_push.yaml", "tab5_ha_hmi_updater")
+    env = _env(_7b_pas_encore_on())
+    appareil = env.from_string(auto["actions"][0]["variables"]["appareil"]).render(trigger=CONNEXION_7B).strip()
+    assert appareil == "d_7b"
+    attente = auto["actions"][1]["then"][0]["wait_template"]
+    assert env.from_string(attente).render(appareil=appareil).strip() == "False", "la 7B pas encore on : on attend"
+    assert _env().from_string(attente).render(appareil=appareil).strip() == "True"
+    # Les envois : la 7B seule, même avant son « on » (avant : le Tab5 seul).
+    envoi = next(a for a in auto["actions"] if "if" in a and "repeat" in str(a.get("then")))
+    for_each = envoi["then"][0]["repeat"]["for_each"]
+    assert ast.literal_eval(env.from_string(for_each).render(appareil=appareil).strip()) == ["tab5_ha_hmi"]
+    # Autres déclencheurs : chaque écran connecté, comme avant.
+    assert ast.literal_eval(_env().from_string(for_each).render(appareil="").strip()) == ["tab5", "tab5_ha_hmi"]
+    # Les scripts appelés reçoivent l'écran.
+    appels = [a for a in auto["actions"] if str(a.get("action", "")).startswith("script.tab5_push_")]
+    appels += [b for a in auto["actions"] if "then" in a for b in a["then"]
+               if str(b.get("action", "")).startswith("script.tab5_push_")]
+    assert len(appels) == 4 and all(a["data"]["appareil"] == "{{ appareil }}" for a in appels)
+
+
+@pytest.mark.parametrize("paquet", ["tab5_push.yaml", "tab5_reveil.yaml", "tab5_lecteur.yaml", "tab5_suivi.yaml",
+                                    "tab5_froid.yaml", "tab5_serveur_ia.yaml", "tab5_musique.yaml"])
+def test_chaque_poussee_de_connexion_attend_son_ecran(paquet):
+    for auto in _paquet(paquet)["automation"]:
+        if not any(t.get("event_type") == "esphome.tab5_connected" for t in auto["triggers"]):
+            continue
+        texte = yaml.safe_dump(auto["actions"], allow_unicode=True)
+        if "esphome." not in texte and "script." not in texte:
+            continue  # rien n'est envoyé (thème, nuit, santé : ils ciblent déjà l'écran)
+        if "tab5_cibles(" in texte or "tab5_entite(" in texte:
+            continue
+        assert "tab5_appareil_connexion(trigger)" in texte and "tab5_pret(" in yaml.safe_dump(
+            _paquet(paquet), allow_unicode=True), f"{paquet} : {auto['id']} n'attend pas l'écran qui se connecte"

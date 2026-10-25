@@ -52,7 +52,9 @@
       connectée). tab5_entite : l'entity_id d'un rôle (ecran, reveil_en_cours, raison,
       demarrage, micro, satellite, rdv_avant, langue, theme_nuit, nuit_ecran, api,
       pipeline) de cet appareil, '' s'il n'en a pas — les motifs n'existent qu'ici.
-      tab5_nom : son nom dans HA. Une boucle :
+      tab5_nom : son nom dans HA. tab5_pret(appareil) : 'oui' quand cet écran (sans
+      appareil : un écran) est connecté ; tab5_appareil_connexion(trigger) : l'écran
+      dont la connexion a déclenché, '' sinon. Une boucle :
         {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
         {{ tab5_cibles(appareil | default('')).split(',') | select | list }}
 
@@ -168,4 +170,27 @@
 {%- macro tab5_nom(appareil) -%}
   {%- set d = appareil | default('', true) | string -%}
   {{- (device_attr(d, 'name_by_user') or device_attr(d, 'name') or 'Tab5') if d and '.' not in d else 'Tab5' -}}
+{%- endmacro -%}
+{%- macro tab5_pret(appareil='') -%}
+  {#- 'oui' quand on peut envoyer à `appareil` : son « HA API Status » est `on`. Sans
+      appareil (ou pas une tablette) : une tablette connectée, comme tab5_connectee().
+      Plusieurs écrans (25/10/2026) : à la connexion de la 7B, l'attente « une tablette
+      connectée » passait aussitôt grâce au Tab5, la liste des destinataires était
+      calculée 0,15 s avant que la 7B soit `on` et sa poussée complète partait au Tab5
+      seul. Une poussée déclenchée par esphome.tab5_connected attend donc CET écran :
+        {%- from 'tab5_tablette.jinja' import tab5_pret -%}
+        {{ tab5_pret(appareil) == 'oui' }} -#}
+  {%- set d = appareil | default('', true) | string -%}
+  {%- if d and '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' -%}
+    {{- 'oui' if is_state(tab5_entite(d, 'api'), 'on') else '' -}}
+  {%- else -%}
+    {{- tab5_connectee() -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_appareil_connexion(trigger) -%}
+  {#- device_id de la tablette dont l'esphome.tab5_connected a déclenché, '' pour tout
+      autre déclencheur : la poussée de connexion ne sert que cet écran. -#}
+  {%- if trigger.platform == 'event' and (trigger.event.event_type | default('', true) | string) == 'esphome.tab5_connected' -%}
+    {{- trigger.event.data.device_id | default('', true) | string -}}
+  {%- endif -%}
 {%- endmacro -%}

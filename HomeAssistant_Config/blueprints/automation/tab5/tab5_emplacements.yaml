@@ -4780,6 +4780,19 @@ conditions:
          or tab5_connectee() == 'oui' }}
 
 actions:
+  # Connexion d'un écran (25/10/2026, plusieurs écrans) : l'événement arrive avant que HA
+  # ait fini d'ouvrir sa liaison ; envoyer tout de suite finissait parfois en « Not
+  # connected to tab5-ha-hmi » (Waveshare 7B, 07:46, 08:11 et 10:46 ce jour-là). On attend
+  # le « HA API Status » de CET écran, 10 s au plus (tab5_pret, tab5_tablette.jinja) ;
+  # les envois vont déjà à lui seul (`tablettes`). Le démarrage de HA (demarrage_ha) n'a
+  # pas d'écran à attendre : la condition « tablette connectée » l'a déjà vérifié.
+  - if: "{{ trigger.platform == 'event' and trigger.event.event_type == 'esphome.tab5_connected' }}"
+    then:
+      - wait_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_pret -%}
+          {{ tab5_pret(trigger.event.data.device_id | default('', true) | string) == 'oui' }}
+        timeout: "00:00:10"
+        continue_on_timeout: true
   - variables:
       # « clé|état|valeur; » : état tel quel, valeur = luminosité (lampes) ou nombre de
       # l'état (capteurs), nan sinon. Une entité absente n'est pas poussée (zone absente).

@@ -325,7 +325,7 @@ def test_deux_secondes_au_moins_entre_deux_poussees():
 def test_script_de_poussee():
     script = _paquet()["script"]["tab5_serveur_ia_pousser"]
     seq = script["sequence"]
-    assert seq[0]["condition"] == "template" and "tab5_connectee() == 'oui'" in seq[0]["value_template"]
+    assert seq[0]["condition"] == "template" and "tab5_pret(appareil | default('')) == 'oui'" in seq[0]["value_template"]
     envoi = envoi_tablettes(seq[1])
     assert envoi["action"] == "esphome.{{ tablette }}_tab5_maj_serveur_ia" and envoi["continue_on_error"] is True
     assert list(envoi["data"]) == ["payload"]

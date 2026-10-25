@@ -154,9 +154,26 @@ automation:
           {%- from 'tab5_tablette.jinja' import tab5_origine -%}
           {{ tab5_origine(trigger) == 'oui' }}
     actions:
+      # Connexion d'un écran (25/10/2026, plusieurs écrans) : attendre SA liaison (10 s
+      # au plus), puis le script ne sert que lui (`appareil`) ; avant, une autre tablette
+      # connectée suffisait et l'écran qui venait de se connecter n'était pas dans la liste.
+      - variables:
+          appareil: >-
+            {%- from 'tab5_tablette.jinja' import tab5_appareil_connexion -%}
+            {{ tab5_appareil_connexion(trigger) }}
+      - if: "{{ appareil != '' }}"
+        then:
+          - wait_template: >-
+              {%- from 'tab5_tablette.jinja' import tab5_pret -%}
+              {{ tab5_pret(appareil) == 'oui' }}
+            timeout: "00:00:10"
+            continue_on_timeout: true
       - action: script.turn_on
         target:
           entity_id: script.tab5_froid_calculer
+        data:
+          variables:
+            appareil: "{{ appareil }}"
 
 script:
   tab5_froid_calculer:
@@ -372,8 +389,8 @@ script:
           appareils: "{{ bilan.appareils }}"
       - condition: template
         value_template: >-
-          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-          {{ tab5_connectee() == 'oui' }}
+          {%- from 'tab5_tablette.jinja' import tab5_pret -%}
+          {{ tab5_pret(appareil | default('')) == 'oui' }}
       - repeat:
           for_each: >-
             {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}

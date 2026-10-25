@@ -408,13 +408,16 @@ def test_chaque_poussee_attend_la_tablette():
     tablette commence par la garde « tablette connectée » (trouvée par son modèle), et
     le blueprint pousse aussi au rechargement des automatisations (défaut 4)."""
     garde = "tab5_connectee() == 'oui'"  # custom_templates/tab5_tablette.jinja (HA-7)
+    # Depuis le 25/10/2026 (plusieurs écrans), les scripts de poussée attendent l'écran qu'on
+    # leur passe, ou un écran connecté sans lui : tab5_pret() (même fichier).
+    garde_ecran = "tab5_pret(appareil | default('')) == 'oui'"
     for nom in ("tab5_push", "tab5_calendar", "tab5_reveil", "tab5_serveur_ia"):
         paquet = yaml.load(_lire("HomeAssistant_Config", "packages", f"{nom}.yaml"), Loader=_Chargeur)
         for script, corps in (paquet.get("script") or {}).items():
             if "esphome.tab5_ha_hmi_" not in yaml.dump(corps, allow_unicode=True):
                 continue
             premiere = corps["sequence"][0]
-            assert premiere.get("condition") == "template" and garde in premiere["value_template"], \
+            assert premiere.get("condition") == "template" and (garde in premiere["value_template"] or garde_ecran in premiere["value_template"]), \
                 f"{nom}.yaml, script {script} : la garde « tablette connectée » doit ouvrir la séquence"
     assert "select('eq', 'tab5-ha-hmi')" in _lire("HomeAssistant_Config", "custom_templates", "tab5_tablette.jinja")
     push = _lire("HomeAssistant_Config", "packages", "tab5_push.yaml")
