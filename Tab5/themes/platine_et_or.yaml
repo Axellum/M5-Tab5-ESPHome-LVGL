@@ -8,6 +8,7 @@
 # couleurs, formes (`formes:`) et polices d'affichage (heure, date, titres) ; le reste du
 # texte reste en Roboto. Les rôles absents héritent d'Ardoise (même mode).
 nom: Platine et or
+nom_ha: Platinum and gold   # option lue par Home Assistant (ADR-0070)
 ordre: 15
 herite: ardoise
 zones_sombres: [bandeau]

@@ -24,7 +24,7 @@
            pas encore (rest_command… sur un HA neuf), puis tout le YAML
            (homeassistant.reload_all) : pas de 2e redémarrage. Dans cet ordre, sinon une
            automatisation lit un modèle ou une entrée pas encore là ;
-        4. constate l'effet : le capteur « Tab5 · version des fichiers HA »
+        4. constate l'effet : le capteur « Tab5 · HA files version »
            (packages/tab5_health.yaml) donne la nouvelle version ; sinon une réparation dit
            quoi faire (ligne `packages:` absente, ou redémarrage) ;
         5. propose l'assistant de configuration (ADR-0052) : fichiers actifs et aucune

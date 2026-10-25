@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a tap on the room's name in the central card, in device mode (after a tap on the Home Assistant button), with the « Maison » entry of the tablet's « Aller à l'écran » list in Home Assistant, or with a long press on one of the three buttons top right when the blueprint gives it « Maison · House » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+**Opens with** a tap on the room's name in the central card, in device mode (after a tap on the Home Assistant button), with the « House » entry of the tablet's « Go to screen » list in Home Assistant, or with a long press on one of the three buttons top right when the blueprint gives it « Maison · House » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 ![The house window: one column per room, one row per device with its icon, name and state](../images/notice/maison-en.webp)
 
@@ -23,7 +23,7 @@ States change on the rows while the window is open. Like every window, it closes
 
 ---
 
-**S'ouvre par** un tap sur le nom de la pièce dans la carte centrale, en mode appareils (après un tap sur le bouton Home Assistant), par l'entrée « Maison » de la liste « Aller à l'écran » de la tablette dans Home Assistant, ou par un appui long sur l'un des trois boutons en haut à droite quand le blueprint lui donne « Maison · House » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+**S'ouvre par** un tap sur le nom de la pièce dans la carte centrale, en mode appareils (après un tap sur le bouton Home Assistant), par l'entrée « House » de la liste « Go to screen » de la tablette dans Home Assistant, ou par un appui long sur l'un des trois boutons en haut à droite quand le blueprint lui donne « Maison · House » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 ![La fenêtre de la maison : une colonne par pièce, une ligne par appareil avec son icône, son nom et son état](../images/notice/maison-fr.webp)
 

@@ -34,7 +34,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 `Tab5/user_entities.yaml` is gitignored (never committed). For a standard install there is nothing to replace in it: every line is optional.
 
-**Screen language:** French by default; add `tab5_langue: English` (or `Deutsch`, `Nederlands`, `Español`, `Italiano`, `Türkçe`) for another language on the first boot. It can then be changed from Home Assistant (select « Langue »), see [translations](../translations.md).
+**Screen language:** French by default; add `tab5_langue: English` (or `Deutsch`, `Nederlands`, `Español`, `Italiano`, `Türkçe`) for another language on the first boot. It can then be changed from Home Assistant (select « Language »), see [translations](../translations.md).
 
 **Time zone:** nothing to set since 3.0. The tablet takes Home Assistant's time zone and keeps the last one it received, so the alarm clock stays right when HA is down after a power cut. An old `tab5_fuseau` line is ignored.
 
@@ -118,7 +118,7 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 `Tab5/user_entities.yaml` est gitignoré (ne jamais le committer). Pour une installation standard, rien n'y est à remplacer : toutes les lignes sont facultatives.
 
-**Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` (ou `Deutsch`, `Nederlands`, `Español`, `Italiano`, `Türkçe`) pour une autre langue au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Langue »), voir [traductions](../translations.md#version-française).
+**Langue de l'écran :** le français par défaut ; ajoutez `tab5_langue: English` (ou `Deutsch`, `Nederlands`, `Español`, `Italiano`, `Türkçe`) pour une autre langue au premier démarrage. Elle se change ensuite depuis Home Assistant (select « Language »), voir [traductions](../translations.md#version-française).
 
 **Fuseau horaire :** rien à régler depuis la 3.0. La tablette prend celui de Home Assistant et garde le dernier reçu : le réveil reste juste quand HA manque après une coupure de courant. Une ancienne ligne `tab5_fuseau` est ignorée.
 

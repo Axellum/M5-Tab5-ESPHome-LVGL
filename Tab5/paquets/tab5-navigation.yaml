@@ -12,8 +12,9 @@
 #       - le select « Aller à l'écran » et le text_sensor « Écran courant ».
 # @architecture_constraint La liste des écrans vit en trois endroits qu'ESPHome ne sait
 #       pas réunir : l'enum Ecran (tab5_custom.h : valeurs, codes de kCodesGestes gardés en
-#       NVS), les options du select (lues par HA : ni traduites, ni réordonnées) et le
-#       registre ci-dessous (fenêtre, libellé, ouverture). Les trois sont tenus
+#       NVS), les options du select (lues par HA : en anglais depuis le 24/10/2026,
+#       ADR-0070, jamais traduites dans la langue de l'écran ni réordonnées) et le
+#       registre ci-dessous (fenêtre, libellé anglais = l'option, ouverture). Les trois sont tenus
 #       d'accord par des tests : ordre enum ↔ select (tests/test_appuis.py), libellés
 #       select ↔ registre (tools/check_tab5_registry.py). Un écran de plus : sa valeur
 #       dans l'enum (avant ARCADE), son option à la fin du select, sa ligne `add` ici
@@ -44,9 +45,12 @@ script:
   # de RÉGLAGES du réveil (alarm_popup), elle, est une modale ordinaire.
   # Les SUBWINDOW (détail d'un jour du calendrier, confirmations de la page Système
   # des Réglages) n'ont pas de fondu propre : masquage sec, avec la carte qui les porte.
-  # « Console système » n'est plus une fenêtre depuis le 08/10/2026 : c'est la page
-  # Système des Réglages (tab5_ecran_ouvrir ci-dessous la traduit, et
-  # tools/check_tab5_registry.py l'accepte comme alias de « Réglages »).
+  # « System console » (« Console système ») n'est plus une fenêtre depuis le 08/10/2026 :
+  # c'est la page Système des Réglages (tab5_ecran_ouvrir ci-dessous la traduit, et
+  # tools/check_tab5_registry.py l'accepte comme alias de « Settings »).
+  # Libellés en anglais (24/10/2026, ADR-0070) : ce sont les options du select « Aller à
+  # l'écran » et les états du capteur « Écran courant », que HA lit ; l'écran n'affiche
+  # jamais ces libellés (chaque popup a son titre, traduit par tr()).
   # Ouverture (4e argument, 08/10/2026) : ce que tab5_ecran_ouvrir lance pour ouvrir cet
   # écran, quand c'est plus qu'animate_popup_open() de la fenêtre (le défaut) — son
   # script d'ouverture, qui pose ses widgets, demande ses données à HA ou recalcule son
@@ -58,73 +62,73 @@ script:
     then:
       - lambda: |-
           if (ModalRegistry::ready()) return;
-          ModalRegistry::add(id(alarm_ring_layer),       "Réveil qui sonne", ModalRegistry::LAYER);
+          ModalRegistry::add(id(alarm_ring_layer),       "Alarm ringing",    ModalRegistry::LAYER);
           // Le réveil resynchronise g_alarm_cfg et recalcule la prochaine sonnerie avant de
           // s'afficher, sinon la carte « Prochaine sonnerie » montrerait un état périmé.
-          ModalRegistry::add(id(alarm_popup),            "Réveil",           ModalRegistry::POPUP,
+          ModalRegistry::add(id(alarm_popup),            "Alarm",            ModalRegistry::POPUP,
                              [] { id(tab5_alarm_open).execute(); });
           // L'assistant arme aussi l'état vocal et la synchro des réglages du panneau gauche.
-          ModalRegistry::add(id(assistant_popup),        "Assistant vocal",  ModalRegistry::POPUP,
+          ModalRegistry::add(id(assistant_popup),        "Voice assistant",  ModalRegistry::POPUP,
                              [] { id(tab5_assist_open).execute(); });
           // Le calendrier a besoin de son mois courant + du rendu.
-          ModalRegistry::add(id(calendar_popup),         "Calendrier",       ModalRegistry::POPUP,
+          ModalRegistry::add(id(calendar_popup),         "Calendar",         ModalRegistry::POPUP,
                              [] { id(tab5_calendar_open).execute(); });
           // Lumières et volet (ADR-0042) : le popup d'une tuile, ouvert sans tuile touchée —
           // celle de la pièce affichée d'abord (tuiles_ecran_ouvrir, tab5_tuiles.cpp). Une
           // page par pièce dans les deux popups (ADR-0046) : ils s'ouvrent sur cette pièce.
-          ModalRegistry::add(id(light_options_popup),    "Lumières",         ModalRegistry::POPUP,
+          ModalRegistry::add(id(light_options_popup),    "Lights",           ModalRegistry::POPUP,
                              [] { tuiles_ecran_ouvrir(Ecran::LUMIERES); });
-          ModalRegistry::add(id(volet_popup),            "Volet",            ModalRegistry::POPUP,
+          ModalRegistry::add(id(volet_popup),            "Shutter",          ModalRegistry::POPUP,
                              [] { tuiles_ecran_ouvrir(Ecran::VOLET); });
-          ModalRegistry::add(id(appareil_popup),         "Appareil",         ModalRegistry::POPUP);
+          ModalRegistry::add(id(appareil_popup),         "Device",           ModalRegistry::POPUP);
           // La clim du blueprint : le popup a pu montrer celle d'une tuile (ADR-0027) et
           // être refermé par close_all().
-          ModalRegistry::add(id(clim_options_popup),     "Climatisation",    ModalRegistry::POPUP,
+          ModalRegistry::add(id(clim_options_popup),     "Air conditioning", ModalRegistry::POPUP,
                              [] { clim_afficher_blueprint(); animate_popup_open(id(clim_options_popup)); });
-          ModalRegistry::add(id(pots_detail_popup),      "Plantes",          ModalRegistry::POPUP);
+          ModalRegistry::add(id(pots_detail_popup),      "Plants",           ModalRegistry::POPUP);
           // Télécommande (ADR-0056) : sur la télécommande déjà montrée, disposition peinte.
-          ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP,
+          ModalRegistry::add(id(tv_remote_popup),        "TV remote",        ModalRegistry::POPUP,
                              [] { telecommande_ouvrir(-1); });
           // Énergie (ADR-0028) : pose les widgets à la première ouverture, demande ses données.
-          ModalRegistry::add(id(energie_popup),          "Énergie",          ModalRegistry::POPUP,
+          ModalRegistry::add(id(energie_popup),          "Energy",           ModalRegistry::POPUP,
                              [] { id(tab5_energie_ouvrir).execute(); });
           // Réglages : pose les widgets et peint avant d'ouvrir, sur la page Écran
           // (« Console système » : la page Système, tab5_ecran_ouvrir).
-          ModalRegistry::add(id(reglages_popup),         "Réglages",         ModalRegistry::POPUP,
+          ModalRegistry::add(id(reglages_popup),         "Settings",         ModalRegistry::POPUP,
                              [] { id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_ECRAN); });
           // Température (ADR-0032) : celle de gauche de l'accueil (salon, ou la pièce affichée
           // en mode HA, ADR-0040), sinon la serre (ADR-0042).
-          ModalRegistry::add(id(historique_popup),       "Température",      ModalRegistry::POPUP,
+          ModalRegistry::add(id(historique_popup),       "Temperature",      ModalRegistry::POPUP,
                              [] {
                                const char* cle = accueil_historique_cle(false);
                                if (cle == nullptr) cle = accueil_historique_cle(true);
                                if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));
                              });
           // Alertes : pose les widgets et demande l'historique à HA.
-          ModalRegistry::add(id(alertes_popup),          "Alertes",          ModalRegistry::POPUP,
+          ModalRegistry::add(id(alertes_popup),          "Alerts",           ModalRegistry::POPUP,
                              [] { id(tab5_alertes_ouvrir).execute(); });
           // Météo (ADR-0043) : pose les widgets, construit les tracés à la première
           // ouverture, page « Aujourd'hui ».
-          ModalRegistry::add(id(meteo_popup),            "Météo",            ModalRegistry::POPUP,
+          ModalRegistry::add(id(meteo_popup),            "Weather",          ModalRegistry::POPUP,
                              [] { id(tab5_meteo_ouvrir).execute(METEO_PAGE_JOUR); });
           // Musique (ADR-0050) : le lecteur courant, état frais demandé à HA.
-          ModalRegistry::add(id(lecteur_popup),          "Musique",          ModalRegistry::POPUP,
+          ModalRegistry::add(id(lecteur_popup),          "Music",            ModalRegistry::POPUP,
                              [] { id(tab5_lecteur_ouvrir).execute(std::string()); });
           // Caméras (ADR-0049) : pose les widgets à la première ouverture, demande la liste.
-          ModalRegistry::add(id(cameras_popup),          "Caméras",          ModalRegistry::POPUP,
+          ModalRegistry::add(id(cameras_popup),          "Cameras",          ModalRegistry::POPUP,
                              [] { id(tab5_cameras_ouvrir).execute(); });
           // Suivi (ADR-0054) : les capteurs suivis, dernier état reçu (rien n'est demandé à HA).
-          ModalRegistry::add(id(suivi_popup),            "Suivi",            ModalRegistry::POPUP,
+          ModalRegistry::add(id(suivi_popup),            "Tracking",         ModalRegistry::POPUP,
                              [] { id(tab5_suivi_ouvrir).execute(); });
           // Froid (ADR-0055) : réfrigérateurs et congélateurs, dernier état reçu.
-          ModalRegistry::add(id(froid_popup),            "Froid",            ModalRegistry::POPUP,
+          ModalRegistry::add(id(froid_popup),            "Fridges",          ModalRegistry::POPUP,
                              [] { id(tab5_froid_ouvrir).execute(); });
           // Serveur IA (ADR-0059) : le serveur de LLM local, dernier état reçu.
-          ModalRegistry::add(id(serveur_ia_popup),       "Serveur IA",       ModalRegistry::POPUP,
+          ModalRegistry::add(id(serveur_ia_popup),       "AI server",        ModalRegistry::POPUP,
                              [] { id(tab5_serveur_ia_ouvrir).execute(); });
           // Après les popups qu'une de ses lignes ouvre : ouverts devant lui, ils sont nommés.
           // Maison (ADR-0037) : pose les widgets, les dispose et peint.
-          ModalRegistry::add(id(maison_popup),           "Maison",           ModalRegistry::POPUP,
+          ModalRegistry::add(id(maison_popup),           "House",            ModalRegistry::POPUP,
                              [] { id(tab5_maison_ouvrir).execute(); });
           ModalRegistry::add(id(cal_day_popup),          nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(overlay_confirm_ha),     nullptr,            ModalRegistry::SUBWINDOW);
@@ -268,7 +272,7 @@ script:
           // sa fenêtre est celle des Réglages (alias de check_tab5_registry.py).
           id(tab5_modal_registry_init).execute();
           lv_obj_t* target = e == Ecran::ARCADE ? nullptr
-                           : ModalRegistry::find(e == Ecran::CONSOLE ? "Réglages" : nom);
+                           : ModalRegistry::find(e == Ecran::CONSOLE ? "Settings" : nom);
           if (e != Ecran::ACCUEIL && e != Ecran::ARCADE && target == nullptr) {
             ESP_LOGW("TAB5", "Aller a l'ecran : option '%s' sans fenetre enregistree", nom);
           }
@@ -321,8 +325,11 @@ text_sensor:
   # Publié SEULEMENT quand il change (audit du 25/09/2026, lot 3 bis) : avant, la
   # même valeur partait toutes les 5 s, et le panneau du rotateur central (planning,
   # pluie, vigilance, info, alertes, 8 s chacun) en faisait ≈ 10 700 lignes par jour
-  # en base. L'accueil est donc « Accueil » tout court. HA reçoit quand même l'état
+  # en base. L'accueil est donc « Home » tout court. HA reçoit quand même l'état
   # courant à chaque reconnexion (ESPHome le renvoie à l'abonnement).
+  # En anglais pour HA (24/10/2026, ADR-0070) : « Home », le libellé du registre (« Alarm
+  # ringing », « Energy »…), « Arcade » ou « Game · <console> » (le nom d'une console est un
+  # nom propre). Avant : « Accueil », « Énergie »…, « Jeu · <console> ».
   - platform: template
     id: tab5_screen_name
     name: "Écran courant"
@@ -339,7 +346,7 @@ text_sensor:
       // masquerait un jeu en cours.
       if (!id(page_main)->is_showing()) {
         const char* game = GameRegistry::open_name();
-        name = (game != nullptr) ? std::string("Jeu · ") + game : std::string("Arcade");
+        name = (game != nullptr) ? std::string("Game · ") + game : std::string("Arcade");
       } else {
         // Ordre = priorité d'affichage : les popups couvrent le dashboard, on
         // nomme donc le premier visible. C'est l'ordre d'enregistrement de
@@ -347,7 +354,7 @@ text_sensor:
         // c'est le seul calque qui couvre aussi les fenêtres modales.
         if (!ModalRegistry::ready()) id(tab5_modal_registry_init).execute();  // une fois (PERF-5)
         const char* modal = ModalRegistry::visible_name();
-        name = (modal != nullptr) ? std::string(modal) : std::string("Accueil");
+        name = (modal != nullptr) ? std::string(modal) : std::string("Home");
       }
       if (name == last) return {};
       last = name;
@@ -362,8 +369,12 @@ select:
   # murale n'a pas d'usage). « Lumières » l'était jusqu'au 09/10/2026 (le popup suivait
   # la dernière lampe touchée) : il s'ouvre maintenant sur les lumières de la pièce
   # affichée, ou de la première qui en a (tuiles_ecran_ouvrir, ADR-0042).
-  # Les options sont lues par HA : jamais traduites, et une nouvelle s'ajoute à la fin
-  # (l'index de l'option EST la valeur d'Ecran, tab5_custom.h).
+  # Les options sont lues par HA, et une nouvelle s'ajoute à la fin (l'index de l'option
+  # EST la valeur d'Ecran, tab5_custom.h). En anglais depuis le 24/10/2026 (ADR-0070,
+  # décision d'Axel : des utilisateurs non francophones veulent lire HA en anglais), dans
+  # toutes les langues de l'écran ; avant, en français (« Accueil », « Énergie »…) et
+  # « jamais traduites ». Seul le texte a changé, pas l'ordre : un appel par index reste
+  # bon, une automatisation qui écrit l'ancien texte est à mettre à jour.
   - platform: template
     id: tab5_goto_screen
     name: "Aller à l'écran"
@@ -372,40 +383,40 @@ select:
     optimistic: true
     options:
       - "—"
-      - "Accueil"
-      - "Assistant vocal"
-      - "Calendrier"
-      - "Réveil"
-      - "Climatisation"
-      - "Plantes"
-      - "Télécommande TV"
-      - "Console système"
+      - "Home"
+      - "Voice assistant"
+      - "Calendar"
+      - "Alarm"
+      - "Air conditioning"
+      - "Plants"
+      - "TV remote"
+      - "System console"
       # ADR-0028 : à la fin, les index des autres options ne bougent pas.
-      - "Énergie"
+      - "Energy"
       # Réglages de la tablette (06/10/2026), à la fin pour la même raison.
-      - "Réglages"
+      - "Settings"
       # Historique des alertes (lot 4 du plan des alertes, 06/10/2026), à la fin aussi.
-      - "Alertes"
+      - "Alerts"
       # Toute la maison, pièce par pièce (ADR-0037, 07/10/2026), à la fin aussi.
-      - "Maison"
+      - "House"
       # Roue de navigation (ADR-0042, 09/10/2026) : les popups d'une tuile (Lumières et
       # Volets, une page par pièce, ADR-0046) et la température de l'accueil, ouverts sans
       # tuile touchée. À la fin aussi.
-      - "Lumières"
-      - "Volet"
-      - "Température"
+      - "Lights"
+      - "Shutter"
+      - "Temperature"
       # La météo en graphiques (ADR-0043, 09/10/2026), à la fin aussi.
-      - "Météo"
+      - "Weather"
       # Le lecteur de musique (ADR-0050, 10/10/2026), à la fin aussi.
-      - "Musique"
+      - "Music"
       # L'image des caméras (ADR-0049, 09/10/2026) : une sonnette l'ouvre d'ici. À la fin.
-      - "Caméras"
+      - "Cameras"
       # Les capteurs suivis (ADR-0054, 10/10/2026), à la fin aussi.
-      - "Suivi"
+      - "Tracking"
       # Réfrigérateurs et congélateurs (ADR-0055, 10/10/2026), à la fin aussi.
-      - "Froid"
+      - "Fridges"
       # Le serveur de LLM local (ADR-0059, 10/10/2026), à la fin aussi.
-      - "Serveur IA"
+      - "AI server"
     on_value:
       # Toute l'ouverture est dans tab5_ecran_ouvrir (plus haut), partagé avec les appuis
       # longs des boutons du haut : l'index de l'option EST la valeur d'Ecran

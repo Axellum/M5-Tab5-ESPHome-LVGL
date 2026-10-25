@@ -10,7 +10,7 @@ Measured on the author's boards: the Tab5 (ST7123 screen, ESP32-P4 revision v1.3
 
 Measured on the author's 7B from 21:45 to 06:16, nobody touching it, on a measuring build of `main` 3293d4e1 that logs every frame of 2 ms or more and times each step of a theme switch (never committed). Same method as the Tab5 campaigns below: driven through the native API, whole screen = backlight off then on, popups through the « Aller à l'écran » select, the number kept is the longest frame, median of the runs. Power was recorded at the same time at the USB input: [consumption](consumption.md#settings-and-themes-7b-night-of-2026-10-16).
 
-The author's board is mounted upside down, so these measurements ran with `carte_rotation: "0"` (no rotation; since [ADR-0069](decisions/0069-screen-direction-from-home-assistant.md), its « Sens de l'écran » setting on « Retourné » takes the same code path). At the default 180°, a whole screen takes about 13 ms more: 82.6 against 69.4 ms (4 runs each, same board, same evening, builds identical except the rotation).
+The author's board is mounted upside down, so these measurements ran with `carte_rotation: "0"` (no rotation; since [ADR-0069](decisions/0069-screen-direction-from-home-assistant.md), its « Sens de l'écran » setting on « Upside down » takes the same code path). At the default 180°, a whole screen takes about 13 ms more: 82.6 against 69.4 ms (4 runs each, same board, same evening, builds identical except the rotation).
 
 ### Whole screen, per theme (5 runs)
 
@@ -368,7 +368,7 @@ Mesuré sur les cartes de l'auteur : le Tab5 (écran ST7123, ESP32-P4 révision 
 
 Mesuré sur la 7B de l'auteur de 21 h 45 à 6 h 16, sans personne pour y toucher, sur un build de mesure de `main` 3293d4e1 qui écrit au journal chaque image de 2 ms ou plus et chronomètre chaque étape d'une bascule de thème (jamais commité). Même méthode que les campagnes du Tab5 plus bas : pilotage par l'API native, écran entier = rétroéclairage éteint puis rallumé, popups par le select « Aller à l'écran », chiffre retenu = image la plus longue, en médiane des passes. La puissance était relevée en même temps à l'entrée USB : [consommation](consumption.md#réglages-et-thèmes-7b-nuit-du-16102026).
 
-La carte de l'auteur est montée à l'envers : ces mesures tournaient avec `carte_rotation: "0"` (sans rotation ; depuis l'[ADR-0069](decisions/0069-screen-direction-from-home-assistant.md), son réglage « Sens de l'écran » sur « Retourné » prend le même chemin de code). Avec les 180° d'origine, un écran entier prend environ 13 ms de plus : 82,6 contre 69,4 ms (4 passes chacun, même carte, même soir, builds identiques à la rotation près).
+La carte de l'auteur est montée à l'envers : ces mesures tournaient avec `carte_rotation: "0"` (sans rotation ; depuis l'[ADR-0069](decisions/0069-screen-direction-from-home-assistant.md), son réglage « Sens de l'écran » sur « Upside down » prend le même chemin de code). Avec les 180° d'origine, un écran entier prend environ 13 ms de plus : 82,6 contre 69,4 ms (4 passes chacun, même carte, même soir, builds identiques à la rotation près).
 
 ### Écran entier, par thème (5 passes)
 

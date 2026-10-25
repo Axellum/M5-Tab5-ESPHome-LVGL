@@ -6,7 +6,7 @@
 #       (Paramètres → Automatisations et scènes → Scripts → « Tab5 — consumption
 #       test », Exécuter) passe par 11 cas de N minutes (écran 100 / 50 / 10 % et
 #       éteint, « Okay Nabu » coupé, haut-parleur coupé, thème très sombre puis
-#       clair, mode économie « Toujours », tout coupé, référence rejouée à la fin),
+#       clair, mode économie « Always », tout coupé, référence rejouée à la fin),
 #       relève « Tab5 Consommation » toutes les 5 s et donne à la fin, dans une
 #       notification, un tableau EN ANGLAIS à copier dans GitHub.
 #       Pourquoi un script de HA plutôt que tools/mesure_conso.py : rien à installer,
@@ -37,7 +37,7 @@
 
 script:
   tab5_mesure_consommation:
-    alias: "Tab5 — consumption test · test de consommation"
+    alias: "Tab5 — consumption test"
     icon: mdi:battery-clock
     description: >-
       Measures the power drawn by the Tab5 on its battery in 11 cases (screen
@@ -137,19 +137,23 @@ script:
             theme: "{{ states(e_theme) }}"
             mode: "{{ states(e_mode) }}"
           # Cas : luminosité (0 = éteint), micro, haut-parleur, économie, thème et
-          # mode ('' = ceux de l'utilisateur).
+          # mode. Économie, thème et mode par l'INDEX de l'option (-1 = ceux de
+          # l'utilisateur), lue dans la liste des options du select : ces options sont en
+          # anglais depuis le firmware du 24/10/2026 (ADR-0070), en français avant, et la
+          # tablette garde l'index. Économie : 0 Never (Jamais), 2 Always (Toujours) ;
+          # thème 13 : Obsidian (Obsidienne) ; mode : 0 Dark (Sombre), 1 Light (Clair).
           cas:
-            - {nom: "reference", texte: "Reference: screen 100 %, Okay Nabu on, speaker on, your theme", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
-            - {nom: "okay_nabu_off", texte: "Okay Nabu (microphone) off", ecran: 100, micro: false, hp: true, eco: "Jamais", theme: "", mode: ""}
-            - {nom: "speaker_off", texte: "Speaker amplifier off", ecran: 100, micro: true, hp: false, eco: "Jamais", theme: "", mode: ""}
-            - {nom: "screen_50", texte: "Screen 50 %", ecran: 50, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
-            - {nom: "screen_10", texte: "Screen 10 %", ecran: 10, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
-            - {nom: "energy_saving", texte: "Energy saving « Always » (screen 10 %, no animation, 30 fps): compare with screen_10", ecran: 100, micro: true, hp: true, eco: "Toujours", theme: "", mode: ""}
-            - {nom: "screen_off", texte: "Screen off", ecran: 0, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
-            - {nom: "theme_dark", texte: "Very dark theme (Obsidienne, dark mode), screen 100 %", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "Obsidienne", mode: "Sombre"}
-            - {nom: "theme_light", texte: "Same theme in light mode, screen 100 %", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "Obsidienne", mode: "Clair"}
-            - {nom: "all_off", texte: "Screen, Okay Nabu and speaker off", ecran: 0, micro: false, hp: false, eco: "Jamais", theme: "", mode: ""}
-            - {nom: "reference_end", texte: "Reference again (drift with temperature and battery level)", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "reference", texte: "Reference: screen 100 %, Okay Nabu on, speaker on, your theme", ecran: 100, micro: true, hp: true, eco: 0, theme: -1, mode: -1}
+            - {nom: "okay_nabu_off", texte: "Okay Nabu (microphone) off", ecran: 100, micro: false, hp: true, eco: 0, theme: -1, mode: -1}
+            - {nom: "speaker_off", texte: "Speaker amplifier off", ecran: 100, micro: true, hp: false, eco: 0, theme: -1, mode: -1}
+            - {nom: "screen_50", texte: "Screen 50 %", ecran: 50, micro: true, hp: true, eco: 0, theme: -1, mode: -1}
+            - {nom: "screen_10", texte: "Screen 10 %", ecran: 10, micro: true, hp: true, eco: 0, theme: -1, mode: -1}
+            - {nom: "energy_saving", texte: "Energy saving « Always » (screen 10 %, no animation, 30 fps): compare with screen_10", ecran: 100, micro: true, hp: true, eco: 2, theme: -1, mode: -1}
+            - {nom: "screen_off", texte: "Screen off", ecran: 0, micro: true, hp: true, eco: 0, theme: -1, mode: -1}
+            - {nom: "theme_dark", texte: "Very dark theme (Obsidian, dark mode), screen 100 %", ecran: 100, micro: true, hp: true, eco: 0, theme: 13, mode: 0}
+            - {nom: "theme_light", texte: "Same theme in light mode, screen 100 %", ecran: 100, micro: true, hp: true, eco: 0, theme: 13, mode: 1}
+            - {nom: "all_off", texte: "Screen, Okay Nabu and speaker off", ecran: 0, micro: false, hp: false, eco: 0, theme: -1, mode: -1}
+            - {nom: "reference_end", texte: "Reference again (drift with temperature and battery level)", ecran: 100, micro: true, hp: true, eco: 0, theme: -1, mode: -1}
           resultats: []
           debranche: false
           debut: "{{ now().strftime('%Y-%m-%d %H:%M') }}"
@@ -173,11 +177,12 @@ script:
           - action: switch.turn_on
             target:
               entity_id: "{{ e_mesure }}"
+      # « Never » (« Jamais » avant le 24/10/2026) : la première option, quelle que soit la langue.
       - action: select.select_option
         target:
           entity_id: "{{ e_extinction }}"
         data:
-          option: "Jamais"
+          option: "{{ (state_attr(e_extinction, 'options') or ['Never']) | first }}"
 
       # ── Les cas ──
       - repeat:
@@ -189,13 +194,20 @@ script:
               then:
                 - variables:
                     c: "{{ repeat.item }}"
-                    theme_voulu: "{{ repeat.item.theme or avant.theme }}"
-                    mode_voulu: "{{ repeat.item.mode or avant.mode }}"
+                    theme_voulu: >-
+                      {%- set o = state_attr(e_theme, 'options') or [] -%}
+                      {{ o[repeat.item.theme] if 0 <= repeat.item.theme < o | count else avant.theme }}
+                    mode_voulu: >-
+                      {%- set o = state_attr(e_mode, 'options') or [] -%}
+                      {{ o[repeat.item.mode] if 0 <= repeat.item.mode < o | count else avant.mode }}
+                    eco_voulue: >-
+                      {%- set o = state_attr(e_eco, 'options') or [] -%}
+                      {{ o[repeat.item.eco] if 0 <= repeat.item.eco < o | count else avant.eco }}
                 - action: select.select_option
                   target:
                     entity_id: "{{ e_eco }}"
                   data:
-                    option: "{{ c.eco }}"
+                    option: "{{ eco_voulue }}"
                 - if:
                     - condition: template
                       value_template: "{{ states(e_theme) != theme_voulu }}"

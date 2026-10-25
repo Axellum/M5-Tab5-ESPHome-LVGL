@@ -20,7 +20,7 @@ With the HACS integration, its setup assistant can create it for you from your H
 
 **One automation per tablet.** As soon as it is saved, the tablet receives your devices.
 
-**It worked if** the tiles at the bottom of the screen show your devices. The tablet's diagnostic sensor « Zones masquées » lists what is hidden: a slot you left empty, or an entity that does not exist.
+**It worked if** the tiles at the bottom of the screen show your devices. The tablet's diagnostic sensor « Hidden zones » lists what is hidden: a slot you left empty, or an entity that does not exist.
 
 ## The sections
 
@@ -41,7 +41,7 @@ Every section opens folded except Rooms and Room 1: click its title to open it. 
 | Panneau Ok Nabu · Ok Nabu panel | up to three lines of four sensors in the « Ok Nabu » button, like the row under the clock, the place of the listening line « Ok Nabu: ON / OFF » (first by default, or hidden), scrolling fixed (default) or automatic, the time per line | [user manual, home screen](../notice/home.md#voice-domo-microphone-discu-ok-nabu-1-to-4) |
 | Zone à gauche de l'horloge · Left of the clock | what the left column above the Ok Nabu frame shows first: the microphone with the Domo / Discu buttons, the next 15 hours as a chart, the compact music player or a tracked sensor; a tap on the second temperature shows the next one | [user manual, home screen](../notice/home.md#voice-domo-microphone-discu-ok-nabu-1-to-4) |
 | Horloge et boutons du haut · Clock and top buttons | what a tap and a long press do on the hours, the minutes and the date of the clock, and on each of the three buttons at the top right (house, gear, gamepad), twelve gestures: Automatic, Nothing, a screen (the house and weather windows included) or an action (device mode, next device of the − / + tile, next line under the clock, next line of the Ok Nabu panel, wake word on / off) | [user manual, home screen](../notice/home.md#the-three-buttons-top-right-6-to-8) |
-| Planning de travail · Work schedule | empty: the calendar of the « Tab5 · agenda de travail » list ([step 5](sources.md)) | |
+| Planning de travail · Work schedule | empty: the calendar of the « Tab5 · work calendar » list ([step 5](sources.md)) | |
 | Météo · Weather | empty: the weather lists of [step 5](sources.md). Filled, it writes its choice into them and wins over them; with several tablets, fill it in one automation only | [weather providers](weather.md) |
 | Énergie : solaire · Energy: solar | solar power and solar energy produced (a main sensor, then the other inverters if you have several), the panels' peak power | [solar energy](adapt-to-your-home.md#solar-energy-optional) |
 | Énergie : réseau et maison · Energy: grid and home | grid power (bought or sold), home consumption | [solar energy](adapt-to-your-home.md#solar-energy-optional) |
@@ -78,7 +78,7 @@ Avec l'intégration HACS, son assistant de configuration peut la créer pour vou
 
 **Une automatisation par tablette.** Dès qu'elle est enregistrée, la tablette reçoit vos appareils.
 
-**C'est bon si** les tuiles du bas de l'écran montrent vos appareils. Le capteur de diagnostic « Zones masquées » de la tablette liste ce qui est masqué : un emplacement laissé vide, ou une entité qui n'existe pas.
+**C'est bon si** les tuiles du bas de l'écran montrent vos appareils. Le capteur de diagnostic « Hidden zones » de la tablette liste ce qui est masqué : un emplacement laissé vide, ou une entité qui n'existe pas.
 
 ## Les sections
 
@@ -99,7 +99,7 @@ Toutes les sections s'ouvrent repliées, sauf « Pièces » et la pièce 1 : cli
 | Panneau Ok Nabu · Ok Nabu panel | jusqu'à trois lignes de quatre capteurs dans le bouton « Ok Nabu », comme la rangée sous l'horloge, la place de la ligne d'écoute « Ok Nabu : ON / OFF » (première d'origine, ou masquée), le défilement fixe (d'origine) ou automatique, la durée d'une ligne | [notice, écran d'accueil](../notice/home.md#voix--domo-micro-discu-ok-nabu-1-à-4) |
 | Zone à gauche de l'horloge · Left of the clock | ce que montre d'abord la colonne de gauche, au-dessus du cadre Ok Nabu : le micro avec les boutons Domo / Discu, les 15 heures qui viennent en graphique, le lecteur de musique compact ou un capteur suivi ; un tap sur la seconde température passe au suivant | [notice, écran d'accueil](../notice/home.md#voix--domo-micro-discu-ok-nabu-1-à-4) |
 | Horloge et boutons du haut · Clock and top buttons | ce que font un tap et un appui long sur les heures, les minutes et la date de l'horloge, et sur chacun des trois boutons en haut à droite (maison, engrenage, manette), douze gestes : Automatique, Rien, un écran (les fenêtres Maison et Météo comprises) ou une action (mode appareils, appareil suivant de la tuile − / +, ligne suivante sous l'horloge, ligne suivante du panneau Ok Nabu, mot de réveil activé / coupé) | [notice, écran d'accueil](../notice/home.md#les-trois-boutons-en-haut-à-droite-6-à-8) |
-| Planning de travail · Work schedule | vide : l'agenda de la liste « Tab5 · agenda de travail » ([étape 5](sources.md#version-française)) | |
+| Planning de travail · Work schedule | vide : l'agenda de la liste « Tab5 · work calendar » ([étape 5](sources.md#version-française)) | |
 | Météo · Weather | vide : les listes météo de l'[étape 5](sources.md#version-française). Remplie, elle écrit son choix dans ces listes et prime sur elles ; avec plusieurs tablettes, remplissez-la dans une seule automatisation | [fournisseurs météo](weather.md#version-française) |
 | Énergie : solaire · Energy: solar | puissance et énergie solaires produites (un capteur principal, puis les autres onduleurs s'il y en a plusieurs), la puissance crête des panneaux | [énergie solaire](adapt-to-your-home.md#énergie-solaire-facultatif) |
 | Énergie : réseau et maison · Energy: grid and home | puissance du réseau (achat ou vente), consommation de la maison | [énergie solaire](adapt-to-your-home.md#énergie-solaire-facultatif) |

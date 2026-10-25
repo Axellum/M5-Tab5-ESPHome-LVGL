@@ -20,11 +20,10 @@
 #       deux scripts échouent à la ligne d'import. Ne pas recopier ces lignes ici.
 #       Même chose pour custom_templates/tab5_tablette.jinja (garde « tablette
 #       connectée », 08/10/2026).
-# @data_sources Cinq agendas choisis dans HA (listes « Tab5 · agenda … »,
+# @data_sources Cinq agendas choisis dans HA (listes « Tab5 · … calendar »,
 #       packages/tab5_reglages.yaml, ADR-0024) : travail, jours fériés, rendez-vous,
 #       anniversaires, vacances scolaires. Un agenda non choisi est simplement absent.
-#       Travail : les événements dont le titre contient un des mots de « Tab5 · mot des
-#       événements de travail » (sans casse ; vide = tous) ; ses autres événements
+#       Travail : les événements dont le titre contient un des mots de « Tab5 · work event keyword » (sans casse ; vide = tous) ; ses autres événements
 #       sont des RDV. Fériés : un agenda de l'intégration « Jours fériés » (holiday)
 #       ne contient que des jours fériés ; un autre (Google « Jours fériés et autres
 #       fêtes en France ») mélange fériés et fêtes civiles -> liste blanche
@@ -48,7 +47,7 @@
 
 script:
   tab5_calendrier_mois:
-    alias: "Tab5 — codes calendrier d'un mois (popup calendrier)"
+    alias: "Tab5 — calendar codes of a month (calendar popup)"
     description: >-
       Calcule pour le mois demandé le bitmask jour par jour (travail, férié,
       vacances scolaires, RDV, anniversaire) + les heures de travail, et
@@ -288,7 +287,7 @@ script:
                 details: ""
 
   tab5_calendrier_jour:
-    alias: "Tab5 — détail d'un jour (popup calendrier)"
+    alias: "Tab5 — details of a day (calendar popup)"
     description: >-
       Construit les lignes de détail du jour tapé (férié nommé, vacances
       scolaires, horaires de travail, RDV, anniversaires, fêtes civiles) et les

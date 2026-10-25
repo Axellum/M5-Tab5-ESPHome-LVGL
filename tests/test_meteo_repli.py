@@ -207,7 +207,7 @@ def test_seuil_en_constante_nommee():
 
 def _alerte(etats):
     """La source « meteo » de tab5_alertes_sources, rendue avec les attributs du vrai
-    capteur « Tab5 Météo »."""
+    capteur « Tab5 Weather »."""
     m = etats["sensor.tab5_meteo"]
     env = _env_alertes([EtatAlerte("sensor.tab5_meteo", m.state, dict(m.attributes))], MAINTENANT.timestamp())
     rendu = env.from_string("{% from 'tab5_alertes.jinja' import tab5_alertes_sources %}"

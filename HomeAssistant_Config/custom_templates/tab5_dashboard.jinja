@@ -25,13 +25,15 @@
       « Nouveau tableau de bord à partir de zéro », titre « Tab5 » (adresse /dashboard-tab5).
       2. Outils de développement → Modèle : remplacez le contenu de l'éditeur par
       {% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard() }}
-      (autre adresse : tab5_dashboard('dashboard-xxx')), copiez le résultat (à droite).
+      (autre adresse : tab5_dashboard('dashboard-xxx') ; plusieurs tablettes :
+      tab5_dashboard('dashboard-tab5', appareil='<nom de l'appareil>')), copiez le résultat (à droite).
       3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → « Éditeur de configuration
       brute », remplacez tout par le résultat, enregistrez. À refaire après une mise à
       jour qui ajoute des entités.
       ENGLISH — 1. Settings → Dashboards → "Add dashboard" → "New dashboard from scratch",
       title "Tab5" (address /dashboard-tab5). 2. Developer tools → Template: replace the
-      editor content with the line above (other address: tab5_dashboard('dashboard-xxx')),
+      editor content with the line above (other address: tab5_dashboard('dashboard-xxx');
+      several tablets: tab5_dashboard('dashboard-tab5', appareil='<device name>')),
       copy the result (right). 3. Open the Tab5 dashboard → pencil → ⋮ → "Raw
       configuration editor", replace everything with the result, save. Redo after an
       update that adds entities.
@@ -60,12 +62,17 @@
       utilisez « … ». Le contenu de la carte Markdown « En bref » est du Jinja rendu
       par la carte elle-même, à garder entre {% raw %} et {% endraw %}.
 ============================================================================ -#}
-{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='') -%}
+{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='') -%}
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
+{#- Plusieurs tablettes : appareil = l'identifiant ou le nom de celle à montrer
+    (tab5_dashboard('dashboard-tab5', appareil='Tab5 cuisine')) ; sinon la dernière
+    connectée. -#}
 {%- set ns = namespace(api='', t={}, a={}, p=[], m=[], v=[], e='', e_id='') -%}
 {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
-  {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
+  {%- if device_attr(e, 'model') == 'tab5-ha-hmi'
+        and (appareil == '' or appareil in [device_id(e), device_attr(e, 'name'), device_attr(e, 'name_by_user')])
+        and (ns.api == '' or is_state(e, 'on')) -%}
     {%- set ns.api = e -%}
   {%- endif -%}
 {%- endfor -%}
@@ -581,7 +588,7 @@ views:
 {%- raw %}
               {%- macro choix(e) -%}
               {%- set v = states(e) -%}
-              {%- if v in ['Aucun', 'Aucune', 'unknown', 'unavailable', ''] -%}<font color="#ff9800">{% endraw %}{{ t('non choisi', 'not set') }}{% raw %}</font>
+              {%- if v | lower in ['not set', 'none', 'aucun', 'aucune', 'unknown', 'unavailable', ''] -%}<font color="#ff9800">{% endraw %}{{ t('non choisi', 'not set') }}{% raw %}</font>
               {%- elif v.startswith('weather.') and expand(v) | count > 0 -%}
               {%- set n = state_attr(v, 'friendly_name') or v -%}
               {{ device_attr(device_id(v), 'manufacturer') or '' }} · {{ n.split('for city ')[1].split(' - ')[0] if 'for city ' in n else n }}
@@ -728,7 +735,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « Aucune »: never') }}"
+            heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Not set » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « Not set »: never') }}"
             heading_style: subtitle
 {%- endif %}
 {%- for cle, fr_, en_, icone in [('extinction_batterie', 'Extinction sur batterie seulement', 'Auto-off on battery only', 'mdi:battery-clock'),
@@ -768,7 +775,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t("Retourné : carte montée à l'envers ; l'image et le tactile tournent aussitôt", 'Retourné: board mounted upside down; the picture and the touch turn at once') }}"
+            heading: "{{ t("Upside down : carte montée à l'envers ; l'image et le tactile tournent aussitôt", 'Upside down: board mounted upside down; the picture and the touch turn at once') }}"
             heading_style: subtitle
 {%- endif %}
 {#- Économie d'énergie (firmware du 06/10/2026) : « Sur batterie » d'après le courant de l'INA226. #}
@@ -796,7 +803,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t('Essentielles : seule la carte du centre tourne ; Aucune : tout est instantané', 'Essentielles: only the centre card turns; Aucune: everything is instant') }}"
+            heading: "{{ t('Essential : seule la carte du centre tourne ; « None » : tout est instantané', 'Essential: only the centre card turns; « None »: everything is instant') }}"
             heading_style: subtitle
 {%- endif %}
 {#- Limite de charge (firmware du 08/10/2026) : « 100 % » ou « 80 % », pour une tablette toujours branchée. #}
@@ -824,7 +831,7 @@ views:
               - type: select-options
                 style: dropdown
           - type: heading
-            heading: "{{ t('Rapide : la charge rapide du chargeur, seulement quand il est allumé', 'Rapide: the charger’s quick charge, only while it is on') }}"
+            heading: "{{ t('Fast : la charge rapide du chargeur, seulement quand il est allumé', 'Fast: the charger’s quick charge, only while it is on') }}"
             heading_style: subtitle
 {%- endif %}
 {%- if T.wifi_eco %}
@@ -1080,7 +1087,7 @@ views:
             grid_options:
               columns: 12
 {%- for cle, e, fr_, en_, icone, ligne in [('pipeline', '', 'Mode en cours', 'Current mode', 'mdi:robot', false),
-                                           ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (Aucun = boutons masqués)', 'Discu mode pipeline (Aucun = buttons hidden)', 'mdi:chat-processing-outline', false),
+                                           ('', 'select.tab5_pipeline_de_discussion', 'Pipeline du mode « Discu » (Not set = boutons masqués)', 'Discu mode pipeline (Not set = buttons hidden)', 'mdi:chat-processing-outline', false),
                                            ('mot', '', "Mot d'activation", 'Wake word', 'mdi:account-voice', false),
                                            ('mot_2', '', "2ᵉ mot d'activation", 'Second wake word', 'mdi:account-voice', false),
                                            ('pipeline_2', '', 'Pipeline du 2ᵉ mot', 'Second wake word pipeline', 'mdi:robot-outline', false),
@@ -2220,12 +2227,12 @@ views:
     'es': 'Orientación de la pantalla',
     'it': 'Orientamento dello schermo',
     'tr': 'Ekran yönü'},
-  "Retourné : carte montée à l'envers ; l'image et le tactile tournent aussitôt": {
-    'de': 'Retourné: Platine kopfüber montiert; Bild und Touch drehen sich sofort',
-    'nl': 'Retourné: bord ondersteboven gemonteerd; beeld en aanraking draaien meteen',
-    'es': 'Retourné: placa montada al revés; la imagen y el táctil giran al instante',
-    'it': 'Retourné: scheda montata capovolta; immagine e tocco ruotano subito',
-    'tr': 'Retourné: kart ters monte edilmiş; görüntü ve dokunma hemen döner'},
+  "Upside down : carte montée à l'envers ; l'image et le tactile tournent aussitôt": {
+    'de': 'Upside down: Platine kopfüber montiert; Bild und Touch drehen sich sofort',
+    'nl': 'Upside down: bord ondersteboven gemonteerd; beeld en aanraking draaien meteen',
+    'es': 'Upside down: placa montada al revés; la imagen y el táctil giran al instante',
+    'it': 'Upside down: scheda montata capovolta; immagine e tocco ruotano subito',
+    'tr': 'Upside down: kart ters monte edilmiş; görüntü ve dokunma hemen döner'},
   "Extinction auto de l'écran": {
     'de': 'Bildschirm automatisch aus',
     'nl': 'Scherm automatisch uit',
@@ -2244,12 +2251,12 @@ views:
     'es': 'Apagado nocturno',
     'it': 'Spegnimento notturno',
     'tr': 'Gece ekran kapatma'},
-  'Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais': {
-    'de': 'Im Zeitfenster: aus nach 1 Min. ohne Berührung, am Ende wieder an; « Aucune »: nie',
-    'nl': 'Tijdens het venster: uit na 1 min zonder aanraking, aan het einde weer aan; « Aucune »: nooit',
-    'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « Aucune »: nunca',
-    'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « Aucune »: mai',
-    'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « Aucune »: asla'},
+  'Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Not set » : jamais': {
+    'de': 'Im Zeitfenster: aus nach 1 Min. ohne Berührung, am Ende wieder an; « Not set »: nie',
+    'nl': 'Tijdens het venster: uit na 1 min zonder aanraking, aan het einde weer aan; « Not set »: nooit',
+    'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « Not set »: nunca',
+    'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « Not set »: mai',
+    'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « Not set »: asla'},
   'Extinction sur batterie seulement': {
     'de': 'Automatisch aus nur im Akkubetrieb',
     'nl': 'Automatisch uit alleen op batterij',
@@ -2328,24 +2335,24 @@ views:
     'es': 'Animaciones',
     'it': 'Animazioni',
     'tr': 'Animasyonlar'},
-  'Essentielles : seule la carte du centre tourne ; Aucune : tout est instantané': {
-    'de': 'Essentielles: nur die mittlere Karte dreht sich; Aucune: alles sofort',
-    'nl': 'Essentielles: alleen de middelste kaart draait; Aucune: alles direct',
-    'es': 'Essentielles: solo gira la tarjeta central; Aucune: todo es instantáneo',
-    'it': 'Essentielles: ruota solo la scheda centrale; Aucune: tutto è istantaneo',
-    'tr': 'Essentielles: yalnızca ortadaki kart döner; Aucune: her şey anında'},
+  'Essential : seule la carte du centre tourne ; « None » : tout est instantané': {
+    'de': 'Essential: nur die mittlere Karte dreht sich; « None »: alles sofort',
+    'nl': 'Essential: alleen de middelste kaart draait; « None »: alles direct',
+    'es': 'Essential: solo gira la tarjeta central; « None »: todo es instantáneo',
+    'it': 'Essential: ruota solo la scheda centrale; « None »: tutto è istantaneo',
+    'tr': 'Essential: yalnızca ortadaki kart döner; « None »: her şey anında'},
   'Mode de charge': {
     'de': 'Lademodus',
     'nl': 'Laadmodus',
     'es': 'Modo de carga',
     'it': 'Modalità di carica',
     'tr': 'Şarj modu'},
-  'Rapide : la charge rapide du chargeur, seulement quand il est allumé': {
-    'de': 'Rapide: die Schnellladung des Ladegeräts, nur wenn es eingeschaltet ist',
-    'nl': 'Rapide: het snelladen van de lader, alleen als die aan staat',
-    'es': 'Rapide: la carga rápida del cargador, solo cuando está encendido',
-    'it': 'Rapide: la carica rapida del caricatore, solo quando è acceso',
-    'tr': 'Rapide: şarj cihazının hızlı şarjı, yalnızca açıkken'},
+  'Fast : la charge rapide du chargeur, seulement quand il est allumé': {
+    'de': 'Fast: die Schnellladung des Ladegeräts, nur wenn es eingeschaltet ist',
+    'nl': 'Fast: het snelladen van de lader, alleen als die aan staat',
+    'es': 'Fast: la carga rápida del cargador, solo cuando está encendido',
+    'it': 'Fast: la carica rapida del caricatore, solo quando è acceso',
+    'tr': 'Fast: şarj cihazının hızlı şarjı, yalnızca açıkken'},
   'Wi-Fi éco': {
     'de': 'WLAN sparen',
     'nl': 'Zuinige wifi',
@@ -2622,12 +2629,12 @@ views:
     'es': 'Modo actual',
     'it': 'Modalità attuale',
     'tr': 'Geçerli mod'},
-  'Pipeline du mode « Discu » (Aucun = boutons masqués)': {
-    'de': 'Pipeline des Modus „Discu“ (Aucun = Tasten ausgeblendet)',
-    'nl': 'Pipeline van de modus “Discu” (Aucun = knoppen verborgen)',
-    'es': 'Pipeline del modo «Discu» (Aucun = botones ocultos)',
-    'it': 'Pipeline della modalità «Discu» (Aucun = pulsanti nascosti)',
-    'tr': '“Discu” modu pipeline’ı (Aucun = düğmeler gizli)'},
+  'Pipeline du mode « Discu » (Not set = boutons masqués)': {
+    'de': 'Pipeline des Modus „Discu“ (Not set = Tasten ausgeblendet)',
+    'nl': 'Pipeline van de modus “Discu” (Not set = knoppen verborgen)',
+    'es': 'Pipeline del modo «Discu» (Not set = botones ocultos)',
+    'it': 'Pipeline della modalità «Discu» (Not set = pulsanti nascosti)',
+    'tr': '“Discu” modu pipeline’ı (Not set = düğmeler gizli)'},
   "Mot d'activation": {
     'de': 'Aktivierungswort',
     'nl': 'Activeringswoord',

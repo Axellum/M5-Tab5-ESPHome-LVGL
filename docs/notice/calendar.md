@@ -16,7 +16,7 @@
 
 The detail lists the day's holiday, school holidays, work hours, appointments with their time and birthdays. Its **×**, or a tap around it, brings the month back.
 
-The grid of days works without Home Assistant; the hours and events come from your calendars ([step 5](../installation/sources.md)). An appointment you just added is not there yet? The tablet's « Recharger le calendrier » button, in Home Assistant, asks again.
+The grid of days works without Home Assistant; the hours and events come from your calendars ([step 5](../installation/sources.md)). An appointment you just added is not there yet? The tablet's « Reload calendar » button, in Home Assistant, asks again.
 
 ---
 
@@ -36,4 +36,4 @@ The grid of days works without Home Assistant; the hours and events come from yo
 
 Le détail liste le férié du jour, les vacances scolaires, les heures de travail, les rendez-vous avec leur heure et les anniversaires. Sa **×**, ou un tap autour, ramène le mois.
 
-La grille des jours marche sans Home Assistant ; les heures et les événements viennent de vos agendas ([étape 5](../installation/sources.md#version-française)). Un rendez-vous que vous venez d'ajouter n'y est pas encore ? Le bouton « Recharger le calendrier » de la tablette, dans Home Assistant, redemande.
+La grille des jours marche sans Home Assistant ; les heures et les événements viennent de vos agendas ([étape 5](../installation/sources.md#version-française)). Un rendez-vous que vous venez d'ajouter n'y est pas encore ? Le bouton « Reload calendar » de la tablette, dans Home Assistant, redemande.

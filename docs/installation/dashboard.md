@@ -32,7 +32,7 @@ Every setting of the tablet in one Home Assistant dashboard, written for your ho
 ## Good to know
 
 - A card only appears when its entity exists (TV, shutter, battery…). The battery entities are disabled by default: enable them if a battery is fitted.
-- The rooms, tiles, sensors and solar panels are set in the blueprint automation of [step 6](devices.md). No template can read its choices, so the Settings view explains each section rather than showing it; the « Zones masquées » sensor says what is missing.
+- The rooms, tiles, sensors and solar panels are set in the blueprint automation of [step 6](devices.md). No template can read its choices, so the Settings view explains each section rather than showing it; the « Hidden zones » sensor says what is missing.
 - Two settings stay on the tablet only: the text size of the assistant popup, and a custom choice of alarm days.
 - **After an update that adds entities**, do items 2 and 3 again.
 - « TemplateNotFound: tab5_dashboard.jinja »: the macro is loaded when Home Assistant starts. Restart it, or run the action `homeassistant.reload_custom_templates`.
@@ -73,7 +73,7 @@ Tous les réglages de la tablette dans un tableau de bord Home Assistant, écrit
 ## Bon à savoir
 
 - Une carte n'apparaît que si son entité existe (TV, volet, batterie…). Les entités de la batterie sont désactivées par défaut : activez-les si une batterie est montée.
-- Les pièces, les tuiles, les capteurs et les panneaux solaires se règlent dans l'automatisation du blueprint de l'[étape 6](devices.md#version-française). Aucun modèle ne peut lire ses choix : la vue Réglages explique donc chaque section au lieu de la montrer ; le capteur « Zones masquées » dit ce qui manque.
+- Les pièces, les tuiles, les capteurs et les panneaux solaires se règlent dans l'automatisation du blueprint de l'[étape 6](devices.md#version-française). Aucun modèle ne peut lire ses choix : la vue Réglages explique donc chaque section au lieu de la montrer ; le capteur « Hidden zones » dit ce qui manque.
 - Deux réglages restent sur la tablette seulement : la taille du texte du popup de l'assistant, et un choix personnalisé des jours du réveil.
 - **Après une mise à jour qui ajoute des entités**, refaites les points 2 et 3.
 - « TemplateNotFound: tab5_dashboard.jinja » : la macro est chargée au démarrage de Home Assistant. Redémarrez-le, ou lancez l'action `homeassistant.reload_custom_templates`.

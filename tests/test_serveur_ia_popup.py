@@ -113,8 +113,8 @@ def _env(etats):
 
 
 def _payload(etats, choix):
-    """Le payload rendu, `choix` = {rôle: entité} (le reste sur « Aucun »)."""
-    selects = [EtatHA(f"select.tab5_ia_{r}", choix.get(r, "Aucun")) for r in ROLES]
+    """Le payload rendu, `choix` = {rôle: entité} (le reste sur « Not set »)."""
+    selects = [EtatHA(f"select.tab5_ia_{r}", choix.get(r, "Not set")) for r in ROLES]
     env = _env(list(etats) + selects)
     capteur = _modele_payload()
     compte = _rendre(env, capteur["state"], {})
@@ -262,10 +262,10 @@ def test_dix_listes_et_leurs_memoires():
     assert bloc["triggers"][-1]["entity_id"] == memoires
     for r, s in selects.items():
         assert s["default_entity_id"] == f"select.{r}"
-        assert s["name"].startswith("Tab5 · serveur IA, ") and " · AI server, " in s["name"]
+        assert s["name"].startswith("Tab5 · AI server, ") and " · " not in s["name"][len("Tab5 · "):]
         memoire = f"input_text.tab5_choix_ia_{r[len('tab5_ia_'):]}"
         assert s["select_option"][0]["target"]["entity_id"] == memoire
-        assert memoire in s["state"] and "'Aucun'" in s["state"] and "['Aucun']" in s["options"]
+        assert memoire in s["state"] and "'Not set'" in s["state"] and "['Not set']" in s["options"]
     immediate = next(a for a in paquet["automation"] if a["id"] == "tab5_serveur_ia_immediat")
     assert immediate["triggers"][0]["entity_id"] == memoires
 
@@ -284,15 +284,15 @@ def test_chaque_liste_ne_propose_que_ce_qui_convient():
                                            device_class="humidity", state_class="measurement")]
     options = {r: _options(etats, r)[0] for r in ROLES}
     assert options["etat"] == ["binary_sensor.tab5_serveur_ia_en_ligne", "sensor.tab5_serveur_ia_modele",
-                               "sensor.tab5_serveur_ia_requetes", "Aucun"]
+                               "sensor.tab5_serveur_ia_requetes", "Not set"]
     assert "sensor.tab5_serveur_ia_modele" in options["modele"] and "sensor.glances_ram" not in options["modele"]
     assert "sensor.tab5_serveur_ia_vitesse" in options["tokens"] and "binary_sensor" not in str(options["tokens"])
-    assert options["vram_totale"] == ["sensor.tab5_serveur_ia_vram", "sensor.glances_gpu_memoire_totale", "Aucun"]
+    assert options["vram_totale"] == ["sensor.tab5_serveur_ia_vram", "sensor.glances_gpu_memoire_totale", "Not set"]
     assert "sensor.glances_ram" in options["vram"], "une VRAM utilisée en % est permise"
-    assert options["temperature"] == ["sensor.glances_gpu_temperature", "Aucun"]
-    assert options["ram"] == ["sensor.glances_ram", "sensor.salon_humidite", "Aucun"]
-    assert options["puissance"] == ["sensor.prise_pc_ia", "Aucun"]
-    assert all(o[-1] == "Aucun" for o in options.values())
+    assert options["temperature"] == ["sensor.glances_gpu_temperature", "Not set"]
+    assert options["ram"] == ["sensor.glances_ram", "sensor.salon_humidite", "Not set"]
+    assert options["puissance"] == ["sensor.prise_pc_ia", "Not set"]
+    assert all(o[-1] == "Not set" for o in options.values())
 
 
 def test_un_choix_disparu_reste_dans_sa_liste():
@@ -300,7 +300,7 @@ def test_un_choix_disparu_reste_dans_sa_liste():
     options, etat = _options(_ollama_et_glances(), "temperature", "sensor.gpu_parti")
     assert etat == "sensor.gpu_parti" and "sensor.gpu_parti" in options
     options, etat = _options(_ollama_et_glances(), "temperature", "n'importe quoi")
-    assert etat == "Aucun"
+    assert etat == "Not set"
 
 
 # ─── Poussées ──────────────────────────────────────────────────────────────────
