@@ -6,7 +6,10 @@
 #       Freebox, enceinte, la tablette elle-même…).
 #         - Les lecteurs proposés : la liste « Tab5 · music players · music
 #           players » (packages/tab5_reglages.yaml, plusieurs choix, 6 au plus, jamais
-#           devinés) ; sa mémoire input_text.tab5_choix_lecteurs.
+#           devinés) ; sa mémoire input_text.tab5_choix_lecteurs. Plusieurs écrans
+#           (ADR-0072, 25/10/2026) : un écran peut avoir sa propre liste (« Tab5 · this
+#           screen · music players ») et a son propre lecteur montré ; la poussée sert
+#           chaque écran avec les siens, une commande vise la liste de l'écran qui l'émet.
 #         - Le lecteur montré : input_text.tab5_lecteur_actif (une pastille touchée,
 #           une tuile med ouverte), sinon le premier de la liste qui joue, sinon le
 #           premier de la liste. Un lecteur de la liste qui SE MET à jouer devient le
@@ -91,21 +94,16 @@ template:
   # Miroirs : un déclencheur `state:` exige un entity_id écrit dans le YAML. Le premier
   # dit quel lecteur montrer ; le second change dès que ce lecteur change (état, morceau,
   # volume…) ou qu'un lecteur de la liste se met à jouer.
+  # Plusieurs écrans (ADR-0072, 25/10/2026) : chaque écran a sa liste (la sienne, sinon
+  # celle de la maison) et son lecteur montré, tab5_lecteur_montre(appareil)
+  # (custom_templates/tab5_tablette.jinja). Le miroir ci-dessous est celui de la maison
+  # (popup Musique, playlists) ; la signature suit le lecteur montré de chaque écran.
   - sensor:
       - name: "Tab5 · shown player"
         unique_id: tab5_lecteur_montre
         default_entity_id: sensor.tab5_lecteur_montre
         icon: mdi:music
-        state: >-
-          {%- set liste = states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
-               | select('match', 'media_player[.]') | unique | list -%}
-          {%- set m = states('input_text.tab5_lecteur_actif') -%}
-          {%- set jouent = liste | select('is_state', 'playing') | list -%}
-          {%- if m.startswith('media_player.') and expand(m) | count > 0 -%}{{ m }}
-          {%- elif jouent -%}{{ jouent | first }}
-          {%- elif liste -%}{{ liste | first }}
-          {%- else -%}Aucun
-          {%- endif -%}
+        state: "{% from 'tab5_tablette.jinja' import tab5_lecteur_montre %}{{ tab5_lecteur_montre('') }}"
       - name: "Tab5 · player signature"
         unique_id: tab5_lecteur_signature
         default_entity_id: sensor.tab5_signature_du_lecteur
@@ -115,26 +113,41 @@ template:
           {{ states(a) if a.startswith('media_player.') else 'Aucun' }}
         attributes:
           lecteur: "{{ states('sensor.tab5_lecteur_montre') }}"
+          # Lecteurs montrés : celui de la maison, puis celui de chaque écran (ADR-0072).
+          montres: >-
+            {%- from 'tab5_tablette.jinja' import tab5_ecrans, tab5_lecteur_montre -%}
+            {%- set n = namespace(l=[states('sensor.tab5_lecteur_montre')]) -%}
+            {%- for d in tab5_ecrans().split(',') | select -%}
+              {%- set a = tab5_lecteur_montre(d) -%}
+              {%- if a not in n.l -%}{%- set n.l = n.l + [a] -%}{%- endif -%}
+            {%- endfor -%}
+            {{ n.l }}
           signature: >-
-            {%- set a = states('sensor.tab5_lecteur_montre') -%}
-            {%- if a.startswith('media_player.') -%}
-              {%- set n = namespace(s=states(a)) -%}
+            {%- from 'tab5_tablette.jinja' import tab5_ecrans, tab5_lecteur_montre -%}
+            {%- set n = namespace(s='', l=[states('sensor.tab5_lecteur_montre')]) -%}
+            {%- for d in tab5_ecrans().split(',') | select -%}
+              {%- set a = tab5_lecteur_montre(d) -%}
+              {%- if a not in n.l -%}{%- set n.l = n.l + [a] -%}{%- endif -%}
+            {%- endfor -%}
+            {%- for a in n.l if a.startswith('media_player.') -%}
+              {%- set n.s = n.s ~ ('#' if n.s else '') ~ a ~ '=' ~ states(a) -%}
               {%- for k in ['friendly_name', 'media_title', 'media_artist', 'media_album_name', 'app_name',
                             'media_duration', 'media_position_updated_at', 'volume_level', 'is_volume_muted',
                             'shuffle', 'repeat', 'supported_features', 'entity_picture'] -%}
                 {%- set n.s = n.s ~ '|' ~ (state_attr(a, k) | string) -%}
               {%- endfor -%}
-              {{ n.s }}
-            {%- endif -%}
-          # Lecteurs de la liste qui jouent : celui qui s'y ajoute devient le lecteur montré
-          # (automatisation ci-dessous), si celui-ci ne joue pas.
+            {%- endfor -%}
+            {{ n.s }}
+          # Lecteurs des listes (la maison et chaque écran) qui jouent : celui qui s'y ajoute
+          # devient le lecteur choisi (automatisation ci-dessous), si celui de la maison ne
+          # joue pas.
           en_lecture: >-
-            {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
-               | select('match', 'media_player[.]') | unique | select('is_state', 'playing') | list }}
+            {%- from 'tab5_tablette.jinja' import tab5_lecteurs_tous -%}
+            {{ tab5_lecteurs_tous().split(',') | select | select('is_state', 'playing') | list }}
           liste: >-
+            {%- from 'tab5_tablette.jinja' import tab5_lecteurs_tous -%}
             {%- set n = namespace(s='') -%}
-            {%- for e in states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
-                 | select('match', 'media_player[.]') | unique -%}
+            {%- for e in tab5_lecteurs_tous().split(',') | select -%}
               {%- set n.s = n.s ~ e ~ '|' ~ (state_attr(e, 'friendly_name') | string) ~ '|'
                    ~ (state_attr(e, 'device_class') | string) ~ ';' -%}
             {%- endfor -%}
@@ -218,59 +231,59 @@ script:
           {{ tab5_pret(appareil | default('')) == 'oui' }}
       - delay:
           milliseconds: 400
-      - variables:
-          liste: >-
-            {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
-               | select('match', 'media_player[.]') | unique | list }}
-          a: "{{ states('sensor.tab5_lecteur_montre') }}"
-          lecteurs: >-
-            {%- set n = namespace(l=[]) -%}
-            {%- for e in liste[:6] -%}
-              {%- set nom = (state_attr(e, 'friendly_name') or '') | string -%}
-              {%- set genre = state_attr(e, 'device_class') if state_attr(e, 'device_class') in ['tv', 'speaker', 'receiver'] else '' -%}
-              {%- set n.l = n.l + [nom | replace('|', '/') | replace(';', ',') | replace('\n', ' ') ~ '|' ~ genre] -%}
-            {%- endfor -%}
-            {{ n.l | join(';') }}
-          etat: >-
-            {%- macro t(v) -%}{{ (v or '') | string | replace('|', '/') | replace(';', ',') | replace('\n', ' ') }}{%- endmacro -%}
-            {%- macro drapeau(v) -%}{{ '' if v is none else ('1' if v else '0') }}{%- endmacro -%}
-            {%- if a.startswith('media_player.') and expand(a) | count > 0 -%}
-              {%- set s = states(a) -%}
-              {%- set f = state_attr(a, 'supported_features') | int(0) -%}
-              {%- set genre = state_attr(a, 'device_class') if state_attr(a, 'device_class') in ['tv', 'speaker', 'receiver'] else '' -%}
-              {%- set duree = state_attr(a, 'media_duration') -%}
-              {%- set pos = state_attr(a, 'media_position') -%}
-              {%- set maj = state_attr(a, 'media_position_updated_at') -%}
-              {%- if pos is number -%}
-                {%- if s == 'playing' and maj is not none -%}
-                  {%- set pos = pos + [0, now().timestamp() - as_timestamp(maj, now().timestamp())] | max -%}
-                {%- endif -%}
-                {%- set position = (pos | round(1)) | string -%}
-              {%- else -%}
-                {%- set position = 'nan' -%}
-              {%- endif -%}
-              {%- set vol = state_attr(a, 'volume_level') -%}
-              {%- set lettres = ('l' if f | bitwise_and(1) or f | bitwise_and(16384) else '')
-                   ~ ('s' if f | bitwise_and(2) else '') ~ ('v' if f | bitwise_and(4) else '')
-                   ~ ('m' if f | bitwise_and(8) else '') ~ ('p' if f | bitwise_and(16) else '')
-                   ~ ('n' if f | bitwise_and(32) else '') ~ ('a' if f | bitwise_and(32768) else '')
-                   ~ ('r' if f | bitwise_and(262144) else '') ~ ('o' if f | bitwise_and(128) else '') -%}
-              {{- liste.index(a) if a in liste[:6] else -1 }}|{{ t(state_attr(a, 'friendly_name')) }}|{{ genre }}|{{ s }}
-              {{- '|' }}{{ t(state_attr(a, 'media_title')) }}|{{ t(state_attr(a, 'media_artist') or state_attr(a, 'media_album_artist')) }}
-              {{- '|' }}{{ t(state_attr(a, 'media_album_name')) }}|{{ t(state_attr(a, 'app_name')) }}|{{ position }}
-              {{- '|' }}{{ (duree | round(0) | int) if duree is number and duree > 0 else 'nan' }}
-              {{- '|' }}{{ ((vol * 100) | round(0) | int) if vol is number else 'nan' }}
-              {{- '|' }}{{ drapeau(state_attr(a, 'is_volume_muted')) }}|{{ drapeau(state_attr(a, 'shuffle')) }}
-              {{- '|' }}{{ state_attr(a, 'repeat') if state_attr(a, 'repeat') in ['off', 'all', 'one'] else '' }}
-              {{- '|' }}{{ lettres }}|{{ (state_attr(a, 'entity_picture') or '') | string | replace('|', '%7C') | replace(' ', '%20') }}
-            {%- endif -%}
+      # Chaque écran sa liste et son lecteur montré (ADR-0072) : un passage par écran.
       - repeat:
           for_each: >-
-            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
-            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+            {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
+            {{ tab5_cibles(appareil | default('')).split(',') | select | list }}
           sequence:
             - variables:
-                tablette: "{{ repeat.item }}"
+                tablette: "{% from 'tab5_tablette.jinja' import tab5_prefixe %}{{ tab5_prefixe(repeat.item) }}"
+                liste: >-
+                  {%- from 'tab5_tablette.jinja' import tab5_reglage -%}
+                  {{ tab5_reglage(repeat.item, 'lecteurs').split(',') | select | list }}
+                a: "{% from 'tab5_tablette.jinja' import tab5_lecteur_montre %}{{ tab5_lecteur_montre(repeat.item) }}"
+                lecteurs: >-
+                  {%- set n = namespace(l=[]) -%}
+                  {%- for e in liste[:6] -%}
+                    {%- set nom = (state_attr(e, 'friendly_name') or '') | string -%}
+                    {%- set genre = state_attr(e, 'device_class') if state_attr(e, 'device_class') in ['tv', 'speaker', 'receiver'] else '' -%}
+                    {%- set n.l = n.l + [nom | replace('|', '/') | replace(';', ',') | replace('\n', ' ') ~ '|' ~ genre] -%}
+                  {%- endfor -%}
+                  {{ n.l | join(';') }}
+                etat: >-
+                  {%- macro t(v) -%}{{ (v or '') | string | replace('|', '/') | replace(';', ',') | replace('\n', ' ') }}{%- endmacro -%}
+                  {%- macro drapeau(v) -%}{{ '' if v is none else ('1' if v else '0') }}{%- endmacro -%}
+                  {%- if a.startswith('media_player.') and expand(a) | count > 0 -%}
+                    {%- set s = states(a) -%}
+                    {%- set f = state_attr(a, 'supported_features') | int(0) -%}
+                    {%- set genre = state_attr(a, 'device_class') if state_attr(a, 'device_class') in ['tv', 'speaker', 'receiver'] else '' -%}
+                    {%- set duree = state_attr(a, 'media_duration') -%}
+                    {%- set pos = state_attr(a, 'media_position') -%}
+                    {%- set maj = state_attr(a, 'media_position_updated_at') -%}
+                    {%- if pos is number -%}
+                      {%- if s == 'playing' and maj is not none -%}
+                        {%- set pos = pos + [0, now().timestamp() - as_timestamp(maj, now().timestamp())] | max -%}
+                      {%- endif -%}
+                      {%- set position = (pos | round(1)) | string -%}
+                    {%- else -%}
+                      {%- set position = 'nan' -%}
+                    {%- endif -%}
+                    {%- set vol = state_attr(a, 'volume_level') -%}
+                    {%- set lettres = ('l' if f | bitwise_and(1) or f | bitwise_and(16384) else '')
+                         ~ ('s' if f | bitwise_and(2) else '') ~ ('v' if f | bitwise_and(4) else '')
+                         ~ ('m' if f | bitwise_and(8) else '') ~ ('p' if f | bitwise_and(16) else '')
+                         ~ ('n' if f | bitwise_and(32) else '') ~ ('a' if f | bitwise_and(32768) else '')
+                         ~ ('r' if f | bitwise_and(262144) else '') ~ ('o' if f | bitwise_and(128) else '') -%}
+                    {{- liste.index(a) if a in liste[:6] else -1 }}|{{ t(state_attr(a, 'friendly_name')) }}|{{ genre }}|{{ s }}
+                    {{- '|' }}{{ t(state_attr(a, 'media_title')) }}|{{ t(state_attr(a, 'media_artist') or state_attr(a, 'media_album_artist')) }}
+                    {{- '|' }}{{ t(state_attr(a, 'media_album_name')) }}|{{ t(state_attr(a, 'app_name')) }}|{{ position }}
+                    {{- '|' }}{{ (duree | round(0) | int) if duree is number and duree > 0 else 'nan' }}
+                    {{- '|' }}{{ ((vol * 100) | round(0) | int) if vol is number else 'nan' }}
+                    {{- '|' }}{{ drapeau(state_attr(a, 'is_volume_muted')) }}|{{ drapeau(state_attr(a, 'shuffle')) }}
+                    {{- '|' }}{{ state_attr(a, 'repeat') if state_attr(a, 'repeat') in ['off', 'all', 'one'] else '' }}
+                    {{- '|' }}{{ lettres }}|{{ (state_attr(a, 'entity_picture') or '') | string | replace('|', '%7C') | replace(' ', '%20') }}
+                  {%- endif -%}
             - action: "esphome.{{ tablette }}_tab5_maj_lecteur"
               continue_on_error: true
               data:
@@ -292,13 +305,15 @@ script:
         description: "Index dans la liste, « -1 » (le lecteur montré) ou la clé d'une tuile (« tRT », ouvrir)"
       valeur:
         description: "1/0 (aléatoire, muet), off/all/one (répétition), 0 à 100 (volume), secondes (position)"
+      appareil:
+        description: "device_id de l'écran qui a émis l'événement (ADR-0072) : l'index désigne un lecteur de SA liste"
     sequence:
       - variables:
           liste: >-
-            {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
-               | select('match', 'media_player[.]') | unique | list }}
+            {%- from 'tab5_tablette.jinja' import tab5_reglage -%}
+            {{ tab5_reglage(appareil | default(''), 'lecteurs').split(',') | select | list }}
           i: "{{ (lecteur | default('') | string) | int(-99) }}"
-          montre: "{{ states('sensor.tab5_lecteur_montre') }}"
+          montre: "{% from 'tab5_tablette.jinja' import tab5_lecteur_montre %}{{ tab5_lecteur_montre(appareil | default('')) }}"
           cible: >-
             {%- if 0 <= i < [liste | count, 6] | min -%}{{ liste[i] }}
             {%- elif montre.startswith('media_player.') and expand(montre) | count > 0 -%}{{ montre }}
@@ -314,6 +329,9 @@ script:
               - action: script.turn_on
                 target:
                   entity_id: script.tab5_lecteur_pousser
+                data:
+                  variables:
+                    appareil: "{{ appareil | default('') }}"
           # Pastille touchée : ce lecteur de la liste devient le lecteur montré.
           - conditions: "{{ a == 'choisir' and 0 <= i < [liste | count, 6] | min }}"
             sequence:
@@ -436,9 +454,10 @@ script:
           # Le titre (v) est facultatif : sans lui, la playlist part de son premier titre.
           url: >-
             youtube://www.youtube.com/watch?{{ ('v=' ~ id_titre ~ '&') if id_titre else '' }}list={{ id_liste }}
+          # Les lecteurs de la maison et de chaque écran (ADR-0072).
           liste: >-
-            {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
-               | select('match', 'media_player[.]') | unique | list }}
+            {%- from 'tab5_tablette.jinja' import tab5_lecteurs_tous -%}
+            {{ tab5_lecteurs_tous().split(',') | select | list }}
           apple_tv: "{{ integration_entities('apple_tv') }}"
           montre: "{{ states('sensor.tab5_lecteur_montre') }}"
           # Le lecteur montré s'il convient, sinon le premier de la liste qui convient :

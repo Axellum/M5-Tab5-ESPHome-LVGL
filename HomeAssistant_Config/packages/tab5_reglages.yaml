@@ -125,6 +125,11 @@ input_text:
     name: "Tab5 · memory · night screen off"
     icon: mdi:content-save-outline
     max: 255
+  # Écran que montrent les listes « Tab5 · this screen · … » (ADR-0072) : son device_id.
+  tab5_choix_ecran_a_regler:
+    name: "Tab5 · memory · screen to set"
+    icon: mdi:content-save-outline
+    max: 255
   # Réglé à la main (pas une mémoire de liste). Mots qui font d'un événement de
   # l'agenda de travail un événement de TRAVAIL (horaires du planning, heure du
   # réveil) : séparés par des virgules, sans casse, cherchés dans le titre. Vide =
@@ -148,6 +153,9 @@ template:
       - trigger: event
         event_type: entity_registry_updated
       - trigger: state
+        entity_id: sensor.tab5_ecrans
+        attribute: ecrans
+      - trigger: state
         entity_id:
           - input_text.tab5_choix_agenda_travail
           - input_text.tab5_choix_agenda_rdv
@@ -160,6 +168,10 @@ template:
           - input_text.tab5_choix_suivis
           - input_text.tab5_choix_frigos
           - input_text.tab5_choix_congelateurs
+          # Listes « Tab5 · this screen · … » (ADR-0072) : un autre écran à régler, un
+          # réglage d'écran changé (et, plus haut, un écran ajouté).
+          - input_text.tab5_choix_ecran_a_regler
+          - sensor.tab5_reglages_ecrans
     # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
     # capabilities / supported_features / options / suggested_object_id (419 des 485
     # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
@@ -224,6 +236,16 @@ template:
            | select('match', 'sensor[.]') | unique | reject('in', frigos_choisis) | list }}
       frigos_resume: "{{ frigos_choisis | count }} chosen"
       congelateurs_resume: "{{ congelateurs_choisis | count }} chosen"
+      # Réglages par écran (ADR-0072) : l'écran choisi dans « Tab5 · screen to set », sa
+      # valeur propre ('' : celle de la maison) et la valeur qui vaut pour lui.
+      ecran: "{% from 'tab5_tablette.jinja' import tab5_ecran_a_regler %}{{ tab5_ecran_a_regler() }}"
+      ecran_presence: "{% from 'tab5_tablette.jinja' import tab5_reglage_propre %}{{ tab5_reglage_propre(ecran, 'presence') }}"
+      ecran_lecteurs_propres: "{% from 'tab5_tablette.jinja' import tab5_reglage_propre %}{{ tab5_reglage_propre(ecran, 'lecteurs') != '' }}"
+      ecran_lecteurs: >-
+        {%- from 'tab5_tablette.jinja' import tab5_reglage -%}
+        {{ tab5_reglage(ecran, 'lecteurs').split(',') | select | list }}
+      ecran_lecteurs_resume: >-
+        {{ (ecran_lecteurs | count ~ ' chosen') if ecran_lecteurs_propres else ('Same as home (' ~ ecran_lecteurs | count ~ ')') }}
     select:
       - name: "Tab5 · work calendar"
         unique_id: tab5_agenda_de_travail
@@ -486,6 +508,68 @@ template:
               entity_id: input_text.tab5_choix_congelateurs
             data:
               value: "{{ liste }}"
+      # Réglages par écran (ADR-0072, 25/10/2026) : la valeur de l'écran choisi dans
+      # « Tab5 · screen to set » ; « Same as home » = la liste de la maison ci-dessus.
+      # Un choix émet tab5_reglage_ecran, que garde sensor.tab5_reglages_ecrans (plus
+      # bas). Les variables du déclencheur n'existent pas dans select_option : l'écran
+      # y est relu.
+      - name: "Tab5 · this screen · presence sensor"
+        unique_id: tab5_ecran_capteur_de_presence
+        default_entity_id: select.tab5_ecran_capteur_de_presence
+        icon: mdi:motion-sensor
+        availability: "{{ ecran != '' }}"
+        options: >-
+          {{ ['Same as home'] + presences
+             + ([ecran_presence] if ecran_presence.startswith('binary_sensor.') and ecran_presence not in presences else [])
+             + ['Not set'] }}
+        state: >-
+          {{ ecran_presence if ecran_presence.startswith('binary_sensor.') or ecran_presence == 'Not set' else 'Same as home' }}
+        select_option:
+          - event: tab5_reglage_ecran
+            event_data:
+              appareil: "{% from 'tab5_tablette.jinja' import tab5_ecran_a_regler %}{{ tab5_ecran_a_regler() }}"
+              cle: presence
+              valeur: "{{ '' if option == 'Same as home' else option }}"
+      # Comme « Tab5 · music players » : « ○ x » ajoute (6 au plus), « ✓ x » retire ; la
+      # liste de l'écran part de celle de la maison au premier choix ; « ↺ Same as home »
+      # la rend à la maison. Plus aucun lecteur : « Not set » (aucun, pas la maison).
+      - name: "Tab5 · this screen · music players"
+        unique_id: tab5_ecran_lecteurs_de_musique
+        default_entity_id: select.tab5_ecran_lecteurs_de_musique
+        icon: mdi:music-box-multiple
+        availability: "{{ ecran != '' }}"
+        options: >-
+          {%- set ns = namespace(o=[ecran_lecteurs_resume] + (['↺ Same as home'] if ecran_lecteurs_propres else [])) -%}
+          {%- for e in ecran_lecteurs + (lecteurs_ha | reject('in', ecran_lecteurs) | list) -%}
+            {%- set n = state_attr(e, 'friendly_name') -%}
+            {%- set ns.o = ns.o + [('✓ ' if e in ecran_lecteurs else '○ ') ~ ((n ~ ' · ') if n and n != e else '') ~ e] -%}
+          {%- endfor -%}
+          {{ ns.o }}
+        state: "{{ ecran_lecteurs_resume }}"
+        select_option:
+          - variables:
+              appareil: "{% from 'tab5_tablette.jinja' import tab5_ecran_a_regler %}{{ tab5_ecran_a_regler() }}"
+              entite: "{{ option.split(' ') | last }}"
+              choisis: >-
+                {%- from 'tab5_tablette.jinja' import tab5_reglage -%}
+                {{ tab5_reglage(appareil, 'lecteurs').split(',') | select | list }}
+              valeur: >-
+                {%- if option == '↺ Same as home' -%}
+                {%- elif option.startswith('✓ ') -%}
+                  {{ (choisis | reject('eq', entite) | join(',')) or 'Not set' }}
+                {%- elif option.startswith('○ ') and entite.startswith('media_player.') and entite not in choisis
+                         and choisis | count < 6 -%}
+                  {{ (choisis + [entite]) | join(',') }}
+                {%- else -%}
+                  inchangé
+                {%- endif -%}
+          - condition: template
+            value_template: "{{ appareil != '' and valeur != 'inchangé' }}"
+          - event: tab5_reglage_ecran
+            event_data:
+              appareil: "{{ appareil }}"
+              cle: lecteurs
+              valeur: "{{ valeur }}"
 
   # Pipeline du mode « Discussion » de l'écran (bouton « Discu ») : un des pipelines
   # Assist de HA. Modèle ORDINAIRE, sans déclencheurs : il ne lit que le select de
@@ -547,6 +631,109 @@ template:
               entity_id: input_text.tab5_choix_extinction_nuit
             data:
               value: "{{ option }}"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Réglages par écran (ADR-0072, 25/10/2026)
+  # ──────────────────────────────────────────────────────────────────────────
+  # Capteur de présence, extinction de nuit et lecteurs de musique se règlent écran par
+  # écran : on choisit l'écran dans « Tab5 · screen to set », puis sa valeur dans les
+  # listes « Tab5 · this screen · … » (présence et lecteurs : premier bloc ci-dessus ;
+  # nuit : ci-dessous). « Same as home » (le défaut) : la liste de la maison. Le pipeline
+  # de discussion, les agendas, le téléphone et le reste restent ceux de la maison.
+  # Les valeurs propres sont gardées par sensor.tab5_reglages_ecrans, un capteur À
+  # DÉCLENCHEURS : HA restaure son état ET ses attributs au redémarrage (documentation
+  # de l'intégration Template), sans input_text de 255 caractères par écran. Les
+  # packages les lisent par tab5_reglage(appareil, cle) (custom_templates/tab5_tablette.jinja).
+  - select:
+      - name: "Tab5 · screen to set"
+        unique_id: tab5_ecran_a_regler
+        default_entity_id: select.tab5_ecran_a_regler
+        icon: mdi:tablet-cellphone
+        availability: "{{ (state_attr('sensor.tab5_ecrans', 'ecrans') or []) | count > 0 }}"
+        options: >-
+          {%- set ns = namespace(o=[]) -%}
+          {%- for e in state_attr('sensor.tab5_ecrans', 'ecrans') or [] -%}
+            {%- set ns.o = ns.o + [e.nom ~ ' · ' ~ e.prefixe] -%}
+          {%- endfor -%}
+          {{ ns.o }}
+        state: >-
+          {%- from 'tab5_tablette.jinja' import tab5_ecran_a_regler -%}
+          {%- set d = tab5_ecran_a_regler() -%}
+          {{ ((state_attr('sensor.tab5_ecrans', 'ecrans') or []) | selectattr('appareil', 'eq', d)
+              | map(attribute='nom') | first | default('')) ~ ' · ' ~ ((state_attr('sensor.tab5_ecrans', 'ecrans') or [])
+              | selectattr('appareil', 'eq', d) | map(attribute='prefixe') | first | default('')) }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ecran_a_regler
+            data:
+              value: >-
+                {%- set ns = namespace(d='') -%}
+                {%- for e in state_attr('sensor.tab5_ecrans', 'ecrans') or [] -%}
+                  {%- if e.nom ~ ' · ' ~ e.prefixe == option -%}{%- set ns.d = e.appareil -%}{%- endif -%}
+                {%- endfor -%}
+                {{ ns.d }}
+      - name: "Tab5 · this screen · night screen off"
+        unique_id: tab5_ecran_extinction_de_nuit
+        default_entity_id: select.tab5_ecran_extinction_de_nuit
+        icon: mdi:weather-night
+        availability: "{% from 'tab5_tablette.jinja' import tab5_ecran_a_regler %}{{ tab5_ecran_a_regler() != '' }}"
+        options: >-
+          {%- from 'tab5_tablette.jinja' import tab5_ecran_a_regler, tab5_reglage_propre -%}
+          {%- set plages = ['00:00-06:00', '00:00-07:00', '23:00-06:00', '23:00-07:00', '22:00-06:00', '22:00-07:00', '01:00-07:00'] -%}
+          {%- set m = tab5_reglage_propre(tab5_ecran_a_regler(), 'nuit') -%}
+          {{ ['Same as home'] + plages + ([m] if m is match('^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$') and m not in plages else []) + ['Not set'] }}
+        state: >-
+          {%- from 'tab5_tablette.jinja' import tab5_ecran_a_regler, tab5_reglage_propre -%}
+          {%- set m = tab5_reglage_propre(tab5_ecran_a_regler(), 'nuit') -%}
+          {{ m if m == 'Not set' or m is match('^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$') else 'Same as home' }}
+        select_option:
+          - event: tab5_reglage_ecran
+            event_data:
+              appareil: "{% from 'tab5_tablette.jinja' import tab5_ecran_a_regler %}{{ tab5_ecran_a_regler() }}"
+              cle: nuit
+              valeur: "{{ '' if option == 'Same as home' else option }}"
+
+  # Les valeurs propres de chaque écran. État : l'heure du dernier changement.
+  # Attribut `reglages` : {device_id: {cle: valeur}}, cle presence / nuit / lecteurs ;
+  # une valeur vide retire la clé (l'écran reprend celle de la maison), un écran sans
+  # clé disparaît, un appareil qui n'est plus une tablette aussi. tab5_reglage_ecran est
+  # émis par les listes ci-dessus ; une automatisation à vous peut l'émettre aussi
+  # (Outils de développement → Événements) : {appareil: <device_id>, cle: nuit, valeur: "23:00-06:00"}.
+  - triggers:
+      - trigger: event
+        event_type: tab5_reglage_ecran
+    sensor:
+      - name: "Tab5 · screen settings"
+        unique_id: tab5_reglages_ecrans
+        default_entity_id: sensor.tab5_reglages_ecrans
+        icon: mdi:tablet-cellphone
+        device_class: timestamp
+        state: "{{ now().isoformat() }}"
+        attributes:
+          reglages: >-
+            {%- set avant = this.attributes.get('reglages') if this is defined and this.attributes is defined else none -%}
+            {%- set avant = avant if avant is mapping else {} -%}
+            {%- set d = trigger.event.data.appareil | default('', true) | string -%}
+            {%- set c = trigger.event.data.cle | default('', true) | string -%}
+            {%- set v = (trigger.event.data.valeur | default('', true) | string | trim)[:255] -%}
+            {%- set ns = namespace(r={}, e={}) -%}
+            {%- for k in avant if k != d and avant[k] is mapping and '.' not in k and device_attr(k, 'model') == 'tab5-ha-hmi' -%}
+              {%- set ns.r = dict(ns.r, **{k: avant[k]}) -%}
+            {%- endfor -%}
+            {%- if d and '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' -%}
+              {%- set e = avant[d] if d in avant and avant[d] is mapping else {} -%}
+              {%- for k in e if k != c or c not in ['presence', 'nuit', 'lecteurs'] -%}
+                {%- set ns.e = dict(ns.e, **{k: e[k]}) -%}
+              {%- endfor -%}
+              {%- if c in ['presence', 'nuit', 'lecteurs'] and v != '' -%}
+                {%- set ns.e = dict(ns.e, **{c: v}) -%}
+              {%- endif -%}
+              {%- if ns.e -%}
+                {%- set ns.r = dict(ns.r, **{d: ns.e}) -%}
+              {%- endif -%}
+            {%- endif -%}
+            {{ ns.r }}
 
   # ──────────────────────────────────────────────────────────────────────────
   # 2. La tablette, détectée par le modèle de son appareil
@@ -684,6 +871,28 @@ template:
           {{ p | count == 2 and ((p[0] <= h < p[1]) if p[0] < p[1] else (h >= p[0] or h < p[1]) if p[0] > p[1] else false) }}
         availability: "{{ states('select.tab5_extinction_de_nuit') is match('^[0-9]{2}:[0-9]{2}-[0-9]{2}:[0-9]{2}$') }}"
     sensor:
+      # Par écran (ADR-0072) : les device_id des écrans où quelqu'un est là (`presents`) et
+      # de ceux où personne n'est là (`absents`), d'après le capteur de présence de chaque
+      # écran (le sien, sinon celui de la maison). État : combien d'écrans voient quelqu'un.
+      # « Tab5 — screen by presence and phone » (tab5_push.yaml) se déclenche sur ses attributs.
+      - name: "Tab5 · screens: presence"
+        unique_id: tab5_presences_ecrans
+        default_entity_id: sensor.tab5_presences_ecrans
+        icon: mdi:motion-sensor
+        state: "{% from 'tab5_tablette.jinja' import tab5_presences %}{{ tab5_presences('on').split(',') | select | list | count }}"
+        attributes:
+          presents: "{% from 'tab5_tablette.jinja' import tab5_presences %}{{ tab5_presences('on').split(',') | select | list }}"
+          absents: "{% from 'tab5_tablette.jinja' import tab5_presences %}{{ tab5_presences('off').split(',') | select | list }}"
+      # Par écran (ADR-0072) : les device_id des écrans dans leur plage d'extinction de nuit
+      # (la leur, sinon celle de la maison), recalculé chaque minute (now()). État : combien.
+      # « Tab5 — night screen off » (tab5_push.yaml) se déclenche sur son changement.
+      - name: "Tab5 · screens: night now"
+        unique_id: tab5_nuits_ecrans
+        default_entity_id: sensor.tab5_nuits_ecrans
+        icon: mdi:weather-night
+        state: "{% from 'tab5_tablette.jinja' import tab5_nuits %}{{ tab5_nuits(now().strftime('%H:%M')).split(',') | select | list | count }}"
+        attributes:
+          nuit: "{% from 'tab5_tablette.jinja' import tab5_nuits %}{{ tab5_nuits(now().strftime('%H:%M')).split(',') | select | list }}"
       - name: "Tab5 · tracked phone"
         unique_id: tab5_telephone_suivi
         default_entity_id: sensor.tab5_telephone_suivi

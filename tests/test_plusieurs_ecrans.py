@@ -89,8 +89,11 @@ class _Etats:
         return [_Etat(e, v) for e, v in self._etats.items() if e.startswith(domaine + ".")]
 
 
-def _env(maison=MAISON):
-    etats = {e: v for _, _, ents in maison.values() for e, v in ents.items()}
+def _env(maison=MAISON, attributs=None, plus=None):
+    """`attributs` : {entity_id: {attribut: valeur}} lus par state_attr ; `plus` : des états
+    hors des appareils (listes de la maison, capteurs de présence, lecteurs)."""
+    etats = {e: v for _, _, ents in maison.values() for e, v in ents.items()} | (plus or {})
+    attributs = attributs or {}
 
     def device_id(e):
         return next((d for d, (_, _, ents) in maison.items() if e in ents), None)
@@ -109,8 +112,10 @@ def _env(maison=MAISON):
         device_entities=lambda d: list(maison.get(d, (None, None, {}))[2]),
         device_attr=device_attr, device_id=device_id, is_state=est,
         integration_entities=lambda domaine: list(etats),
-        states=_Etats(etats), state_attr=lambda e, a: OPTIONS.get(e) if a == "options" else None,
+        states=_Etats(etats),
+        state_attr=lambda e, a: OPTIONS.get(e) if a == "options" else attributs.get(e, {}).get(a),
         has_value=lambda e: etats.get(e, "unknown") not in ("unknown", "unavailable"),
+        expand=lambda e: [e] if e in etats else [],
     )
     env.filters.update(device_attr=device_attr, device_id=device_id, states=lambda e: etats.get(e, "unknown"))
     env.tests.update(is_state=est, match=lambda v, motif: re.match(motif, str(v)) is not None,
@@ -210,9 +215,11 @@ def test_registre():
 def test_presence_chaque_ecran():
     auto = _automatisation("tab5_push.yaml", "tab5_screen_presence_wifi")
     env = _env()
-    appareils = ast.literal_eval(env.from_string(auto["variables"]["appareils"]).render().strip())
+    telephone = {"id": "allumer", "platform": "state"}
+    appareils = ast.literal_eval(env.from_string(auto["variables"]["appareils"]).render(
+        trigger=telephone, entres=[]).strip())
     assert appareils == ["d_tab5", "d_7b"]
-    (boucle,) = auto["actions"]
+    _, boucle = auto["actions"]
     variables = boucle["repeat"]["sequence"][0]["variables"]
     vus = {d: (env.from_string(variables["ecran"]).render(repeat={"item": d}).strip(),
                env.from_string(variables["reveil"]).render(repeat={"item": d}).strip()) for d in appareils}
@@ -427,3 +434,152 @@ def test_chaque_poussee_de_connexion_attend_son_ecran(paquet):
             continue
         assert "tab5_appareil_connexion(trigger)" in texte and "tab5_pret(" in yaml.safe_dump(
             _paquet(paquet), allow_unicode=True), f"{paquet} : {auto['id']} n'attend pas l'écran qui se connecte"
+
+
+# ─── Réglages par écran (ADR-0072, 25/10/2026) ───────────────────────────────
+# Capteur de présence, extinction de nuit et lecteurs de musique : la valeur propre d'un
+# écran (sensor.tab5_reglages_ecrans), sinon celle de la maison.
+
+ECRANS = {"sensor.tab5_ecrans": {"ecrans": [{"appareil": "d_ancien"}, {"appareil": "d_7b"}, {"appareil": "d_tab5"}]}}
+MAISON_REGLEE = {
+    "select.tab5_capteur_de_presence": "binary_sensor.salon",
+    "select.tab5_extinction_de_nuit": "00:00-06:00",
+    "input_text.tab5_choix_lecteurs": "media_player.salon, media_player.tv",
+    "binary_sensor.salon": "on",
+    "binary_sensor.chambre": "off",
+    "media_player.salon": "idle",
+    "media_player.tv": "playing",
+    "media_player.chambre": "idle",
+    "media_player.cuisine": "idle",
+    "input_text.tab5_lecteur_actif": "",
+}
+TABLETTE = ("{%- from 'tab5_tablette.jinja' import tab5_reglage, tab5_reglage_propre, tab5_presences, tab5_nuits,"
+            " tab5_ecrans, tab5_ecran_a_regler, tab5_lecteurs_tous, tab5_lecteur_montre -%}")
+
+
+def _regle(reglages, plus=None):
+    attributs = dict(ECRANS, **{"sensor.tab5_reglages_ecrans": {"reglages": reglages}})
+    return _env(attributs=attributs, plus=MAISON_REGLEE | (plus or {}))
+
+
+def _rend(env, appel, **contexte):
+    return env.from_string(TABLETTE + appel).render(**contexte).strip()
+
+
+def test_reglage_d_un_ecran_sinon_la_maison():
+    env = _regle({"d_7b": {"presence": "binary_sensor.chambre", "nuit": "Not set", "lecteurs": "media_player.chambre"}})
+    assert _rend(env, "{{ tab5_reglage('d_7b', 'presence') }}") == "binary_sensor.chambre"
+    assert _rend(env, "{{ tab5_reglage('d_tab5', 'presence') }}") == "binary_sensor.salon"
+    assert _rend(env, "{{ tab5_reglage('d_7b', 'nuit') }}") == "Not set"
+    assert _rend(env, "{{ tab5_reglage('d_tab5', 'nuit') }}") == "00:00-06:00"
+    assert _rend(env, "{{ tab5_reglage('d_7b', 'lecteurs') }}") == "media_player.chambre"
+    assert _rend(env, "{{ tab5_reglage('d_tab5', 'lecteurs') }}") == "media_player.salon,media_player.tv"
+    assert _rend(env, "{{ tab5_reglage('', 'lecteurs') }}") == "media_player.salon,media_player.tv"
+    assert _rend(env, "{{ tab5_reglage_propre('d_tab5', 'nuit') }}") == ""
+    # Lecteurs « Not set » : aucun, pas ceux de la maison.
+    env = _regle({"d_7b": {"lecteurs": "Not set"}})
+    assert _rend(env, "{{ tab5_reglage('d_7b', 'lecteurs') }}") == ""
+    # Rien de gardé (premier démarrage) : la maison partout.
+    env = _regle(None)
+    assert _rend(env, "{{ tab5_reglage('d_7b', 'presence') }}") == "binary_sensor.salon"
+
+
+def test_presences_par_ecran():
+    env = _regle({"d_7b": {"presence": "binary_sensor.chambre"}, "d_ancien": {"presence": "Not set"}})
+    assert _rend(env, "{{ tab5_presences('on') }}") == "d_tab5"
+    assert _rend(env, "{{ tab5_presences('off') }}") == "d_7b"
+    # Sans réglage propre, chaque écran suit le capteur de la maison (comme avant).
+    env = _regle({})
+    assert _rend(env, "{{ tab5_presences('on') }}") == "d_ancien,d_7b,d_tab5"
+    assert _rend(env, "{{ tab5_presences('off') }}") == ""
+
+
+@pytest.mark.parametrize("h, attendu", [("03:00", "d_ancien,d_tab5"), ("23:30", "d_7b"), ("12:00", "")])
+def test_nuits_par_ecran(h, attendu):
+    env = _regle({"d_7b": {"nuit": "23:00-01:00"}})
+    assert _rend(env, "{{ tab5_nuits(h) }}", h=h) == attendu
+
+
+def test_ecran_a_regler():
+    env = _regle({}, {"input_text.tab5_choix_ecran_a_regler": "d_tab5"})
+    assert _rend(env, "{{ tab5_ecran_a_regler() }}") == "d_tab5"
+    env = _regle({}, {"input_text.tab5_choix_ecran_a_regler": "d_disparu"})
+    assert _rend(env, "{{ tab5_ecran_a_regler() }}") == "d_ancien", "le premier écran connu"
+
+
+@pytest.mark.parametrize("actif, ecran, montre", [
+    ("", "d_7b", "media_player.chambre"),            # rien de choisi : le premier de SA liste
+    ("", "d_tab5", "media_player.tv"),               # le premier de sa liste qui joue
+    ("media_player.salon", "d_tab5", "media_player.salon"),
+    ("media_player.salon", "d_7b", "media_player.chambre"),   # choisi ailleurs, pas dans sa liste
+    ("media_player.cuisine", "d_7b", "media_player.cuisine"),  # d'une tuile, dans aucune liste
+    ("media_player.chambre", "", "media_player.chambre"),     # la maison : le choisi, quel qu'il soit
+])
+def test_lecteur_montre_par_ecran(actif, ecran, montre):
+    env = _regle({"d_7b": {"lecteurs": "media_player.chambre"}}, {"input_text.tab5_lecteur_actif": actif})
+    assert _rend(env, "{{ tab5_lecteur_montre(ecran) }}", ecran=ecran) == montre
+    assert _rend(env, "{{ tab5_lecteurs_tous() }}") == "media_player.salon,media_player.tv,media_player.chambre"
+
+
+class _Ceci:
+    def __init__(self, reglages):
+        self.attributes = {} if reglages is None else {"reglages": reglages}
+
+
+def _stockage():
+    for bloc in _paquet("tab5_reglages.yaml")["template"]:
+        for capteur in bloc.get("sensor") or []:
+            if capteur.get("unique_id") == "tab5_reglages_ecrans":
+                assert bloc["triggers"] == [{"trigger": "event", "event_type": "tab5_reglage_ecran"}], \
+                    "à déclencheurs : HA restaure son état et ses attributs au redémarrage"
+                return capteur
+    raise AssertionError("sensor.tab5_reglages_ecrans introuvable")
+
+
+def test_stockage_des_reglages():
+    modele = _stockage()["attributes"]["reglages"]
+    env = _env()
+    env.globals["dict"] = dict
+
+    def evenement(avant, appareil, cle, valeur):
+        trigger = {"event": {"data": {"appareil": appareil, "cle": cle, "valeur": valeur}}}
+        return ast.literal_eval(env.from_string(modele).render(this=_Ceci(avant), trigger=trigger).strip())
+
+    r = evenement(None, "d_7b", "presence", "binary_sensor.chambre")
+    assert r == {"d_7b": {"presence": "binary_sensor.chambre"}}
+    r = evenement(r, "d_7b", "nuit", "23:00-06:00")
+    r = evenement(r, "d_tab5", "lecteurs", "media_player.tv")
+    assert r == {"d_7b": {"presence": "binary_sensor.chambre", "nuit": "23:00-06:00"},
+                 "d_tab5": {"lecteurs": "media_player.tv"}}
+    # Valeur vide : la clé part (l'écran reprend la maison), un écran sans clé aussi.
+    r = evenement(r, "d_tab5", "lecteurs", "")
+    assert r == {"d_7b": {"presence": "binary_sensor.chambre", "nuit": "23:00-06:00"}}
+    # Ni un appareil étranger, ni une clé inconnue, ni une entité à la place d'un appareil.
+    assert evenement(r, "d_autre", "nuit", "Not set") == r
+    assert evenement(r, "d_7b", "theme", "x") == r
+    assert evenement(r, "light.tab5_display_backlight", "nuit", "Not set") == r
+    # Un écran retiré de HA disparaît au changement suivant.
+    assert evenement({"d_parti": {"nuit": "Not set"}}, "d_7b", "nuit", "Not set") == {"d_7b": {"nuit": "Not set"}}
+
+
+def test_presence_allume_et_attend_par_ecran():
+    auto = _automatisation("tab5_push.yaml", "tab5_screen_presence_wifi")
+    assert {"trigger": "state", "entity_id": "sensor.tab5_presences_ecrans", "attribute": "absents",
+            "id": "absence"} in auto["triggers"]
+    env = _env()
+    avant = {"attributes": {"presents": ["d_tab5"], "absents": ["d_7b", "d_ancien"]}}
+    apres = {"attributes": {"presents": ["d_tab5", "d_7b"], "absents": ["d_ancien"]}}
+    trigger = {"id": "presence", "platform": "state", "from_state": avant, "to_state": apres}
+    entres = ast.literal_eval(env.from_string(auto["variables"]["entres"]).render(trigger=trigger).strip())
+    assert entres == ["d_7b"]
+    appareils = env.from_string(auto["variables"]["appareils"]).render(trigger=trigger, entres=entres).strip()
+    assert ast.literal_eval(appareils) == ["d_7b"]
+    # Le Tab5 se vide : il entre dans les absents, l'attente de 15 min part pour lui seul.
+    trigger = {"id": "absence", "platform": "state", "from_state": apres,
+               "to_state": {"attributes": {"presents": [], "absents": ["d_ancien", "d_tab5"]}}}
+    entres = ast.literal_eval(env.from_string(auto["variables"]["entres"]).render(trigger=trigger).strip())
+    assert entres == ["d_tab5"]
+    absence = auto["actions"][0]
+    assert absence["then"][0]["repeat"]["sequence"][0]["target"] == {"entity_id": "script.tab5_ecran_absence"}
+    script = _paquet("tab5_push.yaml")["script"]["tab5_ecran_absence"]
+    assert script["mode"] == "parallel" and script["sequence"][0]["timeout"] == "00:15:00"

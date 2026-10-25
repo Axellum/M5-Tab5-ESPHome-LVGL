@@ -336,6 +336,8 @@ automation:
                         commande: "{{ trigger.event.data.action | default('') | string }}"
                         lecteur: "{{ trigger.event.data.lecteur | default('') | string }}"
                         valeur: "{{ trigger.event.data.valeur | default('') | string }}"
+                        # L'écran qui demande : sa liste de lecteurs (ADR-0072).
+                        appareil: "{{ trigger.event.data.device_id | default('', true) | string }}"
 
           # Musique de la maison (ADR-0067) : pages Pièces et Bibliothèque. Le script ne
           # touche qu'une pièce de la liste (un index) ou le lecteur montré, et vérifie

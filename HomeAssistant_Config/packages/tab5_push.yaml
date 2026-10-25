@@ -609,39 +609,65 @@ automation:
     # « Tab5 · phone ») et lus sur leurs miroirs (tab5_reglages.yaml) : sans choix,
     # les miroirs restent indisponibles et rien ne se déclenche. Chaque écran connecté
     # (tab5_cibles, ADR-0071), avec son propre « réveil en cours » : avant le 25/10/2026,
-    # seul celui de sensor.tab5_tablette suivait la présence. Le capteur et le téléphone
-    # sont encore ceux de la maison.
+    # seul celui de sensor.tab5_tablette suivait la présence. Le téléphone est celui de la
+    # maison ; le capteur de présence, celui de chaque écran (ADR-0072 : le sien, sinon
+    # celui de la maison), lu sur « Tab5 · screens: presence » (tab5_reglages.yaml) : un
+    # écran que quelqu'un vient de rejoindre s'allume ; un écran que tout le monde vient de
+    # quitter attend 15 min sans présence (script.tab5_ecran_absence), puis s'éteint.
     description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
     mode: queued
     max: 5
     triggers:
       - trigger: state
-        entity_id: binary_sensor.tab5_presence
-        to: 'on'
-        id: "allumer"
+        entity_id: sensor.tab5_presences_ecrans
+        attribute: presents
+        id: "presence"
+      - trigger: state
+        entity_id: sensor.tab5_presences_ecrans
+        attribute: absents
+        id: "absence"
       - trigger: state
         entity_id: sensor.tab5_telephone_suivi
         to: 'home'
         id: "allumer"
-      # Capteur radar : il repasse off quelques secondes à chaque sortie de la
-      # pièce, d'où les 15 min avant d'éteindre.
-      - trigger: state
-        entity_id: binary_sensor.tab5_presence
-        to: 'off'
-        for: "00:15:00"
-        id: "eteindre"
       - trigger: state
         entity_id: sensor.tab5_telephone_suivi
         to: 'not_home'
         id: "eteindre"
     variables:
+      # Écrans entrés dans l'attribut qui a déclenché (présence : allumer ; absence :
+      # attendre 15 min) ; le téléphone sert chaque écran connecté.
+      entres: >-
+        {%- if trigger.id in ['presence', 'absence'] -%}
+          {%- set a = 'presents' if trigger.id == 'presence' else 'absents' -%}
+          {%- set avant = (trigger.from_state.attributes[a] if trigger.from_state is not none and a in trigger.from_state.attributes else []) or [] -%}
+          {%- set apres = (trigger.to_state.attributes[a] if trigger.to_state is not none and a in trigger.to_state.attributes else []) or [] -%}
+          {{ apres | reject('in', avant) | list }}
+        {%- else -%}
+          {{ [] }}
+        {%- endif -%}
       appareils: >-
         {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
-        {{ tab5_cibles('').split(',') | select | list }}
+        {%- set connectes = tab5_cibles('').split(',') | select | list -%}
+        {{ connectes if trigger.id in ['allumer', 'eteindre'] else (entres | select('in', connectes) | list) }}
     conditions:
       - condition: template
         value_template: "{{ appareils | count > 0 }}"
     actions:
+      # Capteur radar : il repasse off quelques secondes à chaque sortie de la pièce, d'où
+      # les 15 min (script parallèle, un passage par écran ; il s'arrête au retour).
+      - if: "{{ trigger.id == 'absence' }}"
+        then:
+          - repeat:
+              for_each: "{{ appareils }}"
+              sequence:
+                - action: script.turn_on
+                  target:
+                    entity_id: script.tab5_ecran_absence
+                  data:
+                    variables:
+                      appareil: "{{ repeat.item }}"
+          - stop: "15 min d'attente lancées"
       - repeat:
           for_each: "{{ appareils }}"
           sequence:
@@ -651,7 +677,7 @@ automation:
             - choose:
                 - conditions:
                     - condition: trigger
-                      id: "allumer"
+                      id: ["allumer", "presence"]
                     - condition: template
                       value_template: "{{ ecran != '' and is_state(ecran, 'off') }}"
                   sequence:
@@ -749,11 +775,15 @@ automation:
     mode: queued
     max: 3
     max_exceeded: silent
+    # Plage de chaque écran (ADR-0072, 25/10/2026) : la sienne, sinon celle de la maison,
+    # lue sur « Tab5 · screens: night now » (tab5_reglages.yaml), qui liste les écrans
+    # dans leur plage.
     triggers:
-      # Tout changement d'état, indisponible compris (« Not set » choisi en pleine nuit).
+      # Tout changement de la liste (un écran entre dans sa plage ou en sort, « Not set »
+      # choisi en pleine nuit).
       - trigger: state
-        entity_id: binary_sensor.tab5_nuit_de_l_ecran
-        to: ~
+        entity_id: sensor.tab5_nuits_ecrans
+        attribute: nuit
       - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
@@ -785,7 +815,7 @@ automation:
                 - condition: template
                   value_template: *nuit_prete
               then:
-                - action: "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
+                - action: "switch.turn_{{ 'on' if repeat.item in (state_attr('sensor.tab5_nuits_ecrans', 'nuit') or []) else 'off' }}"
                   continue_on_error: true
                   target:
                     entity_id: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(repeat.item, 'nuit_ecran') }}"
@@ -799,6 +829,35 @@ script:
   # gagne. tab5_push_alertes lit sensor.tab5_alertes (packages/tab5_alerts.yaml) :
   # les alertes à lire, déjà triées.
   # ─────────────────────────────────────────────────────────────────────────────
+
+  # Personne devant un écran (ADR-0072) : lancé par « Tab5 — screen by presence and
+  # phone » quand son capteur de présence passe à off. 15 min sans retour de présence
+  # (l'écran quitte `absents` de sensor.tab5_presences_ecrans : quelqu'un, ou capteur
+  # indisponible), puis l'écran s'éteint s'il est allumé et que son réveil ne sonne pas.
+  # Mode parallel : un passage par écran ; un écran qui repart d'absent relance un
+  # passage, le précédent s'arrête au retour.
+  tab5_ecran_absence:
+    alias: "Tab5 — screen off after 15 min without presence"
+    mode: parallel
+    max: 10
+    fields:
+      appareil:
+        description: "device_id de l'écran"
+    sequence:
+      - wait_template: "{{ appareil not in (state_attr('sensor.tab5_presences_ecrans', 'absents') or []) }}"
+        timeout: "00:15:00"
+        continue_on_timeout: true
+      - condition: template
+        value_template: "{{ not wait.completed }}"
+      - variables:
+          ecran: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'ecran') }}"
+          reveil: "{% from 'tab5_tablette.jinja' import tab5_entite %}{{ tab5_entite(appareil, 'reveil_en_cours') }}"
+      - condition: template
+        value_template: "{{ ecran != '' and is_state(ecran, 'on') and not is_state(reveil, 'on') }}"
+      - action: light.turn_off
+        continue_on_error: true
+        target:
+          entity_id: "{{ ecran }}"
 
   tab5_push_alertes:
     alias: "Tab5 — push weather warnings, info banner and HA alerts"

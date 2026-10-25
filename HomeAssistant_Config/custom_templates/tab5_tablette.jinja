@@ -57,6 +57,13 @@
       dont la connexion a déclenché, '' sinon. Une boucle :
         {%- from 'tab5_tablette.jinja' import tab5_cibles -%}
         {{ tab5_cibles(appareil | default('')).split(',') | select | list }}
+  tab5_ecrans(), tab5_reglage(appareil, cle), tab5_reglage_propre(appareil, cle),
+  tab5_ecran_a_regler(), tab5_lecteurs_tous(), tab5_lecteur_montre(appareil)
+      Réglages par écran (ADR-0072, 25/10/2026) : capteur de présence, extinction de nuit
+      et lecteurs de musique se règlent écran par écran ; un écran sans réglage propre
+      garde celui de la maison (les listes « Tab5 · presence sensor », « Tab5 · night
+      screen off », « Tab5 · music players »). tab5_reglage rend la valeur qui vaut pour
+      l'écran, tab5_reglage_propre la sienne seule ('' : celle de la maison).
 
   Une macro rend toujours du texte : 'oui' ou '' comme couvre() de tab5_calendar.jinja.
   Une condition compare donc : `{{ tab5_connectee() == 'oui' }}` (un « oui » nu ne vaut
@@ -192,5 +199,98 @@
       autre déclencheur : la poussée de connexion ne sert que cet écran. -#}
   {%- if trigger.platform == 'event' and (trigger.event.event_type | default('', true) | string) == 'esphome.tab5_connected' -%}
     {{- trigger.event.data.device_id | default('', true) | string -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_ecrans() -%}
+  {#- device_id de chaque écran connu (connecté ou non), séparés par des virgules, dans
+      l'ordre de « Tab5 · screens » (sensor.tab5_ecrans). -#}
+  {{- (state_attr('sensor.tab5_ecrans', 'ecrans') or []) | map(attribute='appareil') | select | join(',') -}}
+{%- endmacro -%}
+{%- macro tab5_reglage_propre(appareil, cle) -%}
+  {#- Réglages par écran (ADR-0072, 25/10/2026) : la valeur propre à cet écran, gardée par
+      sensor.tab5_reglages_ecrans (packages/tab5_reglages.yaml) ; '' = celle de la maison.
+      cle : presence (entity_id ou « Not set »), nuit (« HH:MM-HH:MM » ou « Not set »),
+      lecteurs (entity_id séparés par des virgules, ou « Not set »). -#}
+  {%- set d = appareil | default('', true) | string -%}
+  {%- set r = state_attr('sensor.tab5_reglages_ecrans', 'reglages') -%}
+  {%- set e = r[d] if d and r is mapping and d in r and r[d] is mapping else {} -%}
+  {{- (e[cle] | string) if cle in e else '' -}}
+{%- endmacro -%}
+{%- macro tab5_reglage(appareil, cle) -%}
+  {#- Le réglage qui vaut pour cet écran : le sien, sinon celui de la maison (sans
+      appareil : celui de la maison). presence : entity_id ou « Not set » ; nuit : plage ou
+      « Not set » ; lecteurs : entity_id séparés par des virgules ('' : aucun). -#}
+  {%- set v = tab5_reglage_propre(appareil, cle) -%}
+  {%- if cle == 'presence' -%}
+    {{- v if v != '' else states('select.tab5_capteur_de_presence') -}}
+  {%- elif cle == 'nuit' -%}
+    {{- v if v != '' else states('select.tab5_extinction_de_nuit') -}}
+  {%- elif cle == 'lecteurs' -%}
+    {%- set brut = v if v != '' else states('input_text.tab5_choix_lecteurs') -%}
+    {{- brut.split(',') | map('trim') | select('match', 'media_player[.]') | unique | list | join(',') -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_presences(etat) -%}
+  {#- device_id des écrans dont le capteur de présence (le leur, sinon celui de la maison)
+      vaut `etat` : 'on' quelqu'un, 'off' personne ; un capteur indisponible n'est ni l'un
+      ni l'autre (il n'éteint rien). -#}
+  {%- set ns = namespace(l=[]) -%}
+  {%- for d in tab5_ecrans().split(',') | select -%}
+    {%- set e = tab5_reglage(d, 'presence') -%}
+    {%- if e.startswith('binary_sensor.') and is_state(e, etat) -%}
+      {%- set ns.l = ns.l + [d] -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {{- ns.l | join(',') -}}
+{%- endmacro -%}
+{%- macro tab5_nuits(h) -%}
+  {#- device_id des écrans dont la plage d'extinction de nuit (la leur, sinon celle de la
+      maison) contient l'heure h, « HH:MM » locale : plage à cheval sur minuit comprise,
+      début = fin : jamais, « Not set » : jamais. h vient de l'appelant (now()) : c'est
+      lui qui fait recalculer le modèle chaque minute. -#}
+  {%- set ns = namespace(l=[]) -%}
+  {%- for d in tab5_ecrans().split(',') | select -%}
+    {%- set p = tab5_reglage(d, 'nuit').split('-') -%}
+    {%- if p | count == 2 and ((p[0] <= h < p[1]) if p[0] < p[1] else (h >= p[0] or h < p[1]) if p[0] > p[1] else false) -%}
+      {%- set ns.l = ns.l + [d] -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {{- ns.l | join(',') -}}
+{%- endmacro -%}
+{%- macro tab5_ecran_libelle(appareil) -%}
+  {#- Option de « Tab5 · screen to set » : « nom · préfixe » (le préfixe est propre à
+      chaque écran, ADR-0063 : deux écrans du même nom restent distincts). -#}
+  {{- tab5_nom(appareil) ~ ' · ' ~ tab5_prefixe(appareil) -}}
+{%- endmacro -%}
+{%- macro tab5_ecran_a_regler() -%}
+  {#- L'écran que montrent les listes « Tab5 · this screen · … » : celui choisi dans
+      « Tab5 · screen to set », sinon le premier écran connu ; '' sans écran. -#}
+  {%- set l = tab5_ecrans().split(',') | select | list -%}
+  {%- set m = states('input_text.tab5_choix_ecran_a_regler') -%}
+  {{- m if m in l else (l | first | default('')) -}}
+{%- endmacro -%}
+{%- macro tab5_lecteurs_tous() -%}
+  {#- Tous les lecteurs choisis, de la maison et de chaque écran, sans doublon. -#}
+  {%- set ns = namespace(l=tab5_reglage('', 'lecteurs').split(',') | select | list) -%}
+  {%- for d in tab5_ecrans().split(',') | select -%}
+    {%- set ns.l = ns.l + (tab5_reglage(d, 'lecteurs').split(',') | select | reject('in', ns.l) | list) -%}
+  {%- endfor -%}
+  {{- ns.l | join(',') -}}
+{%- endmacro -%}
+{%- macro tab5_lecteur_montre(appareil='') -%}
+  {#- Le lecteur que montre le popup Musique de cet écran (ADR-0050) : le lecteur choisi
+      (input_text.tab5_lecteur_actif : pastille, tuile, lecteur qui se met à jouer) s'il
+      est dans la liste de cet écran ou dans aucune (une tuile) ; sinon le premier de sa
+      liste qui joue, sinon le premier de sa liste ; « Aucun » sans liste. Sans appareil :
+      celui de la maison (le lecteur choisi, quel qu'il soit), comme avant le 25/10/2026. -#}
+  {%- set d = appareil | default('', true) | string -%}
+  {%- set liste = tab5_reglage(d, 'lecteurs').split(',') | select | list -%}
+  {%- set m = states('input_text.tab5_lecteur_actif') -%}
+  {%- set jouent = liste | select('is_state', 'playing') | list -%}
+  {%- if m.startswith('media_player.') and expand(m) | count > 0
+        and (d == '' or m in liste or m not in tab5_lecteurs_tous().split(',')) -%}{{ m }}
+  {%- elif jouent -%}{{ jouent | first }}
+  {%- elif liste -%}{{ liste | first }}
+  {%- else -%}Aucun
   {%- endif -%}
 {%- endmacro -%}
