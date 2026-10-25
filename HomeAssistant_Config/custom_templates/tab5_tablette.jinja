@@ -28,10 +28,14 @@
       déclencheur (état, heure, démarrage, rechargement, autre événement) : 'oui'.
       `| string` : device_attr() refuse autre chose qu'un texte (device_id vaut None
       pour un appareil pas encore enregistré).
-  tab5_api()
+  tab5_api(appareil='')
       entity_id du capteur « HA API Status » d'une tablette : la dernière connectée s'il y
       en a une, sinon la première trouvée ; '' sans tablette. Ses autres entités se
       trouvent par device_entities(device_id(…)) (packages/tab5_reglages.yaml).
+      `appareil` (device_id) : celui de cette tablette seulement. Plusieurs écrans : une
+      garde qui regarde LA tablette qui a émis un événement le donne (25/10/2026 : la 7B
+      redémarrée, la garde lisait l'autre tablette, connectée depuis 25 min, et sa
+      poussée complète n'est jamais partie : alertes et planning vides).
   tab5_prefixe(device_id), tab5_destinataires(appareil)
       Plusieurs écrans (ADR-0063) : le préfixe des actions d'une tablette (son capteur
       « Préfixe des actions »), et la liste des préfixes à qui envoyer, séparés par des
@@ -50,10 +54,11 @@
   d'import (erreur de rendu, la poussée s'arrête). L'archive et l'intégration HACS le
   posent avec les packages ; l'intégration recharge les modèles en premier (ADR-0035).
 -#}
-{%- macro tab5_api() -%}
+{%- macro tab5_api(appareil='') -%}
   {%- set ns = namespace(api='') -%}
   {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
-    {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
+    {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (appareil == '' or device_id(e) == appareil)
+          and (ns.api == '' or is_state(e, 'on')) -%}
       {%- set ns.api = e -%}
     {%- endif -%}
   {%- endfor -%}

@@ -160,11 +160,15 @@ automation:
       # renommée) bloquait toute la poussée complète (test « HA neuf », 28/09/2026).
       # Elle ne regarde que tab5_connected : au démarrage de HA (demarrage_ha), la
       # liaison peut être `on` depuis plus longtemps, la poussée part quand même.
+      # Le capteur est celui de la tablette qui a émis l'événement (device_id) : avec
+      # deux écrans, celui de l'autre, connecté depuis longtemps, bloquait la poussée de
+      # celui qui venait de redémarrer (25/10/2026, tests/test_garde_origine.py).
       - alias: "tab5_connected : seulement si la liaison API vient de (re)demarrer (garde contre un evenement reemis)"
         condition: template
         value_template: >-
           {%- from 'tab5_tablette.jinja' import tab5_api -%}
-          {%- set api = tab5_api() -%}
+          {%- set api = tab5_api(trigger.event.data.device_id | default('', true) | string)
+                if trigger.id == 'tab5_connected' else '' -%}
           {%- set depuis = states[api].last_changed if api and is_state(api, 'on') else none -%}
           {{ trigger.id != 'tab5_connected' or depuis is none
              or (now() - depuis).total_seconds() < 180 }}
