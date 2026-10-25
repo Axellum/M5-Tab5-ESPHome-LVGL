@@ -26,7 +26,7 @@ A problem shows in *Settings → System → Repairs*: missing `packages:` line, 
 
 **By hand, they do not update themselves**: replace them with those of `tab5_home_assistant.zip` from the same release ([step 1](home-assistant-files.md)), then *Developer tools → YAML → All YAML configuration*, and run the action `homeassistant.reload_custom_templates` (or restart Home Assistant). A blueprint imported from its URL rather than unzipped: import it again.
 
-The files of an archive know their version: when the tablet runs a newer major or minor release (X.Y; a patch release alone does not count), Home Assistant says so (notification « Tab5 : fichiers Home Assistant à mettre à jour », sensor « Tab5 · fichiers HA en retard »). Files copied from the repository have no version and are never compared.
+The files of an archive know their version: when the tablet runs a newer major or minor release (X.Y; a patch release alone does not count), Home Assistant says so (notification « Tab5 : fichiers Home Assistant à mettre à jour », sensor « Tab5 · HA files out of date »). Files copied from the repository have no version and are never compared.
 
 Using the [dashboard](dashboard.md)? After an update that adds entities, do its items 2 and 3 again.
 
@@ -38,15 +38,15 @@ At each update, the integration keeps the files it replaces or removes in `confi
 2. A file added by the newer version is in no backup, so it stays. To remove it, compare `config/packages/` with the `tab5_home_assistant.zip` of the version you go back to.
 3. *Developer tools → YAML → Check configuration*, then reload as for files put by hand (above), or restart Home Assistant.
 
-The integration then leaves these files alone: it installs its files once per version, when HACS brings a new one, or when « Install the files of this version again now » is ticked (that puts the newer files back). The next version installed through HACS replaces them, names them as edited by hand, and keeps them in a new backup. While the files are older than the integration, « Then update the tablet » waits: it starts the firmware only once « Tab5 · version des fichiers HA » shows the integration's version.
+The integration then leaves these files alone: it installs its files once per version, when HACS brings a new one, or when « Install the files of this version again now » is ticked (that puts the newer files back). The next version installed through HACS replaces them, names them as edited by hand, and keeps them in a new backup. While the files are older than the integration, « Then update the tablet » waits: it starts the firmware only once « Tab5 · HA files version » shows the integration's version.
 
 ## Upgrading from 3.2
 
 Replace the Home Assistant files with those of the new `tab5_home_assistant.zip` (or install the update of the [HACS integration](#home-assistant-files)), then check three lists ([step 5](sources.md)):
 
-1. **Work calendar holding other events?** Type your word in « Tab5 · mot des événements de travail » (the author: `Travail`). Up to 3.2, only titles containing « Travail » counted; left empty, every event of the work calendar now counts as work.
-2. **School holidays** no longer come from a table of the French Zone A: pick a calendar in « Tab5 · agenda des vacances scolaires ».
-3. **Discussion mode**: pick its pipeline in « Tab5 · pipeline de discussion ». Up to 3.2, the tablet asked for a pipeline named exactly « Discussion LLM ».
+1. **Work calendar holding other events?** Type your word in « Tab5 · work event keyword » (the author: `Travail`). Up to 3.2, only titles containing « Travail » counted; left empty, every event of the work calendar now counts as work.
+2. **School holidays** no longer come from a table of the French Zone A: pick a calendar in « Tab5 · school holidays calendar ».
+3. **Discussion mode**: pick its pipeline in « Tab5 · chat pipeline ». Up to 3.2, the tablet asked for a pipeline named exactly « Discussion LLM ».
 
 The lists keep their entity ids, so your dashboards and automations need nothing.
 
@@ -62,9 +62,9 @@ A new firmware **without** the package does not crash and logs nothing, but what
 
 ## Coming from packages with placeholders (3.1.0 and earlier)
 
-Replace the files, then set each list to your old value: `VOTRE_EMAIL_gmail_com` → « Tab5 · agenda de travail », `calendar.famille` → rendez-vous, `calendar.anniversaires` and the public-holiday calendar (usually picked by default), `VOTRE_TELEPHONE` → téléphone, `VOTRE_CAPTEUR_PRESENCE` → capteur de présence, `VOTRE_TV` → TV Samsung, and the IP of the `tab5_tv_app_url` line of `secrets.yaml` → « Tab5 · adresse de la TV » (the line can then go). The weather choice is kept. Keep `volet_serre_tracking.yaml` in `config/packages/` if you use it, and pick your shutter in its list.
+Replace the files, then set each list to your old value: `VOTRE_EMAIL_gmail_com` → « Tab5 · work calendar », `calendar.famille` → rendez-vous, `calendar.anniversaires` and the public-holiday calendar (usually picked by default), `VOTRE_TELEPHONE` → téléphone, `VOTRE_CAPTEUR_PRESENCE` → capteur de présence, `VOTRE_TV` → TV Samsung, and the IP of the `tab5_tv_app_url` line of `secrets.yaml` → « Tab5 · TV address » (the line can then go). The weather choice is kept. Keep `volet_serre_tracking.yaml` in `config/packages/` if you use it, and pick your shutter in its list.
 
-**Set « Tab5 · agenda de travail » before the new automations run**: reload *Input texts* and *Template entities* first, choose, then reload *Scripts*, *Automations* and *REST commands*. Until it is set, every day counts as a rest day, and the alarm clock follows.
+**Set « Tab5 · work calendar » before the new automations run**: reload *Input texts* and *Template entities* first, choose, then reload *Scripts*, *Automations* and *REST commands*. Until it is set, every day counts as a rest day, and the alarm clock follows.
 
 ## Upgrading from 2.x
 
@@ -110,7 +110,7 @@ Un problème s'affiche dans *Paramètres → Système → Corrections* : ligne `
 
 **À la main, ils ne se mettent pas à jour seuls** : remplacez-les par ceux de `tab5_home_assistant.zip` de la même release ([étape 1](home-assistant-files.md#version-française)), puis *Outils de développement → YAML → Toute la configuration YAML*, et lancez l'action `homeassistant.reload_custom_templates` (ou redémarrez Home Assistant). Un blueprint importé depuis son adresse plutôt que décompressé : importez-le de nouveau.
 
-Les fichiers d'une archive connaissent leur version : quand la tablette tourne une release majeure ou mineure plus récente (X.Y ; une version corrective seule ne compte pas), Home Assistant le dit (notification « Tab5 : fichiers Home Assistant à mettre à jour », capteur « Tab5 · fichiers HA en retard »). Des fichiers copiés depuis le dépôt n'ont pas de version et ne sont jamais comparés.
+Les fichiers d'une archive connaissent leur version : quand la tablette tourne une release majeure ou mineure plus récente (X.Y ; une version corrective seule ne compte pas), Home Assistant le dit (notification « Tab5 : fichiers Home Assistant à mettre à jour », capteur « Tab5 · HA files out of date »). Des fichiers copiés depuis le dépôt n'ont pas de version et ne sont jamais comparés.
 
 Vous utilisez le [tableau de bord](dashboard.md#version-française) ? Après une mise à jour qui ajoute des entités, refaites ses points 2 et 3.
 
@@ -122,15 +122,15 @@ Vous utilisez le [tableau de bord](dashboard.md#version-française) ? Après une
 2. Un fichier ajouté par la version plus récente n'est dans aucune sauvegarde : il reste. Pour le retirer, comparez `config/packages/` avec le `tab5_home_assistant.zip` de la version où vous revenez.
 3. *Outils de développement → YAML → Vérifier la configuration*, puis rechargez comme pour des fichiers posés à la main (plus haut), ou redémarrez Home Assistant.
 
-L'intégration laisse ensuite ces fichiers tranquilles : elle installe ses fichiers une fois par version, quand HACS en apporte une nouvelle, ou quand « Réinstaller maintenant les fichiers de cette version » est coché (cela remet les fichiers plus récents). La version suivante installée par HACS les remplace, les nomme comme modifiés à la main, et les garde dans une nouvelle sauvegarde. Tant que les fichiers sont plus anciens que l'intégration, « Mettre ensuite la tablette à jour » attend : le firmware n'est lancé qu'une fois que « Tab5 · version des fichiers HA » donne la version de l'intégration.
+L'intégration laisse ensuite ces fichiers tranquilles : elle installe ses fichiers une fois par version, quand HACS en apporte une nouvelle, ou quand « Réinstaller maintenant les fichiers de cette version » est coché (cela remet les fichiers plus récents). La version suivante installée par HACS les remplace, les nomme comme modifiés à la main, et les garde dans une nouvelle sauvegarde. Tant que les fichiers sont plus anciens que l'intégration, « Mettre ensuite la tablette à jour » attend : le firmware n'est lancé qu'une fois que « Tab5 · HA files version » donne la version de l'intégration.
 
 ## Passer d'une 3.2 à la suite
 
 Remplacez les fichiers Home Assistant par ceux du nouveau `tab5_home_assistant.zip` (ou installez la mise à jour de l'[intégration de HACS](#fichiers-home-assistant)), puis vérifiez trois listes ([étape 5](sources.md#version-française)) :
 
-1. **Votre agenda de travail contient d'autres événements ?** Tapez votre mot dans « Tab5 · mot des événements de travail » (l'auteur : `Travail`). Jusqu'à la 3.2, seuls les titres contenant « Travail » comptaient ; laissé vide, tout l'agenda de travail compte désormais comme du travail.
-2. **Les vacances scolaires** ne viennent plus d'une table de la zone A : choisissez un agenda dans « Tab5 · agenda des vacances scolaires ».
-3. **Mode Discussion** : choisissez son pipeline dans « Tab5 · pipeline de discussion ». Jusqu'à la 3.2, la tablette demandait un pipeline nommé exactement « Discussion LLM ».
+1. **Votre agenda de travail contient d'autres événements ?** Tapez votre mot dans « Tab5 · work event keyword » (l'auteur : `Travail`). Jusqu'à la 3.2, seuls les titres contenant « Travail » comptaient ; laissé vide, tout l'agenda de travail compte désormais comme du travail.
+2. **Les vacances scolaires** ne viennent plus d'une table de la zone A : choisissez un agenda dans « Tab5 · school holidays calendar ».
+3. **Mode Discussion** : choisissez son pipeline dans « Tab5 · chat pipeline ». Jusqu'à la 3.2, la tablette demandait un pipeline nommé exactement « Discussion LLM ».
 
 Les listes gardent leurs identifiants d'entité : vos tableaux de bord et automatisations n'ont rien à changer.
 
@@ -146,9 +146,9 @@ Un firmware récent **sans** le package ne plante pas et n'écrit rien au journa
 
 ## Vous aviez les packages à placeholders (3.1.0 et avant)
 
-Remplacez les fichiers, puis réglez chaque liste sur votre ancienne valeur : `VOTRE_EMAIL_gmail_com` → « Tab5 · agenda de travail », `calendar.famille` → rendez-vous, `calendar.anniversaires` et l'agenda des jours fériés (en général choisis par défaut), `VOTRE_TELEPHONE` → téléphone, `VOTRE_CAPTEUR_PRESENCE` → capteur de présence, `VOTRE_TV` → TV Samsung, et l'IP de la ligne `tab5_tv_app_url` de `secrets.yaml` → « Tab5 · adresse de la TV » (la ligne peut ensuite partir). Le choix météo est gardé. Gardez `volet_serre_tracking.yaml` dans `config/packages/` si vous l'utilisez, et choisissez votre volet dans sa liste.
+Remplacez les fichiers, puis réglez chaque liste sur votre ancienne valeur : `VOTRE_EMAIL_gmail_com` → « Tab5 · work calendar », `calendar.famille` → rendez-vous, `calendar.anniversaires` et l'agenda des jours fériés (en général choisis par défaut), `VOTRE_TELEPHONE` → téléphone, `VOTRE_CAPTEUR_PRESENCE` → capteur de présence, `VOTRE_TV` → TV Samsung, et l'IP de la ligne `tab5_tv_app_url` de `secrets.yaml` → « Tab5 · TV address » (la ligne peut ensuite partir). Le choix météo est gardé. Gardez `volet_serre_tracking.yaml` dans `config/packages/` si vous l'utilisez, et choisissez votre volet dans sa liste.
 
-**Réglez « Tab5 · agenda de travail » avant que les nouvelles automatisations tournent** : rechargez d'abord *Entrées de texte* et *Entités de template*, choisissez, puis rechargez *Scripts*, *Automatisations* et *Commandes REST*. Tant qu'il n'est pas choisi, tous les jours comptent comme des jours de repos, et le réveil suit.
+**Réglez « Tab5 · work calendar » avant que les nouvelles automatisations tournent** : rechargez d'abord *Entrées de texte* et *Entités de template*, choisissez, puis rechargez *Scripts*, *Automatisations* et *Commandes REST*. Tant qu'il n'est pas choisi, tous les jours comptent comme des jours de repos, et le réveil suit.
 
 ## Passer à la 3.0
 

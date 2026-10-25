@@ -11,7 +11,7 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
         1. config/ d'une installation neuve + la ligne `packages:` du guide, zip 9.9.1,
            un blueprint du Tab5 copié à la main (ancien, différent), compte (onboarding),
            intégration ajoutée par son formulaire → fichiers posés sans redémarrage :
-           capteur « Tab5 · version des fichiers HA » à 9.9.1, rest_command chargé à chaud
+           capteur « Tab5 · HA files version » à 9.9.1, rest_command chargé à chaud
            (absent d'un HA neuf), le blueprint remplacé et dit (réparation persistante
            « fichiers_remplaces », copie dans la sauvegarde), validée comme l'interface ;
            l'assistant de configuration proposé (réparation « configurer_pieces ») ;
@@ -19,7 +19,7 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
            un thermostat, une lumière cachée), une température « extérieure » sans pièce, un
            agenda local « Travail CI » ; la réparation suivie comme l'interface, valeurs
            proposées acceptées → pièces, maison (seulement ce qui n'a qu'une réponse) et
-           liste « Tab5 · agenda de travail » proposée ; automatisation du blueprint écrite
+           liste « Tab5 · work calendar » proposée ; automatisation du blueprint écrite
            dans automations.yaml, chargée, liste réglée, réparation retirée ; relancé depuis
            les options sans cocher « mettre à jour » → automations.yaml à l'octet près, le
            choix de la liste gardé ; puis en la cochant, un nom changé et « dehors » décoché
@@ -202,7 +202,7 @@ MAISON_ATTENDUE = {
     "clim": "climate.ci_clim",                            # la seule clim
 }
 # La page Agendas : un agenda local dont le nom dit « travail », proposé pour la liste
-# « Tab5 · agenda de travail », que le package ne devine jamais.
+# « Tab5 · work calendar », que le package ne devine jamais.
 AGENDA_CI = "Travail CI"
 AGENDA_CI_ENTITE = "calendar.travail_ci"
 SELECT_TRAVAIL = "select.tab5_agenda_de_travail"
@@ -398,8 +398,8 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     maison = MAISON_ATTENDUE | ({"meteo_previsions": meteos[0]} if len(meteos) == 1 else {})
     rapport.info(f"1 bis. entités météo de ce HA : {meteos}")
     options_travail = await options_de(ha, SELECT_TRAVAIL, AGENDA_CI_ENTITE)
-    rapport.verifier(AGENDA_CI_ENTITE in options_travail and await etat(ha, SELECT_TRAVAIL) == "Aucun",
-                     "1 bis. liste « Tab5 · agenda de travail » chargée, l'agenda parmi ses choix, réglée sur « Aucun »",
+    rapport.verifier(AGENDA_CI_ENTITE in options_travail and await etat(ha, SELECT_TRAVAIL) == "Not set",
+                     "1 bis. liste « Tab5 · work calendar » chargée, l'agenda parmi ses choix, réglée sur « Not set »",
                      str(options_travail))
 
     # Par la réparation « configurer_pieces », valeurs proposées acceptées.
@@ -428,8 +428,8 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     if "agendas" in par_etape:
         proposee = suggestions(par_etape["agendas"])
         rapport.verifier(proposee.get("agenda_travail") == AGENDA_CI_ENTITE
-                         and all(v == "Aucun" for k, v in proposee.items() if k != "agenda_travail"),
-                         "1 bis. agendas : l'agenda « travail » proposé, le reste sur « Aucun »", str(proposee)[:400])
+                         and all(v == "Not set" for k, v in proposee.items() if k != "agenda_travail"),
+                         "1 bis. agendas : l'agenda « travail » proposé, le reste sur « Not set »", str(proposee)[:400])
     recap = json.dumps(formulaires[-1].get("description_placeholders") or {}, ensure_ascii=False)
     rapport.verifier("Salon CI" in recap and "Applique CI" in recap and "light.ci_applique" not in recap
                      and AGENDA_CI in recap and "Température extérieure CI" in recap,
@@ -448,7 +448,7 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
         rapport.verifier(etat_a is not None and etat_a["state"] == "on",
                          "1 bis. automatisation chargée et active", str(etat_a)[:200])
     rapport.verifier(await attendre_etat(ha, SELECT_TRAVAIL, AGENDA_CI_ENTITE) == AGENDA_CI_ENTITE,
-                     "1 bis. liste « Tab5 · agenda de travail » réglée sur l'agenda proposé")
+                     "1 bis. liste « Tab5 · work calendar » réglée sur l'agenda proposé")
     restes = await attendre_reparations(ha, set(), {"configurer_pieces"})
     rapport.verifier("configurer_pieces" not in restes, "1 bis. réparation « configurer_pieces » retirée", str(restes))
     notes = {n.get("notification_id"): n.get("message") or ""

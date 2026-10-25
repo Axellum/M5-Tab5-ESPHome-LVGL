@@ -95,7 +95,7 @@
       },
       "agendas": {
         "title": "Asistan · takvimler ve kişiler",
-        "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Aucun” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Aucun” yapabilirsiniz.",
+        "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Not set” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Yok” yapabilirsiniz.",
         "data": {
           "agenda_travail": "İş takvimi",
           "agenda_rdv": "Randevu takvimi",
@@ -110,7 +110,7 @@
           "agenda_anniversaires": "Doğum günleri, tatiller, okul tatilleri ve telefon: tek bir aday varsa liste zaten kendisi tahmin eder.",
           "telephone_suivi": "Dönüşte ekranı açar, ayrılışta kapatır.",
           "presence": "Algılamada ekranı açar, 15 dk boyunca varlık olmazsa kapatır.",
-          "pipeline": "Ekranın sohbet modu; “Aucun” düğmelerini gizler."
+          "pipeline": "Ekranın sohbet modu; “Yok” düğmelerini gizler."
         }
       },
       "recapitulatif": {
@@ -243,7 +243,7 @@
           },
           "agendas": {
             "title": "Asistan · takvimler ve kişiler",
-            "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Aucun” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Aucun” yapabilirsiniz.",
+            "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Not set” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Yok” yapabilirsiniz.",
             "data": {
               "agenda_travail": "İş takvimi",
               "agenda_rdv": "Randevu takvimi",
@@ -258,7 +258,7 @@
               "agenda_anniversaires": "Doğum günleri, tatiller, okul tatilleri ve telefon: tek bir aday varsa liste zaten kendisi tahmin eder.",
               "telephone_suivi": "Dönüşte ekranı açar, ayrılışta kapatır.",
               "presence": "Algılamada ekranı açar, 15 dk boyunca varlık olmazsa kapatır.",
-              "pipeline": "Ekranın sohbet modu; “Aucun” düğmelerini gizler."
+              "pipeline": "Ekranın sohbet modu; “Yok” düğmelerini gizler."
             }
           },
           "recapitulatif": {

@@ -37,7 +37,7 @@
 
 script:
   tab5_mesure_consommation:
-    alias: "Tab5 — consumption test · test de consommation"
+    alias: "Tab5 — consumption test"
     icon: mdi:battery-clock
     description: >-
       Measures the power drawn by the Tab5 on its battery in 11 cases (screen

@@ -100,8 +100,7 @@ def test_eteint_comme_ha_et_compte_depuis_l_allumage():
 
 
 def test_nuit_tenue_par_ha():
-    """« Tab5 Nuit (écran éteint) » (16/10/2026) : tenu par HA d'après « Tab5 · extinction de
-    nuit », éteint au démarrage (HA le renvoie à la connexion). Allumé, 1 min sans toucher
+    """« Tab5 Nuit (écran éteint) » (16/10/2026) : tenu par HA d'après « Tab5 · night screen off », éteint au démarrage (HA le renvoie à la connexion). Allumé, 1 min sans toucher
     éteint l'écran même sur « Jamais » ou sur secteur, avec les mêmes exceptions ; l'écran
     éteint par la nuit se rallume quand elle finit."""
     s = next(s for s in _yaml("tab5-ha-controls.yaml")["switch"] if s.get("id") == "tab5_nuit_ecran")
