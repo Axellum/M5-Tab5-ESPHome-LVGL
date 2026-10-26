@@ -4,11 +4,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.9.0` n'est pas
-taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.1).
-**Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.9.0-rc.8).
-
 ## [3.9.0] — 2026-10-25
 
 De `v3.8.1` à aujourd'hui : quatre-vingt-onze pull requests (#459 → #552, sans #487 ni #503, fermées), dont neuf de pré-release
