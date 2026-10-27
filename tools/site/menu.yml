@@ -12,6 +12,9 @@
 # site avec un encart qui le dit. Sinon le fichier est coupé à « ## Version Française ».
 # `h1_fr:` titre de la page française quand il diffère de celui du menu (la partie
 # française d'un fichier n'a pas de « # » : c'est le titre du menu qui le donne).
+# `titre_onglet:` et `description:` ({en, fr}, 65 et 160 caractères au plus) : le <title>
+# entier et la description qu'affiche un moteur de recherche, quand ceux tirés de la page
+# (« titre du menu - nom du site », premier paragraphe) ne disent pas ce qu'on y cherche.
 # Un fichier de docs/ absent d'ici n'est pas publié : tests/test_site_doc.py liste ceux
 # qui restent hors du site exprès (HORS_SITE).
 
@@ -186,9 +189,21 @@
     - en: Hardware
       fr: Matériel
       page: docs/hardware.md
+      titre_onglet:
+        en: M5Stack Tab5 ST7121, ST7123, ILI9881C — Home Assistant
+        fr: M5Stack Tab5 ST7121, ST7123, ILI9881C — écran Home Assistant
+      description:
+        en: Which display chip is in your M5Stack Tab5? The ST7123 and ST7121 run this ESPHome firmware for Home Assistant, the ILI9881C builds. How to tell and choose.
+        fr: Quelle puce écran dans votre M5Stack Tab5 ? La ST7123 et la ST7121 font tourner ce firmware ESPHome pour Home Assistant, l'ILI9881C compile. Comment choisir.
     - en: Waveshare 7B board
       fr: Carte Waveshare 7B
       page: docs/waveshare-7b.md
+      titre_onglet:
+        en: Waveshare ESP32-P4 7B as a Home Assistant screen (ESPHome)
+        fr: Waveshare ESP32-P4 7B en écran Home Assistant (ESPHome)
+      description:
+        en: Turn the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600) into a Home Assistant wall screen, with ESPHome and LVGL firmware installed from the browser.
+        fr: La Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600) en écran mural Home Assistant, avec un firmware ESPHome et LVGL installé depuis le navigateur.
     - en: User interface (LVGL)
       fr: Interface (LVGL)
       page: docs/ui_design.md
