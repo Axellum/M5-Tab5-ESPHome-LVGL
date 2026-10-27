@@ -11,6 +11,7 @@ remplace donc jamais la version stable.
     <site>/en/, <site>/fr/, 404.html  la documentation (docs/, tools/site/construire.py, ADR-0030)
     <site>/images/                    image de partage, sous un nom parlant (IMAGES)
     <site>/sitemap.xml                pages et images, pour les moteurs de recherche
+                                      (<lastmod> : dernier commit du fichier source)
     <site>/versions.json              ce que la page de flashage affiche
     <site>/stable/<variante>/         dernière release 3.x non « pre-release »
     <site>/beta/<variante>/           release 3.x la plus récente, pre-release ou non
@@ -38,6 +39,7 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urljoin
@@ -48,6 +50,9 @@ VARIANTES = ("st7123", "st7121", "ili9881c", "waveshare-7b")
 TAG =re.compile(r"^v(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.]+))?$")
 MAJEURE_MINI = 3  # premières releases avec des binaires (lot 6c)
 SITE = "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/"
+RACINE = Path(__file__).resolve().parents[2]
+# Écrit par tools/site/construire.py à côté de en/ et fr/ (SOURCES_DES_PAGES) : lu, pas publié.
+SOURCES_DES_PAGES = "sources.json"
 
 # Nom publié (site/images/) → fichier de docs/images/. Un nom parlant aide les moteurs
 # de recherche ; les fichiers du dépôt gardent le leur (README, docs, kit de presse).
@@ -134,8 +139,37 @@ def _images(source: Path, dest: Path) -> None:
         shutil.copyfile(source / fichier, dest / nom)
 
 
-def plan_du_site(site: Path) -> str:
-    """sitemap.xml : une entrée par page HTML, avec les images qu'elle affiche."""
+def dates_de_commit(fichiers: set[str], depot: Path = RACINE) -> dict[str, str]:
+    """Date (AAAA-MM-JJ) du dernier commit qui a changé chaque fichier (chemins du dépôt).
+
+    Rien dans un clone superficiel (git y daterait chaque fichier de son seul commit), ni
+    sans git, ni pour un fichier jamais commité : mieux vaut pas de <lastmod> qu'un faux.
+    Un seul `git log`, qui part du plus récent : la première date vue est la bonne."""
+    commande = ["git", "-C", str(depot), "-c", "core.quotepath=off"]
+    try:
+        superficiel = subprocess.run([*commande, "rev-parse", "--is-shallow-repository"], capture_output=True,
+                                     text=True, encoding="utf-8", check=True).stdout.strip()
+        if superficiel != "false" or not fichiers:
+            return {}
+        journal = subprocess.run([*commande, "log", "--format=%x00%cs", "--name-only", "--no-renames",
+                                  "--", *sorted(fichiers)], capture_output=True, text=True,
+                                 encoding="utf-8", check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return {}
+    dates, date = {}, None
+    for ligne in journal.splitlines():
+        if ligne.startswith("\0"):
+            date = ligne[1:]
+        elif ligne in fichiers and ligne not in dates and date:
+            dates[ligne] = date
+    return dates
+
+
+def plan_du_site(site: Path, dates: dict[str, str] | None = None) -> str:
+    """sitemap.xml : une entrée par page HTML, avec les images qu'elle affiche.
+    `dates` : adresse de la page sous le site (« en/hardware/ », « » pour la racine) →
+    date de son <lastmod> ; une page absente n'en a pas."""
+    dates = dates or {}
     lignes = ['<?xml version="1.0" encoding="UTF-8"?>',
               '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
               ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
@@ -146,6 +180,8 @@ def plan_du_site(site: Path) -> str:
             continue
         dossier = relatif.removesuffix("index.html")
         lignes.append(f"  <url><loc>{escape(SITE + dossier)}</loc>")
+        if dossier in dates:  # avant les images : ordre du schéma des sitemaps
+            lignes.append(f"    <lastmod>{dates[dossier]}</lastmod>")
         vues = []
         for src in IMAGE_DE_PAGE.findall(page.read_text(encoding="utf-8")):
             # Relative à la page : images/ de la racine, en/images/ ou fr/images/ de la doc.
@@ -167,11 +203,21 @@ def assembler(web: Path, assets: Path, stable: str | None, beta: str | None, sor
     if sortie.exists():
         shutil.rmtree(sortie)
     shutil.copytree(web, sortie)
+    # Fichier du dépôt de chaque page, pour le <lastmod> du plan du site.
+    sources = {}
+    for page in sorted(web.rglob("*.html")):
+        try:
+            sources[page.relative_to(web).as_posix().removesuffix("index.html")] = \
+                page.resolve().relative_to(RACINE).as_posix()
+        except ValueError:  # web/ hors du dépôt (tests) : pas de date
+            pass
     if images is not None:
         _images(images, sortie / "images")
     if doc is not None:
         attendus = {*LANGUES_DOC, "404.html"}
-        presents = {p.name for p in doc.iterdir()}
+        presents = {p.name for p in doc.iterdir()} - {SOURCES_DES_PAGES}
+        if (doc / SOURCES_DES_PAGES).is_file():
+            sources.update(json.loads((doc / SOURCES_DES_PAGES).read_text(encoding="utf-8")))
         if presents != attendus:
             raise SystemExit(f"documentation : {sorted(presents)} au lieu de {sorted(attendus)}")
         for nom in sorted(presents):
@@ -184,7 +230,9 @@ def assembler(web: Path, assets: Path, stable: str | None, beta: str | None, sor
     versions = {canal: _canal(assets, tag, sortie / canal) if tag else None
                 for canal, tag in (("stable", stable), ("beta", beta))}
     (sortie / "versions.json").write_text(json.dumps(versions, indent=2) + "\n", encoding="utf-8")
-    (sortie / "sitemap.xml").write_text(plan_du_site(sortie), encoding="utf-8")
+    dates = dates_de_commit(set(sources.values()))
+    (sortie / "sitemap.xml").write_text(
+        plan_du_site(sortie, {page: dates[f] for page, f in sources.items() if f in dates}), encoding="utf-8")
     return versions
 
 
