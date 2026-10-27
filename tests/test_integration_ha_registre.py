@@ -127,3 +127,18 @@ async def test_option_gardee_au_demarrage(hass: HomeAssistant, gestionnaire: Ges
     assert hass.states.get(eid).state == "Yellow"  # « Rouge » n'existe plus
     await gestionnaire.async_options_au_demarrage()
     assert hass.states.get(eid).state == "Red"
+
+
+async def test_reparation_proposee_au_demarrage(hass: HomeAssistant, enable_custom_integrations: None) -> None:
+    """Le vrai chemin : l'entrée « Tab5 » chargée, HA démarré → la réparation est là (discussion
+    #278 : chez husyildiz, rien dans les réparations avec l'intégration 3.9.0). Les tests au-dessus
+    appellent proposer_migration() eux-mêmes ; celui-ci passe par async_setup_entry et
+    _au_demarrage (options, fichiers, firmware, puis la migration)."""
+    _tablette(hass, TAB5, "Tab5", [("switch", "Réveil", "tab5_reveil"), ("sensor", "Tab5 Uptime", "tab5_tab5_uptime")])
+    entree = MockConfigEntry(domain=DOMAIN)
+    entree.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entree.entry_id)
+    await hass.async_block_till_done()
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, ISSUE_MIGRATION)
+    assert issue is not None, [i for i in ir.async_get(hass).issues if i[0] == DOMAIN]
+    assert issue.translation_placeholders == {"nombre": "2"}
