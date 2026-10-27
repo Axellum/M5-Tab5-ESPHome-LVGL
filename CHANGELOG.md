@@ -4,6 +4,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### Corrigé
+
+- **« aucune » en français dans le tableau de bord, quelle que soit sa langue** : sans source météo
+  trouvée, `sensor.tab5_sources_meteo` valait « aucune », montré tel quel par la tuile « Sources
+  trouvées » (vu en turc par @husyildiz,
+  [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)). L'état vaut
+  désormais « none » (ADR-0070 : Home Assistant lit de l'anglais) et le tableau de bord le dit dans
+  sa langue, « Aucune source météo trouvée » / « Hava durumu kaynağı bulunamadı »… Mettre à jour
+  `packages/tab5_meteo_sources.yaml` et `custom_templates/tab5_dashboard.jinja`, puis régénérer le
+  tableau de bord. Aucun changement de firmware.
+
 ## [3.9.0] — 2026-10-25
 
 De `v3.8.1` à aujourd'hui : quatre-vingt-onze pull requests (#459 → #552, sans #487 ni #503, fermées), dont neuf de pré-release
