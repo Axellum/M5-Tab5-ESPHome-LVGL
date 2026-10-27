@@ -197,11 +197,13 @@ template:
         unique_id: tab5_sources_meteo
         default_entity_id: sensor.tab5_sources_meteo
         icon: mdi:weather-cloudy-clock
+        # « none » sans source (ADR-0070 : HA lit de l'anglais ; « aucune » avant le
+        # 27/10/2026) : le tableau de bord le traduit, la tuile ne montre que les noms.
         state: >-
           {%- set l = (['Météo-France'] if mf_ville else []) + (['OpenWeatherMap'] if owm_meteos else [])
                       + (['MeteoAlarm'] if meteoalarm else []) + (['DWD'] if dwd else [])
                       + (['CAP Alerts'] if cap else []) -%}
-          {{ l | join(', ') if l else 'aucune' }}
+          {{ l | join(', ') if l else 'none' }}
         attributes:
           meteo: "{{ meteo }}"
           meteo_france: "{{ mf_ville }}"

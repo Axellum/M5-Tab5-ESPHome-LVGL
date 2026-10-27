@@ -258,3 +258,11 @@ def test_texte_de_l_alerte_tient_dans_100_caracteres():
     etats["sensor.tab5_meteo"].attributes["nom_choisi"] = "y" * 40
     assert len(_alerte(etats)["t"]) <= 100
 
+
+
+def test_sans_aucune_source_l_etat_est_en_anglais():
+    """Discussion #278 (27/10/2026) : « aucune » s'affichait tel quel dans un tableau de bord
+    en turc. HA lit de l'anglais (ADR-0070) ; le tableau de bord le traduit."""
+    etats = _maison(mf=None, owm=None, met=None, choix="")[0]
+    assert etats["sensor.tab5_sources_meteo"].state == "none"
+    assert _maison()[0]["sensor.tab5_sources_meteo"].state == "Météo-France, OpenWeatherMap"

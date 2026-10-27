@@ -530,3 +530,20 @@ def test_langue_inconnue(langue):
     """Une langue sans traduction donne l'anglais ; un select pas encore connu, le français."""
     sortie = _rendre(_maison(_tablette(), langue=langue))
     assert ('"Tab5 settings"' if langue == "Klingon" else '"Réglages Tab5"') in sortie
+
+
+@pytest.mark.parametrize("langue, attendu", [("Türkçe", "Hava durumu kaynağı bulunamadı"),
+                                             ("Français", "Aucune source météo trouvée"),
+                                             ("English", "No weather source found")])
+def test_sources_meteo_sans_source_traduites(langue, attendu):
+    """Sans source, sensor.tab5_sources_meteo vaut « none » (« aucune » avant le 27/10/2026) :
+    la tuile des sources se cache et une tuile sans état le dit dans la langue du tableau."""
+    tableau = yaml.safe_load(_rendre(_maison(_tablette(), langue=langue)))
+    tuiles = [c for c in _toutes_les_cartes(tableau) if c.get("entity") == "sensor.tab5_sources_meteo"]
+    assert len(tuiles) == 2, tuiles
+    trouvees, aucune = tuiles
+    assert trouvees["visibility"] == [{"condition": "state", "entity": "sensor.tab5_sources_meteo",
+                                       "state_not": ["none", "aucune"]}]
+    assert aucune["name"] == attendu and aucune["hide_state"] is True
+    assert aucune["visibility"] == [{"condition": "state", "entity": "sensor.tab5_sources_meteo",
+                                     "state": ["none", "aucune"]}]

@@ -956,6 +956,24 @@ views:
             icon: mdi:magnify
             grid_options:
               columns: 12
+            visibility:
+              - condition: state
+                entity: sensor.tab5_sources_meteo
+                state_not: ["none", "aucune"]
+{#- Sans source, l'état vaut « none » (« aucune » avant le 27/10/2026, ADR-0070) : une tuile
+    sans état qui le dit dans la langue du tableau de bord. #}
+          - type: tile
+            entity: sensor.tab5_sources_meteo
+            name: "{{ t('Aucune source météo trouvée', 'No weather source found') }}"
+            icon: mdi:magnify-close
+            color: orange
+            hide_state: true
+            grid_options:
+              columns: 12
+            visibility:
+              - condition: state
+                entity: sensor.tab5_sources_meteo
+                state: ["none", "aucune"]
 {%- endif %}
           - type: markdown
             text_only: true
@@ -2529,6 +2547,12 @@ views:
     'es': 'Fuentes encontradas',
     'it': 'Fonti trovate',
     'tr': 'Bulunan kaynaklar'},
+  'Aucune source météo trouvée': {
+    'de': 'Keine Wetterquelle gefunden',
+    'nl': 'Geen weerbron gevonden',
+    'es': 'No se encontró ninguna fuente meteorológica',
+    'it': 'Nessuna fonte meteo trovata',
+    'tr': 'Hava durumu kaynağı bulunamadı'},
   "Prévisions : n'importe quelle entité météo (Met.no vient avec Home Assistant). Pluie dans l'heure et vigilances : facultatives, la source dépend du pays.": {
     'de': 'Vorhersage: jede Wetter-Entität (Met.no ist in Home Assistant enthalten). Regen in der nächsten Stunde und Wetterwarnungen: optional, die Quelle hängt vom Land ab.',
     'nl': 'Voorspellingen: elke weerentiteit (Met.no wordt met Home Assistant meegeleverd). Regen komend uur en weerwaarschuwingen: optioneel, de bron hangt af van het land.',
