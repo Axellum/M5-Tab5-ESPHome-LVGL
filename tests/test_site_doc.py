@@ -217,6 +217,19 @@ def test_pages_referencables(site, langue):
 
 
 @pytest.mark.parametrize("langue", construire.LANGUES)
+def test_pied_de_page_renvoie_au_site_de_l_auteur(site, langue):
+    """Chaque page, 404 comprise, porte dans son pied le lien vers le site des projets de
+    l'auteur, dans sa langue, en vrai lien (Material écrit `copyright` sans l'échapper)."""
+    lien = f'<a href="{construire.SITE_AUTEUR[langue]}">Axel Duviella · auxfilsdesidees.fr</a>'
+    pages_html = sorted((site / langue).rglob("*.html"))
+    assert pages_html
+    for page in pages_html:
+        texte = page.read_text(encoding="utf-8")
+        pied = re.search(r'<div class="md-copyright__highlight">(.*?)</div>', texte, re.S)
+        assert pied and lien in pied.group(1), page
+
+
+@pytest.mark.parametrize("langue", construire.LANGUES)
 def test_titre_et_description_du_menu(site, plan, langue):
     """`titre_onglet:` et `description:` de menu.yml remplacent le <title>, og:title et la
     description tirés de la page (ce qu'affiche un moteur de recherche)."""
