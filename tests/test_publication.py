@@ -392,6 +392,47 @@ def test_plan_du_site_avec_les_images(tmp_path):
     assert json.loads((tmp_path / "site" / "versions.json").read_text(encoding="utf-8")) == {"stable": None, "beta": None}
 
 
+def test_plan_du_site_lastmod_avant_les_images(tmp_path):
+    """<lastmod> suit <loc> (ordre du schéma des sitemaps) ; une page sans date n'en a pas."""
+    (tmp_path / "a").mkdir()
+    (tmp_path / "a" / "index.html").write_text('<img src="../images/x.png">', encoding="utf-8")
+    (tmp_path / "index.html").write_text("accueil", encoding="utf-8")
+    plan = pages.plan_du_site(tmp_path, {"a/": "2026-10-27"})
+    assert (f"<url><loc>{pages.SITE}a/</loc>\n    <lastmod>2026-10-27</lastmod>\n"
+            f"    <image:image><image:loc>{pages.SITE}images/x.png</image:loc>") in plan
+    assert plan.count("<lastmod>") == 1
+
+
+def _git(depot: Path, *args: str, date: str | None = None) -> None:
+    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    if date:
+        env["GIT_AUTHOR_DATE"] = env["GIT_COMMITTER_DATE"] = date
+    subprocess.run(["git", "-C", str(depot), *args], check=True, capture_output=True, env=env)
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git absent")
+def test_dates_de_commit_jamais_fausses(tmp_path):
+    """Date du dernier commit de chaque fichier ; rien pour un fichier jamais commité, ni
+    dans un clone superficiel (chaque fichier y aurait la date de l'unique commit)."""
+    depot = tmp_path / "depot"
+    (depot / "docs").mkdir(parents=True)
+    _git(depot, "init", "-q")
+    (depot / "docs" / "a.md").write_text("a", encoding="utf-8")
+    (depot / "docs" / "é.md").write_text("é", encoding="utf-8")
+    _git(depot, "add", "docs")
+    _git(depot, "commit", "-q", "-m", "un", date="2026-10-01T12:00:00+00:00")
+    (depot / "docs" / "a.md").write_text("a2", encoding="utf-8")
+    _git(depot, "commit", "-q", "-am", "deux", date="2026-10-20T12:00:00+00:00")
+    (depot / "docs" / "neuf.md").write_text("n", encoding="utf-8")
+    fichiers = {"docs/a.md", "docs/é.md", "docs/neuf.md"}
+    assert pages.dates_de_commit(fichiers, depot) == {"docs/a.md": "2026-10-20", "docs/é.md": "2026-10-01"}
+    clone = tmp_path / "clone"
+    subprocess.run(["git", "clone", "-q", "--depth", "1", depot.as_uri(), str(clone)], check=True, capture_output=True)
+    assert pages.dates_de_commit(fichiers, clone) == {}
+    assert pages.dates_de_commit(fichiers, tmp_path / "pas_un_depot") == {}
+
+
 def test_site_deploye_sans_compiler():
     """site.yml déploie le site seul (push, à la main) et après une publication ; il ne
     compile rien et ne touche pas aux fichiers des releases."""

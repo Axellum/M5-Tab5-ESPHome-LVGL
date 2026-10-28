@@ -7,6 +7,7 @@ déploiement du site ne s'arrête sur main.
 """
 from __future__ import annotations
 
+import json
 import posixpath
 import re
 from pathlib import Path
@@ -313,6 +314,73 @@ def test_assemblage_refuse_une_doc_qui_ecraserait_le_site(tmp_path):
     (doc / "404.html").write_text("x", encoding="utf-8")
     with pytest.raises(SystemExit, match="stable"):
         pages.assembler(REPO / "web", tmp_path / "assets", None, None, tmp_path / "pages", None, doc)
+
+
+# --- Moteurs de recherche : hreflang, plan du site ------------------------------------
+
+def test_aucun_plan_du_site_demande_par_langue(site):
+    """Material lisait en/<page>/sitemap.xml et fr/<page>/sitemap.xml à côté de chaque lien
+    hreflang : des 404 sur chaque page, dans la console (audit Lighthouse du 27/10/2026). L'appel
+    est retiré de son script ; ses deux autres lectures du plan (navigation instantanée,
+    sélecteur de versions) restent éteintes."""
+    for langue in construire.LANGUES:
+        script = next((site / langue / "assets" / "javascripts").glob("bundle.*.min.js")).read_bytes()
+        assert construire.APPEL_LANGUES_MATERIAL not in script, langue
+        assert b"function ui({document$:e})" in script, "le reste du script de Material est intact"
+    base = yaml.safe_load((REPO / "tools" / "site" / "mkdocs.yml").read_text(encoding="utf-8").replace(
+        "!!python/object/apply:pymdownx.slugs.slugify", ""))
+    assert "navigation.instant" not in base["theme"]["features"]
+    assert "version" not in base.get("extra", {})
+
+
+def test_script_de_material_inattendu_refuse(tmp_path):
+    dossier = tmp_path / "assets" / "javascripts"
+    dossier.mkdir(parents=True)
+    (dossier / "bundle.0.min.js").write_bytes(b"autre version")
+    with pytest.raises(construire.ErreurSite, match="APPEL_LANGUES_MATERIAL"):
+        construire.sans_plan_par_langue(tmp_path)
+
+
+def test_x_default_le_meme_dans_les_deux_langues(site):
+    """Les deux versions d'une page annoncent le même x-default : la racine du site pour
+    l'accueil (elle envoie vers en/ ou fr/ selon la langue du navigateur, web/index.html),
+    sinon la page anglaise (le site est d'abord en anglais)."""
+    for page in _pages_html(site, "en"):
+        relatif = page.relative_to(site / "en")
+        chemin = relatif.as_posix().removesuffix("index.html")
+        attendu = construire.SITE if chemin == "" else f"{construire.SITE}en/{chemin}"
+        for langue in construire.LANGUES:
+            texte = (site / langue / relatif).read_text(encoding="utf-8")
+            assert re.findall(r'hreflang="x-default" href="([^"]+)"', texte) == [attendu], (langue, chemin)
+    racine = (REPO / "web" / "index.html").read_text(encoding="utf-8")
+    assert re.findall(r'hreflang="x-default" href="([^"]+)"', racine) == [construire.SITE]
+
+
+def test_plan_du_site_date_chaque_page_de_son_source(site, plan, tmp_path):
+    """<lastmod> = date du dernier commit du fichier source de la page (pages.py), pour
+    toutes les pages ou aucune (clone superficiel de la CI : pas de faux) ; la table des
+    sources n'est pas publiée, et le site est construit avec tout l'historique."""
+    sources = json.loads((site / construire.SOURCES_DES_PAGES).read_text(encoding="utf-8"))
+    assert construire.SOURCES_DES_PAGES == pages.SOURCES_DES_PAGES
+    assert len(sources) == 2 * len(plan.pages) and set(sources.values()) == set(plan.pages)
+    for adresse in sources:
+        assert (site / adresse / "index.html").is_file(), adresse
+    sortie = tmp_path / "pages"
+    pages.assembler(REPO / "web", tmp_path / "assets", None, None, sortie, REPO / "docs" / "images", site)
+    assert not (sortie / construire.SOURCES_DES_PAGES).exists()
+    xml = (sortie / "sitemap.xml").read_text(encoding="utf-8")
+    entrees = dict(re.findall(r"<loc>([^<]+)</loc>(?:\n    <lastmod>([^<]+)</lastmod>)?", xml))
+    dates = pages.dates_de_commit({*sources.values(), "web/index.html"})
+    if not dates:
+        assert "<lastmod>" not in xml
+    else:
+        assert entrees[construire.SITE] == dates["web/index.html"]
+        for adresse, source in sources.items():
+            assert entrees[construire.SITE + adresse] == dates[source], adresse
+        assert all(re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) for d in entrees.values())
+    flux = yaml.safe_load((REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8"))
+    checkout = flux["jobs"]["pages"]["steps"][0]
+    assert checkout["uses"].startswith("actions/checkout@") and checkout["with"]["fetch-depth"] == 0
 
 
 # --- Dépendances et déploiement -----------------------------------------------------

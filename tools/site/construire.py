@@ -24,12 +24,13 @@ Markdown ordinaire.
 
 Usage :
     pip install -r tools/site/requirements.txt
-    python tools/site/construire.py --sortie build/doc        # build/doc/en, build/doc/fr, build/doc/404.html
+    python tools/site/construire.py --sortie build/doc        # build/doc/en, build/doc/fr, build/doc/404.html, build/doc/sources.json
     python tools/site/construire.py --sortie build/doc --adresse http://localhost:8766/   # aperçu local
 """
 from __future__ import annotations
 
 import argparse
+import json
 import posixpath
 import re
 import shutil
@@ -103,6 +104,22 @@ PIED = {
     "en": "MIT licence · shared in case it is useful · made with the help of AI",
     "fr": "Licence MIT · partagé au cas où ça serve · fait avec l'aide de l'IA",
 }
+
+
+# Material 9.7 lit le plan du site à côté de chaque <link rel="alternate"> de la page
+# (`new URL("sitemap.xml", href)`), pour que son sélecteur de langue retrouve la même page
+# dans l'autre langue. Il attend des liens vers la racine de chaque langue ; les nôtres
+# mènent à la page même (theme/main.html) et le seul plan du site est à la racine
+# (pages.py) : chaque page demandait donc en/<page>/sitemap.xml, fr/<page>/sitemap.xml
+# (et encore en/<page>/ pour x-default) et obtenait des 404, erreurs que Lighthouse relève
+# dans la console (audit du 27/10/2026, vu aussi dans un navigateur sur en/hardware/). Notre sélecteur (theme/partials/alternate.html) mène déjà à la même page :
+# cet appel, qui ne fait que ces téléchargements et l'aiguillage des clics qu'ils
+# nourrissent, est retiré du script de Material. Propre à la version figée
+# (requirements.txt) : une autre version qui ne l'a plus fait échouer la construction.
+APPEL_LANGUES_MATERIAL = b"ui({document$:ct});"
+# Les pages publiées et leur fichier source (date de leur dernier commit dans
+# sitemap.xml, pages.py) : lu par l'assemblage du site, pas publié.
+SOURCES_DES_PAGES = "sources.json"
 
 
 class ErreurSite(Exception):
@@ -499,8 +516,22 @@ def configuration(plan: Plan, langue: str, sources: Path, sortie: Path, adresse:
     }
 
 
+def sans_plan_par_langue(dossier: Path) -> None:
+    """Retire du script de Material la lecture de « sitemap.xml » à côté des liens hreflang
+    (APPEL_LANGUES_MATERIAL). Octets lus et écrits tels quels : aucune fin de ligne changée."""
+    scripts = sorted((dossier / "assets" / "javascripts").glob("bundle.*.min.js"))
+    if len(scripts) != 1:
+        raise ErreurSite(f"{dossier} : {len(scripts)} script principal de Material au lieu d'un")
+    texte = scripts[0].read_bytes()
+    if texte.count(APPEL_LANGUES_MATERIAL) != 1:
+        raise ErreurSite(f"{scripts[0].name} : « {APPEL_LANGUES_MATERIAL.decode()} » absent ou en double "
+                         "(autre version de Material ?) : revoir APPEL_LANGUES_MATERIAL")
+    scripts[0].write_bytes(texte.replace(APPEL_LANGUES_MATERIAL, b""))
+
+
 def construire(sortie: Path, adresse: str = SITE, sources: Path | None = None, strict: bool = True) -> None:
-    """Construit en/ et fr/ dans `sortie`, plus 404.html à la racine (celui de GitHub Pages)."""
+    """Construit en/ et fr/ dans `sortie`, plus 404.html à la racine (celui de GitHub Pages)
+    et SOURCES_DES_PAGES (adresse de chaque page sous le site → son fichier du dépôt)."""
     plan = lire_menu()
     if sortie.exists():
         shutil.rmtree(sortie)
@@ -526,8 +557,13 @@ def construire(sortie: Path, adresse: str = SITE, sources: Path | None = None, s
             # Un seul plan du site, celui de pages.py, pour tout le site.
             for nom in ("sitemap.xml", "sitemap.xml.gz"):
                 (sortie / langue / nom).unlink(missing_ok=True)
+            sans_plan_par_langue(sortie / langue)
     # GitHub Pages sert le 404.html de la racine : celui de l'anglais (adresses absolues).
     shutil.copyfile(sortie / "en" / "404.html", sortie / "404.html")
+    pages_sources = {f"{langue}/{url_page(page.source)}": page.source
+                     for langue in LANGUES for page in plan.pages.values()}
+    (sortie / SOURCES_DES_PAGES).write_text(json.dumps(pages_sources, indent=1, sort_keys=True) + "\n",
+                                            encoding="utf-8")
 
 
 def main() -> int:
