@@ -33,6 +33,10 @@ HORS_SITE = {
 }
 
 
+# Pages dont le <title> vient de `titre_onglet:` (menu.yml) sans nommer la Tab5.
+TITRES_PROPRES = {"waveshare-7b/"}
+
+
 @pytest.fixture(scope="module")
 def plan():
     return construire.lire_menu()
@@ -199,7 +203,9 @@ def test_pages_referencables(site, langue):
         texte = page.read_text(encoding="utf-8")
         assert f'<html lang="{langue}"' in texte, page
         titre = re.search(r"<title>([^<]+)</title>", texte)
-        assert titre and "M5Stack Tab5" in titre.group(1) and "Home Assistant" in titre.group(1), page
+        # Un `titre_onglet:` du menu nomme ce qu'on cherche (la carte 7B n'est pas une Tab5).
+        assert titre and "Home Assistant" in titre.group(1), page
+        assert "M5Stack Tab5" in titre.group(1) or chemin in TITRES_PROPRES, page
         description = re.search(r'<meta name="description" content="([^"]+)"', texte)
         assert description and 40 <= len(description.group(1)) <= 300, page
         assert f'<link rel="canonical" href="{construire.SITE}{langue}/{chemin}">' in texte, page
@@ -208,6 +214,36 @@ def test_pages_referencables(site, langue):
             assert f'href="{construire.SITE}{autre}/{chemin}" hreflang="{autre}"' in texte, f"sélecteur : {page}"
         assert f'<meta property="og:image" content="{construire.SITE}{construire.IMAGE_PARTAGE}">' in texte, page
     assert construire.IMAGE_PARTAGE.removeprefix("images/") in pages.IMAGES
+
+
+@pytest.mark.parametrize("langue", construire.LANGUES)
+def test_titre_et_description_du_menu(site, plan, langue):
+    """`titre_onglet:` et `description:` de menu.yml remplacent le <title>, og:title et la
+    description tirés de la page (ce qu'affiche un moteur de recherche)."""
+    import html
+    vus = 0
+    for page in plan.pages.values():
+        if not (page.titre_onglet or page.resume):
+            continue
+        texte = (site / langue / construire.chemin_site(page.source).removesuffix(".md") / "index.html").read_text(encoding="utf-8")
+        texte = html.unescape(texte)
+        if page.titre_onglet:
+            assert f"<title>{page.titre_onglet[langue]}</title>" in texte, page.source
+            assert f'<meta property="og:title" content="{page.titre_onglet[langue]}">' in texte, page.source
+        if page.resume:
+            assert f'<meta name="description" content="{page.resume[langue]}">' in texte, page.source
+        vus += 1
+    assert vus >= 2
+    assert {construire.chemin_site(p.source).removesuffix(".md") + "/" for p in plan.pages.values()
+            if p.titre_onglet} >= TITRES_PROPRES
+
+
+def test_titre_onglet_trop_long_refuse(tmp_path):
+    menu = tmp_path / "menu.yml"
+    menu.write_text(yaml.safe_dump([{"en": "Hardware", "fr": "Matériel", "page": "docs/hardware.md",
+                                     "titre_onglet": {"en": "x" * 66, "fr": "y"}}]), encoding="utf-8")
+    with pytest.raises(construire.ErreurSite, match="65"):
+        construire.lire_menu(menu)
 
 
 @pytest.mark.parametrize("langue", construire.LANGUES)

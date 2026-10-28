@@ -2,7 +2,8 @@
   Site de documentation (ADR-0030) : l'en-tête de Material 9.7 (bloc site_meta), sauf les
   liens hreflang, qui mènent ici à la même page dans l'autre langue (les deux arbres ont
   les mêmes chemins) plutôt qu'à l'accueil de l'autre site ; plus l'image et les balises
-  de partage. La description vient du premier paragraphe de la page (construire.py).
+  de partage. La description vient du premier paragraphe de la page (construire.py),
+  ou de `description:` dans menu.yml ; `titre_onglet:` y remplace le <title> d'une page.
   La page d'accueil (le README du dépôt) a son propre <title> et la fiche JSON-LD du
   projet, reprises de l'ancienne vitrine.
 -#}
@@ -10,6 +11,8 @@
 {% block htmltitle %}
   {%- if page and page.is_homepage %}
   <title>{{ config.extra.titre_accueil }}</title>
+  {%- elif page and page.meta and page.meta.titre_onglet %}
+  <title>{{ page.meta.titre_onglet | e }}</title>
   {%- else %}
   {{ super() }}
   {%- endif %}
@@ -47,7 +50,9 @@
   <meta name="generator" content="mkdocs-{{ mkdocs_version }}, mkdocs-material">
 {% endblock %}
 {% block extrahead %}
-  {%- if page and page.title and not page.is_homepage -%}
+  {%- if page and page.meta and page.meta.titre_onglet and not page.is_homepage -%}
+    {%- set titre = page.meta.titre_onglet -%}
+  {%- elif page and page.title and not page.is_homepage -%}
     {%- set titre = (page.title | striptags) ~ " - " ~ config.site_name -%}
   {%- else -%}
     {%- set titre = config.extra.titre_accueil -%}

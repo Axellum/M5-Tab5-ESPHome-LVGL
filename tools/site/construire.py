@@ -132,6 +132,8 @@ class Page:
     titres: dict              # {"en": …, "fr": …} : titres du menu
     langue: str | None = None  # None = bilingue ; "en" / "fr" = une seule langue
     h1_fr: str | None = None   # titre de la page française, s'il diffère de celui du menu
+    titre_onglet: dict | None = None  # {"en": …, "fr": …} : <title> entier, pour les moteurs de recherche
+    resume: dict | None = None        # {"en": …, "fr": …} : description, à la place du premier paragraphe
 
 
 @dataclass
@@ -153,21 +155,30 @@ def _titre_h1(chemin: Path) -> str:
 def lire_menu(fichier: Path = ICI / "menu.yml") -> Plan:
     plan = Plan(arbre=yaml.safe_load(fichier.read_text(encoding="utf-8")))
 
-    def ajouter(source: str, titres: dict, langue: str | None, h1_fr: str | None = None) -> None:
+    def ajouter(source: str, titres: dict, langue: str | None, h1_fr: str | None = None,
+                titre_onglet: dict | None = None, resume: dict | None = None) -> None:
         if source in plan.pages:
             raise ErreurSite(f"{source} : deux fois dans le menu")
         if not (RACINE / source).is_file():
             raise ErreurSite(f"{source} : fichier absent")
         if not source.startswith("docs/") and source != ACCUEIL:
             raise ErreurSite(f"{source} : seules les pages de docs/ et le README sont publiés")
-        plan.pages[source] = Page(source, titres, langue, h1_fr)
+        for cle, valeur, limite in (("titre_onglet", titre_onglet, 65), ("description", resume, 160)):
+            if valeur is None:
+                continue
+            if not isinstance(valeur, dict) or set(valeur) != set(LANGUES) or not all(valeur.values()):
+                raise ErreurSite(f"{source} : `{cle}` veut un texte anglais et un texte français")
+            if any(len(v) > limite for v in valeur.values()):
+                raise ErreurSite(f"{source} : `{cle}` dépasse {limite} caractères (coupé par Google)")
+        plan.pages[source] = Page(source, titres, langue, h1_fr, titre_onglet, resume)
 
     def parcourir(entrees: list) -> None:
         for e in entrees:
             if not all(e.get(lg) for lg in LANGUES):
                 raise ErreurSite(f"entrée du menu sans titre anglais ou français : {e}")
             if "page" in e:
-                ajouter(e["page"], {lg: e[lg] for lg in LANGUES}, e.get("langue"), e.get("h1_fr"))
+                ajouter(e["page"], {lg: e[lg] for lg in LANGUES}, e.get("langue"), e.get("h1_fr"),
+                        e.get("titre_onglet"), e.get("description"))
             if "dossier" in e:
                 for f in sorted((RACINE / e["dossier"]).glob("*.md")):
                     if f.name != "README.md":
@@ -459,8 +470,10 @@ def preparer_langue(plan: Plan, langue: str, sources: Path, adresse: str) -> set
     liens = Liens(plan, langue, adresse)
     for page in plan.pages.values():
         texte = liens.page(contenu(page, langue), page.source)
-        tete = yaml.safe_dump({"description": description(texte) or DESCRIPTIONS[langue]},
-                              allow_unicode=True, width=1000)
+        meta = {"description": (page.resume or {}).get(langue) or description(texte) or DESCRIPTIONS[langue]}
+        if page.titre_onglet:
+            meta["titre_onglet"] = page.titre_onglet[langue]
+        tete = yaml.safe_dump(meta, allow_unicode=True, width=1000)
         cible = sources / chemin_site(page.source)
         cible.parent.mkdir(parents=True, exist_ok=True)
         cible.write_text(f"---\n{tete}---\n\n{texte}", encoding="utf-8")
