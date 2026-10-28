@@ -12,6 +12,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Corrigé
 
+- **Doc de la Waveshare 7B : la ligne de statut ne se contredit plus** : elle disait qu'une page
+  de l'énergie n'était pas adaptée à l'écran, alors que la page « Bilan » le suit depuis le
+  18/10/2026 (et que la 3.9.0 dit « tout marche sauf les jeux »). Le seul reste, mesuré en
+  Roboto 22 px (qui ne rétrécit pas avec l'écran), est « Tout fermer » du popup Volets en
+  allemand (« Alle schließen », 140 px) et en turc (« Tümünü kapat », 143 px) : plus large que
+  son bouton de 134 px ; les autres langues tiennent (118 px au plus). La ligne de statut de la
+  [page de la carte](docs/waveshare-7b.md), en anglais et en français, le dit maintenant.
+  Aucun changement de firmware.
 - **« aucune » en français dans le tableau de bord, quelle que soit sa langue** : sans source météo
   trouvée, `sensor.tab5_sources_meteo` valait « aucune », montré tel quel par la tuile « Sources
   trouvées » (vu en turc par @husyildiz,
