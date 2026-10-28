@@ -9,6 +9,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - **Logo du projet** : un écran avec un toit, en tête du README, en icône de la documentation
   (en haut à gauche et dans l'onglet) et de la page d'installation (`web/favicon.svg`,
   `tools/site/assets/logo.svg`). Aucun changement de firmware.
+- **Lien vers le site des projets de l'auteur** : le pied de chaque page de la documentation
+  (anglais, français et 404) se termine par « Axel Duviella · auxfilsdesidees.fr », vers
+  https://auxfilsdesidees.fr/en/ ou https://auxfilsdesidees.fr/ selon la langue
+  (`tools/site/construire.py`, vérifié par `tests/test_site_doc.py`) ; la page
+  [Related projects](docs/related_projects.md) y renvoie en tête de ses deux langues.
+  Aucun changement de firmware.
 
 ### Corrigé
 

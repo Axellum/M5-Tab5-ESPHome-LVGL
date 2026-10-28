@@ -100,9 +100,19 @@ THEME = {
     "en": ("Switch to dark mode", "Switch to light mode"),
     "fr": ("Passer en mode sombre", "Passer en mode clair"),
 }
+# Le site des projets de l'auteur (une page par écran, dont la Tab5 et la 7B), dans la
+# langue de la page. Material écrit `copyright` tel quel dans le pied de chaque page :
+# le lien y est du HTML (tests/test_site_doc.py vérifie qu'il est sur toutes les pages).
+SITE_AUTEUR = {
+    "en": "https://auxfilsdesidees.fr/en/",
+    "fr": "https://auxfilsdesidees.fr/",
+}
+LIEN_AUTEUR = '<a href="{}">Axel Duviella · auxfilsdesidees.fr</a>'
 PIED = {
-    "en": "MIT licence · shared in case it is useful · made with the help of AI",
-    "fr": "Licence MIT · partagé au cas où ça serve · fait avec l'aide de l'IA",
+    "en": "MIT licence · shared in case it is useful · made with the help of AI · "
+          + LIEN_AUTEUR.format(SITE_AUTEUR["en"]),
+    "fr": "Licence MIT · partagé au cas où ça serve · fait avec l'aide de l'IA · "
+          + LIEN_AUTEUR.format(SITE_AUTEUR["fr"]),
 }
 
 

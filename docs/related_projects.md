@@ -2,6 +2,8 @@
 
 ## English · [Français](#version-française)
 
+All the author's projects, one page per screen (this M5Stack Tab5, the Waveshare ESP32-P4 7B…): **[auxfilsdesidees.fr](https://auxfilsdesidees.fr/en/)**.
+
 ---
 
 ## Vigie — Global Weather & Hazard Ecosystem
@@ -53,6 +55,8 @@ If any part of this is useful to you — as a starting point, as a reference, or
 ---
 
 ## Version Française
+
+Tous les projets de l'auteur, une page par écran (cette M5Stack Tab5, la Waveshare ESP32-P4 7B…) : **[auxfilsdesidees.fr](https://auxfilsdesidees.fr/)**.
 
 ---
 
