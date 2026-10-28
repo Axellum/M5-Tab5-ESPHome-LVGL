@@ -14,7 +14,7 @@ The tablet follows the channel it was installed from (Stable or Beta); to switch
 
 ## Home Assistant files
 
-**With the HACS integration** ([installed this way](home-assistant-files.md#with-hacs)): each release shows up in *Settings → Updates* as « Tab5 — fichiers HA · HA files ». *Install*, then restart Home Assistant. At start, the integration:
+**With the HACS integration** ([installed this way](home-assistant-files.md#with-hacs)): each release shows up in *Settings → Updates* as « Tab5 — fichiers HA · HA files ». *Install*, then restart Home Assistant. **The integration must also be added** in *Settings → Devices & services* (it is listed there as « Tab5 — fichiers HA · HA files », apart from the tablet under ESPHome): an update downloaded by HACS for an integration that was never added does nothing ([troubleshooting](../troubleshooting.md#tab5-integration-hacs-downloaded-but-nothing-happens)). At start, the integration:
 
 - saves the current files in `config/tab5_sauvegardes/` (the 5 latest backups are kept);
 - puts the new ones in place: a Tab5 file you edited by hand is replaced too, and the notification names it (its copy stays in the backup); a Tab5 file that was already there without coming from the integration (copied by hand) and differs is also named in *Settings → System → Repairs*, with its backup folder;
@@ -98,7 +98,7 @@ La tablette suit le canal depuis lequel elle a été installée (Stable ou Bêta
 
 ## Fichiers Home Assistant
 
-**Avec l'intégration de HACS** ([installée ainsi](home-assistant-files.md#avec-hacs)) : chaque release apparaît dans *Paramètres → Mises à jour*, « Tab5 — fichiers HA · HA files ». *Installer*, puis redémarrez Home Assistant. Au démarrage, l'intégration :
+**Avec l'intégration de HACS** ([installée ainsi](home-assistant-files.md#avec-hacs)) : chaque release apparaît dans *Paramètres → Mises à jour*, « Tab5 — fichiers HA · HA files ». *Installer*, puis redémarrez Home Assistant. **L'intégration doit aussi être ajoutée** dans *Paramètres → Appareils et services* (elle y apparaît sous « Tab5 — fichiers HA · HA files », à part de la tablette rangée sous ESPHome) : une mise à jour téléchargée par HACS pour une intégration jamais ajoutée ne fait rien ([incidents connus](../troubleshooting.md#intégration-tab5-hacs--téléchargée-mais-rien-ne-se-passe)). Au démarrage, l'intégration :
 
 - garde les fichiers actuels dans `config/tab5_sauvegardes/` (les 5 dernières sauvegardes sont gardées) ;
 - pose les nouveaux : un fichier du Tab5 modifié à la main est remplacé lui aussi, et la notification le nomme (sa copie reste dans la sauvegarde) ; un fichier du Tab5 déjà là sans venir de l'intégration (copié à la main) et différent est aussi nommé dans *Paramètres → Système → Corrections*, avec son dossier de sauvegarde ;
