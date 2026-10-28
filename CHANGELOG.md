@@ -4,6 +4,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### Ajouté
+
+- **Logo du projet** : un écran avec un toit, en tête du README, en icône de la documentation
+  (en haut à gauche et dans l'onglet) et de la page d'installation (`web/favicon.svg`,
+  `tools/site/assets/logo.svg`). Aucun changement de firmware.
+
 ### Corrigé
 
 - **« aucune » en français dans le tableau de bord, quelle que soit sa langue** : sans source météo

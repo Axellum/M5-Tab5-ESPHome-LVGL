@@ -3,6 +3,8 @@
 <!-- hors-site -->
 <div align="center">
 
+<img src="web/favicon.svg" alt="" width="96" height="96">
+
 [![ESPHome](https://img.shields.io/badge/ESPHome-≥2026.9.0-blue)](https://esphome.io)
 [![Build](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml/badge.svg)](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/workflows/esphome-tab5.yml)
 [![LVGL](https://img.shields.io/badge/LVGL-9.5-green)](https://lvgl.io)
