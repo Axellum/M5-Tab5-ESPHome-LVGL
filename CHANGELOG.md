@@ -20,6 +20,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   sa langue, « Aucune source météo trouvée » / « Hava durumu kaynağı bulunamadı »… Mettre à jour
   `packages/tab5_meteo_sources.yaml` et `custom_templates/tab5_dashboard.jinja`, puis régénérer le
   tableau de bord. Aucun changement de firmware.
+- **Doc : télécharger l'intégration dans HACS ne suffit pas** : l'installation par HACS, la page
+  des mises à jour et une nouvelle entrée du dépannage (« téléchargée, mais rien ne se passe »)
+  disent maintenant en gras qu'il faut ensuite l'ajouter dans *Appareils et services*. Sans ça,
+  elle ne démarre jamais : ni fichiers posés, ni correction « noms anglais », ni message (vu par
+  @husyildiz, [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278),
+  qui prenait la tablette rangée sous ESPHome pour l'intégration). Aucun changement de firmware.
 
 ## [3.9.0] — 2026-10-25
 

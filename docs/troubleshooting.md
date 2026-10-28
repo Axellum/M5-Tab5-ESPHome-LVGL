@@ -197,6 +197,16 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ---
 
+### Tab5 integration (HACS): downloaded, but nothing happens
+
+**Symptom:** the « Tab5 » repository is downloaded in HACS (its version shows there), but nothing comes from it: no notification « Tab5: Home Assistant files », nothing in *Settings → System → Repairs* (not even « Tab5: switch the entities to their English names » after a 3.9.0 update, the tablet's entities keeping their French names), nothing from it in the log.
+
+**Root cause:** HACS only downloads the integration. As long as it is not added in *Settings → Devices & services*, Home Assistant never starts it, so it can do nothing and say nothing. The tablet itself is listed there too, under ESPHome, which makes it easy to think the integration is already added (seen on 28 October 2026).
+
+**Fix:** *Settings → Devices & services*: look for the card « Tab5 — fichiers HA · HA files ». If it is not there, *Add integration → Tab5* ([step 5 of the HACS install](installation/home-assistant-files.md#with-hacs)). It starts at once: the files of its version are put in place and the repairs it has show up.
+
+---
+
 ### Tab5 integration (HACS): a message in Repairs
 
 **Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → System → Repairs* shows a message whose title starts with « Tab5 ».
@@ -439,6 +449,14 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 **Cause racine :** ni la tablette ni ce dépôt. Depuis le 23 octobre 2026, GitHub répond au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et HACS 2.0.5 refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release sont touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), correctif proposé dans [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (pas publié le 24 octobre).
 
 **Correctif :** attendre une version de HACS qui le corrige, puis *Download* de nouveau. En attendant, les fichiers se posent à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
+
+### Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe
+
+**Symptôme :** le dépôt « Tab5 » est téléchargé dans HACS (sa version y apparaît), mais rien n'en vient : pas de notification « Tab5 : fichiers Home Assistant », rien dans *Paramètres → Système → Corrections* (pas même « Tab5: switch the entities to their English names » après une mise à jour vers la 3.9.0, les entités de la tablette gardant leurs noms français), rien d'elle dans le journal.
+
+**Cause racine :** HACS ne fait que télécharger l'intégration. Tant qu'elle n'est pas ajoutée dans *Paramètres → Appareils et services*, Home Assistant ne la démarre jamais : elle ne peut rien faire ni rien dire. La tablette elle-même y figure aussi, sous ESPHome, ce qui laisse facilement croire que l'intégration est déjà ajoutée (vu le 28 octobre 2026).
+
+**Correctif :** *Paramètres → Appareils et services* : cherchez la carte « Tab5 — fichiers HA · HA files ». Si elle n'y est pas, *Ajouter une intégration → Tab5* ([étape 5 de l'installation par HACS](installation/home-assistant-files.md#avec-hacs)). Elle démarre tout de suite : les fichiers de sa version sont posés et ses corrections apparaissent.
 
 ### Intégration Tab5 (HACS) : un message dans Corrections
 
