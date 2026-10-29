@@ -9,10 +9,11 @@
 // DO-3). La palette sombre du premier thème est PALETTE_SOMBRE (tab5_tokens.h), celle des
 // jeux : THEMES[0] la reprend au lieu d'en recopier les valeurs.
 #pragma once
+#include "tab5_i18n.h"  // tr_noop() : le nom est une clé de Tab5/lang/*.yaml, traduit à l'affichage
 #include "tab5_tokens.h"
 
 inline constexpr Theme THEMES[] = {
-    {"Ardoise", false, false,  // Tab5/themes/ardoise.yaml
+    {tr_noop("Ardoise"), false, false,  // Tab5/themes/ardoise.yaml
      PALETTE_SOMBRE,  // sombre : tab5_tokens.h (palette des jeux)
      {  // clair
       .BG                  = 0xE8ECF1,
@@ -82,7 +83,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x9C6400,
       .HUM_GRAD_30         = 0x2A3443,
      }},
-    {"Relief doux", true, false,  // Tab5/themes/relief_doux.yaml
+    {tr_noop("Relief doux"), true, false,  // Tab5/themes/relief_doux.yaml
      {  // sombre
       .BG                  = 0x2B2F35,
       .GLASS_HI            = 0x1F2226,
@@ -219,7 +220,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x9A5B00,
       .HUM_GRAD_30         = 0x3B4656,
      }},
-    {"Relief plat", true, false,  // Tab5/themes/relief_plat.yaml
+    {tr_noop("Relief plat"), true, false,  // Tab5/themes/relief_plat.yaml
      {  // sombre
       .BG                  = 0x2D3138,
       .GLASS_HI            = 0x24272C,
@@ -356,7 +357,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x955F00,
       .HUM_GRAD_30         = 0x3B4656,
      }},
-    {"Graphite", false, false,  // Tab5/themes/graphite.yaml
+    {tr_noop("Graphite"), false, false,  // Tab5/themes/graphite.yaml
      {  // sombre
       .BG                  = 0x0F1114,
       .GLASS_HI            = 0x292E36,
@@ -493,7 +494,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xA06500,
       .HUM_GRAD_30         = 0x3E4858,
      }},
-    {"Almanach imprimé", false, false,  // Tab5/themes/almanach_imprime.yaml
+    {tr_noop("Almanach imprimé"), false, false,  // Tab5/themes/almanach_imprime.yaml
      {  // sombre
       .BG                  = 0x16120E,
       .GLASS_HI            = 0x2B231B,
@@ -630,7 +631,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x946300,
       .HUM_GRAD_30         = 0x3A2E22,
      }},
-    {"Ardoise douce", false, false,  // Tab5/themes/ardoise_douce.yaml
+    {tr_noop("Ardoise douce"), false, false,  // Tab5/themes/ardoise_douce.yaml
      {  // sombre
       .BG                  = 0x0C1118,
       .GLASS_HI            = 0x29333F,
@@ -767,7 +768,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x9C6400,
       .HUM_GRAD_30         = 0x2A3443,
      }},
-    {"Terre cuite", false, false,  // Tab5/themes/terre_cuite.yaml
+    {tr_noop("Terre cuite"), false, false,  // Tab5/themes/terre_cuite.yaml
      {  // sombre
       .BG                  = 0x15100D,
       .GLASS_HI            = 0x1A1411,
@@ -904,7 +905,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x946000,
       .HUM_GRAD_30         = 0x3A2A1E,
      }},
-    {"Craie et ardoise", true, false,  // Tab5/themes/craie_et_ardoise.yaml
+    {tr_noop("Craie et ardoise"), true, false,  // Tab5/themes/craie_et_ardoise.yaml
      {  // sombre
       .BG                  = 0x0F141B,
       .GLASS_HI            = 0x283345,
@@ -1041,7 +1042,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xB4570B,
       .HUM_GRAD_30         = 0x2E3A4E,
      }},
-    {"Almanach", true, false,  // Tab5/themes/almanach.yaml
+    {tr_noop("Almanach"), true, false,  // Tab5/themes/almanach.yaml
      {  // sombre
       .BG                  = 0x15110D,
       .GLASS_HI            = 0x322A22,
@@ -1178,7 +1179,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x9F6208,
       .HUM_GRAD_30         = 0x2A241E,
      }},
-    {"Béton brut", true, true,  // Tab5/themes/beton_brut.yaml
+    {tr_noop("Béton brut"), true, true,  // Tab5/themes/beton_brut.yaml
      {  // sombre
       .BG                  = 0x161614,
       .GLASS_HI            = 0x232321,
@@ -1315,7 +1316,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x9A6A00,
       .HUM_GRAD_30         = 0x3A3935,
      }},
-    {"Néon calme", true, false,  // Tab5/themes/neon_calme.yaml
+    {tr_noop("Néon calme"), true, false,  // Tab5/themes/neon_calme.yaml
      {  // sombre
       .BG                  = 0x04060B,
       .GLASS_HI            = 0x0B141F,
@@ -1452,7 +1453,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xA27400,
       .HUM_GRAD_30         = 0x3A4C60,
      }},
-    {"Zen Sumi", true, false,  // Tab5/themes/zen_sumi.yaml
+    {tr_noop("Zen Sumi"), true, false,  // Tab5/themes/zen_sumi.yaml
      {  // sombre
       .BG                  = 0x0E0E0F,
       .GLASS_HI            = 0x202022,
@@ -1589,7 +1590,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x8A5F00,
       .HUM_GRAD_30         = 0x3A3A3F,
      }},
-    {"Bento", false, false,  // Tab5/themes/bento.yaml
+    {tr_noop("Bento"), false, false,  // Tab5/themes/bento.yaml
      {  // sombre
       .BG                  = 0x0E1117,
       .GLASS_HI            = 0x123A66,
@@ -1726,7 +1727,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xA85A00,
       .HUM_GRAD_30         = 0x1E8A3C,
      }},
-    {"Obsidienne", true, true,  // Tab5/themes/obsidienne.yaml
+    {tr_noop("Obsidienne"), true, true,  // Tab5/themes/obsidienne.yaml
      {  // sombre
       .BG                  = 0x0B0A12,
       .GLASS_HI            = 0x15131F,
@@ -1863,7 +1864,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0x9C5C00,
       .HUM_GRAD_30         = 0x46606F,
      }},
-    {"Platine et or", true, false,  // Tab5/themes/platine_et_or.yaml
+    {tr_noop("Platine et or"), true, false,  // Tab5/themes/platine_et_or.yaml
      {  // sombre
       .BG                  = 0x08080B,
       .GLASS_HI            = 0x32333F,
@@ -2000,7 +2001,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xA65A00,
       .HUM_GRAD_30         = 0x3D4052,
      }},
-    {"Signalisation", true, false,  // Tab5/themes/signalisation.yaml
+    {tr_noop("Signalisation"), true, false,  // Tab5/themes/signalisation.yaml
      {  // sombre
       .BG                  = 0x15181D,
       .GLASS_HI            = 0x262B33,
@@ -2137,7 +2138,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xA16207,
       .HUM_GRAD_30         = 0x0B1220,
      }},
-    {"Capsule", true, false,  // Tab5/themes/capsule.yaml
+    {tr_noop("Capsule"), true, false,  // Tab5/themes/capsule.yaml
      {  // sombre
       .BG                  = 0x24150F,
       .GLASS_HI            = 0x4E3022,
@@ -2274,7 +2275,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xA16207,
       .HUM_GRAD_30         = 0x3B2314,
      }},
-    {"Pixel", true, false,  // Tab5/themes/pixel.yaml
+    {tr_noop("Pixel"), true, false,  // Tab5/themes/pixel.yaml
      {  // sombre
       .BG                  = 0x1A1C2C,
       .GLASS_HI            = 0x11132A,
@@ -2411,7 +2412,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xA85D00,
       .HUM_GRAD_30         = 0x1D2B53,
      }},
-    {"Bonbon", true, false,  // Tab5/themes/bonbon.yaml
+    {tr_noop("Bonbon"), true, false,  // Tab5/themes/bonbon.yaml
      {  // sombre
       .BG                  = 0x26081C,
       .GLASS_HI            = 0x4C1339,
@@ -2548,7 +2549,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xC25E00,
       .HUM_GRAD_30         = 0x4A0D35,
      }},
-    {"Sorbet", true, false,  // Tab5/themes/sorbet.yaml
+    {tr_noop("Sorbet"), true, false,  // Tab5/themes/sorbet.yaml
      {  // sombre
       .BG                  = 0x2A2740,
       .GLASS_HI            = 0x403D62,
@@ -2685,7 +2686,7 @@ inline constexpr Theme THEMES[] = {
       .HUM_GRAD_22         = 0xB86F00,
       .HUM_GRAD_30         = 0x3F3A5A,
      }},
-    {"Ultraviolet", true, false,  // Tab5/themes/ultraviolet.yaml
+    {tr_noop("Ultraviolet"), true, false,  // Tab5/themes/ultraviolet.yaml
      {  // sombre
       .BG                  = 0x000000,
       .GLASS_HI            = 0x1C1924,

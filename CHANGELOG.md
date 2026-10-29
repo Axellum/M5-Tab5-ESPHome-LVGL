@@ -18,6 +18,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Corrigé
 
+- **Le nom du thème suit la langue de l'écran** (Réglages, page Apparence) : un écran en anglais
+  montrait « Craie et ardoise » quand Home Assistant disait « Chalk and slate ». Les 21 noms
+  passent par `tr()` et ont leur ligne dans les six langues ; en anglais, le même nom que le
+  select « Thème » de Home Assistant (`nom_ha`, vérifié par `tests/test_themes.py`).
+
 - **Vider un emplacement du blueprint fait enfin disparaître sa zone sans redémarrer** : une zone
   dont la tablette avait reçu une valeur depuis son démarrage restait affichée quand HA la
   déclarait ensuite absente (`zones_reponse_ha()`, `Tab5/ecran/tab5_zones.cpp`). Vu le 29/10/2026 sur

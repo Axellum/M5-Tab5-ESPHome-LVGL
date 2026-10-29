@@ -62,7 +62,7 @@ def _palettes() -> dict[str, list[tuple[str, str]]]:
     texte = THEMES_DATA.read_text(encoding="utf-8").replace("\r\n", "\n")
     bloc = re.search(r"inline constexpr Theme THEMES\[\] = \{(.*?)\n\};", texte, re.S).group(1)
     palettes = {}
-    for nom, corps in re.findall(r'\{"([^"]+)",[^\n]*\n(.*?)\n     \}\},', bloc, re.S):
+    for nom, corps in re.findall(r'\{tr_noop\("([^"]+)"\),[^\n]*\n(.*?)\n     \}\},', bloc, re.S):
         if re.match(r"\s*PALETTE_SOMBRE,", corps):
             palettes[f"{nom} (sombre)"] = _valeurs(sombre)
         for mode, valeurs in re.findall(r"\{  // (sombre|clair)\n(.*?)(?:\n     \}|\Z)", corps, re.S):
@@ -304,8 +304,16 @@ def test_options_du_select_dans_l_ordre_des_themes():
     texte = THEMES_YAML.read_text(encoding="utf-8")
     bloc = re.search(r"# >>> themes[^\n]*\n(.*?)# <<< themes", texte, re.S).group(1)
     options = re.findall(r'- "([^"]+)"', bloc)
-    # Une option est le nom anglais du thème (`nom_ha`, lu par HA, ADR-0070) ; l'écran montre `nom`.
+    # Une option est le nom anglais du thème (`nom_ha`, lu par HA, ADR-0070) ; l'écran montre `nom` traduit.
     assert options == [t.nom_ha for t in gen_themes.charger()]
+
+
+def test_nom_a_l_ecran_en_anglais_celui_de_ha():
+    """L'écran traduit le nom du thème (tr(), tab5_reglages.cpp) : en anglais, il dit le
+    même mot que le select de Home Assistant (`nom_ha`, ADR-0070)."""
+    en = yaml.safe_load((Path(__file__).resolve().parents[1] / "Tab5/lang/en.yaml").read_text(encoding="utf-8"))
+    ecarts = [(t.nom, en.get(t.nom), t.nom_ha) for t in gen_themes.charger() if en.get(t.nom) != t.nom_ha]
+    assert not ecarts, f"Tab5/lang/en.yaml : nom du thème ≠ nom_ha : {ecarts}"
 
 
 def test_theme_par_defaut_existe():
