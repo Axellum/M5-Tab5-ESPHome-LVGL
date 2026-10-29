@@ -10,6 +10,16 @@ The firmware holds no Wi-Fi password ([ADR-0020](../decisions/0020-no-secret-fir
 
 The window of the install page offers it as soon as the install ends: *Connect to Wi-Fi*, pick your network, type its password. It goes over the USB cable (Improv).
 
+![The Wi-Fi from the install page: Connect to Wi-Fi, the network, its password, Connect, then « Device connected to the network! »](../images/installation/wifi.webp)
+
+| | In the animation |
+|---|---|
+| **1** | *Connect to Wi-Fi* |
+| **2** | your network (2.4 GHz) |
+| **3** | its password |
+| **4** | *Connect* |
+| **5** | done: the tablet is on your network. The next step happens in Home Assistant |
+
 The window is already closed? Open the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) again, *Connect and install*, then its Wi-Fi button. [ESPHome Web](https://web.esphome.io) does the same (*Connect*, then *Configure Wi-Fi*).
 
 ## Without a cable, with a phone
@@ -37,6 +47,16 @@ Le firmware ne contient aucun mot de passe Wi-Fi ([ADR-0020](../decisions/0020-n
 ## Par l'USB, juste après l'installation
 
 La fenêtre de la page d'installation le propose dès la fin de l'installation : *Connect to Wi-Fi*, choisissez votre réseau, tapez son mot de passe. Il passe par le câble USB (Improv).
+
+![Le Wi-Fi depuis la page d'installation : Connect to Wi-Fi, le réseau, son mot de passe, Connect, puis « Device connected to the network! »](../images/installation/wifi.webp)
+
+| | Dans l'animation (page en anglais) |
+|---|---|
+| **1** | *Connect to Wi-Fi* (se connecter au Wi-Fi) |
+| **2** | votre réseau (2,4 GHz) |
+| **3** | son mot de passe |
+| **4** | *Connect* (connecter) |
+| **5** | c'est fait : la tablette est sur votre réseau. La suite se passe dans Home Assistant |
 
 La fenêtre est déjà fermée ? Rouvrez la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/), *Connecter et installer*, puis son bouton Wi-Fi. [ESPHome Web](https://web.esphome.io) fait la même chose (*Connect*, puis *Configure Wi-Fi*).
 
