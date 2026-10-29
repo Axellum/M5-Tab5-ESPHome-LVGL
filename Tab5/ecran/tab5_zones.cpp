@@ -609,9 +609,12 @@ bool zones_reponse_ha(const std::string& absentes) {
         }
         debut = fin + 1;
     }
-    // Une entité entendue existe : HA ne peut pas l'avoir vue absente, sauf à être
-    // un autre client (mode démo) ; la donnée l'emporte.
-    nouv &= ~s_vues;
+    // La réponse de HA l'emporte, même sur une zone déjà entendue : depuis le lot 6a
+    // (ADR-0019), le blueprint la déclare aussi absente quand son champ est vidé, alors
+    // que la dernière donnée reçue reste là (29/10/2026 : l'icône du téléphone restait
+    // jusqu'au redémarrage). Une donnée reçue ensuite la refait apparaître (zone_vue) :
+    // le mode démo, autre client, la remontre à sa poussée suivante.
+    s_vues &= ~nouv;
     if (nouv == s_absentes) return false;
     s_absentes = nouv;
     sauver();
