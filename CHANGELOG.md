@@ -18,6 +18,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Corrigé
 
+- **Vider un emplacement du blueprint fait enfin disparaître sa zone sans redémarrer** : une zone
+  dont la tablette avait reçu une valeur depuis son démarrage restait affichée quand HA la
+  déclarait ensuite absente (`zones_reponse_ha()`, `Tab5/ecran/tab5_zones.cpp`). Vu le 29/10/2026 sur
+  la Waveshare 7B : le champ « Batterie du téléphone » vidé, l'action `tab5_maj_zones` reçue avec
+  `telephone`, l'icône du téléphone restée en haut à gauche et « Zones masquées » inchangé. La
+  réponse de HA l'emporte maintenant ; une donnée reçue après elle refait toujours apparaître la
+  zone ([ADR-0018](docs/decisions/0018-optional-zones-confirmed-by-ha.md), mise à jour du 29/10).
 - **Page d'installation, Waveshare 7B et ST7121** (doc seule, anglais et français) : le message
   « Failed to initialize… holding the BOOT button », reçu le 29/10/2026 sur la 7B par son port
   « USB », a sa ligne pour la 7B, avec deux pistes non vérifiées (boutons BOOT et RESET, port

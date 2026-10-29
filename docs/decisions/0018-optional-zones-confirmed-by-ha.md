@@ -28,3 +28,7 @@ Hiding a zone because its entity stayed silent was also rejected. Checked in HA'
 ## Update — 2026-09-29: a zone decided from a list, not an entry
 
 `discussion` (added at the end of the `Zone` enum: the hidden set is kept in NVS as bits, in enum order) is not a blueprint entry: the blueprint answers it absent when the list « Tab5 · pipeline de discussion » says « Aucun », and present when the list does not exist (an older package). It hides the Domo / Discu buttons of the home page and of the assistant popup, and the tablet goes back to Domo. The blueprint also answers the zones when that list changes, without waiting for the tablet's next request. `tests/test_zones.py` freezes the order of the keys.
+
+## Update — 2026-10-29: Home Assistant's answer wins over a zone already heard
+
+Until now `zones_reponse_ha()` ignored an absent key whose data had been heard since boot (`nouv &= ~s_vues`): with lot 5, an entity the tablet had heard could not be missing from HA. Since lot 6a (ADR-0019) the blueprint also answers a zone absent when its slot is **emptied**, while the last value received stays on the tablet. Emptying « Batterie du téléphone » therefore left the phone icon on screen until the next reboot (29/10/2026, Waveshare 7B: `absentes` sent with `telephone`, « Zones masquées » unchanged). The answer now wins and forgets that the zone was heard (`s_vues &= ~nouv`); « data always wins » still holds for data received **after** the answer, so a zone pushed by another client (demo mode) comes back at its next push.
