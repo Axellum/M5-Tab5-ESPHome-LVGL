@@ -20,6 +20,10 @@ With the HACS integration, its setup assistant can create it for you from your H
 
 **One automation per tablet.** As soon as it is saved, the tablet receives your devices.
 
+![Home Assistant on the left, the screen on the right: the number of rooms set to 4 in the automation, and the House window of the screen following it](../images/installation/pieces_en_direct.webp)
+
+**1** a field of the automation (here « Number of rooms », from 10 to 4), then *Save*; **2** the screen follows at once, without a restart.
+
 **It worked if** the tiles at the bottom of the screen show your devices. The tablet's diagnostic sensor « Hidden zones » lists what is hidden: a slot you left empty, or an entity that does not exist.
 
 ## The sections
@@ -77,6 +81,10 @@ Avec l'intégration HACS, son assistant de configuration peut la créer pour vou
 ![L'automatisation des emplacements dans l'éditeur de Home Assistant : le blueprint, sa description et ses sections, Pièce 1 ouverte, Pièces 2 à 5 et Personnaliser des tuiles repliées](../images/installation/ha_blueprint_fr.png)
 
 **Une automatisation par tablette.** Dès qu'elle est enregistrée, la tablette reçoit vos appareils.
+
+![Home Assistant à gauche, l'écran à droite : le nombre de pièces passé à 4 dans l'automatisation, et la fenêtre Maison de l'écran qui suit](../images/installation/pieces_en_direct.webp)
+
+**1** un champ de l'automatisation (ici « Nombre de pièces », de 10 à 4), puis *Enregistrer* ; **2** l'écran suit aussitôt, sans redémarrer.
 
 **C'est bon si** les tuiles du bas de l'écran montrent vos appareils. Le capteur de diagnostic « Hidden zones » de la tablette liste ce qui est masqué : un emplacement laissé vide, ou une entité qui n'existe pas.
 
