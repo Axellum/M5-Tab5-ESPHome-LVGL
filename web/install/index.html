@@ -106,8 +106,8 @@
         <span lang="en">October 2025 → April 2026 · the author's unit, used every day</span></span></span></label>
     <label class="choix"><input type="radio" name="ecran" value="st7121">
       <span><strong>ST7121</strong> <span class="etat">
-        <span lang="fr">depuis avril 2026 · compilée ; tourne chez un autre utilisateur, jamais essayée par l'auteur</span>
-        <span lang="en">since April 2026 · built; runs for another user, never tried by the author</span></span></span></label>
+        <span lang="fr">depuis avril 2026 · la deuxième tablette de l'auteur depuis le 21/10/2026, et celle d'un autre utilisateur</span>
+        <span lang="en">since April 2026 · the author's second tablet since 21 Oct 2026, and another user's</span></span></span></label>
     <label class="choix"><input type="radio" name="ecran" value="ili9881c">
       <span><strong>ILI9881C</strong> <span class="etat">
         <span lang="fr">mai → octobre 2025 · compilée, jamais essayée</span>
@@ -167,6 +167,8 @@
       <li lang="en"><strong>No port in the list</strong>: a cable that only charges shows none; try another cable, another USB port of the computer. Still nothing: put the tablet in download mode (next point). One user got there by unplugging the cable, pressing that button, then plugging the cable back in.</li>
       <li lang="fr"><strong>« Failed to initialize… holding the BOOT button »</strong> : le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite : la tablette est en mode téléchargement. Relancez « Connecter et installer » ; à la fin, un appui court sur reset la redémarre.</li>
       <li lang="en"><strong>"Failed to initialize… holding the BOOT button"</strong>: the Tab5 has no BOOT button. Hold its reset button for about 2 s, until the internal green LED blinks fast: the tablet is in download mode. Start "Connect and install" again; at the end, a short press on reset restarts it.</li>
+      <li lang="fr"><strong>Le même message sur la Waveshare 7B</strong> : l'auteur l'a eu le 29/10/2026 par le port « USB » de la carte (celui de l'ESP32-P4) ; la carte a seulement redémarré. La solution n'est pas encore trouvée. Deux pistes, non vérifiées : la mettre en mode téléchargement avec ses boutons BOOT et RESET (le schéma de Waveshare en montre deux : maintenir BOOT, appuyer sur RESET, relâcher BOOT), ou brancher le port « USB TO UART », qui d'après Waveshare passe seul en mode téléchargement. Si l'une marche chez vous, dites-le dans les <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility">Discussions</a>.</li>
+      <li lang="en"><strong>The same message on the Waveshare 7B</strong>: the author got it on 29 Oct 2026 through the board's "USB" port (the ESP32-P4's own); the board only restarted. No fix found yet. Two leads, not tried: put it in download mode with its BOOT and RESET buttons (Waveshare's schematic shows both: hold BOOT, press RESET, release BOOT), or plug in the "USB TO UART" port, which according to Waveshare enters download mode by itself. If one works for you, say so in <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility">Discussions</a>.</li>
       <li lang="fr">Fermer la fenêtre redémarre la tablette une fois : c'est normal.</li>
       <li lang="en">Closing the window restarts the tablet once: that is normal.</li>
     </ul>

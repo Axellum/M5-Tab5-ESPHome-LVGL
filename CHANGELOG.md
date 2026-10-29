@@ -18,6 +18,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Corrigé
 
+- **Page d'installation, Waveshare 7B et ST7121** (doc seule, anglais et français) : le message
+  « Failed to initialize… holding the BOOT button », reçu le 29/10/2026 sur la 7B par son port
+  « USB », a sa ligne pour la 7B, avec deux pistes non vérifiées (boutons BOOT et RESET, port
+  « USB TO UART ») ; la ST7121 n'est plus « jamais essayée par l'auteur », qui en a une depuis
+  le 21/10/2026 (`web/install/index.html`, `docs/installation/flash.md`,
+  `docs/waveshare-7b.md`). Aucun changement de firmware.
 - **Doc de la Waveshare 7B : la ligne de statut ne se contredit plus** : elle disait qu'une page
   de l'énergie n'était pas adaptée à l'écran, alors que la page « Bilan » le suit depuis le
   18/10/2026 (et que la 3.9.0 dit « tout marche sauf les jeux »). Le seul reste, mesuré en
