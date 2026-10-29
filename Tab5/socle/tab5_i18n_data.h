@@ -8,9 +8,30 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1286;
+static const uint16_t kI18nKeyCount = 1307;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1448,6 +1469,8 @@ static const char* const kI18nKeys[] = {
     "Allumer",
     "Allumer seulement",
     "Allumé",
+    "Almanach",
+    "Almanach imprimé",
     "Amateur",
     "Analyse…",
     "Anglaises 8×8",
@@ -1473,6 +1496,8 @@ static const char* const kI18nKeys[] = {
     "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.",
     "Appuyez sur le micro puis parlez…",
     "Après la première sonnerie, Home Assistant annonce la météo et le planning.",
+    "Ardoise",
+    "Ardoise douce",
     "Argent",
     "Arrêter",
     "Artistes",
@@ -1532,6 +1557,7 @@ static const char* const kI18nKeys[] = {
     "BILLE PERDUE",
     "Batterie",
     "Batterie montée",
+    "Bento",
     "Bibliothèque",
     "Bientôt sec",
     "Bilan",
@@ -1546,6 +1572,7 @@ static const char* const kI18nKeys[] = {
     "Blancs",
     "Blitz 5 min",
     "Bloc max",
+    "Bonbon",
     "Bonne réponse = victoire",
     "Bonne réponse — vous rejouez.",
     "Boost",
@@ -1556,6 +1583,7 @@ static const char* const kI18nKeys[] = {
     "Brise",
     "Brouillard",
     "Btn",
+    "Béton brut",
     "CATÉGORIE AU CHOIX",
     "CLASSEMENT",
     "COMMANDE",
@@ -1574,6 +1602,7 @@ static const char* const kI18nKeys[] = {
     "Calibrer à plat",
     "Calme",
     "Caméras",
+    "Capsule",
     "Capteur",
     "Capteur muet",
     "Carillon",
@@ -1654,6 +1683,7 @@ static const char* const kI18nKeys[] = {
     "Coup interdit (ko ou suicide)",
     "Courbe en cours d'apprentissage",
     "Couronne fêlée",
+    "Craie et ardoise",
     "Crème",
     "Créneau",
     "Cuivre",
@@ -1779,6 +1809,7 @@ static const char* const kI18nKeys[] = {
     "Gestes, règles, affichage",
     "Glisser les chiffres vers le haut ou vers le bas.",
     "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5",
+    "Graphite",
     "Groupes morts retirés : %d noirs, %d blancs",
     "Grêle",
     "Géographie",
@@ -2022,7 +2053,9 @@ static const char* const kI18nKeys[] = {
     "Nulle déclarée en mode démo",
     "Nulle par accord entre les joueurs",
     "Némésis",
+    "Néon calme",
     "OPTIONS",
+    "Obsidienne",
     "Oct",
     "Options locales (NVS)",
     "Options locales, conservées dans le Tab",
@@ -2076,12 +2109,14 @@ static const char* const kI18nKeys[] = {
     "Pendule",
     "Pierre de sang",
     "Pierres offertes à Noir (Blanc commence)",
+    "Pixel",
     "Pièce",
     "Pièce %d",
     "Pièce : %s",
     "Pièces",
     "Pièces %d à %d",
     "Plantes",
+    "Platine et or",
     "Playlist {n}",
     "Playlists",
     "Pluie",
@@ -2175,6 +2210,8 @@ static const char* const kI18nKeys[] = {
     "Relancer une run",
     "Relevé une fois dans la run",
     "Relevé une fois par run",
+    "Relief doux",
+    "Relief plat",
     "Remet à zéro le bilan et le classement local",
     "Remettre les compteurs à zéro",
     "Remettre les statistiques à zéro",
@@ -2279,6 +2316,7 @@ static const char* const kI18nKeys[] = {
     "Si l'écran est à l'envers dans vos mains",
     "Si la bille part du mauvais côté",
     "Signal",
+    "Signalisation",
     "Silence",
     "Sombre",
     "Son",
@@ -2288,6 +2326,7 @@ static const char* const kI18nKeys[] = {
     "Sonne à l'heure fixe, les jours cochés ci-dessous.",
     "Sonne à l'heure fixe, uniquement les jours travaillés.",
     "Sonnerie",
+    "Sorbet",
     "Sortie de chaque jeu : hub, puis « Quitter »",
     "Sortie ouverte ! Grimpe tout en haut.",
     "Source",
@@ -2333,6 +2372,7 @@ static const char* const kI18nKeys[] = {
     "Température élevée",
     "Températures",
     "Tension",
+    "Terre cuite",
     "Tester",
     "Thème",
     "Tokens par seconde",
@@ -2385,6 +2425,7 @@ static const char* const kI18nKeys[] = {
     "Tu sors du dédale. Il te laisse partir.",
     "Télécommande",
     "Télécommande TV",
+    "Ultraviolet",
     "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous.",
     "Un bouclier à chaque nouvelle salle",
     "Un bouclier à chaque salle",
@@ -2438,6 +2479,7 @@ static const char* const kI18nKeys[] = {
     "Vous jouez les %s",
     "Week-end",
     "Wi-Fi éco",
+    "Zen Sumi",
     "Zigzag",
     "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.",
     "achat / vente estimés heure par heure",
@@ -2738,6 +2780,8 @@ static const char* const kI18n_en[] = {
     "Turn on",  // "Allumer"
     "Turn on only",  // "Allumer seulement"
     "On",  // "Allumé"
+    "Almanac",  // "Almanach"
+    "Printed almanac",  // "Almanach imprimé"
     "Amateur",  // "Amateur"
     "Thinking…",  // "Analyse…"
     "English 8x8",  // "Anglaises 8×8"
@@ -2763,6 +2807,8 @@ static const char* const kI18n_en[] = {
     "Tapping an owned item sells it back for half its price. A sold item is also unequipped.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tap the mic, then speak…",  // "Appuyez sur le micro puis parlez…"
     "After the first ring, Home Assistant announces the weather and the schedule.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
+    "Slate",  // "Ardoise"
+    "Soft slate",  // "Ardoise douce"
     "Silver",  // "Argent"
     "Stop",  // "Arrêter"
     "Artists",  // "Artistes"
@@ -2822,6 +2868,7 @@ static const char* const kI18n_en[] = {
     "BALL LOST",  // "BILLE PERDUE"
     "Battery",  // "Batterie"
     "Battery fitted",  // "Batterie montée"
+    "Bento",  // "Bento"
     "Library",  // "Bibliothèque"
     "Drying soon",  // "Bientôt sec"
     "Balance",  // "Bilan"
@@ -2836,6 +2883,7 @@ static const char* const kI18n_en[] = {
     "White",  // "Blancs"
     "Blitz 5 min",  // "Blitz 5 min"
     "Max block",  // "Bloc max"
+    "Candy",  // "Bonbon"
     "Correct answer = victory",  // "Bonne réponse = victoire"
     "Correct answer — roll again.",  // "Bonne réponse — vous rejouez."
     "Boost",  // "Boost"
@@ -2846,6 +2894,7 @@ static const char* const kI18n_en[] = {
     "Breeze",  // "Brise"
     "Fog",  // "Brouillard"
     "Btn",  // "Btn"
+    "Raw concrete",  // "Béton brut"
     "CHOOSE A CATEGORY",  // "CATÉGORIE AU CHOIX"
     "LEADERBOARD",  // "CLASSEMENT"
     "CONTROL",  // "COMMANDE"
@@ -2864,6 +2913,7 @@ static const char* const kI18n_en[] = {
     "Calibrate flat",  // "Calibrer à plat"
     "Calm",  // "Calme"
     "Cameras",  // "Caméras"
+    "Capsule",  // "Capsule"
     "Sensor",  // "Capteur"
     "Sensor silent",  // "Capteur muet"
     "Chime",  // "Carillon"
@@ -2944,6 +2994,7 @@ static const char* const kI18n_en[] = {
     "Illegal move (ko or suicide)",  // "Coup interdit (ko ou suicide)"
     "Curve still being learned",  // "Courbe en cours d'apprentissage"
     "Cracked Crown",  // "Couronne fêlée"
+    "Chalk and slate",  // "Craie et ardoise"
     "Cream",  // "Crème"
     "Window",  // "Créneau"
     "Copper",  // "Cuivre"
@@ -3069,6 +3120,7 @@ static const char* const kI18n_en[] = {
     "Gestures, rules, display",  // "Gestes, règles, affichage"
     "Slide the digits up or down.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nChinese scoring · komi 6.5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
+    "Graphite",  // "Graphite"
     "Dead stones removed: %d black, %d white",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Hail",  // "Grêle"
     "Geography",  // "Géographie"
@@ -3312,7 +3364,9 @@ static const char* const kI18n_en[] = {
     "Draw declared in demo mode",  // "Nulle déclarée en mode démo"
     "Draw by mutual agreement",  // "Nulle par accord entre les joueurs"
     "Nemesis",  // "Némésis"
+    "Calm neon",  // "Néon calme"
     "OPTIONS",  // "OPTIONS"
+    "Obsidian",  // "Obsidienne"
     "Oct",  // "Oct"
     "Local options (NVS)",  // "Options locales (NVS)"
     "Local options, kept on the Tab",  // "Options locales, conservées dans le Tab"
@@ -3366,12 +3420,14 @@ static const char* const kI18n_en[] = {
     "Clock",  // "Pendule"
     "Bloodstone",  // "Pierre de sang"
     "Handicap stones for Black (White starts)",  // "Pierres offertes à Noir (Blanc commence)"
+    "Pixel",  // "Pixel"
     "Room",  // "Pièce"
     "Room %d",  // "Pièce %d"
     "Room: %s",  // "Pièce : %s"
     "Rooms",  // "Pièces"
     "Rooms %d to %d",  // "Pièces %d à %d"
     "Plants",  // "Plantes"
+    "Platinum and gold",  // "Platine et or"
     "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Rain",  // "Pluie"
@@ -3465,6 +3521,8 @@ static const char* const kI18n_en[] = {
     "Start another run",  // "Relancer une run"
     "Revives you once this run",  // "Relevé une fois dans la run"
     "Revives you once per run",  // "Relevé une fois par run"
+    "Soft relief",  // "Relief doux"
+    "Flat relief",  // "Relief plat"
     "Resets results and local rating",  // "Remet à zéro le bilan et le classement local"
     "Reset the counters",  // "Remettre les compteurs à zéro"
     "Reset statistics",  // "Remettre les statistiques à zéro"
@@ -3569,6 +3627,7 @@ static const char* const kI18n_en[] = {
     "If the screen appears upside down",  // "Si l'écran est à l'envers dans vos mains"
     "If the ball goes the wrong way",  // "Si la bille part du mauvais côté"
     "Signal",  // "Signal"
+    "Signage",  // "Signalisation"
     "Quiet",  // "Silence"
     "Dark",  // "Sombre"
     "Sound",  // "Son"
@@ -3578,6 +3637,7 @@ static const char* const kI18n_en[] = {
     "Rings at the fixed time, on the days checked below.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Rings at the fixed time, on work days only.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Ringtone",  // "Sonnerie"
+    "Sorbet",  // "Sorbet"
     "To leave a game: hub, then “Quit”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Exit open! Climb to the very top.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Source",  // "Source"
@@ -3623,6 +3683,7 @@ static const char* const kI18n_en[] = {
     "High temperature",  // "Température élevée"
     "Temperatures",  // "Températures"
     "Voltage",  // "Tension"
+    "Terracotta",  // "Terre cuite"
     "Test",  // "Tester"
     "Theme",  // "Thème"
     "Tokens per second",  // "Tokens par seconde"
@@ -3675,6 +3736,7 @@ static const char* const kI18n_en[] = {
     "You leave the Maze. It lets you go.",  // "Tu sors du dédale. Il te laisse partir."
     "Remote",  // "Télécommande"
     "TV remote",  // "Télécommande TV"
+    "Ultraviolet",  // "Ultraviolet"
     "An on-screen banner and a voice announcement before each appointment.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "A shield in every new room",  // "Un bouclier à chaque nouvelle salle"
     "A shield in every room",  // "Un bouclier à chaque salle"
@@ -3728,6 +3790,7 @@ static const char* const kI18n_en[] = {
     "Human: %s",  // "Vous jouez les %s"
     "Weekend",  // "Week-end"
     "Eco Wi-Fi",  // "Wi-Fi éco"
+    "Zen Sumi",  // "Zen Sumi"
     "Zigzag",  // "Zigzag"
     "Left zone / right zone = flippers (hold). Bottom center = plunger.\nShake the tablet to nudge the ball — three nudges in a row and it's TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "import / export estimated hour by hour",  // "achat / vente estimés heure par heure"
@@ -4028,6 +4091,8 @@ static const char* const kI18n_de[] = {
     "Einschalten",  // "Allumer"
     "Nur einschalten",  // "Allumer seulement"
     "An",  // "Allumé"
+    "Almanach",  // "Almanach"
+    "Gedruckter Almanach",  // "Almanach imprimé"
     "Amateur",  // "Amateur"
     "Analyse…",  // "Analyse…"
     "Englisch 8x8",  // "Anglaises 8×8"
@@ -4053,6 +4118,8 @@ static const char* const kI18n_de[] = {
     "Ein Gegenstand im Besitz wird per Tippen zum halben Preis verkauft. Verkauftes wird auch abgelegt.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofon antippen, dann sprechen…",  // "Appuyez sur le micro puis parlez…"
     "Nach dem ersten Klingeln sagt Home Assistant Wetter und Planung an.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
+    "Schiefer",  // "Ardoise"
+    "Sanfter Schiefer",  // "Ardoise douce"
     "Silber",  // "Argent"
     "Stopp",  // "Arrêter"
     "Künstler",  // "Artistes"
@@ -4112,6 +4179,7 @@ static const char* const kI18n_de[] = {
     "BALL VERLOREN",  // "BILLE PERDUE"
     "Batterie",  // "Batterie"
     "Akku eingebaut",  // "Batterie montée"
+    "Bento",  // "Bento"
     "Bibliothek",  // "Bibliothèque"
     "Bald trocken",  // "Bientôt sec"
     "Bilanz",  // "Bilan"
@@ -4126,6 +4194,7 @@ static const char* const kI18n_de[] = {
     "Weiß",  // "Blancs"
     "Blitz 5 min",  // "Blitz 5 min"
     "Max. Block",  // "Bloc max"
+    "Bonbon",  // "Bonbon"
     "Richtige Antwort = Sieg",  // "Bonne réponse = victoire"
     "Richtig — nochmal würfeln.",  // "Bonne réponse — vous rejouez."
     "Boost",  // "Boost"
@@ -4136,6 +4205,7 @@ static const char* const kI18n_de[] = {
     "Brise",  // "Brise"
     "Nebel",  // "Brouillard"
     "Tasten",  // "Btn"
+    "Sichtbeton",  // "Béton brut"
     "FREIE KATEGORIE",  // "CATÉGORIE AU CHOIX"
     "BESTENLISTE",  // "CLASSEMENT"
     "STEUERUNG",  // "COMMANDE"
@@ -4154,6 +4224,7 @@ static const char* const kI18n_de[] = {
     "Flach kalibrieren",  // "Calibrer à plat"
     "Ruhig",  // "Calme"
     "Kameras",  // "Caméras"
+    "Kapsel",  // "Capsule"
     "Sensor",  // "Capteur"
     "Sensor stumm",  // "Capteur muet"
     "Gong",  // "Carillon"
@@ -4234,6 +4305,7 @@ static const char* const kI18n_de[] = {
     "Verbotener Zug (Ko oder Suizid)",  // "Coup interdit (ko ou suicide)"
     "Kurve wird noch gelernt",  // "Courbe en cours d'apprentissage"
     "Rissige Krone",  // "Couronne fêlée"
+    "Kreide und Schiefer",  // "Craie et ardoise"
     "Creme",  // "Crème"
     "Zeitfenster",  // "Créneau"
     "Kupfer",  // "Cuivre"
@@ -4359,6 +4431,7 @@ static const char* const kI18n_de[] = {
     "Gesten, Regeln, Anzeige",  // "Gestes, règles, affichage"
     "Ziffern nach oben oder unten schieben.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nChin. Zählung · Komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
+    "Graphit",  // "Graphite"
     "Tote Steine entfernt: %d schwarz, %d weiß",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
@@ -4602,7 +4675,9 @@ static const char* const kI18n_de[] = {
     "Remis im Demomodus erklärt",  // "Nulle déclarée en mode démo"
     "Remis durch Einigung",  // "Nulle par accord entre les joueurs"
     "Nemesis",  // "Némésis"
+    "Ruhiges Neon",  // "Néon calme"
     "OPTIONEN",  // "OPTIONS"
+    "Obsidian",  // "Obsidienne"
     "Okt",  // "Oct"
     "Lokale Optionen (NVS)",  // "Options locales (NVS)"
     "Lokale Optionen, im Tab gespeichert",  // "Options locales, conservées dans le Tab"
@@ -4656,12 +4731,14 @@ static const char* const kI18n_de[] = {
     "Uhr",  // "Pendule"
     "Blutstein",  // "Pierre de sang"
     "Vorgabesteine für Schwarz (Weiß beginnt)",  // "Pierres offertes à Noir (Blanc commence)"
+    "Pixel",  // "Pixel"
     "Raum",  // "Pièce"
     "Raum %d",  // "Pièce %d"
     "Raum: %s",  // "Pièce : %s"
     "Räume",  // "Pièces"
     "Räume %d–%d",  // "Pièces %d à %d"
     "Pflanzen",  // "Plantes"
+    "Platin und Gold",  // "Platine et or"
     "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Regen",  // "Pluie"
@@ -4755,6 +4832,8 @@ static const char* const kI18n_de[] = {
     "Neuer Run",  // "Relancer une run"
     "Belebt einmal im Run wieder",  // "Relevé une fois dans la run"
     "Belebt einmal pro Run wieder",  // "Relevé une fois par run"
+    "Sanftes Relief",  // "Relief doux"
+    "Flaches Relief",  // "Relief plat"
     "Setzt Bilanz und lokale Wertung zurück",  // "Remet à zéro le bilan et le classement local"
     "Zähler zurücksetzen",  // "Remettre les compteurs à zéro"
     "Statistik-Reset",  // "Remettre les statistiques à zéro"
@@ -4859,6 +4938,7 @@ static const char* const kI18n_de[] = {
     "Falls das Bild in deinen Händen kopfsteht",  // "Si l'écran est à l'envers dans vos mains"
     "Rollt der Ball zur falschen Seite?",  // "Si la bille part du mauvais côté"
     "Signal",  // "Signal"
+    "Beschilderung",  // "Signalisation"
     "Leise",  // "Silence"
     "Dunkel",  // "Sombre"
     "Ton",  // "Son"
@@ -4868,6 +4948,7 @@ static const char* const kI18n_de[] = {
     "Klingelt zur festen Zeit an den unten gewählten Tagen.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Klingelt zur festen Zeit, nur an Arbeitstagen.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Klingelton",  // "Sonnerie"
+    "Sorbet",  // "Sorbet"
     "Spiel verlassen: Hub, dann „Beenden“",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Ausgang offen! Klettere ganz nach oben.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Quelle",  // "Source"
@@ -4913,6 +4994,7 @@ static const char* const kI18n_de[] = {
     "Temperatur erhöht",  // "Température élevée"
     "Temperaturen",  // "Températures"
     "Spannung",  // "Tension"
+    "Terrakotta",  // "Terre cuite"
     "Testen",  // "Tester"
     "Design",  // "Thème"
     "Tokens pro Sekunde",  // "Tokens par seconde"
@@ -4965,6 +5047,7 @@ static const char* const kI18n_de[] = {
     "Raus aus dem Labyrinth. Es lässt dich gehen.",  // "Tu sors du dédale. Il te laisse partir."
     "Fernbedienung",  // "Télécommande"
     "TV-Fernbedienung",  // "Télécommande TV"
+    "Ultraviolett",  // "Ultraviolet"
     "Ein Banner auf dem Bildschirm und eine Sprachansage vor jedem Termin.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Ein Schild in jedem neuen Raum",  // "Un bouclier à chaque nouvelle salle"
     "Ein Schild in jedem Raum",  // "Un bouclier à chaque salle"
@@ -5018,6 +5101,7 @@ static const char* const kI18n_de[] = {
     "Mensch: %s",  // "Vous jouez les %s"
     "Wochenende",  // "Week-end"
     "WLAN sparen",  // "Wi-Fi éco"
+    "Zen Sumi",  // "Zen Sumi"
     "Zickzack",  // "Zigzag"
     "Linke / rechte Zone = Flipper (halten). Unten Mitte = Abschuss.\nTablet schütteln, um den Ball anzustoßen — dreimal zu viel und es gibt TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "Bezug / Einspeisung stündlich geschätzt",  // "achat / vente estimés heure par heure"
@@ -5318,6 +5402,8 @@ static const char* const kI18n_nl[] = {
     "Aanzetten",  // "Allumer"
     "Alleen aanzetten",  // "Allumer seulement"
     "Aan",  // "Allumé"
+    "Almanak",  // "Almanach"
+    "Gedrukte almanak",  // "Almanach imprimé"
     "Amateur",  // "Amateur"
     "Analyse…",  // "Analyse…"
     "Engels 8x8",  // "Anglaises 8×8"
@@ -5343,6 +5429,8 @@ static const char* const kI18n_nl[] = {
     "Tik op een voorwerp in je bezit om het voor de halve prijs te verkopen. Een verkocht voorwerp gaat ook uit je uitrusting.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tik op de microfoon en spreek…",  // "Appuyez sur le micro puis parlez…"
     "Na de eerste keer afgaan meldt Home Assistant het weer en de planning.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
+    "Leisteen",  // "Ardoise"
+    "Zacht leisteen",  // "Ardoise douce"
     "Zilver",  // "Argent"
     "Stop",  // "Arrêter"
     "Artiesten",  // "Artistes"
@@ -5402,6 +5490,7 @@ static const char* const kI18n_nl[] = {
     "BAL KWIJT",  // "BILLE PERDUE"
     "Batterij",  // "Batterie"
     "Batterij geplaatst",  // "Batterie montée"
+    "Bento",  // "Bento"
     "Bibliotheek",  // "Bibliothèque"
     "Bijna droog",  // "Bientôt sec"
     "Balans",  // "Bilan"
@@ -5416,6 +5505,7 @@ static const char* const kI18n_nl[] = {
     "Wit",  // "Blancs"
     "Blitz 5 min",  // "Blitz 5 min"
     "Max. blok",  // "Bloc max"
+    "Snoep",  // "Bonbon"
     "Goed antwoord = winst",  // "Bonne réponse = victoire"
     "Goed antwoord — gooi opnieuw.",  // "Bonne réponse — vous rejouez."
     "Boost",  // "Boost"
@@ -5426,6 +5516,7 @@ static const char* const kI18n_nl[] = {
     "Bries",  // "Brise"
     "Mist",  // "Brouillard"
     "Knp",  // "Btn"
+    "Ruw beton",  // "Béton brut"
     "KIES EEN CATEGORIE",  // "CATÉGORIE AU CHOIX"
     "RANGLIJST",  // "CLASSEMENT"
     "BEDIENING",  // "COMMANDE"
@@ -5444,6 +5535,7 @@ static const char* const kI18n_nl[] = {
     "Plat kalibreren",  // "Calibrer à plat"
     "Kalm",  // "Calme"
     "Camera's",  // "Caméras"
+    "Capsule",  // "Capsule"
     "Sensor",  // "Capteur"
     "Sensor stil",  // "Capteur muet"
     "Carillon",  // "Carillon"
@@ -5524,6 +5616,7 @@ static const char* const kI18n_nl[] = {
     "Verboden zet (ko of zelfmoord)",  // "Coup interdit (ko ou suicide)"
     "Curve wordt nog geleerd",  // "Courbe en cours d'apprentissage"
     "Gebarsten kroon",  // "Couronne fêlée"
+    "Krijt en leisteen",  // "Craie et ardoise"
     "Crème",  // "Crème"
     "Periode",  // "Créneau"
     "Koper",  // "Cuivre"
@@ -5649,6 +5742,7 @@ static const char* const kI18n_nl[] = {
     "Gebaren, regels, weergave",  // "Gestes, règles, affichage"
     "Schuif de cijfers omhoog of omlaag.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nChinese telling · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
+    "Grafiet",  // "Graphite"
     "Dode stenen verwijderd: %d zwart, %d wit",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
@@ -5892,7 +5986,9 @@ static const char* const kI18n_nl[] = {
     "Remise verklaard in demomodus",  // "Nulle déclarée en mode démo"
     "Remise in onderling overleg",  // "Nulle par accord entre les joueurs"
     "Nemesis",  // "Némésis"
+    "Rustig neon",  // "Néon calme"
     "OPTIES",  // "OPTIONS"
+    "Obsidiaan",  // "Obsidienne"
     "Okt",  // "Oct"
     "Lokale opties (NVS)",  // "Options locales (NVS)"
     "Lokale opties, bewaard in de Tab",  // "Options locales, conservées dans le Tab"
@@ -5946,12 +6042,14 @@ static const char* const kI18n_nl[] = {
     "Klok",  // "Pendule"
     "Bloedsteen",  // "Pierre de sang"
     "Handicapstenen voor Zwart (Wit begint)",  // "Pierres offertes à Noir (Blanc commence)"
+    "Pixel",  // "Pixel"
     "Kamer",  // "Pièce"
     "Kamer %d",  // "Pièce %d"
     "Kamer: %s",  // "Pièce : %s"
     "Kamers",  // "Pièces"
     "Kamers %d–%d",  // "Pièces %d à %d"
     "Planten",  // "Plantes"
+    "Platina en goud",  // "Platine et or"
     "Afspeellijst {n}",  // "Playlist {n}"
     "Afspeellijsten",  // "Playlists"
     "Regen",  // "Pluie"
@@ -6045,6 +6143,8 @@ static const char* const kI18n_nl[] = {
     "Nieuwe run starten",  // "Relancer une run"
     "Eenmaal herrijzen in deze run",  // "Relevé une fois dans la run"
     "Eenmaal herrijzen per run",  // "Relevé une fois par run"
+    "Zacht reliëf",  // "Relief doux"
+    "Vlak reliëf",  // "Relief plat"
     "Zet resultaten en lokale rating op nul",  // "Remet à zéro le bilan et le classement local"
     "Tellers op nul zetten",  // "Remettre les compteurs à zéro"
     "Statistieken resetten",  // "Remettre les statistiques à zéro"
@@ -6149,6 +6249,7 @@ static const char* const kI18n_nl[] = {
     "Als het scherm ondersteboven staat",  // "Si l'écran est à l'envers dans vos mains"
     "Als de bal de verkeerde kant op gaat",  // "Si la bille part du mauvais côté"
     "Signaal",  // "Signal"
+    "Bewegwijzering",  // "Signalisation"
     "Stil",  // "Silence"
     "Donker",  // "Sombre"
     "Geluid aan",  // "Son"
@@ -6158,6 +6259,7 @@ static const char* const kI18n_nl[] = {
     "Gaat af op de vaste tijd, op de dagen hieronder.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Gaat af op de vaste tijd, alleen op werkdagen.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Wekgeluid",  // "Sonnerie"
+    "Sorbet",  // "Sorbet"
     "Een spel verlaten: hub, dan “Afsluiten”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uitgang open! Klim helemaal naar boven.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Bron",  // "Source"
@@ -6203,6 +6305,7 @@ static const char* const kI18n_nl[] = {
     "Verhoogde temperatuur",  // "Température élevée"
     "Temperaturen",  // "Températures"
     "Spanning",  // "Tension"
+    "Terracotta",  // "Terre cuite"
     "Testen",  // "Tester"
     "Thema",  // "Thème"
     "Tokens per seconde",  // "Tokens par seconde"
@@ -6255,6 +6358,7 @@ static const char* const kI18n_nl[] = {
     "Je verlaat het Doolhof. Het laat je gaan.",  // "Tu sors du dédale. Il te laisse partir."
     "Bediening",  // "Télécommande"
     "Tv-bediening",  // "Télécommande TV"
+    "Ultraviolet",  // "Ultraviolet"
     "Een banner op het scherm en een gesproken melding vóór elke afspraak.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Een schild in elke nieuwe kamer",  // "Un bouclier à chaque nouvelle salle"
     "Een schild in elke kamer",  // "Un bouclier à chaque salle"
@@ -6308,6 +6412,7 @@ static const char* const kI18n_nl[] = {
     "Mens: %s",  // "Vous jouez les %s"
     "Weekend",  // "Week-end"
     "Zuinige wifi",  // "Wi-Fi éco"
+    "Zen Sumi",  // "Zen Sumi"
     "Zigzag",  // "Zigzag"
     "Linkerzone / rechterzone = flippers (vasthouden). Midden onder = plunjer.\nSchud de tablet om de bal te duwen — drie keer te veel op rij en het is TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "inkoop / verkoop per uur geschat",  // "achat / vente estimés heure par heure"
@@ -6608,6 +6713,8 @@ static const char* const kI18n_es[] = {
     "Encender",  // "Allumer"
     "Solo encender",  // "Allumer seulement"
     "ON",  // "Allumé"
+    "Almanaque",  // "Almanach"
+    "Almanaque impreso",  // "Almanach imprimé"
     "Aficionado",  // "Amateur"
     "Analizando…",  // "Analyse…"
     "Inglesas 8x8",  // "Anglaises 8×8"
@@ -6633,6 +6740,8 @@ static const char* const kI18n_es[] = {
     "Tocar un objeto que ya tienes lo vende a mitad de precio. Un objeto vendido también se quita del equipo.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Toca el micro y habla…",  // "Appuyez sur le micro puis parlez…"
     "Tras el primer timbre, Home Assistant anuncia el tiempo y la agenda.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
+    "Pizarra",  // "Ardoise"
+    "Pizarra suave",  // "Ardoise douce"
     "Plata",  // "Argent"
     "Detener",  // "Arrêter"
     "Artistas",  // "Artistes"
@@ -6692,6 +6801,7 @@ static const char* const kI18n_es[] = {
     "BOLA PERDIDA",  // "BILLE PERDUE"
     "Batería",  // "Batterie"
     "Batería instalada",  // "Batterie montée"
+    "Bento",  // "Bento"
     "Biblioteca",  // "Bibliothèque"
     "Casi seca",  // "Bientôt sec"
     "Balance",  // "Bilan"
@@ -6706,6 +6816,7 @@ static const char* const kI18n_es[] = {
     "Blancas",  // "Blancs"
     "Blitz 5 min",  // "Blitz 5 min"
     "Bloq. máx.",  // "Bloc max"
+    "Caramelo",  // "Bonbon"
     "Acierto = victoria",  // "Bonne réponse = victoire"
     "Correcto — vuelves a tirar.",  // "Bonne réponse — vous rejouez."
     "Boost",  // "Boost"
@@ -6716,6 +6827,7 @@ static const char* const kI18n_es[] = {
     "Brisa",  // "Brise"
     "Niebla",  // "Brouillard"
     "Botones",  // "Btn"
+    "Hormigón visto",  // "Béton brut"
     "CATEGORÍA A ELEGIR",  // "CATÉGORIE AU CHOIX"
     "CLASIFICACIÓN",  // "CLASSEMENT"
     "CONTROL",  // "COMMANDE"
@@ -6734,6 +6846,7 @@ static const char* const kI18n_es[] = {
     "Calibrar en plano",  // "Calibrer à plat"
     "Calma",  // "Calme"
     "Cámaras",  // "Caméras"
+    "Cápsula",  // "Capsule"
     "Sensor",  // "Capteur"
     "Sensor mudo",  // "Capteur muet"
     "Carillón",  // "Carillon"
@@ -6814,6 +6927,7 @@ static const char* const kI18n_es[] = {
     "Jugada prohibida (ko o suicidio)",  // "Coup interdit (ko ou suicide)"
     "Curva en aprendizaje",  // "Courbe en cours d'apprentissage"
     "Corona agrietada",  // "Couronne fêlée"
+    "Tiza y pizarra",  // "Craie et ardoise"
     "Crema",  // "Crème"
     "Franja",  // "Créneau"
     "Cobre",  // "Cuivre"
@@ -6939,6 +7053,7 @@ static const char* const kI18n_es[] = {
     "Gestos, reglas, pantalla",  // "Gestes, règles, affichage"
     "Desliza los números hacia arriba o abajo.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nConteo chino · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
+    "Grafito",  // "Graphite"
     "Piedras muertas: %d negras, %d blancas",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Granizo",  // "Grêle"
     "Geografía",  // "Géographie"
@@ -7182,7 +7297,9 @@ static const char* const kI18n_es[] = {
     "Tablas declaradas en modo demo",  // "Nulle déclarée en mode démo"
     "Tablas por mutuo acuerdo",  // "Nulle par accord entre les joueurs"
     "Némesis",  // "Némésis"
+    "Neón tranquilo",  // "Néon calme"
     "OPCIONES",  // "OPTIONS"
+    "Obsidiana",  // "Obsidienne"
     "Oct",  // "Oct"
     "Opciones locales (NVS)",  // "Options locales (NVS)"
     "Opciones locales, guardadas en el Tab",  // "Options locales, conservées dans le Tab"
@@ -7236,12 +7353,14 @@ static const char* const kI18n_es[] = {
     "Reloj",  // "Pendule"
     "Piedra de sangre",  // "Pierre de sang"
     "Piedras para Negro (empieza Blanco)",  // "Pierres offertes à Noir (Blanc commence)"
+    "Píxel",  // "Pixel"
     "Interior",  // "Pièce"
     "Estancia %d",  // "Pièce %d"
     "Estancia: %s",  // "Pièce : %s"
     "Estancias",  // "Pièces"
     "Estancias %d–%d",  // "Pièces %d à %d"
     "Plantas",  // "Plantes"
+    "Platino y oro",  // "Platine et or"
     "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Lluvia",  // "Pluie"
@@ -7335,6 +7454,8 @@ static const char* const kI18n_es[] = {
     "Otra run",  // "Relancer une run"
     "Te revive una vez en la run",  // "Relevé une fois dans la run"
     "Te revive una vez por run",  // "Relevé une fois par run"
+    "Relieve suave",  // "Relief doux"
+    "Relieve plano",  // "Relief plat"
     "Pone a cero el balance y la clasificación local",  // "Remet à zéro le bilan et le classement local"
     "Poner los contadores a cero",  // "Remettre les compteurs à zéro"
     "Reiniciar estadísticas",  // "Remettre les statistiques à zéro"
@@ -7439,6 +7560,7 @@ static const char* const kI18n_es[] = {
     "Si la pantalla está al revés en tus manos",  // "Si l'écran est à l'envers dans vos mains"
     "Si la bola va al lado contrario",  // "Si la bille part du mauvais côté"
     "Señal",  // "Signal"
+    "Señalización",  // "Signalisation"
     "Silencio",  // "Silence"
     "Oscuro",  // "Sombre"
     "Sonido",  // "Son"
@@ -7448,6 +7570,7 @@ static const char* const kI18n_es[] = {
     "Suena a la hora fija, los días marcados abajo.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Suena a la hora fija, solo los días laborables.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Tono",  // "Sonnerie"
+    "Sorbete",  // "Sorbet"
     "Para salir de un juego: hub y luego «Salir»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "¡Salida abierta! Trepa hasta arriba.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Fuente",  // "Source"
@@ -7493,6 +7616,7 @@ static const char* const kI18n_es[] = {
     "Temperatura elevada",  // "Température élevée"
     "Temperaturas",  // "Températures"
     "Tensión",  // "Tension"
+    "Terracota",  // "Terre cuite"
     "Probar",  // "Tester"
     "Tema",  // "Thème"
     "Tokens por segundo",  // "Tokens par seconde"
@@ -7545,6 +7669,7 @@ static const char* const kI18n_es[] = {
     "Sales del Laberinto. Te deja marchar.",  // "Tu sors du dédale. Il te laisse partir."
     "Mando",  // "Télécommande"
     "Control remoto TV",  // "Télécommande TV"
+    "Ultravioleta",  // "Ultraviolet"
     "Un aviso en pantalla y un anuncio de voz antes de cada cita.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Un escudo en cada sala nueva",  // "Un bouclier à chaque nouvelle salle"
     "Un escudo en cada sala",  // "Un bouclier à chaque salle"
@@ -7598,6 +7723,7 @@ static const char* const kI18n_es[] = {
     "Juegas con las %s",  // "Vous jouez les %s"
     "Fin de semana",  // "Week-end"
     "Wi-Fi eco",  // "Wi-Fi éco"
+    "Zen Sumi",  // "Zen Sumi"
     "Zigzag",  // "Zigzag"
     "Zona izquierda / derecha = paletas (mantener). Abajo al centro = lanzador.\nSacude la tableta para empujar la bola — tres abusos seguidos y es TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "compra / venta estimadas hora a hora",  // "achat / vente estimés heure par heure"
@@ -7898,6 +8024,8 @@ static const char* const kI18n_it[] = {
     "Accendi",  // "Allumer"
     "Solo accensione",  // "Allumer seulement"
     "Acceso",  // "Allumé"
+    "Almanacco",  // "Almanach"
+    "Almanacco stampato",  // "Almanach imprimé"
     "Amatore",  // "Amateur"
     "Analisi…",  // "Analyse…"
     "Inglese 8x8",  // "Anglaises 8×8"
@@ -7923,6 +8051,8 @@ static const char* const kI18n_it[] = {
     "Tocca un oggetto posseduto per rivenderlo a metà prezzo. Un oggetto rivenduto viene anche tolto dall'equipaggiamento.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tocca il microfono, poi parla…",  // "Appuyez sur le micro puis parlez…"
     "Dopo il primo squillo, Home Assistant annuncia meteo e programma.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
+    "Ardesia",  // "Ardoise"
+    "Ardesia morbida",  // "Ardoise douce"
     "Argento",  // "Argent"
     "Ferma",  // "Arrêter"
     "Artisti",  // "Artistes"
@@ -7982,6 +8112,7 @@ static const char* const kI18n_it[] = {
     "PALLA PERSA",  // "BILLE PERDUE"
     "Batteria",  // "Batterie"
     "Batteria montata",  // "Batterie montée"
+    "Bento",  // "Bento"
     "Libreria",  // "Bibliothèque"
     "Quasi secco",  // "Bientôt sec"
     "Bilancio",  // "Bilan"
@@ -7996,6 +8127,7 @@ static const char* const kI18n_it[] = {
     "Bianco",  // "Blancs"
     "Blitz 5 min",  // "Blitz 5 min"
     "Blocco max",  // "Bloc max"
+    "Caramella",  // "Bonbon"
     "Risposta esatta = vittoria",  // "Bonne réponse = victoire"
     "Risposta esatta — tira ancora.",  // "Bonne réponse — vous rejouez."
     "Boost",  // "Boost"
@@ -8006,6 +8138,7 @@ static const char* const kI18n_it[] = {
     "Brezza",  // "Brise"
     "Nebbia",  // "Brouillard"
     "Pulsanti",  // "Btn"
+    "Cemento grezzo",  // "Béton brut"
     "CATEGORIA A SCELTA",  // "CATÉGORIE AU CHOIX"
     "CLASSIFICA",  // "CLASSEMENT"
     "COMANDO",  // "COMMANDE"
@@ -8024,6 +8157,7 @@ static const char* const kI18n_it[] = {
     "Calibra in piano",  // "Calibrer à plat"
     "Calma",  // "Calme"
     "Telecamere",  // "Caméras"
+    "Capsula",  // "Capsule"
     "Sensore",  // "Capteur"
     "Sensore muto",  // "Capteur muet"
     "Carillon",  // "Carillon"
@@ -8104,6 +8238,7 @@ static const char* const kI18n_it[] = {
     "Mossa vietata (ko o suicidio)",  // "Coup interdit (ko ou suicide)"
     "Curva in apprendimento",  // "Courbe en cours d'apprentissage"
     "Corona incrinata",  // "Couronne fêlée"
+    "Gesso e ardesia",  // "Craie et ardoise"
     "Crema",  // "Crème"
     "Fascia",  // "Créneau"
     "Rame",  // "Cuivre"
@@ -8229,6 +8364,7 @@ static const char* const kI18n_it[] = {
     "Gesti, regole, schermo",  // "Gestes, règles, affichage"
     "Scorri le cifre in su o in giù.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nRegole cinesi · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
+    "Grafite",  // "Graphite"
     "Pietre morte rimosse: %d nere, %d bianche",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Grandine",  // "Grêle"
     "Geografia",  // "Géographie"
@@ -8472,7 +8608,9 @@ static const char* const kI18n_it[] = {
     "Patta dichiarata in modalità demo",  // "Nulle déclarée en mode démo"
     "Patta d'accordo tra i giocatori",  // "Nulle par accord entre les joueurs"
     "Nemesi",  // "Némésis"
+    "Neon calmo",  // "Néon calme"
     "OPZIONI",  // "OPTIONS"
+    "Ossidiana",  // "Obsidienne"
     "Ott",  // "Oct"
     "Opzioni locali (NVS)",  // "Options locales (NVS)"
     "Opzioni locali, salvate nel Tab",  // "Options locales, conservées dans le Tab"
@@ -8526,12 +8664,14 @@ static const char* const kI18n_it[] = {
     "Orologio",  // "Pendule"
     "Pietra di sangue",  // "Pierre de sang"
     "Pietre di handicap al Nero (inizia il Bianco)",  // "Pierres offertes à Noir (Blanc commence)"
+    "Pixel",  // "Pixel"
     "Stanza",  // "Pièce"
     "Stanza %d",  // "Pièce %d"
     "Stanza: %s",  // "Pièce : %s"
     "Stanze",  // "Pièces"
     "Stanze %d–%d",  // "Pièces %d à %d"
     "Piante",  // "Plantes"
+    "Platino e oro",  // "Platine et or"
     "Playlist {n}",  // "Playlist {n}"
     "Playlist",  // "Playlists"
     "Pioggia",  // "Pluie"
@@ -8625,6 +8765,8 @@ static const char* const kI18n_it[] = {
     "Nuova run",  // "Relancer une run"
     "Ti rialza una volta nella run",  // "Relevé une fois dans la run"
     "Ti rialza una volta per run",  // "Relevé une fois par run"
+    "Rilievo morbido",  // "Relief doux"
+    "Rilievo piatto",  // "Relief plat"
     "Azzera bilancio e punteggio locale",  // "Remet à zéro le bilan et le classement local"
     "Azzera i contatori",  // "Remettre les compteurs à zéro"
     "Azzera le statistiche",  // "Remettre les statistiques à zéro"
@@ -8729,6 +8871,7 @@ static const char* const kI18n_it[] = {
     "Se lo schermo ti appare capovolto",  // "Si l'écran est à l'envers dans vos mains"
     "Se la palla va dalla parte sbagliata",  // "Si la bille part du mauvais côté"
     "Segnale",  // "Signal"
+    "Segnaletica",  // "Signalisation"
     "Silenzioso",  // "Silence"
     "Scuro",  // "Sombre"
     "Audio",  // "Son"
@@ -8738,6 +8881,7 @@ static const char* const kI18n_it[] = {
     "Suona all'ora fissa, nei giorni selezionati sotto.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Suona all'ora fissa, solo nei giorni lavorativi.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Suoneria",  // "Sonnerie"
+    "Sorbetto",  // "Sorbet"
     "Per uscire da un gioco: hub, poi «Esci»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uscita aperta! Sali fino in cima.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Sorgente",  // "Source"
@@ -8783,6 +8927,7 @@ static const char* const kI18n_it[] = {
     "Temperatura elevata",  // "Température élevée"
     "Temperature",  // "Températures"
     "Tensione",  // "Tension"
+    "Terracotta",  // "Terre cuite"
     "Prova",  // "Tester"
     "Tema",  // "Thème"
     "Token al secondo",  // "Tokens par seconde"
@@ -8835,6 +8980,7 @@ static const char* const kI18n_it[] = {
     "Esci dal Labirinto. Ti lascia andare.",  // "Tu sors du dédale. Il te laisse partir."
     "Telecomando",  // "Télécommande"
     "Telecomando TV",  // "Télécommande TV"
+    "Ultravioletto",  // "Ultraviolet"
     "Un banner sullo schermo e un annuncio vocale prima di ogni appuntamento.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Uno scudo a ogni nuova stanza",  // "Un bouclier à chaque nouvelle salle"
     "Uno scudo in ogni stanza",  // "Un bouclier à chaque salle"
@@ -8888,6 +9034,7 @@ static const char* const kI18n_it[] = {
     "Giochi col %s",  // "Vous jouez les %s"
     "Fine settimana",  // "Week-end"
     "Wi-Fi eco",  // "Wi-Fi éco"
+    "Zen Sumi",  // "Zen Sumi"
     "Zigzag",  // "Zigzag"
     "Zona sinistra / destra = flipper (tieni premuto). In basso al centro = lanciatore.\nScuoti il tablet per spingere la palla — tre volte di troppo di fila ed è TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "acquisto / vendita stimati ora per ora",  // "achat / vente estimés heure par heure"
@@ -9188,6 +9335,8 @@ static const char* const kI18n_tr[] = {
     "Aç",  // "Allumer"
     "Yalnızca aç",  // "Allumer seulement"
     "Açık",  // "Allumé"
+    "Almanak",  // "Almanach"
+    "Basılı almanak",  // "Almanach imprimé"
     "Amatör",  // "Amateur"
     "Analiz…",  // "Analyse…"
     "İngiliz 8x8",  // "Anglaises 8×8"
@@ -9213,6 +9362,8 @@ static const char* const kI18n_tr[] = {
     "Sahip olunan bir eşyaya dokunmak onu fiyatının yarısına geri satar. Satılan eşya teçhizattan da çıkarılır.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofona dokun, sonra konuş…",  // "Appuyez sur le micro puis parlez…"
     "İlk çalmadan sonra Home Assistant hava durumunu ve planı duyurur.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
+    "Arduvaz",  // "Ardoise"
+    "Yumuşak arduvaz",  // "Ardoise douce"
     "Gümüş",  // "Argent"
     "Durdur",  // "Arrêter"
     "Sanatçılar",  // "Artistes"
@@ -9272,6 +9423,7 @@ static const char* const kI18n_tr[] = {
     "BİLYE KAYBOLDU",  // "BILLE PERDUE"
     "Pil",  // "Batterie"
     "Pil takılı",  // "Batterie montée"
+    "Bento",  // "Bento"
     "Kitaplık",  // "Bibliothèque"
     "Kurumak üzere",  // "Bientôt sec"
     "Bilanço",  // "Bilan"
@@ -9286,6 +9438,7 @@ static const char* const kI18n_tr[] = {
     "Beyaz",  // "Blancs"
     "Blitz 5 dk",  // "Blitz 5 min"
     "Maks. blok",  // "Bloc max"
+    "Şeker",  // "Bonbon"
     "Doğru yanıt = zafer",  // "Bonne réponse = victoire"
     "Doğru yanıt — tekrar atıyorsun.",  // "Bonne réponse — vous rejouez."
     "Boost",  // "Boost"
@@ -9296,6 +9449,7 @@ static const char* const kI18n_tr[] = {
     "Esinti",  // "Brise"
     "Sis",  // "Brouillard"
     "Düğme",  // "Btn"
+    "Brüt beton",  // "Béton brut"
     "KATEGORİ SEÇ",  // "CATÉGORIE AU CHOIX"
     "SIRALAMA",  // "CLASSEMENT"
     "KOMUT",  // "COMMANDE"
@@ -9314,6 +9468,7 @@ static const char* const kI18n_tr[] = {
     "Düz kalibre et",  // "Calibrer à plat"
     "Sakin",  // "Calme"
     "Kameralar",  // "Caméras"
+    "Kapsül",  // "Capsule"
     "Sensör",  // "Capteur"
     "Sensör sessiz",  // "Capteur muet"
     "Çan sesi",  // "Carillon"
@@ -9394,6 +9549,7 @@ static const char* const kI18n_tr[] = {
     "Yasak hamle (ko veya intihar)",  // "Coup interdit (ko ou suicide)"
     "Eğri öğreniliyor",  // "Courbe en cours d'apprentissage"
     "Çatlak Taç",  // "Couronne fêlée"
+    "Tebeşir ve arduvaz",  // "Craie et ardoise"
     "Krem",  // "Crème"
     "Aralık",  // "Créneau"
     "Bakır",  // "Cuivre"
@@ -9519,6 +9675,7 @@ static const char* const kI18n_tr[] = {
     "Hareketler, kurallar, görünüm",  // "Gestes, règles, affichage"
     "Rakamları yukarı veya aşağı kaydırın.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nÇin sayımı · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
+    "Grafit",  // "Graphite"
     "Alınan ölü taş: %d siyah, %d beyaz",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Dolu",  // "Grêle"
     "Coğrafya",  // "Géographie"
@@ -9762,7 +9919,9 @@ static const char* const kI18n_tr[] = {
     "Demo modunda beraberlik ilan edildi",  // "Nulle déclarée en mode démo"
     "Oyuncuların anlaşmasıyla beraberlik",  // "Nulle par accord entre les joueurs"
     "Nemesis",  // "Némésis"
+    "Sakin neon",  // "Néon calme"
     "SEÇENEKLER",  // "OPTIONS"
+    "Obsidyen",  // "Obsidienne"
     "Eki",  // "Oct"
     "Yerel seçenekler (NVS)",  // "Options locales (NVS)"
     "Yerel seçenekler, Tab'da saklanır",  // "Options locales, conservées dans le Tab"
@@ -9816,12 +9975,14 @@ static const char* const kI18n_tr[] = {
     "Saat",  // "Pendule"
     "Kan Taşı",  // "Pierre de sang"
     "Siyaha verilen taşlar (Beyaz başlar)",  // "Pierres offertes à Noir (Blanc commence)"
+    "Piksel",  // "Pixel"
     "Oda",  // "Pièce"
     "Oda %d",  // "Pièce %d"
     "Oda: %s",  // "Pièce : %s"
     "Odalar",  // "Pièces"
     "Odalar %d–%d",  // "Pièces %d à %d"
     "Bitkiler",  // "Plantes"
+    "Platin ve altın",  // "Platine et or"
     "Çalma listesi {n}",  // "Playlist {n}"
     "Çalma listeleri",  // "Playlists"
     "Yağmur",  // "Pluie"
@@ -9915,6 +10076,8 @@ static const char* const kI18n_tr[] = {
     "Yeni sefer",  // "Relancer une run"
     "Seferde bir kez ayağa kalkarsın",  // "Relevé une fois dans la run"
     "Sefer başına bir kez ayağa kalkarsın",  // "Relevé une fois par run"
+    "Yumuşak kabartma",  // "Relief doux"
+    "Düz kabartma",  // "Relief plat"
     "Sonuçları ve yerel dereceyi sıfırlar",  // "Remet à zéro le bilan et le classement local"
     "Sayaçları sıfırla",  // "Remettre les compteurs à zéro"
     "İstatistikleri sıfırla",  // "Remettre les statistiques à zéro"
@@ -10019,6 +10182,7 @@ static const char* const kI18n_tr[] = {
     "Ekran elinde ters duruyorsa",  // "Si l'écran est à l'envers dans vos mains"
     "Bilye yanlış tarafa gidiyorsa",  // "Si la bille part du mauvais côté"
     "Sinyal",  // "Signal"
+    "Tabela",  // "Signalisation"
     "Sessiz",  // "Silence"
     "Koyu",  // "Sombre"
     "Ses",  // "Son"
@@ -10028,6 +10192,7 @@ static const char* const kI18n_tr[] = {
     "Aşağıda işaretli günlerde sabit saatte çalar.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Yalnızca çalışılan günlerde sabit saatte çalar.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Zil sesi",  // "Sonnerie"
+    "Sorbe",  // "Sorbet"
     "Oyundan çıkış: merkez, sonra “Çık”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Çıkış açık! En tepeye tırman.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Kaynak",  // "Source"
@@ -10073,6 +10238,7 @@ static const char* const kI18n_tr[] = {
     "Sıcaklık yüksek",  // "Température élevée"
     "Sıcaklıklar",  // "Températures"
     "Gerilim",  // "Tension"
+    "Pişmiş toprak",  // "Terre cuite"
     "Dene",  // "Tester"
     "Tema",  // "Thème"
     "Saniyede token",  // "Tokens par seconde"
@@ -10125,6 +10291,7 @@ static const char* const kI18n_tr[] = {
     "Labirentten çıkıyorsun. Gitmene izin veriyor.",  // "Tu sors du dédale. Il te laisse partir."
     "Kumanda",  // "Télécommande"
     "TV kumandası",  // "Télécommande TV"
+    "Morötesi",  // "Ultraviolet"
     "Her randevudan önce ekranda bir bant ve sesli bir duyuru.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Her yeni odada bir kalkan",  // "Un bouclier à chaque nouvelle salle"
     "Her odada bir kalkan",  // "Un bouclier à chaque salle"
@@ -10178,6 +10345,7 @@ static const char* const kI18n_tr[] = {
     "Sen oynuyorsun: %s",  // "Vous jouez les %s"
     "Hafta sonu",  // "Week-end"
     "Eko Wi-Fi",  // "Wi-Fi éco"
+    "Zen Sumi",  // "Zen Sumi"
     "Zikzak",  // "Zigzag"
     "Sol bölge / sağ bölge = flipperler (basılı tut). Alt orta = fırlatıcı.\nBilyeyi itmek için tableti salla — üst üste üç kez abartırsan TILT olur.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "alım / satış saat saat tahmini",  // "achat / vente estimés heure par heure"

@@ -19,7 +19,7 @@
 #   (tools/rendu/, .github/workflows/rendu-host.yml, tâches « clair » et « galerie »).
 # - Le select « Thème » garde l'INDEX (restore_value) : un nouveau thème s'ajoute à la
 #   fin (`ordre:`). HA lit les options : en anglais (`nom_ha` du thème, Dark, Light ; ADR-0070,
-#   24/10/2026), jamais traduites ; l'écran montre le `nom` du thème (THEMES[]).
+#   24/10/2026), jamais traduites ; l'écran montre le `nom` du thème (THEMES[]) traduit par tr().
 # - Les jeux restent sombres (PALETTE_SOMBRE, ADR-0014) : leurs pages naissent avec
 #   le `bg_color` de `lvgl:` (tab5-styles.yaml), évalué avant la restauration du
 #   thème ; seule la page principale est repeinte ici.

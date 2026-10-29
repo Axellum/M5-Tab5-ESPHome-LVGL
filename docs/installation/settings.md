@@ -26,7 +26,7 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 
 **1** « Theme » on the tablet's device page; **2** the screen repaints at once. Each screen has its own theme.
 
-On the screen the theme names stay as they are in every language: they are names. Home Assistant shows them in English (« Soft relief » for « Relief doux », since 2026-10-24, [ADR-0070](../decisions/0070-home-assistant-reads-english.md)). Six of them:
+Home Assistant shows the theme names in English (« Soft relief » for « Relief doux », since 2026-10-24, [ADR-0070](../decisions/0070-home-assistant-reads-english.md)); the screen shows them in its own language, so in English the same names as Home Assistant. Six of them:
 
 ![Six themes of the Tab5 home screen drawn by the firmware itself: Pixel dark with a kitchen leak alert, Bonbon light with the living room's devices, Sorbet dark with a weather warning, Béton brut light with a low battery alert, Zen Sumi dark with the garden's devices and Capsule light with rain in 10 minutes](../images/tab5_themes_en.jpg)
 
@@ -115,7 +115,7 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 
 **1** « Theme » sur la page de l'appareil de la tablette ; **2** l'écran se repeint aussitôt. Chaque écran a son propre thème.
 
-À l'écran, les noms des thèmes restent les mêmes dans toutes les langues : ce sont des noms. Home Assistant les montre en anglais (« Soft relief » pour « Relief doux », depuis le 24/10/2026, [ADR-0070](../decisions/0070-home-assistant-reads-english.md)). Six d'entre eux :
+Home Assistant montre les noms des thèmes en anglais (« Soft relief » pour « Relief doux », depuis le 24/10/2026, [ADR-0070](../decisions/0070-home-assistant-reads-english.md)) ; l'écran les montre dans sa langue, donc en anglais les mêmes noms que Home Assistant. Six d'entre eux :
 
 ![Six thèmes de l'accueil du Tab5 dessinés par le firmware lui-même : Pixel sombre avec une alerte de fuite en cuisine, Bonbon clair avec les appareils du salon, Sorbet sombre avec une vigilance météo, Béton brut clair avec une alerte de pile faible, Zen Sumi sombre avec les appareils du jardin et Capsule clair avec de la pluie dans 10 minutes](../images/tab5_themes.jpg)
 

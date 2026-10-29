@@ -135,9 +135,9 @@ void reglages_peindre(const ReglagesEtat& e) {
     peindre_choix(u.okay_nabu, 2, oui_non(e.okay_nabu));
     peindre_choix(u.tape, 2, oui_non(e.tape));
 
-    // Nom du thème : un nom propre, écrit comme dans le select de HA (jamais traduit).
+    // Nom du thème dans la langue de l'écran : en anglais, celui du select de HA (`nom_ha`).
     const int theme = (e.theme >= 0 && e.theme < THEME_COUNT) ? e.theme : 0;
-    ui_text(u.theme_nom, THEMES[theme].nom);
+    ui_text(u.theme_nom, tr(THEMES[theme].nom));
     peindre_choix(u.mode, REGLAGES_NB_MODES, e.mode);
     peindre_choix(u.nuit, 2, oui_non(e.nuit));
     peindre_choix(u.animations, REGLAGES_NB_ANIMATIONS, e.animations);

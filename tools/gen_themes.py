@@ -18,7 +18,7 @@ tools/police_theme.py). Écrit :
   (b) Tab5/paquets/tab5-themes.yaml — les options du select « Thème », entre `# >>> themes` et
       `# <<< themes`, dans l'ordre des `ordre:` (la tablette garde l'INDEX : un thème
       s'ajoute à la fin). Une option est le `nom_ha` du thème, son nom anglais, celui que
-      lit Home Assistant (ADR-0070, 24/10/2026) ; l'écran montre `nom` (THEMES[]) ;
+      lit Home Assistant (ADR-0070, 24/10/2026) ; l'écran montre `nom` (THEMES[]), traduit par tr() ;
   (c) Tab5/paquets/tab5-themes.yaml — la repeinture des styles partagés après un changement
       de thème, entre `# >>> styles` et `# <<< styles` : chaque couleur de
       `style_definitions:` et du `theme:` (une lambda qui lit `UIColor.X`, ou
@@ -387,6 +387,7 @@ ENTETE_DONNEES = """// GÉNÉRÉ par tools/gen_themes.py depuis Tab5/themes/*.ya
 // DO-3). La palette sombre du premier thème est PALETTE_SOMBRE (tab5_tokens.h), celle des
 // jeux : THEMES[0] la reprend au lieu d'en recopier les valeurs.
 #pragma once
+#include "tab5_i18n.h"  // tr_noop() : le nom est une clé de Tab5/lang/*.yaml, traduit à l'affichage
 #include "tab5_tokens.h"
 """
 
@@ -396,7 +397,7 @@ def rendre_donnees(themes: list[Theme]) -> str:
     lignes = ["", "inline constexpr Theme THEMES[] = {"]
     for i, t in enumerate(themes):
         drapeaux = ", ".join("true" if z in t.zones else "false" for z in ZONES)
-        lignes.append(f'    {{"{t.nom}", {drapeaux},  // Tab5/themes/{t.fichier}.yaml')
+        lignes.append(f'    {{tr_noop("{t.nom}"), {drapeaux},  // Tab5/themes/{t.fichier}.yaml')
         for mode in MODES:
             if i == 0 and mode == "sombre":
                 lignes.append("     PALETTE_SOMBRE,  // sombre : tab5_tokens.h (palette des jeux)")
