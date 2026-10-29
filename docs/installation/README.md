@@ -31,7 +31,7 @@ Seven steps, in this order: nothing to compile, the firmware installs from the b
 
 **Why Home Assistant first:** the tablet gets everything it shows from these files, and asks them for the rest through events. Without them it does not crash, but nothing of your home reaches the screen.
 
-The screenshots of Home Assistant's own pages (device page, entity table, automation and template editors) come from the project's fresh-install test: a new Home Assistant with test devices, where these steps are run for real whenever the Home Assistant files or the tablet's API change.
+The screenshots of Home Assistant's own pages (device page, entity table, automation and template editors) come from the project's fresh-install test: a new Home Assistant with test devices, where these steps are run for real whenever the Home Assistant files or the tablet's API change. The numbered animations of steps 1, 2, 3 and 6 and of the settings were recorded on the author's own Home Assistant and screens, in English, on 29 Oct 2026: each number points to the line of the same number under the image.
 
 ## After the installation
 
@@ -87,7 +87,7 @@ Sept étapes, dans cet ordre : rien à compiler, le firmware s'installe depuis l
 
 **Pourquoi Home Assistant d'abord :** la tablette reçoit de ces fichiers tout ce qu'elle affiche, et leur demande le reste par des événements. Sans eux elle ne plante pas, mais rien de votre maison n'arrive à l'écran.
 
-Les captures des pages de Home Assistant lui-même (page de l'appareil, table des entités, éditeurs d'automatisation et de modèle) viennent du test d'installation à neuf du projet : un Home Assistant neuf avec des appareils de test, où ces étapes sont rejouées pour de vrai à chaque changement des fichiers Home Assistant ou de l'API de la tablette.
+Les captures des pages de Home Assistant lui-même (page de l'appareil, table des entités, éditeurs d'automatisation et de modèle) viennent du test d'installation à neuf du projet : un Home Assistant neuf avec des appareils de test, où ces étapes sont rejouées pour de vrai à chaque changement des fichiers Home Assistant ou de l'API de la tablette. Les animations numérotées des étapes 1, 2, 3 et 6 et des réglages ont été enregistrées sur le Home Assistant et les écrans de l'auteur, en anglais, le 29/10/2026 : chaque numéro renvoie à la ligne du même numéro sous l'image.
 
 ## Après l'installation
 

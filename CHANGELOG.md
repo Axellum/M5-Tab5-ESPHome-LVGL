@@ -6,6 +6,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Ajouté
 
+- **Guide d'installation illustré** (doc seule, anglais et français) : des animations numérotées,
+  enregistrées le 29/10/2026 sur le Home Assistant et les écrans de l'auteur, chaque numéro renvoyant
+  à une ligne sous l'image : HACS pas à pas (étape 1), la page d'installation (étape 2), le Wi-Fi
+  (étape 3), un champ du blueprint et l'écran qui suit (étape 6), un thème choisi et l'écran qui se
+  repeint (réglages), et la boîte « Configurer » qui relance l'assistant. Données personnelles
+  floutées (nom du Wi-Fi, dépôts et intégrations HACS de l'auteur) (`docs/images/installation/*.webp`).
+  La ligne « Failed to initialize » de la Waveshare 7B dit maintenant ce qui a été essayé le 29/10
+  (port « USB », port « USB TO UART », mode téléchargement : la page échoue) et ce qui a marché
+  (esptool depuis l'ordinateur, puis le Wi-Fi depuis la page), dans le guide et sur la page
+  d'installation. Aucun changement de firmware.
 - **Logo du projet** : un écran avec un toit, en tête du README, en icône de la documentation
   (en haut à gauche et dans l'onglet) et de la page d'installation (`web/favicon.svg`,
   `tools/site/assets/logo.svg`). Aucun changement de firmware.

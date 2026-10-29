@@ -22,6 +22,10 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 | Light or dark | Dark, Light, Auto | the mode of the theme. **Auto**: light by day, dark at night, following « Night (auto theme) » |
 | Night (auto theme) | on / off | read only in Auto mode. The automation « Tab5 — day/night theme » (`packages/tab5_push.yaml`) turns it on when the sun sets and off when it rises (`sun.sun`, so the location of Home Assistant). To decide yourself (a light sensor, bedtime…), turn that automation off and switch it from your own. Without Home Assistant, Auto keeps the last state received |
 
+![The tablet's device page on the left, the screen on the right: three themes picked one after the other, and the screen repainting each time](../images/installation/theme_en_direct.webp)
+
+**1** « Theme » on the tablet's device page; **2** the screen repaints at once. Each screen has its own theme.
+
 Home Assistant shows the theme names in English (« Soft relief » for « Relief doux », since 2026-10-24, [ADR-0070](../decisions/0070-home-assistant-reads-english.md)); the screen shows them in its own language, so in English the same names as Home Assistant. Six of them:
 
 ![Six themes of the Tab5 home screen drawn by the firmware itself: Pixel dark with a kitchen leak alert, Bonbon light with the living room's devices, Sorbet dark with a weather warning, Béton brut light with a low battery alert, Zen Sumi dark with the garden's devices and Capsule light with rain in 10 minutes](../images/tab5_themes_en.jpg)
@@ -106,6 +110,10 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 | Theme | 21 thèmes, de « Slate » (Ardoise à l'écran) à « Ultraviolet » ; une tablette neuve démarre en « Soft relief » (Relief doux) | couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. L'écran se repeint aussitôt, sans redémarrer ; les jeux gardent leurs couleurs sombres |
 | Light or dark | Dark, Light, Auto | le mode du thème. **Auto** : clair le jour, sombre la nuit, d'après « Night (auto theme) » |
 | Night (auto theme) | allumé / éteint | lu seulement en mode Auto. L'automatisation « Tab5 — day/night theme » (`packages/tab5_push.yaml`) l'allume au coucher du soleil et l'éteint à son lever (`sun.sun`, donc le lieu de Home Assistant). Pour décider vous-même (capteur de luminosité, heure du coucher…), coupez cette automatisation et pilotez l'interrupteur depuis la vôtre. Sans Home Assistant, Auto garde le dernier état reçu |
+
+![La page de l'appareil à gauche, l'écran à droite : trois thèmes choisis l'un après l'autre, et l'écran qui se repeint à chaque fois](../images/installation/theme_en_direct.webp)
+
+**1** « Theme » sur la page de l'appareil de la tablette ; **2** l'écran se repeint aussitôt. Chaque écran a son propre thème.
 
 Home Assistant montre les noms des thèmes en anglais (« Soft relief » pour « Relief doux », depuis le 24/10/2026, [ADR-0070](../decisions/0070-home-assistant-reads-english.md)) ; l'écran les montre dans sa langue, donc en anglais les mêmes noms que Home Assistant. Six d'entre eux :
 

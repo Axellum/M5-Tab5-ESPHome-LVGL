@@ -35,6 +35,15 @@ A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, th
    **A tablet already installed**: *Update*, without erasing: it keeps its Wi-Fi, its Home Assistant key and its settings. If the page offers *Install* instead (it does not recognise the firmware on the tablet), leave « Erase device » unticked in the box that follows: an erase also takes the Home Assistant key and the screen settings, and Home Assistant then waits for a confirmation ([reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19)).
 3. Wait for the end of the install. The same window then offers to set the Wi-Fi: that is [step 3](wifi.md).
 
+![The install page step by step: the board picked, Connect and install, Install in the window, then the confirmation](../images/installation/page_installation.webp)
+
+| | In the animation |
+|---|---|
+| **1** | your display chip, or the Waveshare 7B |
+| **2** | *Connect and install*, then the port in Chrome's own list (not shown) |
+| **3** | *Install* (*Update* on a tablet already installed) |
+| **4** | *Install* again to confirm: on a new tablet, erasing is expected |
+
 Closing the window restarts the tablet once: that is normal.
 
 ## Check a download (optional)
@@ -54,7 +63,7 @@ The install page and the tablet do not need this: the tablet only accepts a firm
 |---|---|
 | No port in the list | a cable that only charges shows no port: try another cable, then another USB port of the computer. Still nothing: put the tablet in download mode (next row). One user got there by unplugging the cable, pressing that button, then plugging the cable back in |
 | « Failed to initialize… holding the BOOT button » | the Tab5 has no BOOT button. Hold its reset button for about 2 s, until the internal green LED blinks fast: the tablet is in download mode. Start *Connect and install* again; at the end, a short press on reset restarts it |
-| The same message on the Waveshare 7B | the author got it on 29 Oct 2026 through the board's « USB » port (the ESP32-P4's own); the board only restarted. No fix found yet. Two leads, not tried: put it in download mode with its BOOT and RESET buttons (Waveshare's schematic shows both: hold BOOT, press RESET, release BOOT), or plug in the « USB TO UART » port, which according to Waveshare enters download mode by itself ([Waveshare 7B](../waveshare-7b.md)) |
+| The same message on the Waveshare 7B | on 29 Oct 2026 the page never got through on the author's board: « Failed to initialize » on its « USB » port (the ESP32-P4's own), « Possible serial noise » on « USB TO UART », and the same in download mode (hold BOOT, press RESET, release BOOT). What worked: [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32p4/) 5.3.1 from the computer, on « USB TO UART », with `tab5-ha-hmi-waveshare-7b.factory.bin` from the release (*Assets*): `esptool --port COM10 --baud 921600 erase-flash`, then `esptool --port COM10 --baud 921600 write-flash 0x0 tab5-ha-hmi-waveshare-7b.factory.bin` (your port has another number). Then plug in « USB » again for the Wi-Fi from the install page ([step 3](wifi.md)): it answers there, not on « USB TO UART ». After that erase, Home Assistant asks for a confirmation ([reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19); [Waveshare 7B](../waveshare-7b.md)) |
 | No *Install* button | the same version is already on the tablet. To start from scratch, « Erase User Data » (in red, at the bottom) erases everything, Wi-Fi, key and settings included (alarm clock, brightness…: note them in Home Assistant first), then installs again; Home Assistant then asks for a confirmation ([reinstalled with an erase](../troubleshooting.md#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19)) |
 | « This browser has no Web Serial » | Chrome or Edge, on a computer |
 | The screen is not right after the install | the wrong display chip, maybe: a sticker saying « ST7123 » may hide an ST7121. Install the other one (*Update*, without erasing) |
@@ -100,6 +109,15 @@ Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, es
    **Une tablette déjà installée** : *Update*, sans effacer : elle garde son Wi-Fi, sa clé de Home Assistant et ses réglages. Si la page propose *Install* à la place (elle ne reconnaît pas le firmware de la tablette), laissez « Erase device » décoché dans la boîte qui suit : un effacement emporte aussi la clé de Home Assistant et les réglages de l'écran, et Home Assistant attend ensuite une confirmation ([réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026)).
 3. Attendez la fin de l'installation. La même fenêtre propose ensuite de régler le Wi-Fi : c'est l'[étape 3](wifi.md#version-française).
 
+![La page d'installation pas à pas : la carte choisie, Connecter et installer, Install dans la fenêtre, puis la confirmation](../images/installation/page_installation.webp)
+
+| | Dans l'animation (page en anglais) |
+|---|---|
+| **1** | votre puce d'écran, ou la Waveshare 7B |
+| **2** | *Connect and install* (connecter et installer), puis le port dans la liste de Chrome (non montrée) |
+| **3** | *Install* (*Update* sur une tablette déjà installée) |
+| **4** | encore *Install* pour confirmer : sur une tablette neuve, l'effacement est attendu |
+
 Fermer la fenêtre redémarre la tablette une fois : c'est normal.
 
 ## Vérifier un téléchargement (facultatif)
@@ -119,7 +137,7 @@ La page d'installation et la tablette n'en ont pas besoin : la tablette n'accept
 |---|---|
 | Aucun port dans la liste | un câble qui ne fait que charger ne montre aucun port : essayez un autre câble, puis un autre port USB de l'ordinateur. Toujours rien : mettez la tablette en mode téléchargement (ligne suivante). Un utilisateur y est arrivé en débranchant le câble, en appuyant sur ce bouton, puis en rebranchant le câble |
 | « Failed to initialize… holding the BOOT button » | le Tab5 n'a pas de bouton BOOT. Maintenez son bouton reset environ 2 s, jusqu'à ce que la LED verte interne clignote vite : la tablette est en mode téléchargement. Relancez *Connecter et installer* ; à la fin, un appui court sur reset la redémarre |
-| Le même message sur la Waveshare 7B | l'auteur l'a eu le 29/10/2026 par le port « USB » de la carte (celui de l'ESP32-P4) ; la carte a seulement redémarré. La solution n'est pas encore trouvée. Deux pistes, non vérifiées : la mettre en mode téléchargement avec ses boutons BOOT et RESET (le schéma de Waveshare en montre deux : maintenir BOOT, appuyer sur RESET, relâcher BOOT), ou brancher le port « USB TO UART », qui d'après Waveshare passe seul en mode téléchargement ([Waveshare 7B](../waveshare-7b.md#version-française)) |
+| Le même message sur la Waveshare 7B | le 29/10/2026, la page n'est jamais passée sur la carte de l'auteur : « Failed to initialize » par son port « USB » (celui de l'ESP32-P4), « Possible serial noise » par « USB TO UART », et pareil en mode téléchargement (maintenir BOOT, appuyer sur RESET, relâcher BOOT). Ce qui a marché : [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32p4/) 5.3.1 depuis l'ordinateur, par « USB TO UART », avec `tab5-ha-hmi-waveshare-7b.factory.bin` de la release (*Assets*) : `esptool --port COM10 --baud 921600 erase-flash`, puis `esptool --port COM10 --baud 921600 write-flash 0x0 tab5-ha-hmi-waveshare-7b.factory.bin` (votre port a un autre numéro). Rebranchez ensuite « USB » pour le Wi-Fi depuis la page d'installation ([étape 3](wifi.md#version-française)) : il répond là, pas par « USB TO UART ». Après cet effacement, Home Assistant demande une confirmation ([réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026) ; [Waveshare 7B](../waveshare-7b.md#version-française)) |
 | Pas de bouton *Install* | la même version est déjà sur la tablette. Pour repartir de zéro, « Erase User Data » (en rouge, en bas) efface tout, Wi-Fi, clé et réglages compris (réveil, luminosité… : notez-les d'abord dans Home Assistant), puis réinstalle ; Home Assistant demande ensuite une confirmation ([réinstallée avec effacement](../troubleshooting.md#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026)) |
 | « Ce navigateur ne gère pas Web Serial » | Chrome ou Edge, sur un ordinateur |
 | L'écran n'est pas normal après l'installation | peut-être la mauvaise puce d'écran : un autocollant « ST7123 » peut cacher une ST7121. Installez l'autre (*Update*, sans effacer) |
