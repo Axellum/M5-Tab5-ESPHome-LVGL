@@ -25,7 +25,9 @@
 
 **A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, energy, music, cameras, TV remote, alarm clock — and 8 offline games, in seven languages. Twenty-one themes, light or dark, chosen from Home Assistant. It is my everyday screen, shared in case it is useful to someone. It also runs, as an experiment, on a 7-inch Waveshare board.
 
-![The author's M5Stack Tab5 held in one hand on its stand, screen in French: the time, two temperatures, a climate setpoint, the work-hours banner and a 5-day forecast with thunderstorm, rain and sun](docs/images/tab5_hero_4x3.jpg)
+[![Home Assistant wall screen on ESP32-P4, presentation video on YouTube (2 min 27): the 7-inch Home Assistant dashboard with a lamp's colour wheel open](docs/images/home-assistant-wall-screen-esp32-p4-video.webp)](https://youtu.be/75hMN49qWFM)
+
+*▶ [Watch the 2-minute presentation on YouTube](https://youtu.be/75hMN49qWFM) — English texts on screen, subtitles in seven languages.*
 
 **[▶ Video (2 min)](https://youtu.be/75hMN49qWFM)** · **[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
@@ -125,13 +127,27 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 **Three videos on YouTube** (October 2026, English texts on screen, subtitles in seven languages):
 
-| [The screens in 2 minutes](https://youtu.be/75hMN49qWFM) | [Install it in 7 steps](https://youtu.be/6OZMtD_UTSs) | [Every setting from Home Assistant](https://youtu.be/4NPOXTlYok8) |
+| [The Home Assistant screen in 2 minutes](https://youtu.be/75hMN49qWFM) | [Install it in 7 steps, nothing to compile](https://youtu.be/6OZMtD_UTSs) | [Every setting from Home Assistant](https://youtu.be/4NPOXTlYok8) |
 |:-:|:-:|:-:|
-| [<img src="docs/images/video_tour.webp" width="260" loading="lazy" alt="Video thumbnail: the Tab5 home screen with the colour wheel of a lamp open, and the words Your smart home, at your fingertips">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/video_installation.webp" width="260" loading="lazy" alt="Video thumbnail: the blueprint in Home Assistant and the 7-inch screen, with the words Set it up in 7 steps, from your browser, nothing to compile">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/video_reglages.webp" width="260" loading="lazy" alt="Video thumbnail: the Tab5 home screen with the words Your home, at a glance">](https://youtu.be/4NPOXTlYok8) |
+| [<img src="docs/images/home-assistant-dashboard-esp32-p4-tour-video.webp" width="260" loading="lazy" alt="Video: tour of a Home Assistant dashboard on an ESP32-P4 wall screen, a lamp's colour wheel open">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/home-assistant-screen-install-esphome-video.webp" width="260" loading="lazy" alt="Video: installing the Home Assistant screen with ESPHome from the browser, the blueprint and the 7-inch screen">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Video: every setting of the ESP32-P4 Home Assistant screen picked in a Home Assistant blueprint">](https://youtu.be/4NPOXTlYok8) |
+
+**Photos of the real screens** (29 October 2026, the Waveshare 7B in the default theme, the Tab5 in a dark theme):
+
+| Home Assistant dashboard, home screen (Waveshare ESP32-P4 7B) | Light control: a lamp's colour wheel, opened by a long press |
+|:-:|:-:|
+| <img src="docs/images/home-assistant-dashboard-waveshare-esp32-p4-7-inch.webp" width="400" loading="lazy" alt="Home Assistant dashboard on a Waveshare ESP32-P4 7-inch screen: clock, temperatures, energy, work hours and a 5-day weather forecast"> | <img src="docs/images/home-assistant-dashboard-light-colour-wheel.webp" width="400" loading="lazy" alt="Home Assistant light control on an ESP32-P4 touch screen: a lamp's colour wheel with power, brightness and seven colours"> |
+
+| Home Assistant lights: brightness and colours | Home Assistant energy dashboard: solar, grid, battery |
+|:-:|:-:|
+| <img src="docs/images/home-assistant-dashboard-lights-brightness.webp" width="400" loading="lazy" alt="Home Assistant lights dashboard on an ESP32-P4 screen: the lamps of a room, a brightness arc at 71 % and the colours"> | <img src="docs/images/home-assistant-energy-dashboard-solar-battery.webp" width="400" loading="lazy" alt="Home Assistant energy dashboard on an ESP32-P4 screen: solar production, home consumption, grid and battery flows"> |
+
+| M5Stack Tab5 Home Assistant dashboard, dark theme | Home Assistant climate control: air conditioner on the M5Stack Tab5 |
+|:-:|:-:|
+| <img src="docs/images/home-assistant-dashboard-m5stack-tab5-dark-theme.webp" width="400" loading="lazy" alt="M5Stack Tab5 Home Assistant dashboard in a dark blue theme: media player, clock, temperatures and a 5-day weather forecast"> | <img src="docs/images/home-assistant-dashboard-air-conditioner-m5stack-tab5.webp" width="400" loading="lazy" alt="Home Assistant air conditioner control on the M5Stack Tab5: modes, a 22 °C setpoint arc, presets, fan and airflow"> |
 
 An [earlier demo video](https://www.youtube.com/watch?v=ygNhgtMffu4) (voice, touch, TV remote, climate — provisional cut, July 2026), and an animated tour of the screens in the default theme, drawn by the firmware itself on a PC with demo data:
 
-![Animated tour of the M5Stack Tab5 Home Assistant screen: home, a room's devices, the whole house, the quick-action wheel, lights, climate, plants, solar energy, calendar, TV remote and console](docs/images/tab5_ui_tour_en.webp)
+![Animated tour of the M5Stack Tab5 Home Assistant screen: home, a room's devices, the whole house, a lamp's colour wheel, lights, climate, plants, solar energy, calendar, TV remote and console](docs/images/tab5_ui_tour_en.webp)
 
 **Twenty-one themes**, each light or dark: colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. Six of them on the home screen, drawn by the firmware itself on a PC with demo data: two show a room's devices, the four others a different alert on the central card.
 
@@ -236,7 +252,9 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 **Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie, musique, caméras, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Vingt et un thèmes, clairs ou sombres, au choix depuis Home Assistant. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un. Il tourne aussi, à l'essai, sur une carte Waveshare de 7 pouces.
 
-![La M5Stack Tab5 de l'auteur tenue à la main sur son socle : l'heure, deux températures, la consigne de la clim, le bandeau des horaires de travail et les prévisions à 5 jours avec orage, pluie et soleil](docs/images/tab5_hero_4x3.jpg)
+[![Écran mural Home Assistant sur ESP32-P4, vidéo de présentation sur YouTube (2 min 27) : le tableau de bord Home Assistant de l'écran 7 pouces avec la roue des couleurs d'une lampe ouverte](docs/images/home-assistant-wall-screen-esp32-p4-video.webp)](https://youtu.be/75hMN49qWFM)
+
+*▶ [Voir la présentation de 2 minutes sur YouTube](https://youtu.be/75hMN49qWFM) — textes à l'écran en anglais, sous-titres en sept langues dont le français.*
 
 **[▶ Vidéo (2 min)](https://youtu.be/75hMN49qWFM)** · **[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
@@ -336,13 +354,27 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 
 **Trois vidéos sur YouTube** (octobre 2026, textes à l'écran en anglais, sous-titres en sept langues dont le français) :
 
-| [Les écrans en 2 minutes](https://youtu.be/75hMN49qWFM) | [L'installer en 7 étapes](https://youtu.be/6OZMtD_UTSs) | [Tout se règle dans Home Assistant](https://youtu.be/4NPOXTlYok8) |
+| [L'écran Home Assistant en 2 minutes](https://youtu.be/75hMN49qWFM) | [L'installer en 7 étapes, sans rien compiler](https://youtu.be/6OZMtD_UTSs) | [Tout se règle dans Home Assistant](https://youtu.be/4NPOXTlYok8) |
 |:-:|:-:|:-:|
-| [<img src="docs/images/video_tour.webp" width="260" loading="lazy" alt="Miniature de la vidéo : l'accueil du Tab5 avec la roue des couleurs d'une lampe ouverte, et les mots Your smart home, at your fingertips">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/video_installation.webp" width="260" loading="lazy" alt="Miniature de la vidéo : le blueprint dans Home Assistant et l'écran 7 pouces, avec les mots Set it up in 7 steps, from your browser, nothing to compile">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/video_reglages.webp" width="260" loading="lazy" alt="Miniature de la vidéo : l'accueil du Tab5 avec les mots Your home, at a glance">](https://youtu.be/4NPOXTlYok8) |
+| [<img src="docs/images/home-assistant-dashboard-esp32-p4-tour-video.webp" width="260" loading="lazy" alt="Vidéo : le tour d'un tableau de bord Home Assistant sur un écran mural ESP32-P4, la roue des couleurs d'une lampe ouverte">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/home-assistant-screen-install-esphome-video.webp" width="260" loading="lazy" alt="Vidéo : installer l'écran Home Assistant avec ESPHome depuis le navigateur, le blueprint et l'écran 7 pouces">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Vidéo : tous les réglages de l'écran Home Assistant ESP32-P4 choisis dans un blueprint Home Assistant">](https://youtu.be/4NPOXTlYok8) |
+
+**Photos des vrais écrans** (29 octobre 2026, la Waveshare 7B dans le thème par défaut, le Tab5 dans un thème sombre) :
+
+| Tableau de bord Home Assistant, accueil (Waveshare ESP32-P4 7B) | Commande des lumières : la roue des couleurs d'une lampe, ouverte par un appui long |
+|:-:|:-:|
+| <img src="docs/images/home-assistant-dashboard-waveshare-esp32-p4-7-inch.webp" width="400" loading="lazy" alt="Tableau de bord Home Assistant sur un écran Waveshare ESP32-P4 7 pouces : heure, températures, énergie, horaires et prévisions météo à 5 jours"> | <img src="docs/images/home-assistant-dashboard-light-colour-wheel.webp" width="400" loading="lazy" alt="Commande des lumières Home Assistant sur un écran tactile ESP32-P4 : la roue des couleurs d'une lampe, avec marche, luminosité et sept couleurs"> |
+
+| Lumières Home Assistant : luminosité et couleurs | Tableau de bord énergie Home Assistant : solaire, réseau, batterie |
+|:-:|:-:|
+| <img src="docs/images/home-assistant-dashboard-lights-brightness.webp" width="400" loading="lazy" alt="Tableau de bord des lumières Home Assistant sur un écran ESP32-P4 : les lampes d'une pièce, un arc de luminosité à 71 % et les couleurs"> | <img src="docs/images/home-assistant-energy-dashboard-solar-battery.webp" width="400" loading="lazy" alt="Tableau de bord énergie Home Assistant sur un écran ESP32-P4 : production solaire, consommation de la maison, réseau et batterie"> |
+
+| Tableau de bord Home Assistant du M5Stack Tab5, thème sombre | Climatisation Home Assistant : la clim sur le M5Stack Tab5 |
+|:-:|:-:|
+| <img src="docs/images/home-assistant-dashboard-m5stack-tab5-dark-theme.webp" width="400" loading="lazy" alt="Tableau de bord Home Assistant du M5Stack Tab5 dans un thème bleu sombre : lecteur, heure, températures et prévisions météo à 5 jours"> | <img src="docs/images/home-assistant-dashboard-air-conditioner-m5stack-tab5.webp" width="400" loading="lazy" alt="Commande de la climatisation Home Assistant sur le M5Stack Tab5 : modes, arc de consigne à 22 °C, préréglages, ventilation et flux d'air"> |
 
 Une [première vidéo de démo](https://www.youtube.com/watch?v=ygNhgtMffu4) (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026), et un tour animé des écrans dans le thème par défaut, dessinés par le firmware lui-même sur un PC, avec des données de démonstration :
 
-![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils d'une pièce, toute la maison, roue d'actions, lumières, clim, plantes, énergie solaire, calendrier, télécommande TV et console](docs/images/tab5_ui_tour_fr.webp)
+![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils d'une pièce, toute la maison, roue des couleurs d'une lampe, lumières, clim, plantes, énergie solaire, calendrier, télécommande TV et console](docs/images/tab5_ui_tour_fr.webp)
 
 **Vingt et un thèmes**, chacun clair ou sombre : couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. Six d'entre eux sur l'accueil, dessinés par le firmware lui-même sur un PC, avec des données de démonstration : deux montrent les appareils d'une pièce, les quatre autres une alerte différente sur la carte centrale.
 
