@@ -6,7 +6,7 @@
 
 What happens when you touch the screen: tap, long press (hold a moment), swipe. One page per part of the screen; this one shows where everything is.
 
-![The home screen with numbered zones: voice buttons, clock, top buttons, temperatures, climate, the row under the clock, central card and the bottom row](../images/notice/accueil-annote-en.webp)
+![Home Assistant wall screen (ESP32-P4): the home screen with numbered zones: voice buttons, clock, top buttons, temperatures, climate, the row under the clock, central card and the bottom row](../images/notice/accueil-annote-en.webp)
 
 | # | Zone | Tap | Long press |
 |---|---|---|---|
@@ -75,7 +75,7 @@ These pictures are drawn by the project's CI from the firmware itself, with the 
 
 Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt un instant), glissement. Une page par partie de l'écran ; celle-ci montre où tout se trouve.
 
-![L'écran d'accueil avec ses zones numérotées : boutons de la voix, horloge, boutons du haut, températures, clim, rangée sous l'horloge, carte centrale et rangée du bas](../images/notice/accueil-annote-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : l'écran d'accueil avec ses zones numérotées : boutons de la voix, horloge, boutons du haut, températures, clim, rangée sous l'horloge, carte centrale et rangée du bas](../images/notice/accueil-annote-fr.webp)
 
 | N° | Zone | Tap | Appui long |
 |---|---|---|---|

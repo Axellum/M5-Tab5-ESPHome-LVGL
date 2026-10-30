@@ -8,7 +8,7 @@
 
 **Several units**: the window has one page per climate unit (the one picked in the blueprint, then those placed on room cards). Swipe left or right for the next or previous one; the dots at the bottom show which one. With a single unit, there are no dots.
 
-![The climate window: modes, target 20.0 with the arc, options](../images/notice/climatisation-en.webp)
+![Home Assistant wall screen (ESP32-P4): the climate window: modes, target 20.0 with the arc, options](../images/notice/climatisation-en.webp)
 
 **Mode** (left): **Cool**, **Heat**, **Dry**, **Fan**, **Off**. The icon of the current mode is coloured.
 
@@ -39,7 +39,7 @@ A tap on the room temperature of the home screen opens the same wheel as a clima
 
 **Plusieurs clims** : la fenêtre a une page par clim (celle choisie dans le blueprint, puis celles posées sur des cartes de pièce). Glissez à gauche ou à droite pour la suivante ou la précédente ; les pastilles du bas disent laquelle. Avec une seule clim, pas de pastilles.
 
-![La fenêtre de la clim : modes, consigne 20.0 avec l'arc, options](../images/notice/climatisation-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre de la clim : modes, consigne 20.0 avec l'arc, options](../images/notice/climatisation-fr.webp)
 
 **Mode** (à gauche) : **Froid**, **Chaud**, **Sec**, **Ventilation**, **Éteint**. L'icône du mode en cours est en couleur.
 

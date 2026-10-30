@@ -6,7 +6,7 @@
 
 Eight small games, early prototypes made with AI, that run on the tablet alone: no Home Assistant, no network. **Opens with** a tap on the gamepad button, top right of the home screen, or on the second temperature (greenhouse); without a greenhouse sensor, a gamepad stands in its place and does the same.
 
-![The Arcade: eight cards, one per game](../images/notice/arcade-en.webp)
+![Home Assistant wall screen (ESP32-P4): the Arcade: eight cards, one per game](../images/notice/arcade-en.webp)
 
 - **Tap a card**: its game opens on its menu (play, settings, scores…).
 - The **×**, top right, or 45 s without a touch: back to the home screen.
@@ -34,7 +34,7 @@ The rules, levels and settings of each game, in French: [Arcade, the eight conso
 
 Huit petits jeux, des prototypes faits avec l'IA, qui tournent sur la tablette seule : ni Home Assistant, ni réseau. **S'ouvre par** un tap sur le bouton manette, en haut à droite de l'accueil, ou sur la seconde température (serre) ; sans sonde de serre, une manette prend sa place et fait de même.
 
-![L'Arcade : huit cartes, une par jeu](../images/notice/arcade-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : l'Arcade : huit cartes, une par jeu](../images/notice/arcade-fr.webp)
 
 - **Tap sur une carte** : son jeu s'ouvre sur son menu (jouer, réglages, scores…).
 - La **×**, en haut à droite, ou 45 s sans toucher : retour à l'accueil.

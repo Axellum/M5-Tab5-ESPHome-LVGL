@@ -6,7 +6,7 @@
 
 Only if sensors are picked in the « Énergie » sections of the blueprint ([solar energy](../installation/adapt-to-your-home.md#solar-energy-optional)). **Opens with** a tap or a long press on one of those sensors' cards ([bottom row](tiles.md)), the solar one with its solar-panel icon. When the solar production shows in the status row, a long press on the Home Assistant button, top right of the home screen, opens it too.
 
-![The energy window, Flow page: solar, home, grid and battery as circles, joined by lines as thick as the power flowing](../images/notice/energie-flux-en.webp)
+![Home Assistant energy dashboard on the ESP32-P4 wall screen: the energy window, Flow page: solar, home, grid and battery as circles, joined by lines as thick as the power flowing](../images/notice/energie-flux-en.webp)
 
 The window has up to four pages: swipe left or right, or touch their names at the top. It opens on the first one that has data; a page without its data is not shown.
 
@@ -34,7 +34,7 @@ The history needs the produced-energy sensor; without it, the live cards fill th
 
 Seulement si des capteurs sont choisis dans les sections « Énergie » du blueprint ([énergie solaire](../installation/adapt-to-your-home.md#énergie-solaire-facultatif)). **S'ouvre par** un tap ou un appui long sur la carte d'un de ces capteurs ([rangée du bas](tiles.md#version-française)), celle du solaire avec son icône de panneau. Quand la production solaire s'affiche dans la ligne d'état, un appui long sur le bouton Home Assistant, en haut à droite de l'accueil, l'ouvre aussi.
 
-![La fenêtre de l'énergie, page des flux : solaire, maison, réseau et batterie en cercles, reliés par des lignes aussi épaisses que la puissance qui passe](../images/notice/energie-flux-fr.webp)
+![Tableau de bord énergie Home Assistant sur l'écran mural ESP32-P4 : la fenêtre de l'énergie, page des flux : solaire, maison, réseau et batterie en cercles, reliés par des lignes aussi épaisses que la puissance qui passe](../images/notice/energie-flux-fr.webp)
 
 La fenêtre a jusqu'à quatre pages : glissez à gauche ou à droite, ou touchez leur nom en haut. Elle s'ouvre sur la première qui a des données ; une page sans ses données n'apparaît pas.
 

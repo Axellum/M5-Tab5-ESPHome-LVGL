@@ -8,7 +8,7 @@
 
 The weather in graphs, on three pages. Their names are at the top, next to the title, the one shown in colour: **tap a name**, or **swipe** left or right anywhere in the window, to change page (the last one leads back to the first).
 
-![The weather window, Today page: temperature and rain hour by hour](../images/notice/meteo-aujourdhui-en.webp)
+![Home Assistant wall screen (ESP32-P4): the weather window, Today page: temperature and rain hour by hour](../images/notice/meteo-aujourdhui-en.webp)
 
 - **Today**: on top, now: the weather icon, the temperature in its colour, the weather in words (« Éclaircies », « Pluie »…), the low and high of the day, and on the right the rain expected over the hours shown below. Under it, the next hours (up to 15): the hour, its icon, a curve of the temperatures with each value in its colour, and a bar with the millimetres where it rains. The current hour is on a lightly tinted column; where the hours pass midnight, a thin line and « Demain » (tomorrow).
 - **10 days**: one row per day from today (« Aujourd'hui », « Demain », then « Mer 17 »…): its icon, the low, a bar from the low to the high, and the high. All the bars share the same scale: a warm day sits to the right, a cold one to the left, and the bar goes from the colour of the low to the colour of the high. A dot on today's row marks the temperature now.
@@ -26,7 +26,7 @@ Everything comes from what Home Assistant already sends to the home page: nothin
 
 La météo en graphiques, sur trois pages. Leurs noms sont en haut, à côté du titre, celle affichée en couleur : **tap sur un nom**, ou **glisser** vers la gauche ou la droite n'importe où dans la fenêtre, pour changer de page (la dernière ramène à la première).
 
-![La fenêtre de la météo, page Aujourd'hui : température et pluie heure par heure](../images/notice/meteo-aujourdhui-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre de la météo, page Aujourd'hui : température et pluie heure par heure](../images/notice/meteo-aujourdhui-fr.webp)
 
 - **Aujourd'hui** : en haut, le moment : l'icône météo, la température dans sa couleur, le temps en mots (« Éclaircies », « Pluie »…), le minimum et le maximum du jour, et à droite la pluie attendue sur les heures montrées dessous. Dessous, les heures qui viennent (jusqu'à 15) : l'heure, son icône, une courbe des températures avec chaque valeur dans sa couleur, et une barre avec les millimètres là où il pleut. L'heure en cours est sur une colonne légèrement teintée ; là où les heures passent minuit, un trait fin et « Demain ».
 - **10 jours** : une ligne par jour à partir d'aujourd'hui (« Aujourd'hui », « Demain », puis « Mer 17 »…) : son icône, le minimum, une barre du minimum au maximum, et le maximum. Toutes les barres partagent la même échelle : un jour chaud est à droite, un jour froid à gauche, et la barre va de la couleur du minimum à celle du maximum. Un point sur la ligne d'aujourd'hui marque la température du moment.

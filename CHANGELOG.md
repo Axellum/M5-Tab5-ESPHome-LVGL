@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Ajouté
 
+- **Descriptions des images complétées** (doc seule) : les 34 textes alternatifs courts ou sans
+  contexte de la page Écrans (`docs/screens.md`, « Sunny day, French », « Climate popup »…) disent
+  ce que montre l'image et de quoi il s'agit, et la première image de chaque page de la notice
+  (`docs/notice/*.md`, anglais et français) dit qu'il s'agit de l'écran mural Home Assistant sur
+  ESP32-P4. Ni nom de fichier, ni titre, ni autre image changés.
 - **README : la vidéo de présentation en tête et des photos des vrais écrans** : la photo de juillet
   en tête du README (et de l'accueil du site) est remplacée par la vignette de la vidéo de
   présentation, cliquable vers YouTube (`docs/images/home-assistant-wall-screen-esp32-p4-video.webp` ; la photo reste sur la

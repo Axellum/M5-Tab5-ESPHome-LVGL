@@ -8,7 +8,7 @@ The top of the screen never changes: voice (or the chart or the music player tha
 
 ## Voice: Domo, microphone, Discu, Ok Nabu (1 to 4)
 
-![Home screen in conversation mode: the robot button is lit](../images/notice/accueil-mode-discussion-en.webp)
+![Home Assistant wall screen (ESP32-P4): the home screen in conversation mode: the robot button is lit](../images/notice/accueil-mode-discussion-en.webp)
 
 - **Domo** (house) and **Discu** (robot): the two voice modes. A tap picks one; the lit button is the current mode. Domo sends what you say to Home Assistant's assistant, which runs commands (« turn on the living room »). Discu sends it to your conversation assistant, for questions and chat. How to set them up: [the two voice modes](../installation/settings.md#voice-assistant-the-two-modes).
 - **Microphone**: a tap listens right away, without the wake word. While the tablet answers, a tap cuts the answer and listens again. A **long press** opens the [voice assistant window](voice.md). Its colour gives the state: grey, waiting; green, listening; orange, thinking; blue, answering; red, error.
@@ -88,7 +88,7 @@ Le haut de l'écran ne change jamais : voix (ou le graphique ou le lecteur de mu
 
 ## Voix : Domo, micro, Discu, Ok Nabu (1 à 4)
 
-![L'écran d'accueil en mode discussion : le bouton du robot est allumé](../images/notice/accueil-mode-discussion-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : l'écran d'accueil en mode discussion : le bouton du robot est allumé](../images/notice/accueil-mode-discussion-fr.webp)
 
 - **Domo** (maison) et **Discu** (robot) : les deux modes vocaux. Un tap en choisit un ; le bouton allumé est le mode en cours. Domo envoie ce que vous dites à l'assistant de Home Assistant, qui exécute les commandes (« allume le salon »). Discu l'envoie à votre assistant de discussion, pour les questions et la conversation. Pour les régler : [les deux modes vocaux](../installation/settings.md#assistant-vocal--les-deux-modes).
 - **Micro** : un tap écoute tout de suite, sans le mot de réveil. Pendant que la tablette répond, un tap coupe la réponse et réécoute. Un **appui long** ouvre la [fenêtre de l'assistant vocal](voice.md#version-française). Sa couleur donne l'état : gris, en attente ; vert, écoute ; orange, réflexion ; bleu, réponse ; rouge, erreur.

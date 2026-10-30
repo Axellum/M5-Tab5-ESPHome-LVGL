@@ -21,7 +21,7 @@ Say « Ok Nabu », or tap the microphone of the home screen, then speak. The ans
 
 **Opens with** a long press on the microphone. In Discu mode, it also opens by itself when you speak.
 
-![The voice assistant window: settings on the left, the request and a long answer with a table on the right](../images/notice/assistant-reponse-en.webp)
+![Home Assistant wall screen (ESP32-P4): the voice assistant window: settings on the left, the request and a long answer with a table on the right](../images/notice/assistant-reponse-en.webp)
 
 **Settings** (left)
 
@@ -59,7 +59,7 @@ Dites « Ok Nabu », ou touchez le micro de l'écran d'accueil, puis parlez. La 
 
 **S'ouvre par** un appui long sur le micro. En mode Discu, elle s'ouvre aussi seule quand vous parlez.
 
-![La fenêtre de l'assistant vocal : les réglages à gauche, la demande et une longue réponse avec un tableau à droite](../images/notice/assistant-reponse-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre de l'assistant vocal : les réglages à gauche, la demande et une longue réponse avec un tableau à droite](../images/notice/assistant-reponse-fr.webp)
 
 **Réglages** (à gauche)
 
