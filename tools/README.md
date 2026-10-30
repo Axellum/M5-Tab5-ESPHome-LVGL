@@ -12,7 +12,9 @@ Ces outils écrivent dans le dépôt **sans option** : à lancer exprès, puis r
 | `gen_themes.py` | `Tab5/socle/tab5_themes_data.h` et les parties générées de `Tab5/socle/tab5_tokens.h`, `Tab5/paquets/tab5-themes.yaml` et `Tab5/ecran/tab5_theme.cpp`, depuis `Tab5/themes/*.yaml` | après un thème ou un rôle de couleur (`--check`) |
 | `gen_tuiles_icones.py` | `Tab5/socle/tab5_tuiles_icones.h`, les glyphes de trois polices MDI de `Tab5/paquets/tab5-styles.yaml`, deux tables du blueprint | après `Tab5/tuiles_icones.yaml` (`--check`) |
 | `police_theme.py` | `Tab5/themes/_polices.yaml` (télécharge et mesure les polices Google Fonts des thèmes) | après une police de thème, avant `gen_themes.py` |
-| `cartographie_counts.py --write` | les comptes de lignes de `CARTOGRAPHIE_TAB5.md` | quand `pytest` le demande (sans `--write` : vérifie seulement) |
+| `cartographie_counts.py --write` | les comptes de lignes de `CARTOGRAPHIE_TAB5.md` | quand `pytest` le demande, ou après une fusion de `main` en conflit sur ces comptes (sans `--write` : vérifie seulement) |
+| `changelog_assembler.py` | `CHANGELOG.md` (fragments de `changelog.d/` rangés sous `[Unreleased]` ou `--section X.Y.Z`), puis supprime les fragments | à la release seulement ; `--nouveau Ajouté` crée le fragment de la branche, `--dry-run` montre sans écrire, `--check` valide |
+| `prochain_adr.py --write` | le nombre d'ADR du README (EN, FR) et de `CARTOGRAPHIE_TAB5.md` | après un nouvel ADR ou une fusion de `main` qui en ajoute ; sans `--write` : affiche le prochain numéro libre, PR ouvertes comprises |
 | `render_ha_config.py` | `HomeAssistant_Config/rendered/` (gitignoré) | copie déployable ; `--check` = garde-fou de fuite, n'écrit rien |
 | `make_chess_font.py` | `Tab5/fonts/ChessPieces.ttf` (12 glyphes) | seulement si les pièces d'échecs changent |
 | `rendu/maj_references.py` | les PNG de `docs/images/rendu/` (télécharge les captures d'un run) | quand un changement d'écran voulu doit devenir la référence |
@@ -30,6 +32,7 @@ Ces outils écrivent dans le dépôt **sans option** : à lancer exprès, puis r
 | `check_arkanoid_levels.py` | les 8 niveaux d'« Arcanoïde » complets, aucune brique emmurée |
 | `check_trivia_questions.py` | la banque de « Trial Poursuite » : ni entrée manquante, ni question vide ou en double |
 | `cartographie_counts.py` | les comptes de lignes de `CARTOGRAPHIE_TAB5.md`, à 20 % près |
+| `changelog_assembler.py --check` | les fragments de `changelog.d/` : nom, sous-titres permis, puces, assemblage possible (`tests/test_changelog_fragments.py`) |
 | `verifier_secrets_config.py` | aucun secret en clair dans un fichier suivi (hook pre-commit) |
 | `i18n_keys.py` | relève les clés de `tr()` du firmware ; lu par `tests/test_i18n.py`, lancé seul il liste les clés manquantes de chaque langue |
 

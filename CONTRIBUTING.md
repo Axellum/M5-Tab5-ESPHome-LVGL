@@ -37,8 +37,10 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
    gives your editor the same indentation and encoding.
 5. If you changed a `!include`d file: `esphome clean` before the next `run`.
 6. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) checklist.
-7. Add a line to [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes (older versions
-   are archived in [`docs/changelog/`](docs/changelog/)).
+7. For user-visible changes, add a changelog fragment `changelog.d/<branch>.md` rather than
+   editing [`CHANGELOG.md`](CHANGELOG.md): it is assembled at release time, so parallel pull
+   requests do not conflict (format in [`changelog.d/README.md`](changelog.d/README.md); older
+   versions are archived in [`docs/changelog/`](docs/changelog/)).
 8. Never commit a key (`*.pem`, `*.key`), `Tab5/user_entities.yaml`, or production HA files.
 
 ### Branching
@@ -86,8 +88,10 @@ Merci de vous intéresser à ce projet. C'est un firmware personnel, mais issues
    l'éditeur la même indentation et le même encodage.
 5. Si vous modifiez un fichier `!include` : `esphome clean` avant le prochain `run`.
 6. Utiliser la checklist du [modèle de PR](.github/PULL_REQUEST_TEMPLATE.md).
-7. Ajouter une entrée dans [`CHANGELOG.md`](CHANGELOG.md) pour les changements visibles
-   (les versions plus anciennes sont archivées dans [`docs/changelog/`](docs/changelog/)).
+7. Pour un changement visible, déposer un fragment `changelog.d/<branche>.md` plutôt que
+   d'écrire dans [`CHANGELOG.md`](CHANGELOG.md) : il est assemblé à la release, et deux PR
+   parallèles n'entrent plus en conflit (format dans [`changelog.d/README.md`](changelog.d/README.md) ;
+   les versions plus anciennes sont archivées dans [`docs/changelog/`](docs/changelog/)).
 8. Ne jamais committer une clé (`*.pem`, `*.key`), `Tab5/user_entities.yaml`, ni les fichiers HA de prod.
 
 ### Branches

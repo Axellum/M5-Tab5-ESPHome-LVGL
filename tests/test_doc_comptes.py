@@ -42,6 +42,7 @@ changé, il faut adapter le motif, pas le laisser vérifier le vide."""
 import pathlib
 import re
 
+import prochain_adr
 import pytest
 from tests.commun import lire as _lire, sources as _sources
 
@@ -253,14 +254,14 @@ def test_table_des_services_du_readme_tab5():
 
 # ─── Les décisions d'architecture ────────────────────────────────────────────
 
-@pytest.mark.parametrize("chemin, motif", [
-    (README, r"\b(\d+) \[architecture decision records\]"),
-    (README, r"\b(\d+) \[décisions d'architecture\]"),
-    (CARTOGRAPHIE, r"\((\d+) ADR\)"),
-], ids=["readme-en", "readme-fr", "cartographie"])
+# Motifs de tools/prochain_adr.py (une seule liste) : `--write` y recale ces comptes, plutôt
+# qu'un conflit à résoudre à la main quand deux PR ajoutent chacune un ADR.
+@pytest.mark.parametrize("chemin, motif", [(REPO / nom, motif) for nom, motif in prochain_adr.COMPTES],
+                         ids=["readme-en", "readme-fr", "cartographie"])
 def test_nombre_d_adr(chemin, motif):
     assert len(_adr()) > 20, "docs/decisions/ ne contient plus les ADR numérotés"
-    assert set(_nombres(chemin, motif)) == {len(_adr())}
+    assert set(_nombres(chemin, motif)) == {len(_adr())}, (
+        f"{chemin.name} : nombre d'ADR faux, lancer `python tools/prochain_adr.py --write`")
 
 
 # ─── Les langues de l'écran (02/10/2026) ─────────────────────────────────────

@@ -42,7 +42,8 @@ Les balises ESPHome et HA (!lambda, !include, !input…) valent None.
     python tools/contrat_api.py --matrice            # copie de travail × dernier tag stable
     python tools/contrat_api.py --matrice --depuis v3.7.0 --courant v3.8.0-rc.3 [--en]
 
-Les étiquettes « **Contrat HA ↔ firmware** : … (depuis vX.Y.Z) » du CHANGELOG sont
+Les étiquettes « **Contrat HA ↔ firmware** : … (depuis vX.Y.Z) » du CHANGELOG (et des
+fragments de changelog.d/, avant leur premier « ### ») sont
 vérifiées contre la matrice par tests/test_contrat_versions.py ; la phrase exacte vient
 de `etiquette()` (sortie de --matrice)."""
 from __future__ import annotations
@@ -921,7 +922,7 @@ def main(argv=None) -> int:
     m = matrice(depuis, args.courant)
     print(tableau(m, "en" if args.en else "fr"), end="")
     if not args.en:
-        print("\nLigne du CHANGELOG :\n" + etiquette(m))
+        print("\nLigne du CHANGELOG (en tête du fragment changelog.d/ de la PR) :\n" + etiquette(m))
     return 0
 
 
