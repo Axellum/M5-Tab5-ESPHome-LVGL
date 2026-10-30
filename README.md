@@ -27,7 +27,7 @@
 
 ![The author's M5Stack Tab5 held in one hand on its stand, screen in French: the time, two temperatures, a climate setpoint, the work-hours banner and a 5-day forecast with thunderstorm, rain and sun](docs/images/tab5_hero_4x3.jpg)
 
-**[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
+**[▶ Video (2 min)](https://youtu.be/75hMN49qWFM)** · **[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
 > *A personal project exploring what's possible when AI writes all the code. Built with Antigravity, DeepSeek, MiniMax, Z.ai, Claude, and Cursor — not a single line typed by hand. I am more the architect than the author.*
 
@@ -123,7 +123,13 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 ## See it in action
 
-**[▶ Demo video on YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voice, touch, TV remote, climate — provisional cut, July 2026), and an animated tour of the screens in the default theme, drawn by the firmware itself on a PC with demo data:
+**Three videos on YouTube** (October 2026, English texts on screen, subtitles in seven languages):
+
+| [The screens in 2 minutes](https://youtu.be/75hMN49qWFM) | [Install it in 7 steps](https://youtu.be/6OZMtD_UTSs) | [Every setting from Home Assistant](https://youtu.be/4NPOXTlYok8) |
+|:-:|:-:|:-:|
+| [<img src="docs/images/video_tour.webp" width="260" loading="lazy" alt="Video thumbnail: the Tab5 home screen with the colour wheel of a lamp open, and the words Your smart home, at your fingertips">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/video_installation.webp" width="260" loading="lazy" alt="Video thumbnail: the blueprint in Home Assistant and the 7-inch screen, with the words Set it up in 7 steps, from your browser, nothing to compile">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/video_reglages.webp" width="260" loading="lazy" alt="Video thumbnail: the Tab5 home screen with the words Your home, at a glance">](https://youtu.be/4NPOXTlYok8) |
+
+An [earlier demo video](https://www.youtube.com/watch?v=ygNhgtMffu4) (voice, touch, TV remote, climate — provisional cut, July 2026), and an animated tour of the screens in the default theme, drawn by the firmware itself on a PC with demo data:
 
 ![Animated tour of the M5Stack Tab5 Home Assistant screen: home, a room's devices, the whole house, the quick-action wheel, lights, climate, plants, solar energy, calendar, TV remote and console](docs/images/tab5_ui_tour_en.webp)
 
@@ -232,7 +238,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ![La M5Stack Tab5 de l'auteur tenue à la main sur son socle : l'heure, deux températures, la consigne de la clim, le bandeau des horaires de travail et les prévisions à 5 jours avec orage, pluie et soleil](docs/images/tab5_hero_4x3.jpg)
 
-**[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
+**[▶ Vidéo (2 min)](https://youtu.be/75hMN49qWFM)** · **[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
 > *Un projet personnel pour voir ce que donne l'IA quand elle écrit tout le code. Construit avec Antigravity, DeepSeek, MiniMax, Z.ai, Claude et Cursor — pas une ligne tapée à la main. J'en suis plus l'architecte que l'auteur.*
 
@@ -328,7 +334,13 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 
 ## En images
 
-**[▶ Vidéo de démo sur YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026), et un tour animé des écrans dans le thème par défaut, dessinés par le firmware lui-même sur un PC, avec des données de démonstration :
+**Trois vidéos sur YouTube** (octobre 2026, textes à l'écran en anglais, sous-titres en sept langues dont le français) :
+
+| [Les écrans en 2 minutes](https://youtu.be/75hMN49qWFM) | [L'installer en 7 étapes](https://youtu.be/6OZMtD_UTSs) | [Tout se règle dans Home Assistant](https://youtu.be/4NPOXTlYok8) |
+|:-:|:-:|:-:|
+| [<img src="docs/images/video_tour.webp" width="260" loading="lazy" alt="Miniature de la vidéo : l'accueil du Tab5 avec la roue des couleurs d'une lampe ouverte, et les mots Your smart home, at your fingertips">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/video_installation.webp" width="260" loading="lazy" alt="Miniature de la vidéo : le blueprint dans Home Assistant et l'écran 7 pouces, avec les mots Set it up in 7 steps, from your browser, nothing to compile">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/video_reglages.webp" width="260" loading="lazy" alt="Miniature de la vidéo : l'accueil du Tab5 avec les mots Your home, at a glance">](https://youtu.be/4NPOXTlYok8) |
+
+Une [première vidéo de démo](https://www.youtube.com/watch?v=ygNhgtMffu4) (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026), et un tour animé des écrans dans le thème par défaut, dessinés par le firmware lui-même sur un PC, avec des données de démonstration :
 
 ![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils d'une pièce, toute la maison, roue d'actions, lumières, clim, plantes, énergie solaire, calendrier, télécommande TV et console](docs/images/tab5_ui_tour_fr.webp)
 

@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Ajouté
 
+- **Les trois vidéos YouTube dans le README** (et donc sur la page d'accueil du site) : « les écrans
+  en 2 minutes », « l'installer en 7 étapes » et « tout se règle dans Home Assistant », en vignettes
+  cliquables dans « See it in action » / « En images » (miniatures hébergées dans le dépôt,
+  `docs/images/video_*.webp`, rien de chargé depuis YouTube), et un lien « ▶ Vidéo (2 min) » dans
+  la ligne de liens du haut. La vidéo provisoire de juillet reste citée. Aucun changement de firmware.
 - **Guide d'installation illustré** (doc seule, anglais et français) : des animations numérotées,
   enregistrées le 29/10/2026 sur le Home Assistant et les écrans de l'auteur, chaque numéro renvoyant
   à une ligne sous l'image : HACS pas à pas (étape 1), la page d'installation (étape 2), le Wi-Fi
