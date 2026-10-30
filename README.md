@@ -25,7 +25,9 @@
 
 **A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, energy, music, cameras, TV remote, alarm clock — and 8 offline games, in seven languages. Twenty-one themes, light or dark, chosen from Home Assistant. It is my everyday screen, shared in case it is useful to someone. It also runs, as an experiment, on a 7-inch Waveshare board.
 
-![The author's M5Stack Tab5 held in one hand on its stand, screen in French: the time, two temperatures, a climate setpoint, the work-hours banner and a 5-day forecast with thunderstorm, rain and sun](docs/images/tab5_hero_4x3.jpg)
+[![Presentation video on YouTube (2 min 27): the 7-inch screen with a lamp's colour wheel open, and the words Your smart home, at your fingertips](docs/images/video_presentation.webp)](https://youtu.be/75hMN49qWFM)
+
+*▶ [Watch the 2-minute presentation on YouTube](https://youtu.be/75hMN49qWFM) — English texts on screen, subtitles in seven languages.*
 
 **[▶ Video (2 min)](https://youtu.be/75hMN49qWFM)** · **[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
@@ -129,9 +131,23 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 |:-:|:-:|:-:|
 | [<img src="docs/images/video_tour.webp" width="260" loading="lazy" alt="Video thumbnail: the Tab5 home screen with the colour wheel of a lamp open, and the words Your smart home, at your fingertips">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/video_installation.webp" width="260" loading="lazy" alt="Video thumbnail: the blueprint in Home Assistant and the 7-inch screen, with the words Set it up in 7 steps, from your browser, nothing to compile">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/video_reglages.webp" width="260" loading="lazy" alt="Video thumbnail: the Tab5 home screen with the words Your home, at a glance">](https://youtu.be/4NPOXTlYok8) |
 
+**Photos of the real screens** (29 October 2026, the Waveshare 7B in the default theme, the Tab5 in a dark theme):
+
+| Home | A lamp's colour wheel, opened by a long press |
+|:-:|:-:|
+| <img src="docs/images/photo_7b_accueil.webp" width="400" loading="lazy" alt="Photo of the Waveshare 7B home screen: the time, the temperatures, the work-hours banner and a 5-day forecast"> | <img src="docs/images/photo_7b_roue_couleurs.webp" width="400" loading="lazy" alt="Photo of the Waveshare 7B: a lamp's wheel open over the home screen, with power, brightness, details and seven colours"> |
+
+| Lights | Energy |
+|:-:|:-:|
+| <img src="docs/images/photo_7b_lumieres.webp" width="400" loading="lazy" alt="Photo of the Lights popup on the Waveshare 7B: the lamps of the room, a brightness arc at 71 % and the colours"> | <img src="docs/images/photo_7b_energie.webp" width="400" loading="lazy" alt="Photo of the Energy popup on the Waveshare 7B: solar, home, grid and battery joined by lines"> |
+
+| Tab5, home (dark theme) | Tab5, air conditioner |
+|:-:|:-:|
+| <img src="docs/images/photo_tab5_accueil_sombre.webp" width="400" loading="lazy" alt="Photo of the M5Stack Tab5 home screen in a dark blue theme: player, time, temperatures and a sunny 5-day forecast"> | <img src="docs/images/photo_tab5_clim_sombre.webp" width="400" loading="lazy" alt="Photo of the air conditioner popup on the M5Stack Tab5: modes, a 22 °C setpoint arc, presets, fan and airflow"> |
+
 An [earlier demo video](https://www.youtube.com/watch?v=ygNhgtMffu4) (voice, touch, TV remote, climate — provisional cut, July 2026), and an animated tour of the screens in the default theme, drawn by the firmware itself on a PC with demo data:
 
-![Animated tour of the M5Stack Tab5 Home Assistant screen: home, a room's devices, the whole house, the quick-action wheel, lights, climate, plants, solar energy, calendar, TV remote and console](docs/images/tab5_ui_tour_en.webp)
+![Animated tour of the M5Stack Tab5 Home Assistant screen: home, a room's devices, the whole house, a lamp's colour wheel, lights, climate, plants, solar energy, calendar, TV remote and console](docs/images/tab5_ui_tour_en.webp)
 
 **Twenty-one themes**, each light or dark: colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. Six of them on the home screen, drawn by the firmware itself on a PC with demo data: two show a room's devices, the four others a different alert on the central card.
 
@@ -236,7 +252,9 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 **Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie, musique, caméras, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Vingt et un thèmes, clairs ou sombres, au choix depuis Home Assistant. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un. Il tourne aussi, à l'essai, sur une carte Waveshare de 7 pouces.
 
-![La M5Stack Tab5 de l'auteur tenue à la main sur son socle : l'heure, deux températures, la consigne de la clim, le bandeau des horaires de travail et les prévisions à 5 jours avec orage, pluie et soleil](docs/images/tab5_hero_4x3.jpg)
+[![Vidéo de présentation sur YouTube (2 min 27) : l'écran 7 pouces avec la roue des couleurs d'une lampe ouverte, et les mots Your smart home, at your fingertips](docs/images/video_presentation.webp)](https://youtu.be/75hMN49qWFM)
+
+*▶ [Voir la présentation de 2 minutes sur YouTube](https://youtu.be/75hMN49qWFM) — textes à l'écran en anglais, sous-titres en sept langues dont le français.*
 
 **[▶ Vidéo (2 min)](https://youtu.be/75hMN49qWFM)** · **[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
@@ -340,9 +358,23 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 |:-:|:-:|:-:|
 | [<img src="docs/images/video_tour.webp" width="260" loading="lazy" alt="Miniature de la vidéo : l'accueil du Tab5 avec la roue des couleurs d'une lampe ouverte, et les mots Your smart home, at your fingertips">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/video_installation.webp" width="260" loading="lazy" alt="Miniature de la vidéo : le blueprint dans Home Assistant et l'écran 7 pouces, avec les mots Set it up in 7 steps, from your browser, nothing to compile">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/video_reglages.webp" width="260" loading="lazy" alt="Miniature de la vidéo : l'accueil du Tab5 avec les mots Your home, at a glance">](https://youtu.be/4NPOXTlYok8) |
 
+**Photos des vrais écrans** (29 octobre 2026, la Waveshare 7B dans le thème par défaut, le Tab5 dans un thème sombre) :
+
+| Accueil | La roue des couleurs d'une lampe, ouverte par un appui long |
+|:-:|:-:|
+| <img src="docs/images/photo_7b_accueil.webp" width="400" loading="lazy" alt="Photo de l'accueil de la Waveshare 7B : l'heure, les températures, le bandeau des horaires et les prévisions à 5 jours"> | <img src="docs/images/photo_7b_roue_couleurs.webp" width="400" loading="lazy" alt="Photo de la Waveshare 7B : la roue d'une lampe ouverte sur l'accueil, avec marche, luminosité, détails et sept couleurs"> |
+
+| Lumières | Énergie |
+|:-:|:-:|
+| <img src="docs/images/photo_7b_lumieres.webp" width="400" loading="lazy" alt="Photo du popup Lumières sur la Waveshare 7B : les lampes de la pièce, un arc de luminosité à 71 % et les couleurs"> | <img src="docs/images/photo_7b_energie.webp" width="400" loading="lazy" alt="Photo du popup Énergie sur la Waveshare 7B : solaire, maison, réseau et batterie reliés par des lignes"> |
+
+| Tab5, accueil (thème sombre) | Tab5, climatisation |
+|:-:|:-:|
+| <img src="docs/images/photo_tab5_accueil_sombre.webp" width="400" loading="lazy" alt="Photo de l'accueil du M5Stack Tab5 dans un thème bleu sombre : lecteur, heure, températures et prévisions ensoleillées à 5 jours"> | <img src="docs/images/photo_tab5_clim_sombre.webp" width="400" loading="lazy" alt="Photo du popup de la climatisation sur le M5Stack Tab5 : modes, arc de consigne à 22 °C, préréglages, ventilation et flux d'air"> |
+
 Une [première vidéo de démo](https://www.youtube.com/watch?v=ygNhgtMffu4) (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026), et un tour animé des écrans dans le thème par défaut, dessinés par le firmware lui-même sur un PC, avec des données de démonstration :
 
-![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils d'une pièce, toute la maison, roue d'actions, lumières, clim, plantes, énergie solaire, calendrier, télécommande TV et console](docs/images/tab5_ui_tour_fr.webp)
+![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils d'une pièce, toute la maison, roue des couleurs d'une lampe, lumières, clim, plantes, énergie solaire, calendrier, télécommande TV et console](docs/images/tab5_ui_tour_fr.webp)
 
 **Vingt et un thèmes**, chacun clair ou sombre : couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. Six d'entre eux sur l'accueil, dessinés par le firmware lui-même sur un PC, avec des données de démonstration : deux montrent les appareils d'une pièce, les quatre autres une alerte différente sur la carte centrale.
 

@@ -6,6 +6,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Ajouté
 
+- **README : la vidéo de présentation en tête et des photos des vrais écrans** : la photo de juillet
+  en tête du README (et de l'accueil du site) est remplacée par la vignette de la vidéo de
+  présentation, cliquable vers YouTube (`docs/images/video_presentation.webp` ; la photo reste sur la
+  page Écrans). Six photos du 29/10/2026 dans « See it in action » / « En images » : accueil, roue des
+  couleurs d'une lampe, lumières et énergie sur la Waveshare 7B, accueil et climatisation du Tab5 en
+  thème sombre (`docs/images/photo_*.webp`, recadrées, sans métadonnées). Le tour animé est refait
+  depuis le rendu de `main` du 29/10 : la roue des couleurs d'une lampe au lieu de l'ancienne roue de
+  luminosité, et plus de ligne « Pièce n/N » (retirée par #518). Aucun changement de firmware.
 - **Les trois vidéos YouTube dans le README** (et donc sur la page d'accueil du site) : « les écrans
   en 2 minutes », « l'installer en 7 étapes » et « tout se règle dans Home Assistant », en vignettes
   cliquables dans « See it in action » / « En images » (miniatures hébergées dans le dépôt,
