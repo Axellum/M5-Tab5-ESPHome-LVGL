@@ -83,7 +83,7 @@ Not enforced by a test, but judged on the real screen:
 ## Workflow
 
 - Branch + PR against `main`, never push directly. Use [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md)'s checklist.
-- Add an entry to [`CHANGELOG.md`](CHANGELOG.md) for user-visible or architectural changes.
-- If a change alters the file/dependency structure described in `CARTOGRAPHIE_TAB5.md`, update that file in the same PR.
+- User-visible or architectural change: a fragment `changelog.d/<branch>.md`, never `CHANGELOG.md` itself ([format](changelog.d/README.md)). A new ADR: number from `python tools/prochain_adr.py`.
+- If a change alters the file/dependency structure described in `CARTOGRAPHIE_TAB5.md`, update that file in the same PR (counts in conflict after merging `main`: `python tools/cartographie_counts.py --write`).
 - Commit messages and code comments mix French and English (the author is French, the repo is public/bilingual) — match the style of the file you edit.
 - Documentation by task: [`docs/README.md`](docs/README.md); the site's menu and `HORS_SITE`: [`tools/AGENTS.md`](tools/AGENTS.md).
