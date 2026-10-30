@@ -9,9 +9,11 @@ compatibilité entre versions prouvée par le code, plus seulement annoncée.
   d'avant peut casser, mineure pour un ajout pur (règle dans tools/contrat_api.py).
 - Matrice N-1 : les fichiers HA du dépôt avec le firmware du tag précédent, et le firmware
   du dépôt avec les fichiers HA de ce tag (dernier tag, dernier tag stable). Sans étiquette
-  dans `[Unreleased]` du CHANGELOG, les deux sens doivent passer ; une étiquette
+  dans `[Unreleased]` du CHANGELOG ni dans un fragment de `changelog.d/` (qui en fait
+  partie jusqu'à son assemblage), les deux sens doivent passer ; une étiquette
   « **Contrat HA ↔ firmware** : … (depuis vX) » annonce l'ordre, et la matrice doit le
-  permettre (pareil pour celles des sections de version).
+  permettre (pareil pour celles des sections de version). Dans un fragment, l'étiquette
+  se pose avant le premier « ### » : l'assemblage la met en tête de la section.
 - Les règles elles-mêmes (semver, appels qui ne peuvent pas partir) sur des cas construits.
 
 Tags : la CI les récupère (`git fetch --depth=1 … refs/tags/v*`, job `python` de
@@ -27,6 +29,7 @@ from pathlib import Path
 
 import pytest
 
+import changelog_assembler
 import contrat_api as ca
 
 REPO = Path(__file__).resolve().parent.parent
@@ -229,23 +232,35 @@ def test_appel_garde_par_le_protocole_du_blueprint():
 
 # ─── Matrice N-1 et étiquettes du CHANGELOG ──────────────────────────────────
 
-def _etiquettes():
-    """[(fichier, section, ordre, depuis)] des lignes « **Contrat HA ↔ firmware** : … »."""
-    trouvees = []
+def _sections():
+    """[(fichier, section, texte)] : chaque section des CHANGELOG, puis chaque fragment de
+    changelog.d/, qui fait partie de [Unreleased] tant qu'il n'est pas assemblé
+    (tools/changelog_assembler.py, audit du 30/10/2026)."""
+    morceaux = []
     for chemin in CHANGELOGS:
         texte = chemin.read_text(encoding="utf-8")
         reperes = list(SECTION.finditer(texte))
         for i, m in enumerate(reperes):
             fin = reperes[i + 1].start() if i + 1 < len(reperes) else len(texte)
-            for ligne in texte[m.end():fin].splitlines():
-                if not ligne.startswith("**Contrat HA ↔ firmware**"):
-                    continue
-                e = ca.ETIQUETTE.match(ligne)
-                assert e, f"{chemin.name} [{m.group(1)}] : « {ligne} », forme attendue : {ca.ETIQUETTE.pattern}"
-                ordres = {v: k for k, v in ca.ETIQUETTES["fr"].items()}
-                assert e["etiquette"] in ordres, (
-                    f"{chemin.name} [{m.group(1)}] : « {e['etiquette']} », attendu l'une de {sorted(ordres)}")
-                trouvees.append((chemin.name, m.group(1), ordres[e["etiquette"]], e["depuis"]))
+            morceaux.append((chemin.name, m.group(1), texte[m.end():fin]))
+    for chemin in changelog_assembler.fichiers_fragments():
+        morceaux.append((f"changelog.d/{chemin.name}", "Unreleased", chemin.read_text(encoding="utf-8")))
+    return morceaux
+
+
+def _etiquettes():
+    """[(fichier, section, ordre, depuis)] des lignes « **Contrat HA ↔ firmware** : … »."""
+    trouvees = []
+    for nom, section, texte in _sections():
+        for ligne in texte.splitlines():
+            if not ligne.startswith("**Contrat HA ↔ firmware**"):
+                continue
+            e = ca.ETIQUETTE.match(ligne)
+            assert e, f"{nom} [{section}] : « {ligne} », forme attendue : {ca.ETIQUETTE.pattern}"
+            ordres = {v: k for k, v in ca.ETIQUETTES["fr"].items()}
+            assert e["etiquette"] in ordres, (
+                f"{nom} [{section}] : « {e['etiquette']} », attendu l'une de {sorted(ordres)}")
+            trouvees.append((nom, section, ordres[e["etiquette"]], e["depuis"]))
     return trouvees
 
 
@@ -284,5 +299,5 @@ def test_matrice_n_1_du_depot(stable):
     assert m.sur(ordre), (
         f"[Unreleased] contre {tag} : " + _explication(m, ordre)
         + "\nRendre l'appel impossible avec l'ancien firmware (déclencheur sur un événement qu'il "
-          "n'émet pas, garde `protocole`), ou annoncer l'ordre dans [Unreleased] du CHANGELOG : "
+          "n'émet pas, garde `protocole`), ou annoncer l'ordre en tête du fragment changelog.d/ de la PR (avant son premier « ### ») : "
           + ca.etiquette(m))
