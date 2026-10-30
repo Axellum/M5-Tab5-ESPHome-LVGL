@@ -6,6 +6,8 @@ Kept in English only, unlike the rest of the docs, to stay short — these are a
 
 Format: **Context / Decision / Consequences**. One page max. Add a new one whenever you make a call that isn't obvious from reading the code alone, especially if you expect a future audit (human or AI) to flag it as a "bug."
 
+**Numbering.** Parallel sessions used to take the same number (0065 to 0067 twice on 2026-10-18). Take the number from `python tools/prochain_adr.py` when you start (it reads `origin/main` and the files of every open pull request), push the branch early, even as a draft, so the number is reserved, then add the row to the index below and run `python tools/prochain_adr.py --write` (the ADR count of the README and of `CARTOGRAPHIE_TAB5.md`, checked by `tests/test_doc_comptes.py`). If `main` gained an ADR meanwhile: keep both index rows in number order and run `--write` again.
+
 ## Index
 
 | # | Decision |
