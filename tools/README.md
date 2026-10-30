@@ -56,6 +56,7 @@ Le test C++ fait foi. Un miroir Python ne prouve le C++ que s'il est tenu à jou
 | `tab5_cle_api.py` | trouve la clé API de la tablette (gardée par Home Assistant depuis la 3.0) sans jamais l'afficher ; utilisé par les deux suivants |
 | `tab5_logs.py` | les journaux de la tablette, comme `esphome logs`, avec cette clé |
 | `tab5_redonner_cle.py` | redonne cette clé à une tablette réinstallée avec effacement, dans sa fenêtre d'appairage ; reste à recharger son entrée ESPHome dans HA ([dépannage](../docs/troubleshooting.md)) |
+| `prouver_flash.py` | preuve d'un flash par l'API : instantané avant (`--avant`), puis contrôles après (`--apres`) : même MAC, version et heure de compilation attendues, un seul redémarrage, aucune entité perdue, aucun réglage changé ; code de sortie non nul si un contrôle échoue |
 | `capture_serie.py` | écoute le port série USB sans réinitialiser la puce, repère un plantage et décode la pile avec l'ELF (`--elf`) |
 | `improv_serie.py` | règle le Wi-Fi d'une tablette par Improv sur l'USB |
 | `migrer_vers_3.py` | passe une tablette 2.x à la 3.0 par le réseau (seul outil qui lit encore un ancien `secrets.yaml`) |
