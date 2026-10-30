@@ -55,7 +55,7 @@ def test_une_seule_liste_des_clims():
         assert "clims_enumerer(l, kClimPastilles);" in _corps(CLIM, f), f
     # Déclarée pour les autres unités (une clim de plus, ailleurs : une ligne ici).
     assert "int clims_enumerer(ClimRef* out, int max);" in _lire("Tab5", "ecran", "tab5_internal.h")
-    assert "clims_enumerer()" in _lire("AGENTS.md")
+    assert "clims_enumerer()" in _lire("Tab5", "ecran", "AGENTS.md")
 
 
 def test_huit_pages_mais_la_clim_d_ici_les_voit_toutes():

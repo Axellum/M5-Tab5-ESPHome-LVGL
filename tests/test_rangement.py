@@ -21,7 +21,9 @@ import pytest
 
 from tests.commun import REPO, TAB5, lire
 
-RACINE_PERMISE = {"README.md", "user_entities.example.yaml", "tuiles_icones.yaml"}
+RACINE_PERMISE = {"README.md", "user_entities.example.yaml", "tuiles_icones.yaml", "AGENTS.md", "CLAUDE.md"}
+# Consignes des agents par dossier (30/10/2026) : jamais dans un includes:, donc pas copiées à plat.
+CONSIGNES = {"AGENTS.md", "CLAUDE.md"}
 SOUS_DOSSIERS = ("socle", "ecran", "jeux", "paquets")
 RE_INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]', re.M)
 
@@ -47,6 +49,8 @@ def test_noms_uniques_car_copies_a_plat():
     noms: dict[str, list[str]] = {}
     for dossier in SOUS_DOSSIERS:
         for p in _suivis(f"Tab5/{dossier}"):
+            if p.rsplit("/", 1)[1] in CONSIGNES:
+                continue
             noms.setdefault(p.rsplit("/", 1)[1], []).append(p)
     doublons = {n: ps for n, ps in noms.items() if len(ps) > 1}
     assert doublons == {}

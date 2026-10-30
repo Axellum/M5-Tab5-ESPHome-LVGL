@@ -327,7 +327,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 ### 3.3 C++ core
 
-Fichiers de `Tab5/socle/`, `Tab5/ecran/` et `Tab5/jeux/` (table du § 1). Avant d'écrire un utilitaire : la « boîte à outils » d'[`AGENTS.md`](AGENTS.md) (section « Toolbox ») liste ceux qui existent (fichier de chacun) ; conventions du nouveau code dans [`Tab5/README.md`](Tab5/README.md).
+Fichiers de `Tab5/socle/`, `Tab5/ecran/` et `Tab5/jeux/` (table du § 1). Avant d'écrire un utilitaire : les « boîtes à outils » de [`Tab5/socle/AGENTS.md`](Tab5/socle/AGENTS.md), [`Tab5/ecran/AGENTS.md`](Tab5/ecran/AGENTS.md) et [`Tab5/jeux/AGENTS.md`](Tab5/jeux/AGENTS.md) (section « Toolbox ») listent ceux qui existent (fichier de chacun) ; conventions du nouveau code dans [`Tab5/README.md`](Tab5/README.md).
 
 | Fichier | Lignes | Rôle exact | Fonctions clés |
 |---|---|---|---|

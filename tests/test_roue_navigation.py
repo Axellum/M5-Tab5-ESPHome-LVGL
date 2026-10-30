@@ -321,6 +321,6 @@ def test_adr_et_notice():
     adr = lire("docs", "decisions", "0042-navigation-wheel.md")
     assert "roue_navigation_ouvrir" in adr and "0036" in adr
     assert "[0042](0042-navigation-wheel.md)" in lire("docs", "decisions", "README.md")
-    assert "roue_navigation_ouvrir" in lire("AGENTS.md")
+    assert "roue_navigation_ouvrir" in lire("Tab5", "ecran", "AGENTS.md")
     notice = lire("docs", "notice", "home.md")
     assert "navigation wheel" in notice and "roue de navigation" in notice

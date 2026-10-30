@@ -340,6 +340,10 @@ def test_nombre_de_themes(chemin, motif):
 # tests/test_contrat.py.
 
 AGENTS = REPO / "AGENTS.md"
+# Découpage d'AGENTS.md du 30/10/2026 : la phrase du --dry-run est dans tools/AGENTS.md,
+# la boîte à outils dans un AGENTS.md par dossier du firmware.
+AGENTS_OUTILS = REPO / "tools" / "AGENTS.md"
+AGENTS_BOITES = [REPO / "Tab5" / d / "AGENTS.md" for d in ("socle", "ecran", "jeux")]
 DEMO_MODE = REPO / "docs" / "demo_mode.md"
 SERVICES_CPP = REPO / "Tab5" / "ecran" / "tab5_services.cpp"
 PARSE_H = REPO / "Tab5" / "socle" / "tab5_parse.h"
@@ -398,10 +402,10 @@ def _noms(texte):
 
 
 def test_agents_services_de_la_demo():
-    texte = _lire(AGENTS)
+    texte = _lire(AGENTS_OUTILS)
     appeles = re.search(r"the \*\*(\d+) push services\*\* the demo calls", texte)
     autres = re.search(r"The (\d+) other services \(([^)]*)\) are out of its scope", texte)
-    assert appeles and autres, "AGENTS.md : phrase du --dry-run changée, adapter les motifs"
+    assert appeles and autres, "tools/AGENTS.md : phrase du --dry-run changée, adapter les motifs"
     hors_demo = set(_services()) - _demo()
     assert int(appeles.group(1)) == len(_demo())
     assert int(autres.group(1)) == len(hors_demo)
@@ -510,13 +514,17 @@ def test_nombre_de_regles_faux_detecte():
 
 
 def _boite_a_outils():
-    texte = _lire(AGENTS)
-    debut = texte.index("## Toolbox")
-    return texte[debut:texte.index("\n## ", debut + 1)]
+    sections = []
+    for chemin in AGENTS_BOITES:
+        texte = _lire(chemin)
+        debut = texte.index("## Toolbox")
+        fin = texte.find("\n## ", debut + 1)
+        sections.append(texte[debut:fin if fin >= 0 else len(texte)])
+    return "\n".join(sections)
 
 
 def test_boite_a_outils_noms_reels():
-    """Chaque fonction et chaque fichier cités par la boîte à outils d'AGENTS.md existent :
+    """Chaque fonction et chaque fichier cités par les boîtes à outils (Tab5/*/AGENTS.md) existent :
     une liste qui nomme un helper disparu enverrait un agent le chercher en vain."""
     section = _boite_a_outils()
     sources = "\n".join(p.read_text(encoding="utf-8", errors="replace")

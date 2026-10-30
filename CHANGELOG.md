@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Ajouté
 
+- **Consignes des agents IA par dossier** (doc seule) : `AGENTS.md`, que `CLAUDE.md` importe
+  dans chaque session, passe de 38 805 à environ 8 400 octets. Le détail est rangé au plus
+  près du code, dans un `AGENTS.md` par dossier (`Tab5/`, `Tab5/socle/`, `Tab5/ecran/`,
+  `Tab5/jeux/`, `HomeAssistant_Config/`, `tools/`) que le `CLAUDE.md` voisin importe :
+  Claude Code ne le charge qu'une fois un fichier du dossier lu ou modifié. La boîte à outils
+  est répartie par dossier ; `tests/test_agents_md.py` garde le tronc sous 9 000 octets.
 - **Descriptions des images complétées** (doc seule) : les 34 textes alternatifs courts ou sans
   contexte de la page Écrans (`docs/screens.md`, « Sunny day, French », « Climate popup »…) disent
   ce que montre l'image et de quoi il s'agit, et la première image de chaque page de la notice
