@@ -46,6 +46,8 @@ See [`docs/README.md`](../docs/README.md) for the documentation by task (install
 
 Do not leave more than a couple of ESPHome CLI processes running against the device at once — the API only has 8 connection slots; a past session's leaked `esphome` processes silently starved the real device of connections.
 
+**Proving a flash** (toolbox: reuse it, do not rewrite it in a scratchpad): `tools/prouver_flash.py --host <ip> --avant <file>` before, then `--apres <file>` after (expected `--version`, `--build-info`, `--raison esphome.ota`) — MAC, version, build time, one reboot since the snapshot and none during `--attente` (120 s), no entity lost, no setting changed; non-zero exit when a check fails. It does not see the screen, Home Assistant's own view or the SHA-256 of the binary sent.
+
 ## Secrets and the API key
 
 Since 3.0 (lot 6b, [ADR-0020](../docs/decisions/0020-no-secret-firmware-signed-ota.md)) the firmware reads no `!secret` at all — a `secrets.yaml` left from 2.x is only used once, by `tools/migrer_vers_3.py`, to send the first 3.0 firmware with the old API key. Never add a `!secret` back (`tests/test_sans_secret.py` fails). The API key lives in Home Assistant: tools that talk to the tablet get it through `tools/tab5_cle_api.py` and never print it.
