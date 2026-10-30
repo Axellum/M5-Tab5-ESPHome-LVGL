@@ -28,9 +28,9 @@ These pictures are not photos: the CI draws them without a tablet, from the same
 
 | Scene | Français | English |
 |---|---|---|
-| Sunny day | ![Sunny day, French](images/rendu/1-journee-ensoleillee.png) | ![Sunny day, English](images/rendu/1-journee-ensoleillee-en.png) |
-| Rain and orange warning | ![Rain, French](images/rendu/2-pluie-alerte-orange.png) | ![Rain, English](images/rendu/2-pluie-alerte-orange-en.png) |
-| Day off, plants to watch | ![Day off, French](images/rendu/3-jour-de-repos-plantes-a-surveiller.png) | ![Day off, English](images/rendu/3-jour-de-repos-plantes-a-surveiller-en.png) |
+| Sunny day | ![Home Assistant wall screen on the M5Stack Tab5, home screen in French on a sunny day: clock, temperatures, work hours and a sunny 5-day forecast](images/rendu/1-journee-ensoleillee.png) | ![Home Assistant wall screen on the M5Stack Tab5, home screen in English on a sunny day: clock, temperatures, work hours and a sunny 5-day forecast](images/rendu/1-journee-ensoleillee-en.png) |
+| Rain and orange warning | ![Home Assistant wall screen in French, rainy day: the rain bars of the next hour and Moderate rain in 10 min, a rainy 5-day forecast](images/rendu/2-pluie-alerte-orange.png) | ![Home Assistant wall screen in English, rainy day: the rain bars of the next hour and Moderate rain in 10 min, a rainy 5-day forecast](images/rendu/2-pluie-alerte-orange-en.png) |
+| Day off, plants to watch | ![Home Assistant wall screen in French under a cloudy sky: an update and unavailable entities reported under the clock](images/rendu/3-jour-de-repos-plantes-a-surveiller.png) | ![Home Assistant wall screen in English under a cloudy sky: 1 update · Home Assistant Core and 2 unavailable under the clock](images/rendu/3-jour-de-repos-plantes-a-surveiller-en.png) |
 
 ---
 
@@ -103,7 +103,7 @@ The 5 cards (`switches_card.yaml`) show the room of the current page, each drawn
 
 **The room's climate** ([ADR-0040](decisions/0040-room-climate.md), optional): when the room's section of the blueprint declares a temperature sensor, the climate card above shows the room instead of the living room and the greenhouse — a thermometer and the room's temperature on the left (the icon tinted by the humidity), a drop and the humidity on the right when a humidity sensor is declared, nothing otherwise. A long press on the room's temperature opens its history. When the section also declares a climate, the − / + tile adjusts that climate (a tap on its setpoint opens the climate popup on it); its list keeps its choice for the other rooms and the weather mode. A room without these fields, or the weather mode, shows the card as before.
 
-![HA mode: the five devices of the first room under its name (render, demo data)](images/notice/accueil-ha-piece-1-en.webp)
+![Home Assistant dashboard, device mode: the five devices of the first room under its name (render, demo data)](images/notice/accueil-ha-piece-1-en.webp)
 
 ---
 
@@ -125,7 +125,7 @@ Two levels of control. The compact card drives the blueprint's `climate` entity 
 
 The controls are dimmed (not hidden) when the AC is off, so the layout stays stable.
 
-![Climate popup (render, demo data)](images/notice/climatisation-en.webp)
+![Home Assistant climate control on the ESP32-P4 screen: modes, setpoint arc, presets, fan and airflow (render, demo data)](images/notice/climatisation-en.webp)
 
 ---
 
@@ -165,7 +165,7 @@ A **long press on the plants line** of the row under the clock opens a near-full
 
 Values are pushed continuously by the `pot*_ec/lux/temp/bat` HA sensors (`update_pot_metric_ui()`, `tab5_*.cpp`) — the popup needs no sync on open. Tapping the dark overlay or the × button (the shared 80×44 glass button) closes it. Components: `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
-![Plant details popup, Pot 2 needs water (render, demo data)](images/notice/plantes-en.webp)
+![Home Assistant plant sensors on the wall screen: five pots with moisture, fertility, light and temperature, Pot 2 needs water (render, demo data)](images/notice/plantes-en.webp)
 
 ---
 
@@ -182,7 +182,7 @@ Home Assistant then enriches each viewed month **on demand** (`script.tab5_calen
 
 **Tapping a day** opens a 780×540 detail sub-popup (`script.tab5_calendrier_jour`): "Mardi 21 Juillet" title and up to 6 typed lines with colored MDI icons — holiday name, school-holiday label, work hours, timed appointments, birthdays, civil observances — with "Chargement...", "Rien de prévu ce jour" and "Home Assistant hors ligne" states. Closing follows the v2 popup recipe (the shared 80×44 glass × buttons, `scrollable: false` everywhere). Components: `calendar_popup.yaml` + `cal_grid_build()` (42 cells built in C++) + HA package `HomeAssistant_Config/packages/tab5_calendar.yaml`.
 
-![Calendar popup (render, demo data)](images/notice/calendrier-en.webp)
+![Home Assistant calendar on the wall screen: the month with work hours, holidays and appointments (render, demo data)](images/notice/calendrier-en.webp)
 
 ---
 
@@ -226,7 +226,7 @@ The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab
 
 **Assistant popup** (long press on the microphone, `btn_assist_trigger`; its buttons: [user manual](notice/voice.md#the-voice-assistant-window)). In conversation mode a voice request opens it by itself (`on_stt_end` → `tab5_assist_on_request`); in Home Assistant mode the central card's 8 s banner stays the quick feedback. The answer is rendered from Markdown (tables re-aligned approximately — proportional font since 26/09/2026 —, bold, code, bullets), plus an image downloaded on demand (`online_image`, PNG → RGB565, 760×360). The engine can push a rich answer through the `tab5_assist_reponse` service (variables `texte` = Markdown, `image_url` = optional PNG).
 
-![Voice assistant popup with a rich answer (render, demo data)](images/notice/assistant-reponse-en.webp)
+![Home Assistant voice assistant on the ESP32-P4 screen: a rich answer with a table (render, demo data)](images/notice/assistant-reponse-en.webp)
 
 ---
 
@@ -267,7 +267,7 @@ Long-pressing a light tile — its weather shoulders or its HA-mode card — (in
 
 The arc and the colours control the selected light: `popup_lumiere_choisir()` (`tab5_tuiles_popups.cpp`) sets the `current_light_slot` global to the tile's key (`tRT`, or `lumiere_N` in legacy mode) and syncs the rows and the arc. The pages come from the shared popup-with-pages brick (`tab5_pages.cpp`, also used by the Settings popup).
 
-![Light popup (render, demo data)](images/notice/lumieres-chambre-en.webp)
+![Home Assistant lights on the ESP32-P4 screen: the room's lamps, a brightness arc, whites and colours (render, demo data)](images/notice/lumieres-chambre-en.webp)
 
 ---
 
@@ -275,7 +275,7 @@ The arc and the colours control the selected light: `popup_lumiere_choisir()` (`
 
 A near-fullscreen remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, source and menu keys, a round navigation pad with OK, a volume column with mute, the Play · Pause · Back · Home keys and a row of app buttons (Netflix, Prime, YouTube, CANAL+, PC). Opened by long-pressing a media tile with the TV option (`t`; the PC card in legacy mode) or by a long press on the gamepad button (`btn_control_tv`, when the TV zone is present); every key emits a `tab5_action` event ([ADR-0025](decisions/0025-events-only.md)) that the blueprint automation sends to the remote of the page (`remote.send_command`), the app buttons through `script.tab5_tv_app` (`tab5_tv.yaml`) — the Tab5 carries no IR hardware, HA's integrations do the work. Tapping the dark overlay closes it. **Several remotes** since 2026-10-10 ([ADR-0056](decisions/0056-several-remotes.md), `tab5_telecommande.cpp`): up to four, the TV's then « Autres télécommandes » of the blueprint, pushed with every state (`telecommandes` key of `tab5_maj_emplacements`); one page each, their names at the top and the shared swipe ([ADR-0046](decisions/0046-popups-a-pages.md)); the event slot is the page (`tv`, `tv1`, `tv2`, `tv3`). The keys keep the Samsung codes; for a box of the Apple TV integration (Apple TV, Freebox Player) the blueprint translates them (`select`, `menu`, `top_menu`, `play_pause`…), the popup shows Stop instead of Source, no mute, and a playback row (Previous, Rewind, Play / Pause, Forward, Next) instead of the apps.
 
-![TV remote popup (render)](images/notice/telecommande-tv-en.webp)
+![TV remote of the Home Assistant wall screen: power, source, menu, the pad with OK, volume and app buttons (render)](images/notice/telecommande-tv-en.webp)
 
 ---
 
@@ -289,7 +289,7 @@ Shown only if sensors are picked in the « Énergie » sections of the blueprint
 
 HA pushes only while the popup is open (package `tab5_energie.yaml`); instant transitions, like every popup.
 
-![Energy popup, Days view: four live cards and the production of the last 30 days (CI render, demo data)](images/tab5_energie_en.png)
+![Home Assistant energy dashboard, Days view: four live cards (solar, home, grid, battery) and the solar production of the last 30 days (CI render, demo data)](images/tab5_energie_en.png)
 
 ---
 
@@ -432,7 +432,7 @@ Since 3.2 every `vol` tile is a shutter or a valve of its own (tap: stop while i
 
 Opened by **tapping the gamepad button** (`btn_control_tv`, top right) or **« Jeux » in the navigation wheel**. The greenhouse temperature (`btn_serre_games`) opened it until 2026-10-10; its tap now switches the area left of the clock ([ADR-0051](decisions/0051-left-zone-choice.md)). The selector shows a 4×2 grid of 8 cards (298×252 each) with an MDI icon, the game name and a one-line description.
 
-![Arcade selector (render)](images/notice/arcade-en.webp)
+![The Arcade of the ESP32-P4 Home Assistant screen: eight offline games, one card each (render)](images/notice/arcade-en.webp)
 
 Each console is its **own fullscreen LVGL page** (`page_marble`, `page_chess`… declared `skip: true` in `tab5-lvgl.yaml` so swipe navigation can't reach them), not an overlay stacked on the dashboard. Documented ADR-0009 exception: no modal chrome. Shared architecture: YAML = empty containers, all content in C++, `lv_timer` created on open / destroyed on close, pre-allocated LVGL pool (zero allocation in the tick), NVS persistence, **zero HA or network dependency**.
 
@@ -449,11 +449,11 @@ Each console is its **own fullscreen LVGL page** (`page_marble`, `page_chess`…
 
 | Roi Noir (chess) | Arcanoïde (breakout) |
 |:-:|:-:|
-| ![Roi Noir, the board at the start of a game (render)](images/galerie/roi-noir-en.webp) | ![Arcanoïde, the first level (render)](images/galerie/arcanoide-en.webp) |
+| ![Roi Noir, the board at the start of a game (render)](images/galerie/roi-noir-en.webp) | ![Arcanoïde, a brick-breaker game on the ESP32-P4 screen: the first level (render)](images/galerie/arcanoide-en.webp) |
 
 | Coureur d'Or (Lode Runner) |
 |:-:|
-| ![Coureur d'Or, the first level (render)](images/galerie/coureur-dor-en.webp) |
+| ![Coureur d'Or, a platform game on the ESP32-P4 screen: the first level (render)](images/galerie/coureur-dor-en.webp) |
 
 Exiting any game: hub → "Quitter" (clean return to `page_arcade` then the dashboard: timer stopped, score saved to NVS, and for Neon Apron the landscape rotation is restored).
 
@@ -490,9 +490,9 @@ Ces images ne sont pas des photos : la CI les dessine sans tablette, avec le mê
 
 | Scène | Français | English |
 |---|---|---|
-| Journée ensoleillée | ![Journée ensoleillée, français](images/rendu/1-journee-ensoleillee.png) | ![Journée ensoleillée, anglais](images/rendu/1-journee-ensoleillee-en.png) |
-| Pluie et alerte orange | ![Pluie, français](images/rendu/2-pluie-alerte-orange.png) | ![Pluie, anglais](images/rendu/2-pluie-alerte-orange-en.png) |
-| Jour de repos, plantes à surveiller | ![Jour de repos, français](images/rendu/3-jour-de-repos-plantes-a-surveiller.png) | ![Jour de repos, anglais](images/rendu/3-jour-de-repos-plantes-a-surveiller-en.png) |
+| Journée ensoleillée | ![Écran mural Home Assistant sur le M5Stack Tab5, accueil en français par beau temps : heure, températures, horaires de travail et prévisions ensoleillées à 5 jours](images/rendu/1-journee-ensoleillee.png) | ![Écran mural Home Assistant sur le M5Stack Tab5, accueil en anglais par beau temps : heure, températures, horaires de travail et prévisions ensoleillées à 5 jours](images/rendu/1-journee-ensoleillee-en.png) |
+| Pluie et alerte orange | ![Écran mural Home Assistant en français, jour de pluie : les barres de pluie de l'heure qui vient, pluie modérée dans 10 min, prévisions pluvieuses à 5 jours](images/rendu/2-pluie-alerte-orange.png) | ![Écran mural Home Assistant en anglais, jour de pluie : les barres de pluie de l'heure qui vient, Moderate rain in 10 min, prévisions pluvieuses à 5 jours](images/rendu/2-pluie-alerte-orange-en.png) |
+| Jour de repos, plantes à surveiller | ![Écran mural Home Assistant en français sous un ciel voilé : une mise à jour et des entités indisponibles signalées sous l'heure](images/rendu/3-jour-de-repos-plantes-a-surveiller.png) | ![Écran mural Home Assistant en anglais sous un ciel voilé : 1 update · Home Assistant Core et 2 unavailable sous l'heure](images/rendu/3-jour-de-repos-plantes-a-surveiller-en.png) |
 
 ---
 
@@ -565,7 +565,7 @@ Les 5 cartes (`switches_card.yaml`) montrent la pièce de la page courante, chac
 
 **Le climat de la pièce** ([ADR-0040](decisions/0040-room-climate.md), facultatif) : quand la section de la pièce dans le blueprint déclare une sonde de température, la carte clim au-dessus montre la pièce à la place du salon et de la serre — un thermomètre et la température de la pièce à gauche (l'icône teintée par l'humidité), une goutte et l'humidité à droite quand une sonde d'humidité est déclarée, rien sinon. Un appui long sur la température de la pièce ouvre son historique. Quand la section déclare aussi une clim, la tuile − / + règle cette clim (un toucher sur sa consigne ouvre le popup clim sur elle) ; sa liste garde son choix pour les autres pièces et le mode météo. Une pièce sans ces champs, ou le mode météo, montre la carte d'avant.
 
-![Mode HA : les cinq appareils de la première pièce sous son nom (rendu, données de démonstration)](images/notice/accueil-ha-piece-1-fr.webp)
+![Tableau de bord Home Assistant, mode appareils : les cinq appareils de la première pièce sous son nom (rendu, données de démonstration)](images/notice/accueil-ha-piece-1-fr.webp)
 
 ---
 
@@ -587,7 +587,7 @@ Deux niveaux de contrôle. La carte compacte pilote l'entité `climate` du bluep
 
 Les contrôles sont estompés (non cachés) quand le clim est éteint, pour garder la mise en page stable.
 
-![Popup clim (rendu, données de démonstration)](images/notice/climatisation-fr.webp)
+![Commande de la clim Home Assistant sur l'écran ESP32-P4 : modes, arc de consigne, préréglages, ventilation et flux d'air (rendu, données de démonstration)](images/notice/climatisation-fr.webp)
 
 ---
 
@@ -617,7 +617,7 @@ Un **appui long sur la ligne des plantes** de la rangée sous l'horloge ouvre un
 
 Les valeurs sont poussées en continu par les capteurs HA `pot*_ec/lux/temp/bat` (`update_pot_metric_ui()`, `tab5_*.cpp`) — le popup n'a besoin d'aucune synchro à l'ouverture. Taper l'overlay sombre ou le bouton × (le bouton de verre partagé 80×44 de `modal_header.yaml`) le ferme. Composants : `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
-![Popup détails plantes, le pot 2 a soif (rendu, données de démonstration)](images/notice/plantes-fr.webp)
+![Capteurs de plantes Home Assistant sur l'écran mural : cinq pots avec humidité, fertilité, lumière et température, le pot 2 a soif (rendu, données de démonstration)](images/notice/plantes-fr.webp)
 
 ---
 
@@ -634,7 +634,7 @@ Home Assistant enrichit ensuite chaque mois consulté **à la demande** (`script
 
 **Taper un jour** ouvre un sous-popup détail 780×540 (`script.tab5_calendrier_jour`) : titre « Mardi 21 Juillet » et jusqu'à 6 lignes typées avec icônes MDI colorées — nom du férié, libellé des vacances scolaires, horaires de travail, RDV horodatés, anniversaires, fêtes civiles — avec les états « Chargement... », « Rien de prévu ce jour » et « Home Assistant hors ligne ». La fermeture suit la recette popups v2 (croix = boutons de verre partagés 80×44, `scrollable: false` partout). Composants : `calendar_popup.yaml` + `cal_grid_build()` (42 cellules construites en C++) + package HA `HomeAssistant_Config/packages/tab5_calendar.yaml`.
 
-![Popup Calendrier (rendu, données de démonstration)](images/notice/calendrier-fr.webp)
+![Calendrier Home Assistant sur l'écran mural : le mois avec horaires de travail, congés et rendez-vous (rendu, données de démonstration)](images/notice/calendrier-fr.webp)
 
 ---
 
@@ -678,7 +678,7 @@ Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`sele
 
 **Popup assistant** (appui long sur le micro, `btn_assist_trigger` ; ses boutons : [notice](notice/voice.md#version-française)). En mode Discussion, une demande vocale l'ouvre seule (`on_stt_end` → `tab5_assist_on_request`) ; en mode Domotique, le bandeau de 8 s de la carte centrale reste le retour rapide. La réponse est rendue depuis du Markdown (tableaux ré-alignés approximativement — police proportionnelle depuis le 26/09/2026 —, gras, code, puces), plus une image téléchargée à la demande (`online_image`, PNG → RGB565, 760×360). Le moteur peut pousser une réponse riche par le service `tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel).
 
-![Popup Assistant vocal avec une réponse mise en forme (rendu, données de démonstration)](images/notice/assistant-reponse-fr.webp)
+![Assistant vocal Home Assistant sur l'écran ESP32-P4 : une réponse mise en forme avec un tableau (rendu, données de démonstration)](images/notice/assistant-reponse-fr.webp)
 
 ---
 
@@ -719,7 +719,7 @@ Un appui long sur une tuile lumière — ses épaules météo ou sa carte du mod
 
 L'arc et les couleurs commandent la lumière choisie : `popup_lumiere_choisir()` (`tab5_tuiles_popups.cpp`) règle la globale `current_light_slot` sur la clé de la tuile (`tRT`, ou `lumiere_N` en mode héritage) et synchronise les lignes et l'arc. Les pages viennent de la brique commune des popups à pages (`tab5_pages.cpp`, aussi celle du popup Réglages).
 
-![Popup lumière (rendu, données de démonstration)](images/notice/lumieres-chambre-fr.webp)
+![Lumières Home Assistant sur l'écran ESP32-P4 : les lampes de la pièce, un arc de luminosité, blancs et couleurs (rendu, données de démonstration)](images/notice/lumieres-chambre-fr.webp)
 
 ---
 
@@ -727,7 +727,7 @@ L'arc et les couleurs commandent la lumière choisie : `popup_lumiere_choisir()`
 
 Une télécommande quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : touches marche, source et menu, pad de navigation rond avec OK, colonne du volume avec muet, touches Lecture · Pause · Retour · Accueil et une rangée de boutons d'applications (Netflix, Prime, YouTube, CANAL+, PC). Ouverte par appui long sur une tuile multimédia avec l'option TV (`t` ; la carte PC en mode héritage) ou par un appui long sur le bouton manette (`btn_control_tv`, quand la zone TV est présente) ; chaque touche émet un événement `tab5_action` ([ADR-0025](decisions/0025-events-only.md)) que l'automatisation du blueprint envoie à la télécommande de la page (`remote.send_command`), les boutons d'applications par `script.tab5_tv_app` (`tab5_tv.yaml`) — le Tab5 n'a aucun matériel IR, ce sont les intégrations de HA qui font le travail. Taper l'overlay sombre ferme le popup. **Plusieurs télécommandes** depuis le 10/10/2026 ([ADR-0056](decisions/0056-several-remotes.md), `tab5_telecommande.cpp`) : jusqu'à quatre, celle de la TV puis « Autres télécommandes » du blueprint, poussées avec tous les états (clé `telecommandes` de `tab5_maj_emplacements`) ; une page chacune, leurs noms en haut et le glissement commun ([ADR-0046](decisions/0046-popups-a-pages.md)) ; l'emplacement de l'événement est la page (`tv`, `tv1`, `tv2`, `tv3`). Les touches gardent les codes Samsung ; pour un boîtier de l'intégration Apple TV (Apple TV, Freebox Player), le blueprint les traduit (`select`, `menu`, `top_menu`, `play_pause`…), le popup montre Stop à la place de Source, pas de muet, et une rangée de lecture (Précédent, Reculer, Lecture / Pause, Avancer, Suivant) à la place des applications.
 
-![Popup télécommande TV (rendu)](images/notice/telecommande-tv-fr.webp)
+![Télécommande TV de l'écran mural Home Assistant : marche, source, menu, le pavé avec OK, le volume et les boutons d'applications (rendu)](images/notice/telecommande-tv-fr.webp)
 
 ---
 
@@ -741,7 +741,7 @@ N'apparaît que si des capteurs sont choisis dans les sections « Énergie » du
 
 HA ne pousse que pendant que le popup est ouvert (package `tab5_energie.yaml`) ; transitions instantanées, comme tous les popups.
 
-![Popup Énergie, vue Jours : quatre cartes en direct et la production des 30 derniers jours (rendu de la CI, données de démonstration)](images/tab5_energie.png)
+![Tableau de bord énergie Home Assistant, vue Jours : quatre cartes en direct (solaire, maison, réseau, batterie) et la production solaire des 30 derniers jours (rendu de la CI, données de démonstration)](images/tab5_energie.png)
 
 ---
 
@@ -884,7 +884,7 @@ Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui
 
 Ouvert par **tap sur le bouton manette** (`btn_control_tv`, en haut à droite) ou **« Jeux » dans la roue de navigation**. La température de la serre (`btn_serre_games`) l'ouvrait jusqu'au 10/10/2026 ; son tap change désormais la zone à gauche de l'horloge ([ADR-0051](decisions/0051-left-zone-choice.md)). Le sélecteur affiche une grille 4×2 de 8 cartes (298×252 chacune), avec icône MDI, nom du jeu, et description courte.
 
-![Sélecteur Arcade (rendu)](images/notice/arcade-fr.webp)
+![L'Arcade de l'écran Home Assistant ESP32-P4 : huit jeux hors ligne, une carte chacun (rendu)](images/notice/arcade-fr.webp)
 
 Chaque console est sa **propre page LVGL** plein écran 1280×720 (`page_marble`, `page_chess`… déclarées `skip: true` dans `tab5-lvgl.yaml`, pour que le swipe ne puisse pas y naviguer) — pas un overlay posé sur le dashboard. Exception documentée ADR-0009 : pas de chrome modal. Architecture commune : YAML = conteneurs vides, tout le contenu en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, pool LVGL préalloué (zéro allocation dans le tick), persistance NVS, **zéro dépendance HA ou réseau**.
 
@@ -901,11 +901,11 @@ Chaque console est sa **propre page LVGL** plein écran 1280×720 (`page_marble`
 
 | Roi Noir (échecs) | Arcanoïde (casse-briques) |
 |:-:|:-:|
-| ![Roi Noir, l'échiquier en début de partie (rendu)](images/galerie/roi-noir-fr.webp) | ![Arcanoïde, le premier niveau (rendu)](images/galerie/arcanoide-fr.webp) |
+| ![Roi Noir, l'échiquier en début de partie (rendu)](images/galerie/roi-noir-fr.webp) | ![Arcanoïde, un casse-briques sur l'écran ESP32-P4 : le premier niveau (rendu)](images/galerie/arcanoide-fr.webp) |
 
 | Coureur d'Or (Lode Runner) |
 |:-:|
-| ![Coureur d'Or, le premier niveau (rendu)](images/galerie/coureur-dor-fr.webp) |
+| ![Coureur d'Or, un jeu de plateformes sur l'écran ESP32-P4 : le premier niveau (rendu)](images/galerie/coureur-dor-fr.webp) |
 
 Sortie de chaque jeu : hub → « Quitter » (retour propre à `page_arcade` puis au dashboard : timer arrêté, score sauvegardé en NVS, et pour Neon Apron restauration de la rotation paysage).
 

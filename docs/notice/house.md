@@ -6,7 +6,7 @@
 
 **Opens with** a tap on the room's name in the central card, in device mode (after a tap on the Home Assistant button), with the « House » entry of the tablet's « Go to screen » list in Home Assistant, or with a long press on one of the three buttons top right when the blueprint gives it « Maison · House » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
-![The house window: one column per room, one row per device with its icon, name and state](../images/notice/maison-en.webp)
+![Home Assistant wall screen (ESP32-P4): the house window: one column per room, one row per device with its icon, name and state](../images/notice/maison-en.webp)
 
 The whole house at a glance, like a Home Assistant dashboard: one column per room of the « Tab5 — emplacements » blueprint that has devices, in the blueprint's order (room 1 to 10), headed by the room's name (« Room 2 » when it has none). Five columns at most: with more rooms, the window has pages, shared out evenly (eight rooms: two pages of four), swiped left or right, their names at the top (« Rooms 1 to 4 »); it opens on the page of the room shown in device mode. Under it, one row per device, drawn like its card in device mode: its icon in a round badge of its state's colour, its name and its state. A state too long for the column ends with « … ». Without any device, the window says « Aucun appareil » (no device).
 
@@ -25,7 +25,7 @@ States change on the rows while the window is open. Like every window, it closes
 
 **S'ouvre par** un tap sur le nom de la pièce dans la carte centrale, en mode appareils (après un tap sur le bouton Home Assistant), par l'entrée « House » de la liste « Go to screen » de la tablette dans Home Assistant, ou par un appui long sur l'un des trois boutons en haut à droite quand le blueprint lui donne « Maison · House » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
-![La fenêtre de la maison : une colonne par pièce, une ligne par appareil avec son icône, son nom et son état](../images/notice/maison-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre de la maison : une colonne par pièce, une ligne par appareil avec son icône, son nom et son état](../images/notice/maison-fr.webp)
 
 Toute la maison d'un coup d'œil, comme un tableau de bord Home Assistant : une colonne par pièce du blueprint « Tab5 — emplacements » qui a des appareils, dans l'ordre du blueprint (pièce 1 à 10), avec le nom de la pièce en tête (« Pièce 2 » si elle n'en a pas). Cinq colonnes au plus : avec plus de pièces, la fenêtre a des pages, partagées également (huit pièces : deux pages de quatre), qu'on glisse vers la gauche ou la droite, leurs noms en haut (« Pièces 1 à 4 ») ; elle s'ouvre sur la page de la pièce montrée en mode appareils. Dessous, une ligne par appareil, dessinée comme sa carte en mode appareils : son icône dans une pastille ronde de la couleur de son état, son nom et son état. Un état trop long pour la colonne finit par « … ». Sans aucun appareil, la fenêtre dit « Aucun appareil ».
 

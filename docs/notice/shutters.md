@@ -6,7 +6,7 @@
 
 **Opens with** a long press on a shutter or a valve (its card in device mode, or the weather icon of a card that holds it), then **Details** among its [quick actions](tiles.md#quick-actions): on its room, with that shutter selected. Also with « Go to screen » → *Shutter* from Home Assistant (the option keeps that name; « Volet » before 2026-10-24), the [navigation wheel](home.md#central-card-12) (*Appareils* → *Volets*), or a [home page gesture](home.md) set to *Shutters of the room shown*: on the room shown on the home page, or the first one that has shutters. A tap on a shutter's card stops it while it moves, closes it when it is open, opens it otherwise ([bottom row](tiles.md)).
 
-![The shutter window: the drawn shutter at 45 %, moving, Open, Stop and Close](../images/notice/volet-en.webp)
+![Home Assistant wall screen (ESP32-P4): the shutter window: the drawn shutter at 45 %, moving, Open, Stop and Close](../images/notice/volet-en.webp)
 
 **One page per room**: every shutter of the house, room by room, like the [lights](lights.md). The names of the rooms are at the top, next to the ×: **swipe left or right** (except on the drawn shutter) or **tap a room's name**. One room only: no names, no swipe. Five shutters per page: a room with more takes several pages (« Living room 2/3 »).
 
@@ -41,7 +41,7 @@ A shutter card set to *confirm* or *read-only* in the blueprint is not in this w
 
 **S'ouvre par** un appui long sur un volet ou une vanne (sa carte en mode appareils, ou l'icône météo d'une carte qui le porte), puis **Détails** parmi ses [actions rapides](tiles.md#actions-rapides) : sur sa pièce, ce volet choisi. Aussi par « Go to screen » → *Shutter* depuis Home Assistant (l'option garde ce nom ; « Volet » avant le 24/10/2026), la [roue de navigation](home.md#carte-centrale-12) (*Appareils* → *Volets*), ou un [geste de l'accueil](home.md#version-française) réglé sur *Volets de la pièce affichée* : sur la pièce affichée à l'accueil, ou la première qui a des volets. Un tap sur la carte d'un volet l'arrête s'il bouge, le ferme s'il est ouvert, l'ouvre sinon ([rangée du bas](tiles.md#version-française)).
 
-![La fenêtre du volet : le volet dessiné à 45 %, en mouvement, Ouvrir, Stop et Fermer](../images/notice/volet-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre du volet : le volet dessiné à 45 %, en mouvement, Ouvrir, Stop et Fermer](../images/notice/volet-fr.webp)
 
 **Une page par pièce** : tous les volets de la maison, pièce par pièce, comme les [lumières](lights.md#version-française). Les noms des pièces sont en haut, à côté de la × : **glissez à gauche ou à droite** (sauf sur le volet dessiné) ou **touchez le nom d'une pièce**. Une seule pièce : ni noms ni glissement. Cinq volets par page : une pièce qui en a plus prend plusieurs pages (« Salon 2/3 »).
 

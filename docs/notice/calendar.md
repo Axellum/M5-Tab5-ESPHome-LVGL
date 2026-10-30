@@ -6,7 +6,7 @@
 
 **Opens with** a long press on the date, under the clock (a long press on the time opens the [alarm clock](alarm.md)); another gesture can be chosen in the blueprint ([home screen](home.md#clock-and-date-5)).
 
-![The calendar: June 2026, work hours in each day, today framed, legend at the bottom](../images/notice/calendrier-en.webp)
+![Home Assistant wall screen (ESP32-P4): the calendar: June 2026, work hours in each day, today framed, legend at the bottom](../images/notice/calendrier-en.webp)
 
 - **‹** and **›**: the previous or next month. **Today**: back to the current month.
 - Each day shows its work hours (in pink when the day starts before 9:00). The legend at the bottom gives the rest: today framed, a public holiday's number in red, school holidays in a coloured cell, a gold dot for an appointment, a pink dot for a birthday.
@@ -26,7 +26,7 @@ The grid of days works without Home Assistant; the hours and events come from yo
 
 **S'ouvre par** un appui long sur la date, sous l'horloge (un appui long sur l'heure ouvre le [réveil](alarm.md#version-française)) ; un autre geste peut se choisir dans le blueprint ([écran d'accueil](home.md#horloge-et-date-5)).
 
-![Le calendrier : juin 2026, les heures de travail dans chaque jour, aujourd'hui encadré, la légende en bas](../images/notice/calendrier-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : le calendrier : juin 2026, les heures de travail dans chaque jour, aujourd'hui encadré, la légende en bas](../images/notice/calendrier-fr.webp)
 
 - **‹** et **›** : le mois précédent ou suivant. **Aujourd'hui** : retour au mois en cours.
 - Chaque jour montre ses heures de travail (en rose quand la journée commence avant 9:00). La légende du bas donne le reste : aujourd'hui encadré, le numéro d'un jour férié en rouge, les vacances scolaires en case colorée, un point doré pour un rendez-vous, un point rose pour un anniversaire.

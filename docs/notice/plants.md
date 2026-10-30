@@ -8,7 +8,7 @@ On the home screen, in the plants line under the clock, one icon per pot, from t
 
 **Opens with** a long press on those icons. A tap shows the next line of the row, if it has others ([home screen](home.md)).
 
-![My plants: five pots, each with its moisture, its state, fertility, light, temperature and battery](../images/notice/plantes-en.webp)
+![Home Assistant wall screen (ESP32-P4): My plants: five pots, each with its moisture, its state, fertility, light, temperature and battery](../images/notice/plantes-en.webp)
 
 One card per sensor, always in the same order:
 
@@ -27,7 +27,7 @@ Sur l'écran d'accueil, dans la ligne des plantes sous l'horloge, une icône par
 
 **S'ouvre par** un appui long sur ces icônes. Un tap montre la ligne suivante de la rangée, s'il y en a d'autres ([écran d'accueil](home.md#version-française)).
 
-![Mes plantes : cinq pots, chacun avec son humidité, son état, la fertilité, la lumière, la température et la batterie](../images/notice/plantes-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : Mes plantes : cinq pots, chacun avec son humidité, son état, la fertilité, la lumière, la température et la batterie](../images/notice/plantes-fr.webp)
 
 Une carte par capteur, toujours dans le même ordre :
 

@@ -6,7 +6,7 @@
 
 **Opens with** a long press on one of the two temperatures of the [home screen](home.md): the room's, or the second one (greenhouse or outdoors). A tap on the second one switches the area left of the clock between the voice controls and the chart of the coming hours.
 
-![The temperature window of a greenhouse, 24 h view: now, minimum, maximum and the forecast, then the curve of the last 24 hours and the outdoor forecast after « Now »](../images/notice/temperature-serre-en.webp)
+![Home Assistant wall screen (ESP32-P4): the temperature window of a greenhouse, 24 h view: now, minimum, maximum and the forecast, then the curve of the last 24 hours and the outdoor forecast after « Now »](../images/notice/temperature-serre-en.webp)
 
 - **Top**: **Now** (and the average of the period), **Minimum** and **Maximum**, each with when it was reached. For the second temperature, a fourth card: the highest forecast temperature, and the lowest below it.
 - **Bottom**: the curve, with the place and the period as title. **24 h** (hour by hour), **7 days** (every three hours), **30 days** (day by day). The line is the average; the pale bar behind it goes from the minimum to the maximum; the dot at the end is the temperature now.
@@ -30,7 +30,7 @@ Home Assistant sends the curve only while the window is open, from its long-term
 
 **S'ouvre par** un appui long sur l'une des deux températures de l'[écran d'accueil](home.md#version-française) : celle de la pièce, ou la seconde (serre ou dehors). Un tap sur la seconde fait passer la zone à gauche de l'horloge des commandes vocales au graphique des prochaines heures.
 
-![La fenêtre de la température d'une serre, vue 24 h : maintenant, minimum, maximum et la prévision, puis la courbe des dernières 24 heures et la prévision de dehors après « Maintenant »](../images/notice/temperature-serre-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre de la température d'une serre, vue 24 h : maintenant, minimum, maximum et la prévision, puis la courbe des dernières 24 heures et la prévision de dehors après « Maintenant »](../images/notice/temperature-serre-fr.webp)
 
 - **En haut** : **Maintenant** (et la moyenne de la période), **Minimum** et **Maximum**, chacun avec le moment où il a été atteint. Pour la seconde température, une quatrième carte : la température prévue la plus haute, et la plus basse en dessous.
 - **En bas** : la courbe, avec le lieu et la période pour titre. **24 h** (heure par heure), **7 jours** (toutes les trois heures), **30 jours** (jour par jour). La ligne est la moyenne ; la barre pâle derrière elle va du minimum au maximum ; le point au bout est la température du moment.

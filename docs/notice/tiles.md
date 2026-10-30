@@ -16,7 +16,7 @@ The home page shows today and the next four days.
 - **Long press on a weather card that holds no device**: the [Weather window](weather.md), the hours as a curve, ten days and the details. A card with a device keeps the device's long press.
 - **« Forecast from 11:42 »**, with a small clock, above the cards on the right: Home Assistant has sent no forecast for more than 30 minutes (it sends them every 10 minutes). The cards still show the last ones received, at that time (« yesterday 21:04 », or « 3 days old »). The line goes away with the next forecast. Usual causes: Home Assistant stopped or restarting, the Wi-Fi, or the « MAJ Ecran Tab5 ESPHome Push » automation turned off ([troubleshooting](../troubleshooting.md)). It does not see a weather service that stopped updating while Home Assistant keeps sending its last forecast.
 
-![Swipe right: the next hours, five per card](../images/notice/accueil-previsions-heures-1-en.webp)
+![Home Assistant wall screen (ESP32-P4): swipe right: the next hours, five per card](../images/notice/accueil-previsions-heures-1-en.webp)
 
 ![A tap on Wednesday's temperatures: its schedule in the central card](../images/notice/accueil-planning-du-jour-en.webp)
 
@@ -106,7 +106,7 @@ La page d'accueil montre aujourd'hui et les quatre jours suivants.
 - **Appui long sur une carte météo qui ne porte pas d'appareil** : la [fenêtre Météo](weather.md#version-française), les heures en courbe, dix jours et les détails. Une carte qui porte un appareil garde l'appui long de l'appareil.
 - **« Prévisions de 11 h 42 »**, avec une petite horloge, au-dessus des cartes à droite : Home Assistant n'a pas envoyé de prévisions depuis plus de 30 minutes (il les envoie toutes les 10 minutes). Les cartes montrent encore les dernières reçues, à cette heure-là (« d'hier 21 h 04 », ou « vieilles de 3 jours »). La ligne disparaît à l'arrivée des suivantes. Causes habituelles : Home Assistant arrêté ou qui redémarre, le Wi-Fi, ou l'automatisation « MAJ Ecran Tab5 ESPHome Push » désactivée ([dépannage](../troubleshooting.md#version-française)). Elle ne voit pas un service météo qui ne se met plus à jour pendant que Home Assistant continue d'envoyer ses dernières prévisions.
 
-![Glisser vers la droite : les heures qui viennent, cinq cartes](../images/notice/accueil-previsions-heures-1-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : glisser vers la droite : les heures qui viennent, cinq cartes](../images/notice/accueil-previsions-heures-1-fr.webp)
 
 ![Un tap sur les températures de mercredi : son planning dans la carte centrale](../images/notice/accueil-planning-du-jour-fr.webp)
 

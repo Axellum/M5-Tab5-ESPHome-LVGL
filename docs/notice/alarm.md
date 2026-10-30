@@ -6,7 +6,7 @@
 
 **Opens with** a long press on the time, hours or minutes (a long press on the date opens the [calendar](calendar.md)); another gesture can be chosen in the blueprint ([home screen](home.md#clock-and-date-5)). The alarm rings even without Home Assistant: the time, the next days' work hours and the melody are on the tablet.
 
-![The alarm clock window, Time page: the time on two wheels, the switch, the next alarm, Test](../images/notice/reveil-en.webp)
+![Home Assistant wall screen (ESP32-P4): the alarm clock window, Time page: the time on two wheels, the switch, the next alarm, Test](../images/notice/reveil-en.webp)
 
 The window has **five pages**, named at the top next to the title: **Time**, **Days**, **Shift start**, **Ringtone**, **Announcements**. Tap a name, or slide the window left or right (it loops from the last page back to the first). It always opens on **Time**. Values are set on **wheels**: slide the numbers up or down, the one in the middle is kept.
 
@@ -62,7 +62,7 @@ The same settings are entities of the tablet in Home Assistant ([tablet settings
 
 **S'ouvre par** un appui long sur l'heure, heures ou minutes (un appui long sur la date ouvre le [calendrier](calendar.md#version-française)) ; un autre geste peut se choisir dans le blueprint ([écran d'accueil](home.md#horloge-et-date-5)). Le réveil sonne même sans Home Assistant : l'heure, les heures de travail des jours qui viennent et la mélodie sont sur la tablette.
 
-![La fenêtre du réveil, page Heure : l'heure sur deux rouleaux, l'interrupteur, la prochaine sonnerie, Tester](../images/notice/reveil-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre du réveil, page Heure : l'heure sur deux rouleaux, l'interrupteur, la prochaine sonnerie, Tester](../images/notice/reveil-fr.webp)
 
 La fenêtre a **cinq pages**, nommées en haut à côté du titre : **Heure**, **Jours**, **Ouverture**, **Sonnerie**, **Annonces**. Un tap sur un nom, ou un glissé de la fenêtre vers la gauche ou la droite (de la dernière page, on revient à la première). Elle s'ouvre toujours sur **Heure**. Les valeurs se règlent sur des **rouleaux** : faire glisser les chiffres vers le haut ou vers le bas, celui du milieu est retenu.
 

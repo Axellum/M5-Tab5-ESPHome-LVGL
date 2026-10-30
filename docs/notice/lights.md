@@ -6,7 +6,7 @@
 
 **Opens with** a long press on a light: its card in device mode, or the weather icon of a card that holds it; then **Details** among its [quick actions](tiles.md#quick-actions) (a light set to *confirm* opens it at once). It opens on that light's room, with that light selected. Also with « Go to screen » → *Lights* from Home Assistant, the [navigation wheel](home.md#central-card-12) (*Appareils* → *Lumières*), or a [home page gesture](home.md) set to *Lights of the room shown*: on the room shown on the home page, or the first one that has lights. A tap on a light's card only turns it on or off ([bottom row](tiles.md)).
 
-![The lights window: the lights of the room, brightness at 70 %, whites and colours](../images/notice/lumieres-chambre-en.webp)
+![Home Assistant wall screen (ESP32-P4): the lights window: the lights of the room, brightness at 70 %, whites and colours](../images/notice/lumieres-chambre-en.webp)
 
 **One page per room**: every light of the house, room by room. The names of the rooms that have lights are at the top, next to the ×; the room shown is in the accent colour. **Swipe left or right** anywhere on the window (except on the arc) to go to the next or the previous room, or **tap a room's name**. A house with lights in one room only has no names and no swipe. A page holds five lights: a room with more takes several pages, its name says which one (« Living room 2/3 ») and the swipe goes through them; with one room only, one name per page.
 
@@ -35,7 +35,7 @@
 
 **S'ouvre par** un appui long sur une lumière : sa carte en mode appareils, ou l'icône météo d'une carte qui la porte ; puis **Détails** parmi ses [actions rapides](tiles.md#actions-rapides) (une lumière réglée sur *confirmer* l'ouvre tout de suite). Elle s'ouvre sur la pièce de cette lumière, cette lumière choisie. Aussi par « Go to screen » → *Lights* depuis Home Assistant, la [roue de navigation](home.md#carte-centrale-12) (*Appareils* → *Lumières*), ou un [geste de l'accueil](home.md#version-française) réglé sur *Lumières de la pièce affichée* : sur la pièce affichée à l'accueil, ou la première qui a des lumières. Un tap sur la carte d'une lumière l'allume ou l'éteint seulement ([rangée du bas](tiles.md#version-française)).
 
-![La fenêtre des lumières : les lumières de la pièce, luminosité à 70 %, blancs et couleurs](../images/notice/lumieres-chambre-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre des lumières : les lumières de la pièce, luminosité à 70 %, blancs et couleurs](../images/notice/lumieres-chambre-fr.webp)
 
 **Une page par pièce** : toutes les lumières de la maison, pièce par pièce. Les noms des pièces qui ont des lumières sont en haut, à côté de la × ; la pièce affichée est dans la couleur d'accent. **Glissez à gauche ou à droite** n'importe où sur la fenêtre (sauf sur l'arc) pour passer à la pièce suivante ou précédente, ou **touchez le nom d'une pièce**. Une maison qui n'a de lumières que dans une pièce n'a ni noms ni glissement. Une page tient cinq lumières : une pièce qui en a plus prend plusieurs pages, son nom dit laquelle (« Salon 2/3 ») et le glissement les parcourt ; avec une seule pièce, un nom par page.
 

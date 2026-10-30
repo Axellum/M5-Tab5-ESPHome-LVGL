@@ -8,7 +8,7 @@ The tablet settings you may want to change without opening Home Assistant, on fo
 
 The page names sit at the top, next to the title: the page shown is lit. Tap a name to show its page, or slide your finger left (next page) or right (previous page) anywhere in the window; after the last page comes the first again. Sliding the brightness or the volume slider moves the slider, never the page, and a slide that starts on a button does not press it.
 
-![The Settings window on its Screen page: brightness, auto screen off and the two ways to wake the screen](../images/notice/reglages-en.webp)
+![Home Assistant wall screen (ESP32-P4): the Settings window on its Screen page: brightness, auto screen off and the two ways to wake the screen](../images/notice/reglages-en.webp)
 
 **Screen**
 
@@ -58,7 +58,7 @@ Les réglages de la tablette qu'on veut changer sans ouvrir Home Assistant, sur 
 
 Les noms des pages sont en haut, à côté du titre : la page affichée est allumée. Un tap sur un nom montre sa page ; on peut aussi glisser le doigt vers la gauche (page suivante) ou vers la droite (page précédente) n'importe où dans la fenêtre ; après la dernière page revient la première. Glisser le curseur de la luminosité ou du volume bouge le curseur, jamais la page, et un glissement parti d'un bouton ne l'appuie pas.
 
-![La fenêtre Réglages sur sa page Écran : luminosité, extinction auto et les deux façons de rallumer l'écran](../images/notice/reglages-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la fenêtre Réglages sur sa page Écran : luminosité, extinction auto et les deux façons de rallumer l'écran](../images/notice/reglages-fr.webp)
 
 **Écran**
 

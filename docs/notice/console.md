@@ -6,7 +6,7 @@
 
 Since 2026-10-08 the system console is the **System** page of the [settings](settings.md), their fourth page. **Opens with** a long press on the gear button, top right of the home screen (a tap opens the settings on their Screen page), unless the blueprint gives that long press another screen ([home screen](home.md#the-three-buttons-top-right-6-to-8)); then with the tablet's « Go to screen » entity in Home Assistant, option « System console ». From another page of the settings: a tap on **System** at the top, or slide left or right.
 
-![The system console: memory, network, system with the volume, and the management buttons](../images/notice/console-systeme-en.webp)
+![Home Assistant wall screen (ESP32-P4): the system console: memory, network, system with the volume, and the management buttons](../images/notice/console-systeme-en.webp)
 
 **Memory**, **Network** and **System** only show: the tablet's memory, its Wi-Fi, IP address and signal, whether Home Assistant is connected, how long it has been running, the processor's temperature. In **System**, the slider is the tablet's volume (the same as in the [voice assistant window](voice.md)), and two lines added on 2026-10-06 ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)):
 
@@ -35,7 +35,7 @@ The theme, light or dark and the language are in the [settings](settings.md). To
 
 Depuis le 08/10/2026, la console système est la page **Système** des [réglages](settings.md#version-française), leur quatrième page. **S'ouvre par** un appui long sur le bouton engrenage, en haut à droite de l'accueil (un tap ouvre les réglages sur leur page Écran), sauf si le blueprint donne un autre écran à cet appui long ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)) ; alors par l'entité « Go to screen » de la tablette dans Home Assistant, option « System console ». Depuis une autre page des réglages : une tape sur **Système** en haut, ou glisser à gauche ou à droite.
 
-![La console système : mémoire, réseau, système avec le volume, et les boutons de gestion](../images/notice/console-systeme-fr.webp)
+![Écran mural Home Assistant (ESP32-P4) : la console système : mémoire, réseau, système avec le volume, et les boutons de gestion](../images/notice/console-systeme-fr.webp)
 
 **Mémoire**, **Réseau** et **Système** montrent seulement : la mémoire de la tablette, son Wi-Fi, son adresse IP et son signal, si Home Assistant est connecté, depuis combien de temps elle tourne, la température du processeur. Dans **Système**, le curseur est le volume de la tablette (le même que dans la [fenêtre de l'assistant vocal](voice.md#version-française)), et deux lignes ajoutées le 06/10/2026 ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
 
