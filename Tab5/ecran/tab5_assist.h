@@ -95,12 +95,14 @@ const char* action_name(Action a);  // libellé pour les logs
 
 }  // namespace WakeWord
 
-// Renseigne la bulle "Votre demande" (texte STT normalisé UTF-8).
+// Renseigne la bulle "Votre demande" (texte STT normalisé UTF-8, filtré aux glyphes des
+// polices par texte_glyphes : une espace insécable ou fine devient une espace).
 void assist_set_request(lv_obj_t* lbl_request, const std::string& texte);
 
-// Renseigne la zone "Réponse" : normalise + format_assist_markdown + applique la
-// police (nullptr : celle de la date du thème, portée par le style du label) puis le
-// texte. Le retour à la ligne LVGL est géré par le YAML.
+// Renseigne la zone "Réponse" : normalise + format_assist_markdown + glyphes des polices
+// (texte_glyphes, les « \n » restent) + applique la police (nullptr : celle de la date du
+// thème, portée par le style du label) puis le texte. Le retour à la ligne LVGL est géré
+// par le YAML.
 void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
     esphome::font::Font* font);
 

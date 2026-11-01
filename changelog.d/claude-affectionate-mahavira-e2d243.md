@@ -1,0 +1,3 @@
+### Corrigé
+
+- **Plus de rectangle vide dans le popup Assistant vocal** : la demande reconnue s'affichait « tarte tatin▯? », parce que la reconnaissance vocale en français de Home Assistant Cloud met une espace insécable devant « ? », que les polices de l'écran n'ont pas. La demande et la réponse passent maintenant par le même filtre que les noms des tuiles : une espace insécable ou fine (U+00A0, U+202F, U+2009…) devient une espace, un caractère que les polices n'ont pas (un emoji, par exemple) disparaît au lieu de s'afficher en rectangle. Le filtre est rangé dans le socle et testé sur PC ([langues](docs/translations.md)).

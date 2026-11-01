@@ -62,7 +62,8 @@
  *       Les types, options, clés et commandes sont un contrat avec le blueprint :
  *       tests/test_tuiles_firmware.py les compare aux tableaux de l'ADR-0023. Un texte
  *       affiché passe par tr() ; un nom venu de HA s'affiche tel quel, filtré aux glyphes
- *       des polices (Latin-1 + cp1252 + lettres turques, table kHorsLatin1).
+ *       des polices (Latin-1 + cp1252 + lettres turques, table kHorsLatin1 du socle,
+ *       texte_glyphes_copier dans tab5_core.cpp).
  */
 #include "tab5_tuiles_priv.h"
 #include "tab5_geometrie.h"
@@ -219,75 +220,14 @@ void charger() {
 
 // ─── Texte venu de HA : glyphes des polices, 24 octets au plus ───────────────────────
 
-// Hors Latin-1, les caractères que les polices &latin1 dessinent (tab5-styles.yaml) :
-// la ponctuation de Windows-1252, İ ō ř (questions de Trial Poursuite) et Ğ ğ ı Ş ş
-// (écran en turc, 02/10/2026).
-// tests/test_tuiles_firmware.py compare cette table à la liste des glyphes.
-constexpr uint16_t kHorsLatin1[] = {
-    0x20AC, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160,
-    0x2039, 0x0152, 0x017D, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
-    0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x017E, 0x0178, 0x0130, 0x014D, 0x0159,
-    0x011E, 0x011F, 0x0131, 0x015E, 0x015F,
-};
-
-bool glyphe_disponible(uint32_t cp) {
-    if (cp >= 0x20 && cp <= 0x7E) return true;
-    if (cp >= 0xA1 && cp <= 0xFF) return cp != 0xAD;  // ni espace insécable ni trait conditionnel
-    for (uint16_t c : kHorsLatin1)
-        if (c == cp) return true;
-    return false;
-}
-
-// Point de code UTF-8 suivant (U+FFFD si la séquence est invalide) ; avance `p`.
-uint32_t utf8_suivant(const char*& p, const char* fin) {
-    const unsigned char c = static_cast<unsigned char>(*p++);
-    if (c < 0x80) return c;
-    int n = 0;
-    uint32_t cp = 0;
-    if ((c & 0xE0) == 0xC0) { n = 1; cp = c & 0x1F; }
-    else if ((c & 0xF0) == 0xE0) { n = 2; cp = c & 0x0F; }
-    else if ((c & 0xF8) == 0xF0) { n = 3; cp = c & 0x07; }
-    else return 0xFFFD;
-    for (int i = 0; i < n; i++) {
-        if (p >= fin || (static_cast<unsigned char>(*p) & 0xC0) != 0x80) return 0xFFFD;
-        cp = (cp << 6) | (static_cast<unsigned char>(*p++) & 0x3F);
-    }
-    return cp;
-}
-
-size_t utf8_ecrire(uint32_t cp, char* out) {
-    if (cp < 0x80) { out[0] = static_cast<char>(cp); return 1; }
-    if (cp < 0x800) {
-        out[0] = static_cast<char>(0xC0 | (cp >> 6));
-        out[1] = static_cast<char>(0x80 | (cp & 0x3F));
-        return 2;
-    }
-    out[0] = static_cast<char>(0xE0 | (cp >> 12));
-    out[1] = static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-    out[2] = static_cast<char>(0x80 | (cp & 0x3F));
-    return 3;
-}
-
 // Copie un texte de HA dans `dst` (capacité `cap`, zéro final compris) : UTF-8 valide
-// (Latin-1 et mojibake réparés par normalize_text_utf8), sans les caractères que les
-// polices n'ont pas, coupé sur une frontière de caractère. L'espace insécable devient
-// une espace.
+// (Latin-1 et mojibake réparés par normalize_text_utf8), puis le filtre du socle
+// (texte_glyphes_copier, tab5_core.h, table kHorsLatin1) : sans les caractères que les
+// polices n'ont pas, coupé sur une frontière de caractère, une espace Unicode (insécable,
+// fine…) devenue une espace.
 void copier_texte(char* dst, size_t cap, const char* src, size_t n) {
-    std::memset(dst, 0, cap);
     const std::string propre = normalize_text_utf8(std::string(src, n));
-    const char* p = propre.data();
-    const char* fin = p + propre.size();
-    size_t k = 0;
-    while (p < fin) {
-        uint32_t cp = utf8_suivant(p, fin);
-        if (cp == 0xA0) cp = ' ';
-        if (!glyphe_disponible(cp)) continue;
-        char tmp[4];
-        const size_t w = utf8_ecrire(cp, tmp);
-        if (k + w >= cap) break;
-        std::memcpy(dst + k, tmp, w);
-        k += w;
-    }
+    texte_glyphes_copier(dst, cap, propre.data(), propre.size());
 }
 
 uint8_t lire_options(const char* s, size_t n) {

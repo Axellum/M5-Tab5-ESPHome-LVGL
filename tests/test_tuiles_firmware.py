@@ -121,15 +121,24 @@ def test_champs_gardes_selon_l_adr():
     assert re.search(r"constexpr size_t kIcone = 16;", modele), "code de palette : [a-z0-9_]{1,15}"
     assert int(_constexpr("kComplement")) >= 8, "unité d'un cap : 7 octets au plus"
     # Coupé sur une frontière de caractère : on n'ajoute un caractère que s'il tient entier.
-    assert "if (k + w >= cap) break;" in _fonction(_cpp(), "copier_texte")
+    # Le filtre est celui du socle depuis le 01/11/2026 (tab5_core.cpp, testé sur PC).
+    assert "texte_glyphes_copier(dst, cap, propre.data(), propre.size());" in _fonction(_cpp(), "copier_texte")
+    assert "if (k + w >= cap) break;" in _fonction(_core(), "texte_glyphes_copier")
+
+
+def _core():
+    return _lire("Tab5", "socle", "tab5_core.cpp")
 
 
 def test_noms_filtres_aux_glyphes_des_polices():
-    """Le filtre des noms (glyphe_disponible) = les glyphes &latin1 de roboto_32_b, la
+    """Le filtre des noms (glyphe_disponible, socle) = les glyphes &latin1 de roboto_32_b, la
     police des onglets : un caractère gardé s'affiche, aucun affichable n'est jeté."""
-    table = [int(x, 16) for x in re.findall(r"0x([0-9A-F]{4})", _constexpr("kHorsLatin1"))]
+    m = re.search(r"constexpr uint16_t kHorsLatin1\[\] = \{([^}]*)\};", _core())
+    assert m, "table kHorsLatin1 introuvable dans tab5_core.cpp"
+    table = [int(x, 16) for x in re.findall(r"0x([0-9A-F]{4})", m.group(1))]
+    assert "kHorsLatin1[] =" not in _cpp() and "glyphe_disponible(" not in _cpp(), "une seule table, celle du socle"
     garde = set(range(0x20, 0x7F)) | (set(range(0xA1, 0x100)) - {0xAD}) | set(table)
-    corps = _fonction(_cpp(), "glyphe_disponible")
+    corps = _fonction(_core(), "glyphe_disponible")
     assert "cp >= 0x20 && cp <= 0x7E" in corps and "cp >= 0xA1 && cp <= 0xFF" in corps and "0xAD" in corps
     polices = font_glyphs(Path(REPO, "Tab5", "paquets", "tab5-styles.yaml"))
     assert {ord(c) for c in polices["roboto_32_b"]} == garde
