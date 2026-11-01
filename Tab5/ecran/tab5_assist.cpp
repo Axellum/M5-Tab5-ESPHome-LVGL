@@ -154,9 +154,13 @@ static std::string format_assist_markdown(const std::string& in) {
     return out;
 }
 
+// Demande et réponse passent par le filtre des glyphes du socle (texte_glyphes,
+// tab5_core.h), comme les noms des tuiles : le STT fr-FR de HA Cloud met une espace
+// insécable U+00A0 devant « ? » (« mercredi ? », pipeline_debug du 01/11/2026), que les
+// polices n'ont pas — un rectangle vide entre le mot et le « ? ».
 void assist_set_request(lv_obj_t* lbl_request, const std::string& texte) {
     if (!lbl_request) return;
-    std::string t = trim_ws(normalize_text_utf8(texte));
+    std::string t = trim_ws(texte_glyphes(normalize_text_utf8(texte)));
     lv_label_set_text(lbl_request, t.c_str());
 }
 
@@ -175,7 +179,9 @@ void assist_set_response(lv_obj_t* lbl_response, const std::string& texte,
         src.resize(cut);
         src += "\n[...]";
     }
-    std::string t = format_assist_markdown(src);
+    // Après la mise en forme, qui lit encore les tabulations des tableaux ; les « \n »
+    // des lignes restent.
+    std::string t = texte_glyphes(format_assist_markdown(src), true);
     ui_police(lbl_response, font);
     lv_label_set_recolor(lbl_response, false);
     lv_label_set_text(lbl_response, t.c_str());

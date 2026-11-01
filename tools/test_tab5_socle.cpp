@@ -4,6 +4,9 @@
  *     nombres (longueur, illisible, non fini), entiers non signés, plafond commun ;
  *   - dates et heures (Tab5/socle/tab5_core.h/.cpp) : jour civil, jours du mois, heure
  *     valide, « HH:MM » strict, embauche tôt ;
+ *   - le texte venu de HA réduit aux glyphes des polices (texte_glyphes, tab5_core.h,
+ *     01/11/2026) : espaces insécable et fines → espace, caractères absents retirés, coupe
+ *     sur une frontière de caractère ;
  *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h), dont la
  *     clim « d'ici » de la tuile − / + (clim_ici_rang, 14/10/2026) ;
  *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert, et le sens
@@ -181,6 +184,44 @@ static void test_majuscules() {
     t[0] = '\0';
     texte_majuscules(t);
     expect(t[0] == '\0', "majuscules : chaîne vide");
+}
+
+// Texte venu de HA : glyphes des polices (texte_glyphes, 01/11/2026). Le popup vocal
+// montrait « tarte tatin▯? » : le STT fr-FR de HA Cloud écrit « mercredi ? » avec U+00A0
+// (pipeline_debug du 01/11/2026) et les polices n'ont pas l'espace insécable.
+static void test_glyphes() {
+    expect(texte_glyphes("mercredi\xC2\xA0?") == "mercredi ?", "glyphes : U+00A0 (insécable) → espace");
+    expect(texte_glyphes("tatin\xE2\x80\xAF?") == "tatin ?", "glyphes : U+202F (fine insécable) → espace");
+    expect(texte_glyphes("1\xE2\x80\x89km \xE2\x80\x8A;") == "1 km  ;", "glyphes : U+2009, U+200A (fines) → espace");
+    expect(texte_glyphes("x\xE3\x80\x80y\xE2\x81\x9Fz") == "x y z", "glyphes : U+3000, U+205F → espace");
+    // Ce que les polices ont reste tel quel : Latin-1, cp1252, lettres turques.
+    const char* garde = "\xC3\x80 quelle heure ? \xC2\xAB oui \xC2\xBB \xE2\x82\xAC \xE2\x80\xA6 \xE2\x80\xA2 \xC4\x9F \xC4\xB0";
+    expect(texte_glyphes(garde) == garde, "glyphes : À « » € … • ğ İ restent");
+    // Ce qu'elles n'ont pas disparaît (un rectangle vide sinon).
+    expect(texte_glyphes("ok \xF0\x9F\x98\x80!") == "ok !", "glyphes : emoji (4 octets) retiré");
+    expect(texte_glyphes("\xC5\x81\xC3\xB3w\xC5\xBA") == "\xC3\xB3w", "glyphes : Ł ź (absents des polices) retirés");
+    expect(texte_glyphes("mi\xC2\xADnute") == "minute", "glyphes : trait conditionnel U+00AD retiré");
+    expect(texte_glyphes("x\xFFy\xC3") == "xy", "glyphes : UTF-8 invalide ou tronqué retiré");
+    expect(texte_glyphes(std::string("a\0b", 3)) == "ab", "glyphes : zéro au milieu retiré");
+    expect(texte_glyphes("").empty(), "glyphes : texte vide");
+    // Lignes : retirées d'un nom (une ligne), gardées dans la réponse de l'assistant.
+    expect(texte_glyphes("a\nb\tc") == "abc", "glyphes : « \\n » et tabulation retirés d'un nom");
+    expect(texte_glyphes("a\nb", true) == "a\nb", "glyphes : « \\n » gardé avec lignes");
+    // Copie bornée (noms des tuiles, 24 octets) : coupe sur une frontière de caractère.
+    char d[8];
+    texte_glyphes_copier(d, 4, "ab\xC3\xA9", 4);
+    expect(std::strcmp(d, "ab") == 0, "glyphes : « é » coupé entier, pas à moitié (cap 4)");
+    texte_glyphes_copier(d, 5, "ab\xC3\xA9", 4);
+    expect(std::strcmp(d, "ab\xC3\xA9") == 0, "glyphes : « é » tient avec son zéro final (cap 5)");
+    texte_glyphes_copier(d, 3, "a\xE2\x80\xAFz", 5);
+    expect(std::strcmp(d, "a ") == 0, "glyphes : l'espace fine compte pour un octet une fois remplacée");
+    texte_glyphes_copier(d, sizeof(d), nullptr, 3);
+    expect(d[0] == '\0', "glyphes : source nulle → texte vide");
+    // utf8_suivant : point de code et avance.
+    const char* s = "\xC3\xA9z";
+    const char* p = s;
+    expect(utf8_suivant(p, s + 3) == 0xE9 && p == s + 2, "utf8_suivant : é sur deux octets");
+    expect(utf8_suivant(p, s + 3) == 'z' && p == s + 3, "utf8_suivant : ASCII");
 }
 
 static void test_dates() {
@@ -787,6 +828,7 @@ int main() {
     test_entiers();
     test_dates();
     test_majuscules();
+    test_glyphes();
     test_hhmm();
     test_modele_ha();
     test_pieces_pages();

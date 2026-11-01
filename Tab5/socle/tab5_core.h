@@ -123,6 +123,20 @@ std::string fr_capitalized(const char* s);
 // OCTOBRE », ADR-0062). nullptr : rien.
 void texte_majuscules(char* s);
 
+// Texte venu de Home Assistant → les glyphes des polices de texte (jeu &latin1 de
+// tab5-styles.yaml : Latin-1, ponctuation de Windows-1252, İ ō ř et les lettres turques) ;
+// un autre caractère s'afficherait en rectangle vide. Une seule table (kHorsLatin1,
+// tab5_core.cpp), pour les noms des tuiles (texte_ha_copier) comme pour le popup vocal.
+// Point de code UTF-8 suivant (U+FFFD si la séquence est invalide) ; avance `p`.
+uint32_t utf8_suivant(const char*& p, const char* fin);
+// Copie `src` (UTF-8, `n` octets) dans `dst` (`cap` octets, zéro final compris) : une espace
+// Unicode (U+00A0 insécable, que le STT fr-FR de HA Cloud met devant « ? » ; U+202F fine
+// insécable, U+2009 fine…) devient une espace, un caractère que les polices n'ont pas
+// disparaît, la coupe tombe sur une frontière de caractère. `lignes` : les « \n » restent.
+void texte_glyphes_copier(char* dst, size_t cap, const char* src, size_t n, bool lignes = false);
+// Le même filtre sur tout le texte (le résultat n'est jamais plus long que `s`).
+std::string texte_glyphes(const std::string& s, bool lignes = false);
+
 // Les mêmes libellés dans la langue de l'écran (tab5_i18n, lot 4 du 27/09/2026) :
 // ce sont EUX qu'on affiche. Les fr_* restent la source (clés de traduction dans
 // Tab5/lang/*.yaml) et ce que vérifient les tests en français.

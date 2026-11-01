@@ -81,3 +81,24 @@ def test_boutons_du_panneau_dans_le_panneau(carte):
     if carte == "tab5":
         assert boites["btn_assist_mute"] == {"x": 16, "y": 422, "width": 80, "height": 60}
         assert curseur == {"x": 112, "y": 442, "width": 236, "height": 20}
+
+
+def test_demande_et_reponse_filtrees_aux_glyphes():
+    """La demande (STT) et la réponse passent par le filtre des glyphes du socle (texte_glyphes,
+    tab5_core.h), le même que les noms des tuiles : le STT fr-FR de HA Cloud met une espace
+    insécable U+00A0 devant « ? » (« mercredi ? », pipeline_debug du 01/11/2026), que les polices
+    n'ont pas — un rectangle vide à l'écran (« tarte tatin▯? », tournage du 01/11/2026). Le
+    filtre lui-même est testé sur PC : tools/test_tab5_socle.cpp, test_glyphes."""
+    cpp = lire("Tab5", "ecran", "tab5_assist.cpp")
+    demande = cpp.split("void assist_set_request(", 1)[1].split("\n}\n", 1)[0]
+    reponse = cpp.split("void assist_set_response(", 1)[1].split("\n}\n", 1)[0]
+    assert "std::string t = trim_ws(texte_glyphes(normalize_text_utf8(texte)));" in demande
+    assert "lv_label_set_text(lbl_request, t.c_str());" in demande, "le texte filtré est celui affiché"
+    # Après la mise en forme Markdown, lignes gardées : les tableaux restent sur leurs lignes.
+    assert "std::string t = texte_glyphes(format_assist_markdown(src), true);" in reponse
+    assert "lv_label_set_text(lbl_response, t.c_str());" in reponse
+    socle = lire("tools", "test_tab5_socle.cpp")
+    corps = socle.split("static void test_glyphes() {", 1)[1].split("\n}\n", 1)[0]
+    for echappement, nom in ((r"\xC2\xA0", "U+00A0"), (r"\xE2\x80\xAF", "U+202F"), (r"\xE2\x80\x89", "U+2009")):
+        assert echappement in corps, f"{nom} couvert par le test hôte"
+    assert "test_glyphes();" in socle.split("int main() {", 1)[1]
