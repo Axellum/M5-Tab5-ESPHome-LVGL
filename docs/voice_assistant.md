@@ -8,6 +8,8 @@
 
 The Tab5 functions as a local voice satellite for Home Assistant. It runs wake-word detection entirely on-device, streams audio only on demand, and gives real-time visual feedback through an icon on the UI.
 
+▶ **See it in a video** (3 min, spoken, subtitles in seven languages): [“Okay Nabu” and follow-up questions](https://youtu.be/gTc45PRshdk).
+
 The pipeline involves these stages in sequence: local wake-word model → I2S audio capture → Home Assistant Voice pipeline (Wyoming STT → conversation agent → Wyoming TTS) → ES8388 DAC playback.
 
 The conversation agent is the one of the Home Assistant voice assistant in use: two modes of the screen, Domo and Discu, pick which assistant answers ([Assistant mode selection](#assistant-mode-selection)). Any conversation agent of Home Assistant will do.
@@ -124,6 +126,8 @@ How it works: the mode is stored in the `conversation_mode` global bool (kept ac
 ## Vue d'ensemble
 
 Le Tab5 fonctionne comme un satellite vocal local pour Home Assistant. Il exécute la détection de wake-word entièrement sur l'appareil, stream l'audio uniquement à la demande, et donne un retour visuel en temps réel via une icône dans l'UI.
+
+▶ **En vidéo** (3 min, parlée, sous-titres en sept langues) : [« Okay Nabu » et questions de suite](https://youtu.be/gTc45PRshdk).
 
 Le pipeline enchaîne : modèle de wake-word local → capture audio I2S → pipeline Voice Home Assistant (Wyoming STT → agent conversation → Wyoming TTS) → lecture DAC ES8388.
 

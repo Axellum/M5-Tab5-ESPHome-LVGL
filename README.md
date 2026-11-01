@@ -125,11 +125,15 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 ## See it in action
 
-**Three videos on YouTube** (October 2026, English texts on screen, subtitles in seven languages):
+**Four videos on YouTube** (October and November 2026, subtitles in seven languages; the voice assistant one is spoken, the others have English texts on screen):
 
-| [The Home Assistant screen in 2 minutes](https://youtu.be/75hMN49qWFM) | [Install it in 7 steps, nothing to compile](https://youtu.be/6OZMtD_UTSs) | [Every setting from Home Assistant](https://youtu.be/4NPOXTlYok8) |
-|:-:|:-:|:-:|
-| [<img src="docs/images/home-assistant-dashboard-esp32-p4-tour-video.webp" width="260" loading="lazy" alt="Video: tour of a Home Assistant dashboard on an ESP32-P4 wall screen, a lamp's colour wheel open">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/home-assistant-screen-install-esphome-video.webp" width="260" loading="lazy" alt="Video: installing the Home Assistant screen with ESPHome from the browser, the blueprint and the 7-inch screen">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Video: every setting of the ESP32-P4 Home Assistant screen picked in a Home Assistant blueprint">](https://youtu.be/4NPOXTlYok8) |
+| [The Home Assistant screen in 2 minutes](https://youtu.be/75hMN49qWFM) | [Install it in 7 steps, nothing to compile](https://youtu.be/6OZMtD_UTSs) |
+|:-:|:-:|
+| [<img src="docs/images/home-assistant-dashboard-esp32-p4-tour-video.webp" width="260" loading="lazy" alt="Video: tour of a Home Assistant dashboard on an ESP32-P4 wall screen, a lamp's colour wheel open">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/home-assistant-screen-install-esphome-video.webp" width="260" loading="lazy" alt="Video: installing the Home Assistant screen with ESPHome from the browser, the blueprint and the 7-inch screen">](https://youtu.be/6OZMtD_UTSs) |
+
+| [Every setting from Home Assistant](https://youtu.be/4NPOXTlYok8) | [Voice assistant: “Okay Nabu” and follow-up questions](https://youtu.be/gTc45PRshdk) |
+|:-:|:-:|
+| [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Video: every setting of the ESP32-P4 Home Assistant screen picked in a Home Assistant blueprint">](https://youtu.be/4NPOXTlYok8) | [<img src="docs/images/home-assistant-voice-assistant-esp32-p4-video.webp" width="260" loading="lazy" alt="Video: the voice assistant of the ESP32-P4 Home Assistant wall screen, a follow-up question answered without saying the wake word again">](https://youtu.be/gTc45PRshdk) |
 
 **Photos of the real screens** (29 October 2026, the Waveshare 7B in the default theme, the Tab5 in a dark theme):
 
@@ -352,11 +356,15 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 
 ## En images
 
-**Trois vidéos sur YouTube** (octobre 2026, textes à l'écran en anglais, sous-titres en sept langues dont le français) :
+**Quatre vidéos sur YouTube** (octobre et novembre 2026, sous-titres en sept langues dont le français ; celle de l'assistant vocal est parlée, les autres ont des textes à l'écran en anglais) :
 
-| [L'écran Home Assistant en 2 minutes](https://youtu.be/75hMN49qWFM) | [L'installer en 7 étapes, sans rien compiler](https://youtu.be/6OZMtD_UTSs) | [Tout se règle dans Home Assistant](https://youtu.be/4NPOXTlYok8) |
-|:-:|:-:|:-:|
-| [<img src="docs/images/home-assistant-dashboard-esp32-p4-tour-video.webp" width="260" loading="lazy" alt="Vidéo : le tour d'un tableau de bord Home Assistant sur un écran mural ESP32-P4, la roue des couleurs d'une lampe ouverte">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/home-assistant-screen-install-esphome-video.webp" width="260" loading="lazy" alt="Vidéo : installer l'écran Home Assistant avec ESPHome depuis le navigateur, le blueprint et l'écran 7 pouces">](https://youtu.be/6OZMtD_UTSs) | [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Vidéo : tous les réglages de l'écran Home Assistant ESP32-P4 choisis dans un blueprint Home Assistant">](https://youtu.be/4NPOXTlYok8) |
+| [L'écran Home Assistant en 2 minutes](https://youtu.be/75hMN49qWFM) | [L'installer en 7 étapes, sans rien compiler](https://youtu.be/6OZMtD_UTSs) |
+|:-:|:-:|
+| [<img src="docs/images/home-assistant-dashboard-esp32-p4-tour-video.webp" width="260" loading="lazy" alt="Vidéo : le tour d'un tableau de bord Home Assistant sur un écran mural ESP32-P4, la roue des couleurs d'une lampe ouverte">](https://youtu.be/75hMN49qWFM) | [<img src="docs/images/home-assistant-screen-install-esphome-video.webp" width="260" loading="lazy" alt="Vidéo : installer l'écran Home Assistant avec ESPHome depuis le navigateur, le blueprint et l'écran 7 pouces">](https://youtu.be/6OZMtD_UTSs) |
+
+| [Tout se règle dans Home Assistant](https://youtu.be/4NPOXTlYok8) | [L'assistant vocal : « Okay Nabu » et questions de suite](https://youtu.be/gTc45PRshdk) |
+|:-:|:-:|
+| [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Vidéo : tous les réglages de l'écran Home Assistant ESP32-P4 choisis dans un blueprint Home Assistant">](https://youtu.be/4NPOXTlYok8) | [<img src="docs/images/home-assistant-voice-assistant-esp32-p4-video.webp" width="260" loading="lazy" alt="Vidéo : l'assistant vocal de l'écran mural Home Assistant ESP32-P4, une question de suite posée sans redire le mot de réveil">](https://youtu.be/gTc45PRshdk) |
 
 **Photos des vrais écrans** (29 octobre 2026, la Waveshare 7B dans le thème par défaut, le Tab5 dans un thème sombre) :
 

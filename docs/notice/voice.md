@@ -4,6 +4,8 @@
 
 ---
 
+▶ **See it in a video** (3 min, spoken, subtitles in seven languages): [“Okay Nabu” and follow-up questions](https://youtu.be/gTc45PRshdk).
+
 Say « Ok Nabu », or tap the microphone of the home screen, then speak. The answer is spoken and shows for a moment in the central card. The microphone's colour gives the state:
 
 | Colour | State |
@@ -41,6 +43,8 @@ The window does not close by itself while a conversation goes on, even without a
 ## Version Française
 
 ---
+
+▶ **En vidéo** (3 min, parlée, sous-titres en sept langues) : [« Okay Nabu » et questions de suite](https://youtu.be/gTc45PRshdk).
 
 Dites « Ok Nabu », ou touchez le micro de l'écran d'accueil, puis parlez. La réponse est dite à voix haute et s'affiche un moment dans la carte centrale. La couleur du micro donne l'état :
 
