@@ -29,7 +29,7 @@ The difference in practice:
 - The same icon as an MDI glyph at 45 px costs ~200 bytes in the font file, rendered on-the-fly by the font engine
 - Scaling is free: the same glyph can render at 24 px, 45 px, or 72 px without separate assets
 
-A second icon font (`IconeMeteo.ttf`) covers weather-specific symbols not present in the MDI set.
+A second icon font (`IconeMeteo.ttf`) covers weather-specific symbols not present in the MDI set. Each weather icon stacks two of its glyphs (a cloud and the rain, for example) in the theme's colours; its SVG drawings, code points and how to rebuild it are in [`Tab5/fonts/icone_meteo/`](../Tab5/fonts/icone_meteo/README.md) (in French).
 
 **Anti-aliasing note:** fonts are configured at `bpp: 1` (1 bit per pixel) rather than the default 4 bpp. This halves the font's RAM footprint and significantly reduces the CPU cost of rendering on each frame. At 45 px on a 1280 × 720 display, the visual difference between 1 bpp and 4 bpp is negligible at normal viewing distance.
 
@@ -127,7 +127,7 @@ La différence en pratique :
 - Le même icône comme glyphe MDI à 45 px coûte ~200 octets dans le fichier de police, rendu à la volée par le moteur de polices
 - Le scaling est gratuit : le même glyphe peut se rendre à 24 px, 45 px ou 72 px sans assets séparés
 
-Une seconde police d'icônes (`IconeMeteo.ttf`) couvre les symboles météo spécifiques absents du set MDI.
+Une seconde police d'icônes (`IconeMeteo.ttf`) couvre les symboles météo spécifiques absents du set MDI. Chaque icône météo superpose deux de ses glyphes (un nuage et la pluie, par exemple) dans les couleurs du thème ; ses dessins SVG, ses points de code et la façon de la refaire sont dans [`Tab5/fonts/icone_meteo/`](../Tab5/fonts/icone_meteo/README.md).
 
 **Note anti-aliasing :** les polices sont configurées à `bpp: 1` (1 bit par pixel) plutôt que les 4 bpp par défaut. Ça divise par deux l'empreinte RAM de la police et réduit significativement le coût CPU du rendu à chaque frame. À 45 px sur un affichage 1280 × 720, la différence visuelle entre 1 bpp et 4 bpp est négligeable à la distance de visionnage normale.
 
