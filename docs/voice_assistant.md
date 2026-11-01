@@ -72,7 +72,7 @@ TTS responses play through the ES8388 DAC → amplifier → built-in speaker. Th
 
 The I2S speaker in primary mode accepts 16000–48000 Hz and reconfigures its clock to whatever stream arrives, so the `sample_rate: 48000` on the `speaker:` component is only a default, never a constraint on the pipeline.
 
-**Playback buffer:** `buffer_duration: 500ms` on the speaker (the ESPHome default). Do not lower it. TTS is streamed over HTTP from HA *while it is still being generated*, over Wi-Fi carried by the C6 co-processor on SDIO, and when this ring buffer runs dry the speaker task does not pause the stream — it pads the DMA buffer with silence. Every network hiccup becomes an audible micro-gap.
+**Playback buffer:** `buffer_duration: 2000ms` on the speaker (four times the ESPHome default of 500 ms, since 2026-11-01). Do not lower it. TTS is streamed over HTTP from HA *while it is still being generated*, over Wi-Fi carried by the C6 co-processor on SDIO, and when this ring buffer runs dry the speaker task does not pause the stream — it pads the DMA buffer with silence. Every network hiccup becomes an audible micro-gap: crackling was heard at 500 ms on the minute-long answers of a language model. The buffer adds no delay (playback starts with the first data) and takes 384 KiB of PSRAM while a sound plays.
 
 ---
 
@@ -189,7 +189,7 @@ Les réponses TTS sont jouées via le DAC ES8388 → amplificateur → haut-parl
 
 Le haut-parleur I2S en mode primary accepte 16000 à 48000 Hz et reconfigure son horloge sur le flux qui arrive : le `sample_rate: 48000` du composant `speaker:` n'est qu'un défaut, jamais une contrainte sur le pipeline.
 
-**Tampon de lecture :** `buffer_duration: 500ms` sur le haut-parleur (le défaut ESPHome). Ne pas le baisser. Le TTS est streamé en HTTP depuis HA *pendant sa génération*, via le WiFi porté par le co-processeur C6 en SDIO, et quand ce tampon se vide la tâche du haut-parleur ne met pas le flux en pause — elle remplit le buffer DMA de silence. Chaque hoquet réseau devient un micro-trou audible.
+**Tampon de lecture :** `buffer_duration: 2000ms` sur le haut-parleur (quatre fois le défaut ESPHome de 500 ms, depuis le 01/11/2026). Ne pas le baisser. Le TTS est streamé en HTTP depuis HA *pendant sa génération*, via le WiFi porté par le co-processeur C6 en SDIO, et quand ce tampon se vide la tâche du haut-parleur ne met pas le flux en pause — elle remplit le buffer DMA de silence. Chaque hoquet réseau devient un micro-trou audible : des grésillements s'entendaient à 500 ms sur les réponses d'une minute d'un modèle de langage. Le tampon n'ajoute aucun délai (la lecture démarre aux premières données) et prend 384 Kio de PSRAM pendant qu'un son joue.
 
 ---
 

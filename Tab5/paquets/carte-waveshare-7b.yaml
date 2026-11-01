@@ -369,7 +369,7 @@ speaker:
     audio_dac: es8311_dac
     dac_type: external
     channel: mono
-    buffer_duration: 500ms
+    buffer_duration: 2000ms   # même raison que tab5-hardware.yaml (grésillements, 01/11/2026) ; mono : 192 Kio
     timeout: 2000ms
     bits_per_sample: 16bit
     sample_rate: 48000
