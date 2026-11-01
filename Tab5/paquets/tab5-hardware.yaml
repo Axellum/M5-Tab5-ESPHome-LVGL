@@ -432,7 +432,12 @@ speaker:
     # audibles = gresillements. Le TTS arrive en HTTP streame depuis HA PENDANT sa generation
     # (voice_assistant.cpp, tts_start_streaming), via le WiFi porte par le co-processeur C6 en SDIO :
     # les hoquets sont la regle, pas l'exception. Ce buffer est le seul amortisseur en aval du decodeur.
-    buffer_duration: 500ms
+    # [01/11/2026] 500 -> 2000ms : grésillements entendus sur les longues réponses d'un agent LLM
+    # (Gemini, une minute de voix lue au fil de la génération). Le tampon n'ajoute pas de latence :
+    # la lecture démarre dès les premières données (write_without_replacement), il ne fait qu'encaisser
+    # davantage d'avance quand le réseau la livre. Coût : 48 kHz x 2 voies x 16 bits = 192 Kio/s,
+    # soit 384 Kio de PSRAM (32 Mio sur le Tab5) pendant la lecture, rendus à l'arrêt du flux.
+    buffer_duration: 2000ms
     timeout: 2000ms
     bits_per_sample: 16bit
     sample_rate: 48000
