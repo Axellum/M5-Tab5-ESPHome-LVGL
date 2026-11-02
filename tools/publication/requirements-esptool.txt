@@ -14,8 +14,8 @@
 #
 # Régénérer (monter la version : la changer dans la commande), depuis la racine du dépôt,
 # en bash ou en PowerShell, puis remplacer tout ce qui suit cet en-tête par la sortie :
-#   "esptool==5.4.0" | uv pip compile - --generate-hashes --python-version 3.13 --python-platform x86_64-manylinux_2_28 --no-header -o <fichier temporaire>
-# (en bash : echo "esptool==5.4.0" | uv pip compile - …). La CI (job python de
+#   "esptool==5.6.0" | uv pip compile - --generate-hashes --python-version 3.13 --python-platform x86_64-manylinux_2_28 --no-header -o <fichier temporaire>
+# (en bash : echo "esptool==5.6.0" | uv pip compile - …). La CI (job python de
 # esphome-tab5.yml) installe ce fichier sur Linux à chaque PR ; tests/test_ci_securite.py
 # vérifie que chaque paquet est figé (==) avec au moins une empreinte.
 # À relever volontairement, comme ESPHOME_PUBLICATION.
@@ -304,7 +304,7 @@ esp-pylib==1.1.5 \
     --hash=sha256:3006bc9562f9526957e09ee848817463c22fe10ccf8ea68b61553906cbc089e0 \
     --hash=sha256:be04824c2da8d0af3ae891f93d0e4059c14d5f2c3c828b19a1c12d916c6a4d74
     # via esptool
-esptool==5.4.0 \
+esptool==5.6.0 \
     --hash=sha256:fd756598db0a26c9975fa18511b08687c54bf2ce7322ede80cf1f5117dad1f50
 intelhex==2.3.0 \
     --hash=sha256:87cc5225657524ec6361354be928adfd56bcf2a3dcc646c40f8f094c39c07db4 \
