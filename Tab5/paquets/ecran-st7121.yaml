@@ -1,7 +1,8 @@
 # [AI-CONTEXT]
 # @file ecran-st7121.yaml
 # @role Écran et tactile du Tab5 à puce ST7121 (fabriqué depuis le 28/04/2026, journal
-#       des versions M5Stack). COMPILÉ PAR LA CI ; tourne chez un utilisateur depuis octobre 2026.
+#       des versions M5Stack). COMPILÉ PAR LA CI ; tourne sur la deuxième tablette de l'auteur
+#       depuis le 21/10/2026 et chez un autre utilisateur depuis octobre 2026.
 # @architecture_constraint Même découpage que ecran-st7123.yaml : seul ce qui change
 #       d'une révision à l'autre ; le reste vient de tab5-hardware.yaml, étendu par `!extend`.
 #       Écran : modèle officiel M5STACK-TAB5-ST7121 (ESPHome, PR esphome#17500, juillet 2026).
@@ -10,8 +11,9 @@
 #       contrôleur tactile : le même protocole est donc probable, d'où la plateforme st7123.
 #       Confirmé par un tiers (esphome/esphome#17471, 11/07/2026) : ce même couple modèle
 #       ST7121 + tactile st7123 marche sur une vraie ST7121 (écran et tactile, paysage).
-#       Essayé avec CE firmware par un utilisateur depuis octobre 2026 (discussion #278 :
-#       écran, tactile, mot d'activation) ; l'auteur n'a pas de ST7121.
+#       Essayé avec CE firmware par un autre utilisateur depuis octobre 2026 (discussion #278 :
+#       écran, tactile, mot d'activation), et sur la deuxième tablette de l'auteur depuis le
+#       21/10/2026 (docs/installation/flash.md).
 # ============================================================================
 
 # Extinction de la dalle (Tab5/ecran/tab5_dalle.cpp) : voile noir seul, comme la ST7123
