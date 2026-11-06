@@ -479,7 +479,7 @@ Configuration matérielle bas niveau du Tab5 (chargée par `carte-tab5.yaml`) :
 ---
 
 ### `ecran-*.yaml`
-Écran et tactile d'une révision du Tab5, choisie à la compilation par `tab5_ecran:` dans `Tab5/user_entities.yaml` : `st7123` (par défaut, la tablette de l'auteur), `st7121` (tourne chez un utilisateur depuis octobre 2026) ou `ili9881c` (compilée par la CI, jamais testée sur une tablette). Chaque fichier ne contient que ce qui change d'une révision à l'autre — le modèle `mipi_dsi` et la plateforme tactile (`st7123`, ou `gt911` sur l'ILI9881C d'origine) — et étend les entrées `tab5_display` et `touch` de `tab5-hardware.yaml` par `!extend`. Voir [`docs/hardware.md`](hardware.md#révisions-matérielles).
+Écran et tactile d'une révision du Tab5, choisie à la compilation par `tab5_ecran:` dans `Tab5/user_entities.yaml` : `st7123` (par défaut, la tablette de l'auteur), `st7121` (tourne sur la deuxième tablette de l'auteur depuis le 21/10/2026 et chez un autre utilisateur depuis octobre 2026) ou `ili9881c` (compilée par la CI, jamais testée sur une tablette). Chaque fichier ne contient que ce qui change d'une révision à l'autre — le modèle `mipi_dsi` et la plateforme tactile (`st7123`, ou `gt911` sur l'ILI9881C d'origine) — et étend les entrées `tab5_display` et `touch` de `tab5-hardware.yaml` par `!extend`. Voir [`docs/hardware.md`](hardware.md#révisions-matérielles).
 
 ---
 
