@@ -171,6 +171,54 @@ def test_description_sans_markdown():
     assert construire.description(texte) == "Envie ? docs/demo_mode.md montre tout sur tab5_*.cpp."
 
 
+# --- Écrans et fonctions, coulisses des écrans, index du dépannage -------------------------
+
+def _parties(source: str) -> dict[str, str]:
+    texte = (REPO / source).read_text(encoding="utf-8").replace("\r\n", "\n")
+    parties = construire.separer(texte)
+    assert parties, source
+    return parties
+
+
+@pytest.mark.parametrize("source", ["docs/screens.md", "docs/screens_internals.md", "docs/troubleshooting.md"])
+def test_autant_de_titres_en_anglais_qu_en_francais(source):
+    """Les deux langues ont la même structure : une ancre de l'autre langue se traduit par
+    rang (traduire_ancre), donc il faut autant de titres de chaque côté."""
+    parties = _parties(source)
+    assert len(construire._ancres(parties["en"])) == len(construire._ancres(parties["fr"])), source
+
+
+def test_ecrans_lisibles_et_coulisses_sous_le_meme_titre():
+    """screens.md est la page de l'utilisateur (environ 5 000 mots anglais ; elle en avait
+    13 600) : le détail technique est dans screens_internals.md, rangé sous le titre de la
+    section de screens.md qu'il détaille (une ancre citée sur l'une se retrouve sur l'autre)."""
+    ecrans, coulisses = _parties("docs/screens.md"), _parties("docs/screens_internals.md")
+    assert len(ecrans["en"].split()) <= 5500, "screens.md grossit : le détail va dans screens_internals.md"
+    for langue in construire.LANGUES:
+        ici, la = construire._ancres(ecrans[langue]), construire._ancres(coulisses[langue])
+        inconnus = sorted(set(la) - set(ici))
+        assert not inconnus, f"{langue} : titres des coulisses absents de screens.md : {inconnus}"
+
+
+def test_ecrans_et_coulisses_ont_leur_titre_et_leur_description(plan):
+    for source in ("docs/screens.md", "docs/screens_internals.md"):
+        page = plan.pages[source]
+        assert page.titre_onglet and page.resume, f"{source} : titre_onglet et description dans menu.yml"
+        for langue in construire.LANGUES:
+            assert len(page.titre_onglet[langue]) <= 65 and len(page.resume[langue]) <= 160, (source, langue)
+
+
+def test_index_du_depannage_renvoie_a_chaque_incident():
+    """Le tableau « symptôme → incident » en tête de troubleshooting.md, dans chaque langue :
+    une ligne par incident, dans l'ordre de la page, vers une ancre qui existe."""
+    parties = _parties("docs/troubleshooting.md")
+    for langue in construire.LANGUES:
+        ancres = construire._ancres(parties[langue])
+        cibles = re.findall(r"^\| .+ \| \[.+\]\(#([^)]+)\) \|$", parties[langue], re.M)
+        assert len(ancres) > 20, langue
+        assert cibles == ancres[1:], f"{langue} : l'index doit citer chaque incident, une fois, dans l'ordre de la page"
+
+
 # --- Construction --------------------------------------------------------------------
 
 def test_mode_strict_attrape_une_ancre_cassee(tmp_path, monkeypatch, plan):
