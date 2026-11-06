@@ -18,7 +18,7 @@ One page with the weather (rain in the next hour, a 15-day forecast), a central 
 
 ### Which screens does it run on?
 
-On the M5Stack Tab5 (1280×720). Its display chip is printed on the sticker on the back, just above the Espressif logo: the ST7123 is the author's and is supported, the ST7121 runs on another user's unit, and the ILI9881C compiles but is untested ([hardware revisions](hardware.md#hardware-revisions)). It also runs on the 7-inch Waveshare ESP32-P4 7B (1024×600), which is supported ([Waveshare 7B](waveshare-7b.md)).
+On the M5Stack Tab5 (1280×720). Its display chip is printed on the sticker on the back, just above the Espressif logo: the ST7123 is the author's first tablet and is supported, the ST7121 is the author's second tablet (since 21 October 2026) and another user's, and the ILI9881C compiles but has never been tried ([install the firmware](installation/flash.md)). It also runs on the 7-inch Waveshare ESP32-P4 7B (1024×600), which is supported ([Waveshare 7B](waveshare-7b.md)).
 
 ### Who made it, and can I reuse it?
 
@@ -116,7 +116,7 @@ Une seule page avec la météo (la pluie dans l'heure, des prévisions sur 15 jo
 
 ### Sur quels écrans tourne-t-il ?
 
-Sur le M5Stack Tab5 (1280×720). La puce d'écran est imprimée sur l'étiquette au dos, juste au-dessus du logo Espressif : la ST7123 est celle de l'auteur et est prise en charge, la ST7121 tourne chez un autre utilisateur, et l'ILI9881C compile mais n'est pas testée ([révisions matérielles](hardware.md#révisions-matérielles)). Il tourne aussi sur la Waveshare ESP32-P4 7B de 7 pouces (1024×600), prise en charge ([Waveshare 7B](waveshare-7b.md#version-française)).
+Sur le M5Stack Tab5 (1280×720). La puce d'écran est imprimée sur l'étiquette au dos, juste au-dessus du logo Espressif : la ST7123 est la première tablette de l'auteur et est prise en charge, la ST7121 est sa deuxième tablette (depuis le 21/10/2026) et celle d'un autre utilisateur, et l'ILI9881C compile mais n'a jamais été essayée ([installer le firmware](installation/flash.md#version-française)). Il tourne aussi sur la Waveshare ESP32-P4 7B de 7 pouces (1024×600), prise en charge ([Waveshare 7B](waveshare-7b.md#version-française)).
 
 ### Qui l'a fait, et puis-je le réutiliser ?
 
