@@ -10,6 +10,34 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 ---
 
+### Find your symptom
+
+Pick the line that looks like what you see; each one links to the incident, with its root cause and fix.
+
+| Symptom | Incident |
+|---|---|
+| Display stays black after a reboot (OTA, crash); a power cycle fixes it | [Black screen after a software reboot (not a power cycle)](#black-screen-after-a-software-reboot-not-a-power-cycle) |
+| Device online, clock working, but the weather, planning and forecast cards never update | [Weather / planning / climate data missing, but the device is online](#weather--planning--climate-data-missing-but-the-device-is-online) |
+| Voice pipeline says speech-to-text is missing or broken; many « entity already exists » lines in the Home Assistant log | [STT/TTS broken, dozens of "entity already exists — ignoring" log lines](#stttts-broken-dozens-of-entity-already-exists--ignoring-log-lines) |
+| Tapping the screen does nothing, as if the touch controller were dead | [Touch "not working" but the touchscreen is actually detecting presses fine](#touch-not-working-but-the-touchscreen-is-actually-detecting-presses-fine) |
+| Planning, weather and climate still not showing after the fixes above | [A calendar/weather push silently breaks the rest of the same automation](#a-calendarweather-push-silently-breaks-the-rest-of-the-same-automation) |
+| Daily forecast icons gone while the hourly cards update, and the automation reports success | [Daily weather icons gone, hourly forecast fine, automation reports success (2026-09-18)](#daily-weather-icons-gone-hourly-forecast-fine-automation-reports-success-2026-09-18) |
+| `esphome compile` fails with `[pressed] is an invalid option for [style_definitions]` | [ESPHome `pressed:` style rejected when placed in a shared `style_definitions`](#esphome-pressed-style-rejected-when-placed-in-a-shared-style_definitions) |
+| The device sometimes refuses new API connections (Home Assistant, logs, OTA) | [ESPHome API connections exhausted (device drops connections under otherwise normal use)](#esphome-api-connections-exhausted-device-drops-connections-under-otherwise-normal-use) |
+| The tablet reboots by itself every 15–20 minutes while Home Assistant is down | [Device reboots on its own every ~15–20 min while Home Assistant is unreachable](#device-reboots-on-its-own-every-1520-min-while-home-assistant-is-unreachable) |
+| Black screen, no entities, no API after an OTA that said « OTA successful » | [Black screen + device off the network after an OTA — the Wi-Fi co-processor never came up](#black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up) |
+| Waveshare 7B restarts every ~17 s after a software reboot and never reaches Wi-Fi | [Waveshare 7B: boot loop after a software reboot, Wi-Fi link down (2026-10-16)](#waveshare-7b-boot-loop-after-a-software-reboot-wi-fi-link-down-2026-10-16) |
+| `Tab5 Uptime` stays `unavailable` after updating the firmware | [`Tab5 Uptime` stuck at `unavailable` after the update to the boot-time firmware (2026-09-26)](#tab5-uptime-stuck-at-unavailable-after-the-update-to-the-boot-time-firmware-2026-09-26) |
+| A short press on the power button reboots the tablet and Home Assistant sends a crash notification | [Crash alert after a press on the power button (2026-10-06)](#crash-alert-after-a-press-on-the-power-button-2026-10-06) |
+| Adding Tab5 to HACS fails with « Repository not found », or its box is empty | [Adding Tab5 to HACS: « Repository not found », or an empty box (2026-10-07)](#adding-tab5-to-hacs--repository-not-found--or-an-empty-box-2026-10-07) |
+| HACS: « Download failed - 400 » or « Got more than 8190 bytes when reading » | [HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)](#hacs--download-failed---400---got-more-than-8190-bytes-when-reading--2026-10-24) |
+| The Tab5 integration is downloaded in HACS but nothing happens | [Tab5 integration (HACS): downloaded, but nothing happens](#tab5-integration-hacs-downloaded-but-nothing-happens) |
+| A message whose title starts with « Tab5 » appears in Settings → System → Repairs | [Tab5 integration (HACS): a message in Repairs](#tab5-integration-hacs-a-message-in-repairs) |
+| A tablet or a 7B reinstalled with an erase stays unavailable in Home Assistant | [Home Assistant no longer connects after a reinstall with erase (2026-10-19)](#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19) |
+| A faint continuous hiss from a tablet without a battery | [Faint continuous hiss, on a tablet without a battery (2026-10-08)](#faint-continuous-hiss-on-a-tablet-without-a-battery-2026-10-08) |
+| Your own build fails on ESPHome 2026.10.0 with « was not declared in this scope » | [The build fails with ESPHome 2026.10.0: « was not declared in this scope » (2026-10-21)](#the-build-fails-with-esphome-2026100--was-not-declared-in-this-scope--2026-10-21) |
+| Something looks like a bug but may be intended (for example forecast pagination that does not wrap) | [False positives worth knowing about (don't "fix" these again)](#false-positives-worth-knowing-about-dont-fix-these-again) |
+
 ### Black screen after a software reboot (not a power cycle)
 
 **Symptom:** device reboots (OTA, crash, `api.reboot`), display stays black afterward. A power cycle (unplug/replug) fixes it; a soft reboot alone does not, or does so unreliably.
@@ -189,11 +217,13 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)
 
-**Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026.
+**Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026. **Solved since 24 October 2026** (below).
 
-**Root cause:** neither the tablet nor this repository. Since 23 October 2026, GitHub answers a release download with a redirect that carries a Content-Security-Policy header of about 9 KB (9,242 bytes measured on `tab5_hacs.zip` on 24 October), and HACS 2.0.5 refuses any header line over 8,190 bytes. Every integration that HACS installs from a release archive is hit. Tracked by HACS: [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), fix proposed in [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (not released on 24 October).
+**Root cause:** neither the tablet, nor this repository, nor HACS itself. From 23 October 2026, GitHub answered a release download with a redirect that carries a Content-Security-Policy header of about 9 KB (9,242 bytes measured on `tab5_hacs.zip` on 24 October), and the HTTP client of Home Assistant refuses any header line over 8,190 bytes. Every integration that HACS installs from a release archive was hit. Tracked by HACS: [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), closed on 25 October.
 
-**Fix:** wait for a HACS release that fixes it, then *Download* again. Meanwhile, the files go in by hand, without HACS: [parts A to C](installation/home-assistant-files.md#a-download-and-unzip). Do not copy the integration from the repository: it holds the code but not the files (« no Home Assistant files in the integration », below).
+**How it ended:** on the evening of 24 October GitHub shrank the header (HACS's maintainer said it was solved by a change on GitHub's side; measured again on 6 November 2026: 3,994 bytes on `tab5_hacs.zip`), and Home Assistant 2026.10.4, released the same day ([home-assistant/core#188329](https://github.com/home-assistant/core/pull/188329)), accepts headers up to 64 KiB. HACS itself did not change: 2.0.5 is still its latest release on 6 November. A Tab5 download through HACS was not run again by the author after the fix, when this was written.
+
+**Fix:** nothing to do now, *Download* again. If the error comes back, update Home Assistant to 2026.10.4 or newer, or put the files in by hand, without HACS: [parts A to C](installation/home-assistant-files.md#a-download-and-unzip). Do not copy the integration from the repository: it holds the code but not the files (« no Home Assistant files in the integration », below).
 
 ---
 
@@ -260,7 +290,7 @@ More than 30 minutes since the tablet's start: restart it first (a short press o
 
 **Root cause:** the battery charger. Since 3.6.0 (PR #303, 2026-10-04), the firmware sets CHG_EN (PI4IOE 0x44 P7) to 1 at every boot. Without a battery, the charger charges into nothing: the voltage read by the INA226 swings between 4.2 and 8.39 V, or stays around 5.70–5.76 V, and « Battery charging » says yes. With a trial firmware that exposed CHG_EN, switching the charger off made the hiss go away; the INA226 then read 1.83 to 1.94 V (four readings, 09:55 to 09:58) and the charging status went to « not charging ». One more observation, a single one: during the 2 minutes when the voltage read 8.39 V, the hiss could not be heard; it came back with 5.70 V.
 
-**Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». Since 2026-10-10 it does not even switch the charger on while it boots when the previous boot saw no battery. How it decides: [battery](hardware.md#power).
+**Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». Since 2026-10-10 it does not even switch the charger on while it boots when the previous boot saw no battery. How it decides: [battery](tab5-battery.md#battery-detection).
 
 **Workaround from 3.6.0 to the latest published version:** none simple, sorry. These versions have no entity to switch the charger off, and the speaker, the microphone and the volume have nothing to do with it. A fitted battery gives the charger something to charge (whether a tablet with a battery hisses too has not been checked). Otherwise, wait for the next version.
 
@@ -301,6 +331,34 @@ A plain `lambda:` action is still written inside `setup()`, after the includes, 
 Journal d'incidents réels rencontrés sur ce firmware précis, avec la cause racine confirmée et le correctif. À consulter **avant** de re-diagnostiquer quelque chose qui semble familier — plusieurs de ces cas ont demandé des heures de debug en direct avec l'appareil sur le bureau.
 
 Format : **Symptôme → Cause racine → Correctif**.
+
+### Retrouver votre symptôme
+
+Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incident, avec sa cause racine et son correctif.
+
+| Symptôme | Incident |
+|---|---|
+| L'écran reste noir après un redémarrage (OTA, plantage) ; une coupure d'alimentation le répare | [Écran noir après un reboot logiciel (pas une coupure d'alimentation)](#écran-noir-après-un-reboot-logiciel-pas-une-coupure-dalimentation) |
+| L'appareil est en ligne et l'horloge marche, mais les cartes météo, planning et prévisions ne se mettent jamais à jour | [Météo / planning / clim absents alors que l'appareil est en ligne](#météo--planning--clim-absents-alors-que-lappareil-est-en-ligne) |
+| Le pipeline vocal dit que la reconnaissance vocale est absente ou cassée ; beaucoup de lignes « entity already exists » dans le journal de Home Assistant | [STT/TTS cassé, dizaines de logs "entity already exists — ignoring"](#stttts-cassé-dizaines-de-logs-entity-already-exists--ignoring) |
+| Toucher l'écran ne fait rien, comme si le contrôleur tactile était mort | [Tactile "mort" alors que le contrôleur détecte bien les appuis](#tactile-mort-alors-que-le-contrôleur-détecte-bien-les-appuis) |
+| Planning, météo et clim toujours absents après les correctifs ci-dessus | [Un push calendrier/météo casse silencieusement le reste de la même automation](#un-push-calendriermétéo-casse-silencieusement-le-reste-de-la-même-automation) |
+| Les icônes des prévisions journalières ont disparu alors que les cartes horaires se mettent à jour, et l'automation indique un succès | [Icônes météo des jours disparues, horaire intact, automation « réussie » (18/09/2026)](#icônes-météo-des-jours-disparues-horaire-intact-automation--réussie--18092026) |
+| `esphome compile` échoue avec `[pressed] is an invalid option for [style_definitions]` | [`pressed:` LVGL refusé dans un `style_definitions` partagé](#pressed-lvgl-refusé-dans-un-style_definitions-partagé) |
+| L'appareil refuse parfois de nouvelles connexions à l'API (Home Assistant, journaux, OTA) | [Connexions API ESPHome épuisées](#connexions-api-esphome-épuisées) |
+| La tablette redémarre toute seule toutes les 15 à 20 minutes quand Home Assistant est injoignable | [L'appareil redémarre tout seul toutes les ~15-20 min quand Home Assistant est injoignable](#lappareil-redémarre-tout-seul-toutes-les-15-20-min-quand-home-assistant-est-injoignable) |
+| Écran noir, aucune entité, aucune API après une OTA qui annonçait « OTA successful » | [Écran noir + appareil absent du réseau après une OTA — le co-processeur WiFi n'est pas remonté](#écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté) |
+| La Waveshare 7B redémarre toutes les ~17 s après un redémarrage logiciel et n'atteint jamais le Wi-Fi | [Waveshare 7B : boucle de redémarrages après un redémarrage logiciel, lien Wi-Fi absent (16/10/2026)](#waveshare-7b--boucle-de-redémarrages-après-un-redémarrage-logiciel-lien-wi-fi-absent-16102026) |
+| `Tab5 Uptime` reste `unavailable` après la mise à jour du firmware | [`Tab5 Uptime` bloqué à `unavailable` après la mise à jour vers le firmware à heure de démarrage (26/09/2026)](#tab5-uptime-bloqué-à-unavailable-après-la-mise-à-jour-vers-le-firmware-à-heure-de-démarrage-26092026) |
+| Un appui bref sur le bouton d'alimentation redémarre la tablette et Home Assistant envoie une notification de plantage | [Alerte de plantage après un appui sur le bouton d'alimentation (06/10/2026)](#alerte-de-plantage-après-un-appui-sur-le-bouton-dalimentation-06102026) |
+| L'ajout de Tab5 dans HACS échoue avec « Dépôt introuvable », ou sa boîte est vide | [Ajout de Tab5 dans HACS : « Dépôt introuvable », ou une boîte vide (07/10/2026)](#ajout-de-tab5-dans-hacs---dépôt-introuvable--ou-une-boîte-vide-07102026) |
+| HACS : « Download failed - 400 » ou « Got more than 8190 bytes when reading » | [HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)](#hacs---download-failed---400---got-more-than-8190-bytes-when-reading--24102026) |
+| L'intégration Tab5 est téléchargée dans HACS mais rien ne se passe | [Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe](#intégration-tab5-hacs--téléchargée-mais-rien-ne-se-passe) |
+| Un message dont le titre commence par « Tab5 » apparaît dans les Corrections de Home Assistant | [Intégration Tab5 (HACS) : un message dans Corrections](#intégration-tab5-hacs--un-message-dans-corrections) |
+| Une tablette ou une 7B réinstallée avec effacement reste indisponible dans Home Assistant | [Home Assistant ne se reconnecte plus après une réinstallation avec effacement (19/10/2026)](#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026) |
+| Un léger souffle continu sort d'une tablette sans batterie | [Léger souffle continu, sur une tablette sans batterie (08/10/2026)](#léger-souffle-continu-sur-une-tablette-sans-batterie-08102026) |
+| Votre propre compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » | [La compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » (21/10/2026)](#la-compilation-échoue-avec-esphome-2026100---was-not-declared-in-this-scope--21102026) |
+| Quelque chose ressemble à un bug mais est voulu (par exemple la pagination des prévisions qui ne boucle pas) | [Faux positifs à connaître (ne pas re-"corriger")](#faux-positifs-à-connaître-ne-pas-re-corriger) |
 
 ### Écran noir après un reboot logiciel (pas une coupure d'alimentation)
 
@@ -444,11 +502,13 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)
 
-**Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026.
+**Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026. **Résolu depuis le 24 octobre 2026** (plus bas).
 
-**Cause racine :** ni la tablette ni ce dépôt. Depuis le 23 octobre 2026, GitHub répond au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et HACS 2.0.5 refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release sont touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), correctif proposé dans [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (pas publié le 24 octobre).
+**Cause racine :** ni la tablette, ni ce dépôt, ni HACS lui-même. Depuis le 23 octobre 2026, GitHub répondait au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et le client HTTP de Home Assistant refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release étaient touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), fermé le 25 octobre.
 
-**Correctif :** attendre une version de HACS qui le corrige, puis *Download* de nouveau. En attendant, les fichiers se posent à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
+**Comment ça s'est terminé :** le soir du 24 octobre, GitHub a réduit l'en-tête (le mainteneur de HACS a dit que c'était résolu par un changement du côté de GitHub ; mesuré de nouveau le 6 novembre 2026 : 3 994 octets sur `tab5_hacs.zip`), et Home Assistant 2026.10.4, sorti le même jour ([home-assistant/core#188329](https://github.com/home-assistant/core/pull/188329)), accepte des en-têtes jusqu'à 64 Kio. HACS lui-même n'a pas changé : la 2.0.5 est toujours sa dernière release au 6 novembre. Un téléchargement de Tab5 par HACS n'a pas été refait par l'auteur après le correctif, au moment d'écrire ces lignes.
+
+**Correctif :** rien à faire maintenant, *Download* de nouveau. Si l'erreur revient, mettre Home Assistant à jour en 2026.10.4 ou plus récent, ou poser les fichiers à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
 
 ### Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe
 
@@ -507,7 +567,7 @@ Plus de 30 minutes depuis le démarrage de la tablette : redémarrez-la d'abord 
 
 **Cause racine :** le chargeur de la batterie. Depuis la 3.6.0 (PR #303, 04/10/2026), le firmware met CHG_EN (PI4IOE 0x44 P7) à 1 à chaque démarrage. Sans batterie, le chargeur charge dans le vide : la tension lue par l'INA226 oscille entre 4,2 et 8,39 V, ou reste vers 5,70-5,76 V, et « Battery charging » dit oui. Avec un firmware d'essai qui exposait CHG_EN, couper le chargeur a fait disparaître le souffle ; l'INA226 lisait alors 1,83 à 1,94 V (quatre lectures, de 09:55 à 09:58) et l'état de charge est passé à « pas en charge ». Une observation de plus, une seule : pendant les 2 minutes où la tension lue était à 8,39 V, on n'entendait plus le souffle ; il est revenu avec les 5,70 V.
 
-**Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Depuis le 10/10/2026, il ne l'allume même plus pendant le démarrage quand le démarrage précédent n'a vu aucune batterie. Comment il décide : [batterie](hardware.md#alimentation).
+**Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Depuis le 10/10/2026, il ne l'allume même plus pendant le démarrage quand le démarrage précédent n'a vu aucune batterie. Comment il décide : [batterie](tab5-battery.md#détection-de-la-batterie).
 
 **Contournement de la 3.6.0 à la dernière version publiée :** aucun de simple, désolé. Ces versions n'ont pas d'entité pour couper le chargeur, et le haut-parleur, le micro ou le volume n'y sont pour rien. Une batterie montée donne au chargeur quelque chose à charger (on n'a pas vérifié si une tablette avec batterie souffle aussi). Sinon, attendre la prochaine version.
 

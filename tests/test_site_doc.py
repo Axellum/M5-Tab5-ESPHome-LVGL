@@ -7,6 +7,7 @@ déploiement du site ne s'arrête sur main.
 """
 from __future__ import annotations
 
+import html
 import json
 import posixpath
 import re
@@ -35,6 +36,28 @@ HORS_SITE = {
 
 # Pages dont le <title> vient de `titre_onglet:` (menu.yml) sans nommer la Tab5.
 TITRES_PROPRES = {"waveshare-7b/"}
+
+# Les pages qui comptent : titre d'onglet et description écrits à la main (menu.yml, lot « SEO
+# rapide » du 06/11/2026) au lieu du premier paragraphe (« Opens with… », « S'ouvre par… »).
+PAGES_QUI_COMPTENT = (
+    "docs/installation/README.md", "docs/installation/home-assistant-files.md", "docs/installation/flash.md",
+    "docs/installation/wifi.md", "docs/installation/add-to-home-assistant.md", "docs/installation/sources.md",
+    "docs/installation/devices.md", "docs/installation/dashboard.md",
+    "docs/notice/README.md", "docs/notice/home.md", "docs/notice/lights.md", "docs/notice/climate.md",
+    "docs/notice/energy.md", "docs/notice/voice.md", "docs/notice/weather.md", "docs/notice/music.md",
+    "docs/notice/cameras.md", "docs/notice/alarm.md", "docs/notice/settings.md",
+    "docs/voice_assistant.md", "docs/demo_mode.md", "docs/translations.md", "docs/troubleshooting.md",
+    "docs/debugging.md", "docs/architecture.md", "docs/performance.md", "docs/consumption.md",
+    "docs/related_projects.md", "docs/story.md",
+)
+JSON_LD = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
+# Un lien (<link> de l'en-tête, <a> du sélecteur de langue) qui annonce une version dans une langue.
+LIEN_HREFLANG = re.compile(r"<(?:link|a)\b[^>]*\bhreflang=")
+
+
+def _json_ld(texte: str) -> dict[str, dict]:
+    """Les blocs JSON-LD de l'en-tête d'une page, par @type."""
+    return {bloc["@type"]: bloc for bloc in (json.loads(b) for b in JSON_LD.findall(texte.partition("</head>")[0]))}
 
 
 @pytest.fixture(scope="module")
@@ -171,6 +194,54 @@ def test_description_sans_markdown():
     assert construire.description(texte) == "Envie ? docs/demo_mode.md montre tout sur tab5_*.cpp."
 
 
+# --- Écrans et fonctions, coulisses des écrans, index du dépannage -------------------------
+
+def _parties(source: str) -> dict[str, str]:
+    texte = (REPO / source).read_text(encoding="utf-8").replace("\r\n", "\n")
+    parties = construire.separer(texte)
+    assert parties, source
+    return parties
+
+
+@pytest.mark.parametrize("source", ["docs/screens.md", "docs/screens_internals.md", "docs/troubleshooting.md"])
+def test_autant_de_titres_en_anglais_qu_en_francais(source):
+    """Les deux langues ont la même structure : une ancre de l'autre langue se traduit par
+    rang (traduire_ancre), donc il faut autant de titres de chaque côté."""
+    parties = _parties(source)
+    assert len(construire._ancres(parties["en"])) == len(construire._ancres(parties["fr"])), source
+
+
+def test_ecrans_lisibles_et_coulisses_sous_le_meme_titre():
+    """screens.md est la page de l'utilisateur (environ 5 000 mots anglais ; elle en avait
+    13 600) : le détail technique est dans screens_internals.md, rangé sous le titre de la
+    section de screens.md qu'il détaille (une ancre citée sur l'une se retrouve sur l'autre)."""
+    ecrans, coulisses = _parties("docs/screens.md"), _parties("docs/screens_internals.md")
+    assert len(ecrans["en"].split()) <= 5500, "screens.md grossit : le détail va dans screens_internals.md"
+    for langue in construire.LANGUES:
+        ici, la = construire._ancres(ecrans[langue]), construire._ancres(coulisses[langue])
+        inconnus = sorted(set(la) - set(ici))
+        assert not inconnus, f"{langue} : titres des coulisses absents de screens.md : {inconnus}"
+
+
+def test_ecrans_et_coulisses_ont_leur_titre_et_leur_description(plan):
+    for source in ("docs/screens.md", "docs/screens_internals.md"):
+        page = plan.pages[source]
+        assert page.titre_onglet and page.resume, f"{source} : titre_onglet et description dans menu.yml"
+        for langue in construire.LANGUES:
+            assert len(page.titre_onglet[langue]) <= 65 and len(page.resume[langue]) <= 160, (source, langue)
+
+
+def test_index_du_depannage_renvoie_a_chaque_incident():
+    """Le tableau « symptôme → incident » en tête de troubleshooting.md, dans chaque langue :
+    une ligne par incident, dans l'ordre de la page, vers une ancre qui existe."""
+    parties = _parties("docs/troubleshooting.md")
+    for langue in construire.LANGUES:
+        ancres = construire._ancres(parties[langue])
+        cibles = re.findall(r"^\| .+ \| \[.+\]\(#([^)]+)\) \|$", parties[langue], re.M)
+        assert len(ancres) > 20, langue
+        assert cibles == ancres[1:], f"{langue} : l'index doit citer chaque incident, une fois, dans l'ordre de la page"
+
+
 # --- Construction --------------------------------------------------------------------
 
 def test_mode_strict_attrape_une_ancre_cassee(tmp_path, monkeypatch, plan):
@@ -195,24 +266,41 @@ def test_site_construit_dans_les_deux_langues(site, plan):
 
 
 @pytest.mark.parametrize("langue", construire.LANGUES)
-def test_pages_referencables(site, langue):
+def test_pages_referencables(site, plan, langue):
     """Langue, titre, description, adresse canonique, même page dans l'autre langue, image
-    de partage publiée à la racine du site."""
+    de partage publiée à la racine du site. Une page écrite dans une seule langue (les ADR en
+    anglais, `arcade.md` en français) : son canonical est la page de sa langue d'origine, sur
+    les deux sites, et elle n'a aucun hreflang."""
+    par_adresse = {construire.url_page(p.source): p for p in plan.pages.values()}
     for page in _pages_html(site, langue):
         chemin = page.relative_to(site / langue).as_posix().removesuffix("index.html")
         texte = page.read_text(encoding="utf-8")
+        voulue = par_adresse[chemin]
+        origine = voulue.langue or langue
         assert f'<html lang="{langue}"' in texte, page
         titre = re.search(r"<title>([^<]+)</title>", texte)
-        # Un `titre_onglet:` du menu nomme ce qu'on cherche (la carte 7B n'est pas une Tab5).
-        assert titre and "Home Assistant" in titre.group(1), page
-        assert "M5Stack Tab5" in titre.group(1) or chemin in TITRES_PROPRES, page
+        # Un `titre_onglet:` du menu nomme ce qu'on cherche (la carte 7B n'est pas une Tab5) ;
+        # écrit à la main, il tient en 65 caractères et n'a plus le nom du site au bout.
+        assert titre, page
+        if voulue.titre_onglet:
+            assert "Tab5" in titre.group(1) or chemin in TITRES_PROPRES, page
+        else:
+            assert "Home Assistant" in titre.group(1), page
+            assert "M5Stack Tab5" in titre.group(1), page
         description = re.search(r'<meta name="description" content="([^"]+)"', texte)
         assert description and 40 <= len(description.group(1)) <= 300, page
-        assert f'<link rel="canonical" href="{construire.SITE}{langue}/{chemin}">' in texte, page
-        for autre in construire.LANGUES:
-            assert f'<link rel="alternate" hreflang="{autre}" href="{construire.SITE}{autre}/{chemin}">' in texte, page
-            assert f'href="{construire.SITE}{autre}/{chemin}" hreflang="{autre}"' in texte, f"sélecteur : {page}"
+        assert f'<link rel="canonical" href="{construire.SITE}{origine}/{chemin}">' in texte, page
+        if voulue.langue:
+            assert not LIEN_HREFLANG.search(texte), f"page d'une seule langue : aucun hreflang ({page})"
+            # Le sélecteur de langue mène toujours à l'autre version, sans l'annoncer comme traduction.
+            for autre in construire.LANGUES:
+                assert f'href="{construire.SITE}{autre}/{chemin}"' in texte, f"sélecteur : {page}"
+        else:
+            for autre in construire.LANGUES:
+                assert f'<link rel="alternate" hreflang="{autre}" href="{construire.SITE}{autre}/{chemin}">' in texte, page
+                assert f'href="{construire.SITE}{autre}/{chemin}" hreflang="{autre}"' in texte, f"sélecteur : {page}"
         assert f'<meta property="og:image" content="{construire.SITE}{construire.IMAGE_PARTAGE}">' in texte, page
+        assert f'<meta property="og:url" content="{construire.SITE}{origine}/{chemin}">' in texte, page
     assert construire.IMAGE_PARTAGE.removeprefix("images/") in pages.IMAGES
 
 
@@ -233,12 +321,11 @@ def test_pied_de_page_renvoie_au_site_de_l_auteur(site, langue):
 def test_titre_et_description_du_menu(site, plan, langue):
     """`titre_onglet:` et `description:` de menu.yml remplacent le <title>, og:title et la
     description tirés de la page (ce qu'affiche un moteur de recherche)."""
-    import html
     vus = 0
     for page in plan.pages.values():
         if not (page.titre_onglet or page.resume):
             continue
-        texte = (site / langue / construire.chemin_site(page.source).removesuffix(".md") / "index.html").read_text(encoding="utf-8")
+        texte = (site / langue / construire.url_page(page.source) / "index.html").read_text(encoding="utf-8")
         texte = html.unescape(texte)
         if page.titre_onglet:
             assert f"<title>{page.titre_onglet[langue]}</title>" in texte, page.source
@@ -247,8 +334,7 @@ def test_titre_et_description_du_menu(site, plan, langue):
             assert f'<meta name="description" content="{page.resume[langue]}">' in texte, page.source
         vus += 1
     assert vus >= 2
-    assert {construire.chemin_site(p.source).removesuffix(".md") + "/" for p in plan.pages.values()
-            if p.titre_onglet} >= TITRES_PROPRES
+    assert {construire.url_page(p.source) for p in plan.pages.values() if p.titre_onglet} >= TITRES_PROPRES
 
 
 def test_titre_onglet_trop_long_refuse(tmp_path):
@@ -358,15 +444,136 @@ def test_x_default_le_meme_dans_les_deux_langues(site):
     """Les deux versions d'une page annoncent le même x-default : la racine du site pour
     l'accueil (elle envoie vers en/ ou fr/ selon la langue du navigateur, web/index.html),
     sinon la page anglaise (le site est d'abord en anglais)."""
+    uniques = {construire.url_page(p.source) for p in construire.lire_menu().pages.values() if p.langue}
     for page in _pages_html(site, "en"):
         relatif = page.relative_to(site / "en")
         chemin = relatif.as_posix().removesuffix("index.html")
         attendu = construire.SITE if chemin == "" else f"{construire.SITE}en/{chemin}"
         for langue in construire.LANGUES:
             texte = (site / langue / relatif).read_text(encoding="utf-8")
+            if chemin in uniques:  # une seule langue : pas de hreflang, donc pas de x-default
+                assert not LIEN_HREFLANG.search(texte), (langue, chemin)
+                continue
             assert re.findall(r'hreflang="x-default" href="([^"]+)"', texte) == [attendu], (langue, chemin)
     racine = (REPO / "web" / "index.html").read_text(encoding="utf-8")
     assert re.findall(r'hreflang="x-default" href="([^"]+)"', racine) == [construire.SITE]
+
+
+def test_pages_d_une_seule_langue_hors_du_plan_du_site_mais_en_ligne(site, plan, tmp_path):
+    """Les ADR (anglais) sous fr/decisions/ et `arcade.md` (français) sous en/arcade/ sont le
+    texte de l'original : même titre, rien à y indexer. Elles restent en ligne et accessibles
+    (sélecteur de langue, menu), n'ont ni plan du site ni hreflang, et leur canonical mène à
+    la page de la langue d'origine, qui seule est au plan."""
+    uniques = [p for p in plan.pages.values() if p.langue]
+    assert len(uniques) > 70 and {p.langue for p in uniques} == {"en", "fr"}
+    sortie = tmp_path / "pages"
+    pages.assembler(REPO / "web", tmp_path / "assets", None, None, sortie, REPO / "docs" / "images", site)
+    locs = set(re.findall(r"<loc>([^<]+)</loc>", (sortie / "sitemap.xml").read_text(encoding="utf-8")))
+    for p in uniques:
+        adresse = construire.url_page(p.source)
+        copie = "fr" if p.langue == "en" else "en"
+        assert construire.SITE + f"{p.langue}/{adresse}" in locs, p.source
+        assert construire.SITE + f"{copie}/{adresse}" not in locs, p.source
+        assert (sortie / copie / adresse / "index.html").is_file(), f"{p.source} : la copie reste en ligne"
+        texte = (sortie / copie / adresse / "index.html").read_text(encoding="utf-8")
+        assert f'<link rel="canonical" href="{construire.SITE}{p.langue}/{adresse}">' in texte, p.source
+    racine = [p for p in (REPO / "web").rglob("*.html") if not p.name.startswith("google") and p.name != "404.html"]
+    assert len(locs) == 2 * len(plan.pages) - len(uniques) + len(racine)
+
+
+def test_plan_du_site_ne_liste_que_les_adresses_canoniques(tmp_path):
+    """Une page dont le canonical mène ailleurs n'est pas au plan (Google veut l'adresse préférée) ;
+    une page sans canonical, ou qui est le sien, y est."""
+    pages_html = {
+        "a/index.html": f'<link rel="canonical" href="{pages.SITE}a/">',
+        "b/index.html": f'<link rel="canonical" href="{pages.SITE}a/">',
+        "c/index.html": "<html></html>",
+    }
+    for relatif, texte in pages_html.items():
+        (tmp_path / relatif).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / relatif).write_text(texte, encoding="utf-8")
+    locs = re.findall(r"<loc>([^<]+)</loc>", pages.plan_du_site(tmp_path))
+    assert locs == [pages.SITE + "a/", pages.SITE + "c/"]
+
+
+def test_fil_d_ariane_suit_le_menu(plan):
+    """Chemin du menu, de l'accueil à la page, dans la langue du texte ; les sections sans page
+    (« Install », « Under the hood ») n'y sont pas ; l'accueil n'en a pas (un seul élément)."""
+    def noms(source: str, langue: str) -> list[str]:
+        return [e["nom"] for e in construire.fil_d_ariane(plan, source, langue, construire.SITE)]
+    assert noms("docs/notice/lights.md", "en") == ["Home", "User manual", "Lights"]
+    assert noms("docs/notice/lights.md", "fr") == ["Accueil", "Notice d'utilisation", "Lumières"]
+    assert noms("docs/architecture.md", "en") == ["Home", "Architecture"]
+    assert noms("docs/installation/flash.md", "en") == ["Home", "Installation guide", "2. Install the firmware"]
+    assert noms("docs/decisions/0001-push-only-zero-polling.md", "en")[:2] == ["Home", "Design decisions"]
+    assert construire.fil_d_ariane(plan, construire.ACCUEIL, "en", construire.SITE) == []
+    assert construire.fil_d_ariane(plan, "docs/README.md", "fr", construire.SITE) == [
+        {"nom": "Accueil", "url": construire.SITE + "fr/"},
+        {"nom": "Documentation", "url": construire.SITE + "fr/documentation/"}]
+    # Un nom trop long (le « # » d'un ADR) est coupé à un mot.
+    long = construire.fil_d_ariane(plan, "docs/decisions/0060-ai-server-actions.md", "en", construire.SITE)[-1]["nom"]
+    assert len(long) <= construire.LIMITE_NOM_FIL and long.endswith("…")
+
+
+@pytest.mark.parametrize("langue", construire.LANGUES)
+def test_balisage_json_ld_et_og_locale(site, plan, langue):
+    """BreadcrumbList sur toutes les pages sauf l'accueil, TechArticle sur les pages de doc
+    (l'accueil garde SoftwareSourceCode), og:locale et og:locale:alternate. Tout décrit la page
+    canonique : pour une copie, celle de la langue d'origine. Ni HowTo ni FAQPage : Google ne les
+    affiche plus (journal des modifications de Google Search Central : HowTo retiré le 14/09/2023,
+    FAQ le 07/05/2026)."""
+    par_adresse = {construire.url_page(p.source): p for p in plan.pages.values()}
+    for page in _pages_html(site, langue):
+        chemin = page.relative_to(site / langue).as_posix().removesuffix("index.html")
+        texte = page.read_text(encoding="utf-8")
+        origine = par_adresse[chemin].langue or langue
+        canonique = f"{construire.SITE}{origine}/{chemin}"
+        blocs = _json_ld(texte)
+        assert not {"HowTo", "FAQPage"} & set(blocs), page
+        locales = re.findall(r'<meta property="og:locale" content="([^"]+)"', texte)
+        assert locales == [construire.LOCALES[origine]], page
+        alternates = re.findall(r'<meta property="og:locale:alternate" content="([^"]+)"', texte)
+        autre = "fr" if origine == "en" else "en"
+        assert alternates == ([] if par_adresse[chemin].langue else [construire.LOCALES[autre]]), page
+        if chemin == "":
+            assert set(blocs) == {"SoftwareSourceCode"}, "l'accueil : sa fiche, et pas de fil d'une seule étape"
+            continue
+        assert set(blocs) == {"TechArticle", "BreadcrumbList"}, page
+        article = blocs["TechArticle"]
+        assert article["url"] == article["mainEntityOfPage"] == canonique, page
+        assert article["inLanguage"] == origine and 0 < len(article["headline"]) <= construire.LIMITE_TITRE_ARTICLE, page
+        assert article["description"] and article["image"] == construire.SITE + construire.IMAGE_PARTAGE, page
+        elements = blocs["BreadcrumbList"]["itemListElement"]
+        assert len(elements) >= 2, f"Google veut deux éléments au moins ({page})"
+        assert [e["position"] for e in elements] == list(range(1, len(elements) + 1)), page
+        assert elements[0]["item"] == f"{construire.SITE}{origine}/", page
+        assert elements[-1]["item"] == canonique, page
+        assert all(e["name"] and e["item"].startswith(f"{construire.SITE}{origine}/") for e in elements), page
+
+
+def test_pages_qui_comptent_ont_un_titre_et_une_description_ecrits(plan, site):
+    """Les pages de PAGES_QUI_COMPTENT : titre d'onglet (≤ 65, vérifié à la lecture du menu) et
+    description (≤ 160) écrits à la main dans les deux langues, qui nomment le produit, ne
+    reprennent pas « Opens with… » / « S'ouvre par… », et ne se répètent pas d'une page à l'autre."""
+    assert len(set(PAGES_QUI_COMPTENT)) == len(PAGES_QUI_COMPTENT) >= 25
+    for langue in construire.LANGUES:
+        titres, descriptions = [], []
+        for source in PAGES_QUI_COMPTENT:
+            page = plan.pages[source]
+            assert page.titre_onglet and page.resume, f"{source} : titre_onglet et description à écrire"
+            titre, resume = page.titre_onglet[langue], page.resume[langue]
+            assert "Tab5" in titre, (source, titre)
+            assert not resume.startswith(("Opens with", "S'ouvre par", "S’ouvre par")), (source, resume)
+            assert 100 <= len(resume) <= 160, (source, len(resume))
+            titres.append(titre)
+            descriptions.append(resume)
+        assert len(set(titres)) == len(titres) and len(set(descriptions)) == len(descriptions), langue
+    assert len(plan.pages["docs/installation/dashboard.md"].titre_onglet["fr"]) <= 65  # 66 avec le nom du site au bout
+    # Le titre construit est bien celui du menu, sans le nom du site.
+    for source in PAGES_QUI_COMPTENT:
+        for langue in construire.LANGUES:
+            page_html = (site / langue / construire.url_page(source) / "index.html").read_text(encoding="utf-8")
+            assert f"<title>{plan.pages[source].titre_onglet[langue]}</title>" in html.unescape(page_html), (source, langue)
 
 
 def test_plan_du_site_date_chaque_page_de_son_source(site, plan, tmp_path):
@@ -388,7 +595,11 @@ def test_plan_du_site_date_chaque_page_de_son_source(site, plan, tmp_path):
         assert "<lastmod>" not in xml
     else:
         assert entrees[construire.SITE] == dates["web/index.html"]
+        copies = {f"{'fr' if p.langue == 'en' else 'en'}/{construire.url_page(p.source)}" for p in plan.pages.values() if p.langue}
         for adresse, source in sources.items():
+            if adresse in copies:  # hors du plan (canonical vers l'original), donc sans date
+                assert construire.SITE + adresse not in entrees, adresse
+                continue
             assert entrees[construire.SITE + adresse] == dates[source], adresse
         assert all(re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) for d in entrees.values())
     flux = yaml.safe_load((REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8"))

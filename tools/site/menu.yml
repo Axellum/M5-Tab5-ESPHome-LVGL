@@ -47,28 +47,76 @@
     - en: Installation guide
       fr: Guide d'installation
       page: docs/installation/README.md
+      titre_onglet:
+        en: "Install the M5Stack Tab5 on Home Assistant in 7 steps"
+        fr: "Installer la M5Stack Tab5 sur Home Assistant en 7 étapes"
+      description:
+        en: "Turn an M5Stack Tab5 into a Home Assistant screen in seven steps: firmware installed from Chrome or Edge, tablet added, devices picked. Nothing to compile."
+        fr: "Transformez votre M5Stack Tab5 en écran Home Assistant en sept étapes : firmware installé depuis Chrome ou Edge, appareils choisis. Rien à compiler."
       pages:
         - en: 1. Home Assistant files
           fr: 1. Fichiers Home Assistant
           page: docs/installation/home-assistant-files.md
+          titre_onglet:
+            en: "Tab5 Home Assistant files: install with HACS or by hand"
+            fr: "Fichiers Home Assistant du Tab5 : avec HACS ou à la main"
+          description:
+            en: "Step 1 of 7: add the Tab5 files to Home Assistant with HACS or by hand from tab5_home_assistant.zip. Nothing to fill in, your devices are picked later."
+            fr: "Étape 1 sur 7 : ajoutez les fichiers du Tab5 à Home Assistant, avec HACS ou à la main (tab5_home_assistant.zip). Rien à remplir, vos appareils viennent ensuite."
         - en: 2. Install the firmware
           fr: 2. Installer le firmware
           page: docs/installation/flash.md
+          titre_onglet:
+            en: "Install the Tab5 firmware from Chrome or Edge over USB"
+            fr: "Installer le firmware du Tab5 depuis Chrome ou Edge en USB"
+          description:
+            en: "Step 2 of 7: install the signed ESPHome firmware on your M5Stack Tab5 over USB, nothing to compile. Pick your display chip (ST7123, ST7121, ILI9881C)."
+            fr: "Étape 2 sur 7 : installez en USB le firmware ESPHome signé sur votre M5Stack Tab5, sans compiler. Choisissez votre puce d'écran (ST7123, ST7121, ILI9881C)."
         - en: 3. Wi-Fi
           fr: 3. Wi-Fi
           page: docs/installation/wifi.md
+          titre_onglet:
+            en: "Connect the Tab5 to Wi-Fi: over USB or from a phone"
+            fr: "Connecter le Tab5 au Wi-Fi : par USB ou depuis un téléphone"
+          description:
+            en: "Step 3 of 7: the firmware stores no Wi-Fi password. Give the Tab5 your 2.4 GHz network over USB after the install, or from a phone through « Tab5 Fallback AP »."
+            fr: "Étape 3 sur 7 : aucun mot de passe Wi-Fi dans le firmware. Donnez votre réseau 2,4 GHz au Tab5 par USB après l'installation, ou depuis un téléphone."
         - en: 4. Add to Home Assistant
           fr: 4. Ajouter à Home Assistant
           page: docs/installation/add-to-home-assistant.md
+          titre_onglet:
+            en: "Add the Tab5 to Home Assistant with the ESPHome integration"
+            fr: "Ajouter le Tab5 à Home Assistant avec l'intégration ESPHome"
+          description:
+            en: "Step 4 of 7: Home Assistant discovers the tablet by itself. Click Configure, then Submit, within 30 minutes of its start. What to do if it does not appear."
+            fr: "Étape 4 sur 7 : Home Assistant découvre la tablette seul. Cliquez sur Configurer puis Valider dans les 30 minutes après son démarrage ; que faire sinon."
         - en: 5. Your sources
           fr: 5. Vos sources
           page: docs/installation/sources.md
+          titre_onglet:
+            en: "Pick the Tab5 weather, calendars and voice in Home Assistant"
+            fr: "Choisir météo, agendas et voix du Tab5 dans Home Assistant"
+          description:
+            en: "Step 5 of 7: pick the Tab5 weather, calendars, phone, TV and voice in the « Tab5 · » lists of Home Assistant. No YAML; left unset, a feature stays off."
+            fr: "Étape 5 sur 7 : choisissez météo, agendas, téléphone, TV et voix dans les listes « Tab5 · » de Home Assistant, sans YAML. Non réglée, une fonction reste coupée."
         - en: 6. Your devices
           fr: 6. Vos appareils
           page: docs/installation/devices.md
+          titre_onglet:
+            en: "Choose the lights, shutters and climate shown on the Tab5"
+            fr: "Choisir les lumières, volets et clim affichés sur le Tab5"
+          description:
+            en: "Step 6 of 7: one blueprint automation picks the lights, shutters, climate, plants, TV and sensors the Tab5 shows. Changing one needs no flash."
+            fr: "Étape 6 sur 7 : une seule automatisation (blueprint) choisit lumières, volets, clim, plantes, TV et capteurs du Tab5. En changer ne demande aucun flash."
         - en: 7. A dashboard (optional)
           fr: 7. Un tableau de bord (facultatif)
           page: docs/installation/dashboard.md
+          titre_onglet:
+            en: "A Home Assistant dashboard for the Tab5 settings (optional)"
+            fr: "Un tableau de bord Home Assistant pour le Tab5 (facultatif)"
+          description:
+            en: "Step 7 of 7, optional: a Home Assistant dashboard with every Tab5 setting and a health view, written for your home by a macro. Brightness, alarm, voice."
+            fr: "Étape 7 sur 7, facultative : un tableau de bord Home Assistant avec tous les réglages du Tab5 et une vue santé, écrit pour votre maison par une macro."
     - en: Tablet settings
       fr: Réglages de la tablette
       page: docs/installation/settings.md
@@ -87,6 +135,12 @@
     - en: Demo mode
       fr: Mode démo
       page: docs/demo_mode.md
+      titre_onglet:
+        en: "Try the Tab5 dashboard without Home Assistant: demo mode"
+        fr: "Essayer le Tab5 sans Home Assistant : le mode démo"
+      description:
+        en: "See the full M5Stack Tab5 dashboard before setting up Home Assistant: a small Python script pushes demo weather, climate and plant data to a flashed tablet."
+        fr: "Voyez le tableau de bord complet du M5Stack Tab5 avant d'installer Home Assistant : un petit script Python envoie météo, clim et plantes de démo à la tablette."
 
 - en: Use the tablet
   fr: Utiliser la tablette
@@ -94,22 +148,46 @@
     - en: User manual
       fr: Notice d'utilisation
       page: docs/notice/README.md
+      titre_onglet:
+        en: "Tab5 user manual: touch, long press and swipe on the screen"
+        fr: "Notice du Tab5 : toucher, appui long et glissé sur l'écran"
+      description:
+        en: "What happens when you tap, long press or swipe the M5Stack Tab5 dashboard: a map of the home screen, then one page per window (lights, climate, energy…)."
+        fr: "Ce qui se passe quand vous touchez, appuyez longuement ou glissez sur le M5Stack Tab5 : le plan de l'écran d'accueil, puis une page par fenêtre."
       pages:
         - en: Home screen
           fr: Écran d'accueil
           page: docs/notice/home.md
+          titre_onglet:
+            en: "Tab5 home screen: voice, clock, temperatures, central card"
+            fr: "Écran d'accueil du Tab5 : voix, horloge, températures, carte"
+          description:
+            en: "The M5Stack Tab5 home screen explained: Domo and Discu voice modes, the « Ok Nabu » wake word, clock, buttons, temperatures, row under the clock, central card."
+            fr: "L'écran d'accueil du M5Stack Tab5 : voix Domo et Discu, mot de réveil « Ok Nabu », horloge, boutons, températures, rangée sous l'horloge, carte centrale."
         - en: Bottom row and rooms
           fr: Rangée du bas et pièces
           page: docs/notice/tiles.md
         - en: Lights
           fr: Lumières
           page: docs/notice/lights.md
+          titre_onglet:
+            en: "Control lights from the Tab5: brightness, colours, rooms"
+            fr: "Piloter les lumières depuis le Tab5 : luminosité, couleurs"
+          description:
+            en: "Turn lights on and off and set their brightness and colour from the Tab5, room by room: swipe between rooms, five lights a page, an All off button."
+            fr: "Allumez, éteignez et réglez luminosité et couleur des lumières depuis le Tab5, pièce par pièce : cinq lumières par page, bouton Tout éteindre."
         - en: Shutters
           fr: Volets
           page: docs/notice/shutters.md
         - en: Climate
           fr: Clim
           page: docs/notice/climate.md
+          titre_onglet:
+            en: "Control a Home Assistant climate unit from the Tab5"
+            fr: "Piloter une clim Home Assistant depuis le Tab5"
+          description:
+            en: "Set the mode, the target temperature and the options (eco, boost, quiet, swing) of a Home Assistant climate unit from the Tab5, with one page per unit."
+            fr: "Réglez le mode (froid, chaud, sec, ventilation), la température cible et les options d'une clim Home Assistant depuis le Tab5 ; une page par appareil."
         - en: TV remote
           fr: Télécommande TV
           page: docs/notice/tv.md
@@ -119,12 +197,30 @@
         - en: Alarm clock
           fr: Réveil
           page: docs/notice/alarm.md
+          titre_onglet:
+            en: "Tab5 alarm clock: fixed time, work calendar or shift start"
+            fr: "Réveil du Tab5 : heure fixe, agenda de travail, prise de poste"
+          description:
+            en: "Set the Tab5 alarm clock: fixed time and days, your work calendar, or a ring before your shift starts. Gradual volume; it rings without Home Assistant."
+            fr: "Réglez le réveil du Tab5 : heure et jours fixes, agenda de travail, ou sonnerie avant la prise de poste. Volume progressif ; sonne sans Home Assistant."
         - en: Voice
           fr: Voix
           page: docs/notice/voice.md
+          titre_onglet:
+            en: "Use the Tab5 voice assistant: « Ok Nabu », colours, window"
+            fr: "Utiliser l'assistant vocal du Tab5 : « Ok Nabu », couleurs"
+          description:
+            en: "Say « Ok Nabu » or tap the microphone, then speak: what the Tab5 microphone colours mean, and the voice window with your request, the answer and the volume."
+            fr: "Dites « Ok Nabu » ou touchez le micro, puis parlez : ce que signifient les couleurs du micro du Tab5, et la fenêtre vocale (demande, réponse, volume)."
         - en: Energy
           fr: Énergie
           page: docs/notice/energy.md
+          titre_onglet:
+            en: "Solar and energy on the Tab5: flow, production, kWh balance"
+            fr: "Solaire et énergie sur le Tab5 : flux, production, bilan kWh"
+          description:
+            en: "See solar production, home consumption, grid and battery on the M5Stack Tab5: live flow, production by hour, day and month, forecast and a monthly kWh balance."
+            fr: "Suivez production solaire, consommation, réseau et batterie sur le M5Stack Tab5 : flux en direct, production par heure, jour et mois, bilan mensuel en kWh."
         - en: Temperature
           fr: Température
           page: docs/notice/temperature.md
@@ -140,12 +236,30 @@
         - en: Weather
           fr: Météo
           page: docs/notice/weather.md
+          titre_onglet:
+            en: "Tab5 weather screen: hourly, 10-day forecast, rain next hour"
+            fr: "Météo sur le Tab5 : par heure, 10 jours, pluie dans l'heure"
+          description:
+            en: "The Tab5 weather window in three pages: the next hours with temperatures and rain, a 10-day forecast, and details: rain in the next hour, humidity, UV, frost."
+            fr: "La fenêtre météo du Tab5 en trois pages : les prochaines heures avec températures et pluie, les 10 jours, et le détail (pluie dans l'heure, humidité, UV, gel)."
         - en: Music
           fr: Musique
           page: docs/notice/music.md
+          titre_onglet:
+            en: "Tab5 music player for any Home Assistant media player"
+            fr: "Lecteur de musique du Tab5 pour tout lecteur Home Assistant"
+          description:
+            en: "Control any Home Assistant media player from the Tab5: cover, title, position, shuffle, repeat and volume, for an Apple TV, TV, Freebox, speaker or the tablet."
+            fr: "Pilotez n'importe quel lecteur multimédia Home Assistant depuis le Tab5 : pochette, titre, position, volume (Apple TV, TV, Freebox, enceinte, la tablette…)."
         - en: Cameras
           fr: Caméras
           page: docs/notice/cameras.md
+          titre_onglet:
+            en: "Home Assistant cameras on the Tab5: mosaic and large view"
+            fr: "Caméras Home Assistant sur le Tab5 : mosaïque et vue large"
+          description:
+            en: "See your Home Assistant cameras on the Tab5: still images by room, a mosaic of up to four, a large view on tap. No video; images refresh while it is open."
+            fr: "Voyez vos caméras Home Assistant sur le Tab5 : images fixes par pièce, mosaïque de quatre au plus, vue large d'un tap. Pas de vidéo ; l'image se renouvelle."
         - en: Tracking
           fr: Suivi
           page: docs/notice/tracking.md
@@ -158,6 +272,12 @@
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md
+          titre_onglet:
+            en: "Tab5 settings screen: brightness, theme, language, battery"
+            fr: "Réglages du Tab5 : luminosité, thème, langue, batterie"
+          description:
+            en: "Change the Tab5 settings on the tablet, without opening Home Assistant: brightness, screen off, theme, light or dark, language, charge limit, power saving."
+            fr: "Modifiez les réglages du Tab5 sur la tablette, sans ouvrir Home Assistant : luminosité, extinction, thème, langue, limite de charge, économie d'énergie."
         - en: System console
           fr: Console système
           page: docs/notice/console.md
@@ -167,9 +287,21 @@
     - en: Screens and features
       fr: Écrans et fonctions
       page: docs/screens.md
+      titre_onglet:
+        en: "M5Stack Tab5 screens and features — Home Assistant display"
+        fr: "M5Stack Tab5 : écrans et fonctions — écran Home Assistant"
+      description:
+        en: "Every screen and window of the M5Stack Tab5 Home Assistant display: home, climate, lights, alarm, energy, cameras, weather. A picture and a manual link each."
+        fr: "Tous les écrans et fenêtres du Tab5 en écran mural Home Assistant : accueil, clim, lumières, réveil, énergie, caméras, météo. Image et lien de notice chacun."
     - en: Voice assistant
       fr: Assistant vocal
       page: docs/voice_assistant.md
+      titre_onglet:
+        en: "Tab5 as a Home Assistant voice satellite: wake word, STT, TTS"
+        fr: "Le Tab5, satellite vocal Home Assistant : mot de réveil, STT, TTS"
+      description:
+        en: "How the M5Stack Tab5 works as a Home Assistant voice satellite: « Okay Nabu » wake word on the device, audio sent on demand, then STT, agent and TTS."
+        fr: "Le M5Stack Tab5 comme satellite vocal Home Assistant : mot de réveil « Okay Nabu » sur l'appareil, audio envoyé à la demande, puis STT, agent et TTS."
     - en: Local AI server
       fr: Serveur IA local
       page: docs/serveur-ia.md
@@ -187,9 +319,21 @@
     - en: Known incidents
       fr: Incidents connus
       page: docs/troubleshooting.md
+      titre_onglet:
+        en: "Tab5 troubleshooting: black screen, Wi-Fi, HACS, reboots"
+        fr: "Dépannage du Tab5 : écran noir, Wi-Fi, HACS, redémarrages"
+      description:
+        en: "Real M5Stack Tab5 incidents with root cause and fix: black screen after a reboot, weather missing on screen, exhausted API connections, HACS errors."
+        fr: "Incidents réels du M5Stack Tab5, cause et correctif : écran noir après un reboot, météo absente de l'écran, connexions API épuisées, erreurs HACS."
     - en: Debugging
       fr: Diagnostiquer
       page: docs/debugging.md
+      titre_onglet:
+        en: "Debug the Tab5: ESPHome logs, system console, crash capture"
+        fr: "Déboguer le Tab5 : journaux ESPHome, console, plantages"
+      description:
+        en: "Find out what an M5Stack Tab5 is doing: live ESPHome logs, the on-screen system console, a render of the screen without the tablet, crash capture over serial."
+        fr: "Savoir ce que fait un M5Stack Tab5 : journaux ESPHome en direct, console système, rendu de l'écran sans tablette, capture d'un plantage sur le port série."
 
 - en: Under the hood
   fr: Comprendre le projet
@@ -197,39 +341,111 @@
     - en: Architecture
       fr: Architecture
       page: docs/architecture.md
+      titre_onglet:
+        en: "Tab5 firmware architecture: ESPHome packages, LVGL, push-only"
+        fr: "Architecture du firmware Tab5 : packages ESPHome, LVGL, push"
+      description:
+        en: "How the M5Stack Tab5 Home Assistant firmware is built: one ESPHome entry file, YAML packages by concern, native LVGL, data pushed in, events sent back."
+        fr: "Comment est construit le firmware du M5Stack Tab5 pour Home Assistant : un fichier ESPHome d'entrée, des packages YAML, LVGL natif, données poussées."
+    - en: Screen internals
+      fr: "Écrans : détails techniques"
+      page: docs/screens_internals.md
+      titre_onglet:
+        en: "M5Stack Tab5 screen internals (ESPHome, LVGL) — Home Assistant"
+        fr: "M5Stack Tab5 : écrans, détails techniques — Home Assistant"
+      description:
+        en: "How each M5Stack Tab5 screen works inside: ESPHome and LVGL files, C++ functions, sizes in pixels, timings and the decisions behind them. For developers."
+        fr: "Comment marche chaque écran du M5Stack Tab5 : fichiers ESPHome et LVGL, fonctions C++, tailles en pixels, temporisations et décisions. Pour les développeurs."
     - en: Hardware
       fr: Matériel
       page: docs/hardware.md
+      h1_fr: "Matériel du M5Stack Tab5 : révisions d'écran, fiche technique et alimentation"
       titre_onglet:
-        en: M5Stack Tab5 ST7121, ST7123, ILI9881C — Home Assistant
-        fr: M5Stack Tab5 ST7121, ST7123, ILI9881C — écran Home Assistant
+        en: M5Stack Tab5 specs and display chips — Home Assistant
+        fr: "M5Stack Tab5 : fiche technique et puces écran — Home Assistant"
       description:
-        en: Which display chip is in your M5Stack Tab5? The ST7123 and ST7121 run this ESPHome firmware for Home Assistant, the ILI9881C builds. How to tell and choose.
-        fr: Quelle puce écran dans votre M5Stack Tab5 ? La ST7123 et la ST7121 font tourner ce firmware ESPHome pour Home Assistant, l'ILI9881C compile. Comment choisir.
+        en: "M5Stack Tab5 specs for ESPHome and Home Assistant: ESP32-P4, ESP32-C6, 5-inch 1280×720 screen, display chips ST7123, ST7121, ILI9881C, what is used."
+        fr: "Fiche du M5Stack Tab5 pour ESPHome et Home Assistant : ESP32-P4, ESP32-C6, écran 5 pouces 1280×720, puces écran ST7123, ST7121, ILI9881C, ce qui sert."
+      pages:
+        - en: Tab5 battery and power
+          fr: Batterie et alimentation du Tab5
+          page: docs/tab5-battery.md
+          h1_fr: "Batterie et alimentation du M5Stack Tab5 dans Home Assistant : chargeur, niveau et sécurité"
+          titre_onglet:
+            en: "M5Stack Tab5 battery: charger, 80 % limit — Home Assistant"
+            fr: "Batterie M5Stack Tab5 : chargeur, limite 80 % — Home Assistant"
+          description:
+            en: "How the M5Stack Tab5 battery works with this ESPHome firmware: detection, charger safety locks, 80 % charge limit, discharge curve, low-battery alert."
+            fr: "Batterie du M5Stack Tab5 avec ce firmware ESPHome : détection, verrous du chargeur, limite de charge à 80 %, courbe de décharge, alerte de batterie faible."
+        - en: Tab5 pinout
+          fr: Brochage du Tab5
+          page: docs/tab5-pinout.md
+          h1_fr: "Brochage du M5Stack Tab5 : GPIO, expandeurs d'E/S et adresses I2C"
+          titre_onglet:
+            en: "M5Stack Tab5 pinout: GPIO, I2C addresses — Home Assistant"
+            fr: "Brochage M5Stack Tab5 : GPIO, adresses I2C — Home Assistant"
+          description:
+            en: "M5Stack Tab5 pinout for ESPHome: every GPIO and I/O expander pin, the I2C addresses, the ESP32-C6 SDIO link, with a wiring diagram checked against the YAML."
+            fr: "Brochage du M5Stack Tab5 pour ESPHome : chaque GPIO et broche d'expandeur, adresses I2C, liaison SDIO de l'ESP32-C6, schéma de câblage vérifié contre le YAML."
     - en: Waveshare 7B board
       fr: Carte Waveshare 7B
       page: docs/waveshare-7b.md
+      h1_fr: Waveshare ESP32-P4 7B en écran Home Assistant
       titre_onglet:
         en: Waveshare ESP32-P4 7B as a Home Assistant screen (ESPHome)
         fr: Waveshare ESP32-P4 7B en écran Home Assistant (ESPHome)
       description:
-        en: Turn the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600) into a Home Assistant wall screen, with ESPHome and LVGL firmware installed from the browser.
-        fr: La Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600) en écran mural Home Assistant, avec un firmware ESPHome et LVGL installé depuis le navigateur.
+        en: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600) as a Home Assistant screen: ESPHome firmware, install, pins, what works and what is missing."
+        fr: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600) en écran Home Assistant : firmware ESPHome, installation, broches, ce qui marche et ce qui manque."
+    - en: Tab5 or Waveshare 7B?
+      fr: Tab5 ou Waveshare 7B ?
+      page: docs/tab5-vs-waveshare-7b.md
+      h1_fr: "Quel écran : M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant"
+      titre_onglet:
+        en: M5Stack Tab5 or Waveshare ESP32-P4 7B for Home Assistant?
+        fr: M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant ?
+      description:
+        en: "M5Stack Tab5 or Waveshare ESP32-P4 7B as a Home Assistant screen: size, battery, clock, games, price and install, side by side, and which to pick."
+        fr: "M5Stack Tab5 ou Waveshare ESP32-P4 7B en écran Home Assistant : taille, batterie, horloge, jeux, prix et installation côte à côte, et lequel choisir."
     - en: User interface (LVGL)
       fr: Interface (LVGL)
       page: docs/ui_design.md
     - en: Performance
       fr: Performances
       page: docs/performance.md
+      titre_onglet:
+        en: "Tab5 and Waveshare 7B performance: frame times, popups, boot"
+        fr: "Performances du Tab5 et de la 7B : images, popups, démarrage"
+      description:
+        en: "Frame times, popups, theme switch, boot and restarts measured on a real M5Stack Tab5 and a Waveshare ESP32-P4 7B, with the method so you can repeat it."
+        fr: "Durées d'image, popups, changement de thème, démarrage et redémarrages mesurés sur un M5Stack Tab5 et une Waveshare ESP32-P4 7B, avec la méthode pour refaire."
     - en: Power consumption
       fr: Consommation
       page: docs/consumption.md
+      titre_onglet:
+        en: "M5Stack Tab5 power consumption: watts, battery life, per year"
+        fr: "Consommation du M5Stack Tab5 : watts, autonomie, kWh par an"
+      description:
+        en: "How many watts does the Tab5 draw? Measured on a tablet on battery: 2.63 W with the screen at 100 %, 1.23 W with it off. The backlight is the lever. 7B too."
+        fr: "Combien de watts consomme le Tab5 ? Mesuré sur batterie : 2,63 W écran à 100 %, 1,23 W écran éteint. Le rétroéclairage est le levier. La 7B aussi."
     - en: Screen languages
       fr: Langues de l'écran
       page: docs/translations.md
+      titre_onglet:
+        en: "Tab5 screen languages: 7 to choose from, and how to add yours"
+        fr: "Langues de l'écran du Tab5 : 7 au choix, ajoutez la vôtre"
+      description:
+        en: "The Tab5 screen speaks French, English, German, Dutch, Spanish, Italian and Turkish. How to pick the language, how translations work, how to add or fix one."
+        fr: "L'écran du Tab5 parle français, anglais, allemand, néerlandais, espagnol, italien et turc. Choisir la langue, comprendre les traductions, en ajouter une."
     - en: Related projects
       fr: Projets voisins
       page: docs/related_projects.md
+      titre_onglet:
+        en: "Projects around the Tab5: Vigie hazard alerts and AI engine"
+        fr: "Projets voisins du Tab5 : alertes Vigie et moteur IA"
+      description:
+        en: "The author's other projects beside this Tab5 screen: Vigie (world weather and hazard alerts, with its own 7-inch ESP32-P4 display) and a multi-agent AI engine."
+        fr: "Les autres projets de l'auteur autour de l'écran Tab5 : Vigie (météo et alertes mondiales, avec son écran ESP32-P4 de 7 pouces) et un moteur IA multi-agents."
     - en: Design decisions
       fr: Décisions d'architecture
       page: docs/decisions/README.md
@@ -239,6 +455,12 @@
 - en: The story
   fr: L'histoire
   page: docs/story.md
+  titre_onglet:
+    en: "The story of the Tab5 Home Assistant screen, built with AI"
+    fr: "L'histoire de l'écran Tab5 pour Home Assistant, fait avec l'IA"
+  description:
+    en: "How an old Nextion weather screen became an M5Stack Tab5 Home Assistant dashboard built with AI: the goals, the voice assistant and the engine behind it."
+    fr: "Comment un vieil écran météo Nextion est devenu un tableau de bord Home Assistant sur M5Stack Tab5, fait avec l'IA : objectifs, assistant vocal, moteur."
 
 - en: Releases
   fr: Versions
