@@ -64,7 +64,7 @@ On 2026-11-06 the pins of this table were compared with two other sources, read 
 - **M5Stack's PinMap** ([docs.m5stack.com/en/core/Tab5](https://docs.m5stack.com/en/core/Tab5)): the same I2C pins (GPIO 31 and 32), touch interrupt (GPIO 23), backlight (GPIO 22), I2S pins of the two codecs (GPIO 27, 29, 30, 28 and 26) and ESP32-C6 link: SDIO data 0 to 3 on GPIO 11, 10, 9 and 8, command GPIO 13, clock GPIO 12, reset GPIO 15. The expanders agree too (0x43: antenna select P0, speaker amplifier P1, external 5 V P2, display reset P4, touch reset P5, headphone detect P7; 0x44: Wi-Fi power P0, USB power P3, quick charge P5, charging status P6, charge enable P7). M5Stack also lists a GPIO 14 wired to the C6's IO2, the camera reset on 0x43 P6 and a power-off pulse on 0x44 P4: this firmware configures none of them.
 - **ESPHome's device page** ([the page](https://devices.esphome.io/devices/m5stack-tab5/), its `config.yaml` read in the [devices.esphome.io repository](https://github.com/esphome/devices.esphome.io/tree/main/src/docs/devices/M5Stack-Tab5)): the same SDIO, I2C, I2S, touch, backlight and expander pins.
 
-This table was not compared with pinouts published elsewhere. If one disagrees with it, this table is what runs on the author's Tab5 (ST7123), and the CI compares it with the YAML at every change.
+This table was not compared with pinouts published elsewhere. If one disagrees with it, this table is what the firmware's YAML configures, and the CI compares it with the YAML at every change.
 
 ## Pins this firmware does not use
 
@@ -166,7 +166,7 @@ Le 06/11/2026, les broches de ce tableau ont été comparées à deux autres sou
 - **Le brochage de M5Stack** ([docs.m5stack.com/en/core/Tab5](https://docs.m5stack.com/en/core/Tab5)) : les mêmes broches I2C (GPIO 31 et 32), d'interruption du tactile (GPIO 23), de rétroéclairage (GPIO 22), I2S des deux codecs (GPIO 27, 29, 30, 28 et 26) et de la liaison ESP32-C6 : données SDIO 0 à 3 sur GPIO 11, 10, 9 et 8, commande GPIO 13, horloge GPIO 12, reset GPIO 15. Les expandeurs s'accordent aussi (0x43 : choix d'antenne P0, ampli du haut-parleur P1, 5 V externe P2, reset de l'écran P4, reset du tactile P5, détection du casque P7 ; 0x44 : alimentation du Wi-Fi P0, alimentation USB P3, charge rapide P5, état de charge P6, activation de la charge P7). M5Stack liste en plus un GPIO 14 relié à l'IO2 du C6, le reset de la caméra sur 0x43 P6 et une impulsion d'extinction sur 0x44 P4 : ce firmware n'en configure aucun.
 - **La page ESPHome de l'appareil** ([la page](https://devices.esphome.io/devices/m5stack-tab5/), son `config.yaml` lu dans le [dépôt devices.esphome.io](https://github.com/esphome/devices.esphome.io/tree/main/src/docs/devices/M5Stack-Tab5)) : les mêmes broches SDIO, I2C, I2S, tactile, rétroéclairage et expandeurs.
 
-Ce tableau n'a pas été comparé aux brochages publiés ailleurs. Si l'un d'eux diffère, ce tableau est ce qui tourne sur le Tab5 de l'auteur (ST7123), et la CI le compare au YAML à chaque changement.
+Ce tableau n'a pas été comparé aux brochages publiés ailleurs. Si l'un d'eux diffère, ce tableau est ce que le YAML du firmware configure, et la CI le compare au YAML à chaque changement.
 
 ## Broches que ce firmware n'utilise pas
 
