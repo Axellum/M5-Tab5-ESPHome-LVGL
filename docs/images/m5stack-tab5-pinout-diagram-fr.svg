@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 790" width="960" height="790" role="img" aria-labelledby="titre desc" xml:lang="fr">
+  <title id="titre">Câblage du M5Stack Tab5 : ESP32-P4, ESP32-C6, expandeurs d'E/S, codecs et bus I2C</title>
+  <desc id="desc">Schéma fonctionnel du M5Stack Tab5 tel que ce firmware le configure. L'ESP32-P4 parle au co-processeur Wi-Fi ESP32-C6 par SDIO (horloge GPIO 12, commande GPIO 13, données GPIO 11, 10, 9 et 8, reset GPIO 15). Un seul bus I2C (SDA GPIO 31, SCL GPIO 32, 400 kHz) atteint deux expandeurs d'E/S PI4IOE5V6408 (0x43 et 0x44), le contrôleur tactile, les codecs audio ES8388 et ES7210, le capteur de mouvement BMI270 (0x68), l'horloge RX8130CE et le moniteur de batterie INA226 (0x41). L'écran est en MIPI-DSI, le rétroéclairage sur GPIO 22 et l'interruption du tactile sur GPIO 23. Les deux codecs partagent un bus I2S : horloge bit GPIO 27, sélection de mot GPIO 29, horloge maître GPIO 30, données du micro GPIO 28, données du haut-parleur GPIO 26. Les expandeurs portent les resets, l'ampli, les interrupteurs d'alimentation et les lignes du chargeur de batterie.</desc>
+  <style>
+    .fond{fill:#f6f7f9}
+    .carte{fill:#ffffff;stroke:#d9dee7;stroke-width:1.5}
+    .puce{fill:#ffffff;stroke:#c3cad6;stroke-width:1.5}
+    .t{fill:#1d2330}
+    .d{fill:#5b6475}
+    .p4{fill:#e5f4ea;stroke:#1a7f37;stroke-width:2}
+    .p4-t{fill:#1a7f37}
+    .c6{fill:#fdf0dc;stroke:#b45f06;stroke-width:2}
+    .c6-t{fill:#b45f06}
+    .i2c{stroke:#0b6bcb;stroke-width:3;fill:none}
+    .i2c-t{fill:#0b6bcb}
+    .sdio{stroke:#b45f06;stroke-width:3;fill:none}
+    .sdio-t{fill:#b45f06}
+    .i2s{stroke:#7a3fb5;stroke-width:3;fill:none}
+    .i2s-t{fill:#7a3fb5}
+    .gpio{stroke:#5b6475;stroke-width:2.5;fill:none}
+    .dsi{stroke:#5b6475;stroke-width:5;fill:none}
+    .aud{fill:#f1e9fa;stroke:#7a3fb5;stroke-width:2}
+    .ecr{fill:#e3eefb;stroke:#0b6bcb;stroke-width:2}
+    text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+    .m{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace}
+    @media (prefers-color-scheme: dark){
+      .fond{fill:#11151c}
+      .carte{fill:#1a2029;stroke:#2c3440}
+      .puce{fill:#1a2029;stroke:#3a4452}
+      .t{fill:#e6e9ef}
+      .d{fill:#9aa3b2}
+      .p4{fill:#14301f;stroke:#5fd08a}
+      .p4-t{fill:#5fd08a}
+      .c6{fill:#3a2a12;stroke:#f0b45a}
+      .c6-t{fill:#f0b45a}
+      .i2c{stroke:#4ea1f3}
+      .i2c-t{fill:#4ea1f3}
+      .sdio{stroke:#f0b45a}
+      .sdio-t{fill:#f0b45a}
+      .i2s{stroke:#b98bf0}
+      .i2s-t{fill:#b98bf0}
+      .gpio{stroke:#9aa3b2}
+      .dsi{stroke:#9aa3b2}
+      .aud{fill:#2a1f3a;stroke:#b98bf0}
+      .ecr{fill:#16283d;stroke:#4ea1f3}
+    }
+  </style>
+  <rect x="0" y="0" width="960" height="790" rx="18" class="fond"/>
+  <text x="480" y="34" class="t" font-size="22" font-weight="700" text-anchor="middle">M5Stack Tab5 : ce qui est relié à quoi</text>
+  <text x="480" y="56" class="d" font-size="14" text-anchor="middle">Broches et adresses telles qu'écrites dans le YAML du firmware</text>
+  <rect x="20" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="74" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">PI4IOE5V6408</text>
+  <text x="74" y="122" class="d" font-size="11.5" text-anchor="middle">0x43 · expandeur</text>
+  <line x1="74" y1="136" x2="74" y2="170" class="i2c"/>
+  <rect x="136" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="190" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">PI4IOE5V6408</text>
+  <text x="190" y="122" class="d" font-size="11.5" text-anchor="middle">0x44 · expandeur</text>
+  <line x1="190" y1="136" x2="190" y2="170" class="i2c"/>
+  <rect x="252" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="306" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">Tactile</text>
+  <text x="306" y="122" class="d" font-size="11.5" text-anchor="middle">ST7123 · GT911</text>
+  <line x1="306" y1="136" x2="306" y2="170" class="i2c"/>
+  <rect x="368" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="422" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">ES8388</text>
+  <text x="422" y="122" class="d" font-size="11.5" text-anchor="middle">DAC haut-parleur</text>
+  <line x1="422" y1="136" x2="422" y2="170" class="i2c"/>
+  <rect x="484" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="538" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">ES7210</text>
+  <text x="538" y="122" class="d" font-size="11.5" text-anchor="middle">ADC micro</text>
+  <line x1="538" y1="136" x2="538" y2="170" class="i2c"/>
+  <rect x="600" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="654" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">BMI270</text>
+  <text x="654" y="122" class="d" font-size="11.5" text-anchor="middle">0x68 · mouvement</text>
+  <line x1="654" y1="136" x2="654" y2="170" class="i2c"/>
+  <rect x="716" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="770" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">RX8130CE</text>
+  <text x="770" y="122" class="d" font-size="11.5" text-anchor="middle">horloge (RTC)</text>
+  <line x1="770" y1="136" x2="770" y2="170" class="i2c"/>
+  <rect x="832" y="78" width="108" height="58" rx="8" class="puce"/>
+  <text x="886" y="102" class="t" font-size="13" font-weight="700" text-anchor="middle">INA226</text>
+  <text x="886" y="122" class="d" font-size="11.5" text-anchor="middle">0x41 · batterie</text>
+  <line x1="886" y1="136" x2="886" y2="170" class="i2c"/>
+  <line x1="20" y1="170" x2="940" y2="170" class="i2c"/>
+  <text x="24" y="192" class="i2c-t" font-size="13" font-weight="700">Bus I2C bsp_bus · 400 kHz · SDA GPIO 31 · SCL GPIO 32</text>
+  <line x1="490" y1="170" x2="490" y2="270" class="i2c"/>
+  <text x="500" y="236" class="i2c-t" font-size="12" font-weight="700">I2C</text>
+  <rect x="370" y="270" width="240" height="285" rx="14" class="p4"/>
+  <text x="490" y="410" class="p4-t" font-size="24" font-weight="700" text-anchor="middle">ESP32-P4</text>
+  <text x="490" y="436" class="d" font-size="14" text-anchor="middle">processeur principal</text>
+  <rect x="24" y="305" width="170" height="150" rx="14" class="c6"/>
+  <text x="109" y="367" class="c6-t" font-size="22" font-weight="700" text-anchor="middle">ESP32-C6</text>
+  <text x="109" y="393" class="d" font-size="13" text-anchor="middle">co-processeur Wi-Fi</text>
+  <text x="109" y="413" class="d" font-size="13" text-anchor="middle">ESP-Hosted</text>
+  <line x1="194" y1="342" x2="370" y2="342" class="sdio"/>
+  <text x="282" y="328" class="sdio-t" font-size="13" font-weight="700" text-anchor="middle">SDIO</text>
+  <text x="282" y="362" class="t" font-size="12" text-anchor="middle">clk GPIO 12</text>
+  <text x="282" y="379" class="t" font-size="12" text-anchor="middle">cmd GPIO 13</text>
+  <text x="282" y="396" class="t" font-size="12" text-anchor="middle">données GPIO 11 · 10 · 9 · 8</text>
+  <line x1="194" y1="425" x2="370" y2="425" class="gpio"/>
+  <text x="282" y="445" class="t" font-size="12" text-anchor="middle">reset GPIO 15</text>
+  <rect x="730" y="262" width="206" height="100" rx="14" class="ecr"/>
+  <text x="833" y="306" class="i2c-t" font-size="17" font-weight="700" text-anchor="middle">Écran et tactile</text>
+  <text x="833" y="330" class="d" font-size="12" text-anchor="middle">ILI9881C · ST7123 · ST7121</text>
+  <line x1="610" y1="294" x2="730" y2="294" class="dsi"/>
+  <text x="670" y="284" class="t" font-size="12" font-weight="700" text-anchor="middle">MIPI-DSI</text>
+  <line x1="610" y1="326" x2="730" y2="326" class="gpio"/>
+  <text x="670" y="318" class="t" font-size="12" text-anchor="middle">rétroécl. GPIO 22</text>
+  <line x1="610" y1="352" x2="730" y2="352" class="gpio"/>
+  <text x="670" y="344" class="t" font-size="12" text-anchor="middle">int. tactile GPIO 23</text>
+  <rect x="730" y="405" width="206" height="150" rx="14" class="aud"/>
+  <text x="833" y="461" class="i2s-t" font-size="17" font-weight="700" text-anchor="middle">ES8388 et ES7210</text>
+  <text x="833" y="485" class="d" font-size="12" text-anchor="middle">haut-parleur et micro</text>
+  <text x="833" y="503" class="d" font-size="12" text-anchor="middle">(un seul bus I2S partagé)</text>
+  <line x1="610" y1="418" x2="730" y2="418" class="i2s"/>
+  <text x="670" y="436" class="t" font-size="12" text-anchor="middle">bclk GPIO 27</text>
+  <text x="670" y="451" class="t" font-size="12" text-anchor="middle">lrclk GPIO 29</text>
+  <text x="670" y="466" class="t" font-size="12" text-anchor="middle">mclk GPIO 30</text>
+  <line x1="610" y1="492" x2="730" y2="492" class="i2s"/>
+  <text x="670" y="510" class="t" font-size="12" text-anchor="middle">micro, entrée GPIO 28</text>
+  <line x1="610" y1="527" x2="730" y2="527" class="i2s"/>
+  <text x="670" y="545" class="t" font-size="12" text-anchor="middle">haut-parleur GPIO 26</text>
+  <rect x="20" y="590" width="450" height="148" rx="12" class="carte"/>
+  <text x="36" y="613" class="i2c-t" font-size="14" font-weight="700">PI4IOE5V6408 0x43</text>
+  <text x="36" y="636" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x43 P0</tspan>  antenne Wi-Fi, interne ou externe</text>
+  <text x="36" y="653" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x43 P1</tspan>  activation de l'ampli du haut-parleur</text>
+  <text x="36" y="670" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x43 P2</tspan>  alimentation 5 V externe</text>
+  <text x="36" y="687" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x43 P4</tspan>  reset de l'écran</text>
+  <text x="36" y="704" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x43 P5</tspan>  reset du tactile</text>
+  <text x="36" y="721" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x43 P7</tspan>  détection de la prise casque</text>
+  <rect x="490" y="590" width="450" height="148" rx="12" class="carte"/>
+  <text x="506" y="613" class="i2c-t" font-size="14" font-weight="700">PI4IOE5V6408 0x44</text>
+  <text x="506" y="636" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x44 P0</tspan>  alimentation du Wi-Fi</text>
+  <text x="506" y="653" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x44 P3</tspan>  alimentation USB</text>
+  <text x="506" y="670" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x44 P5</tspan>  charge rapide (active à 0)</text>
+  <text x="506" y="687" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x44 P6</tspan>  état de charge de la batterie</text>
+  <text x="506" y="704" class="t" font-size="12.5"><tspan class="m" font-weight="700">0x44 P7</tspan>  activation de la charge</text>
+  <text x="480" y="768" class="d" font-size="12" text-anchor="middle">La caméra, la microSD, le RS485 et les connecteurs d'extension ne sont pas utilisés par ce firmware.</text>
+</svg>

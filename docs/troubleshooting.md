@@ -217,11 +217,13 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)
 
-**Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026.
+**Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026. **Solved since 24 October 2026** (below).
 
-**Root cause:** neither the tablet nor this repository. Since 23 October 2026, GitHub answers a release download with a redirect that carries a Content-Security-Policy header of about 9 KB (9,242 bytes measured on `tab5_hacs.zip` on 24 October), and HACS 2.0.5 refuses any header line over 8,190 bytes. Every integration that HACS installs from a release archive is hit. Tracked by HACS: [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), fix proposed in [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (not released on 24 October).
+**Root cause:** neither the tablet, nor this repository, nor HACS itself. From 23 October 2026, GitHub answered a release download with a redirect that carries a Content-Security-Policy header of about 9 KB (9,242 bytes measured on `tab5_hacs.zip` on 24 October), and the HTTP client of Home Assistant refuses any header line over 8,190 bytes. Every integration that HACS installs from a release archive was hit. Tracked by HACS: [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), closed on 25 October.
 
-**Fix:** wait for a HACS release that fixes it, then *Download* again. Meanwhile, the files go in by hand, without HACS: [parts A to C](installation/home-assistant-files.md#a-download-and-unzip). Do not copy the integration from the repository: it holds the code but not the files (« no Home Assistant files in the integration », below).
+**How it ended:** on the evening of 24 October GitHub shrank the header (HACS's maintainer said it was solved by a change on GitHub's side; measured again on 6 November 2026: 3,994 bytes on `tab5_hacs.zip`), and Home Assistant 2026.10.4, released the same day ([home-assistant/core#188329](https://github.com/home-assistant/core/pull/188329)), accepts headers up to 64 KiB. HACS itself did not change: 2.0.5 is still its latest release on 6 November. A Tab5 download through HACS was not run again by the author after the fix, when this was written.
+
+**Fix:** nothing to do now, *Download* again. If the error comes back, update Home Assistant to 2026.10.4 or newer, or put the files in by hand, without HACS: [parts A to C](installation/home-assistant-files.md#a-download-and-unzip). Do not copy the integration from the repository: it holds the code but not the files (« no Home Assistant files in the integration », below).
 
 ---
 
@@ -288,7 +290,7 @@ More than 30 minutes since the tablet's start: restart it first (a short press o
 
 **Root cause:** the battery charger. Since 3.6.0 (PR #303, 2026-10-04), the firmware sets CHG_EN (PI4IOE 0x44 P7) to 1 at every boot. Without a battery, the charger charges into nothing: the voltage read by the INA226 swings between 4.2 and 8.39 V, or stays around 5.70–5.76 V, and « Battery charging » says yes. With a trial firmware that exposed CHG_EN, switching the charger off made the hiss go away; the INA226 then read 1.83 to 1.94 V (four readings, 09:55 to 09:58) and the charging status went to « not charging ». One more observation, a single one: during the 2 minutes when the voltage read 8.39 V, the hiss could not be heard; it came back with 5.70 V.
 
-**Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». Since 2026-10-10 it does not even switch the charger on while it boots when the previous boot saw no battery. How it decides: [battery](hardware.md#power).
+**Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». Since 2026-10-10 it does not even switch the charger on while it boots when the previous boot saw no battery. How it decides: [battery](tab5-battery.md#battery-detection).
 
 **Workaround from 3.6.0 to the latest published version:** none simple, sorry. These versions have no entity to switch the charger off, and the speaker, the microphone and the volume have nothing to do with it. A fitted battery gives the charger something to charge (whether a tablet with a battery hisses too has not been checked). Otherwise, wait for the next version.
 
@@ -500,11 +502,13 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)
 
-**Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026.
+**Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026. **Résolu depuis le 24 octobre 2026** (plus bas).
 
-**Cause racine :** ni la tablette ni ce dépôt. Depuis le 23 octobre 2026, GitHub répond au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et HACS 2.0.5 refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release sont touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), correctif proposé dans [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (pas publié le 24 octobre).
+**Cause racine :** ni la tablette, ni ce dépôt, ni HACS lui-même. Depuis le 23 octobre 2026, GitHub répondait au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et le client HTTP de Home Assistant refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release étaient touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), fermé le 25 octobre.
 
-**Correctif :** attendre une version de HACS qui le corrige, puis *Download* de nouveau. En attendant, les fichiers se posent à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
+**Comment ça s'est terminé :** le soir du 24 octobre, GitHub a réduit l'en-tête (le mainteneur de HACS a dit que c'était résolu par un changement du côté de GitHub ; mesuré de nouveau le 6 novembre 2026 : 3 994 octets sur `tab5_hacs.zip`), et Home Assistant 2026.10.4, sorti le même jour ([home-assistant/core#188329](https://github.com/home-assistant/core/pull/188329)), accepte des en-têtes jusqu'à 64 Kio. HACS lui-même n'a pas changé : la 2.0.5 est toujours sa dernière release au 6 novembre. Un téléchargement de Tab5 par HACS n'a pas été refait par l'auteur après le correctif, au moment d'écrire ces lignes.
+
+**Correctif :** rien à faire maintenant, *Download* de nouveau. Si l'erreur revient, mettre Home Assistant à jour en 2026.10.4 ou plus récent, ou poser les fichiers à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
 
 ### Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe
 
@@ -563,7 +567,7 @@ Plus de 30 minutes depuis le démarrage de la tablette : redémarrez-la d'abord 
 
 **Cause racine :** le chargeur de la batterie. Depuis la 3.6.0 (PR #303, 04/10/2026), le firmware met CHG_EN (PI4IOE 0x44 P7) à 1 à chaque démarrage. Sans batterie, le chargeur charge dans le vide : la tension lue par l'INA226 oscille entre 4,2 et 8,39 V, ou reste vers 5,70-5,76 V, et « Battery charging » dit oui. Avec un firmware d'essai qui exposait CHG_EN, couper le chargeur a fait disparaître le souffle ; l'INA226 lisait alors 1,83 à 1,94 V (quatre lectures, de 09:55 à 09:58) et l'état de charge est passé à « pas en charge ». Une observation de plus, une seule : pendant les 2 minutes où la tension lue était à 8,39 V, on n'entendait plus le souffle ; il est revenu avec les 5,70 V.
 
-**Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Depuis le 10/10/2026, il ne l'allume même plus pendant le démarrage quand le démarrage précédent n'a vu aucune batterie. Comment il décide : [batterie](hardware.md#alimentation).
+**Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Depuis le 10/10/2026, il ne l'allume même plus pendant le démarrage quand le démarrage précédent n'a vu aucune batterie. Comment il décide : [batterie](tab5-battery.md#détection-de-la-batterie).
 
 **Contournement de la 3.6.0 à la dernière version publiée :** aucun de simple, désolé. Ces versions n'ont pas d'entité pour couper le chargeur, et le haut-parleur, le micro ou le volume n'y sont pour rien. Une batterie montée donne au chargeur quelque chose à charger (on n'a pas vérifié si une tablette avec batterie souffle aussi). Sinon, attendre la prochaine version.
 

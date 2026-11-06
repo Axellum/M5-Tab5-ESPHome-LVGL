@@ -63,6 +63,8 @@ IMAGES = {
     "m5stack-tab5-home-assistant-screen-card.jpg": "tab5_social_preview.jpg",
 }
 IMAGE_DE_PAGE = re.compile(r'<img\b[^>]*\bsrc="((?:\.\./)*images/[^"]+)"')
+# Adresse canonique d'une page (<link rel="canonical">) : elle n'est au plan du site que si c'est la sienne.
+CANONIQUE = re.compile(r'<link rel="canonical" href="([^"]+)"')
 # Dossiers de la documentation (tools/site/construire.py, ADR-0030) : une langue chacun.
 LANGUES_DOC = ("en", "fr")
 
@@ -168,7 +170,13 @@ def dates_de_commit(fichiers: set[str], depot: Path = RACINE) -> dict[str, str]:
 def plan_du_site(site: Path, dates: dict[str, str] | None = None) -> str:
     """sitemap.xml : une entrée par page HTML, avec les images qu'elle affiche.
     `dates` : adresse de la page sous le site (« en/hardware/ », « » pour la racine) →
-    date de son <lastmod> ; une page absente n'en a pas."""
+    date de son <lastmod> ; une page absente n'en a pas.
+
+    Une page dont le canonical mène ailleurs n'y figure pas : Google veut au plan l'adresse
+    préférée seulement, pas celles qui mènent au même contenu. C'est la copie d'une page
+    d'une seule langue sur l'autre site (les ADR en anglais sous fr/decisions/, `arcade.md`
+    en français sous en/arcade/) : elle reste en ligne et accessible, sa page d'origine
+    est au plan (tools/site/construire.py, balisage ; ADR-0030)."""
     dates = dates or {}
     lignes = ['<?xml version="1.0" encoding="UTF-8"?>',
               '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
@@ -179,11 +187,15 @@ def plan_du_site(site: Path, dates: dict[str, str] | None = None) -> str:
         if nom.startswith("google") or nom == "404.html":  # vérification de Search Console, page d'erreur
             continue
         dossier = relatif.removesuffix("index.html")
+        texte = page.read_text(encoding="utf-8")
+        canonique = CANONIQUE.search(texte)
+        if canonique and canonique.group(1) != SITE + dossier:
+            continue
         lignes.append(f"  <url><loc>{escape(SITE + dossier)}</loc>")
         if dossier in dates:  # avant les images : ordre du schéma des sitemaps
             lignes.append(f"    <lastmod>{dates[dossier]}</lastmod>")
         vues = []
-        for src in IMAGE_DE_PAGE.findall(page.read_text(encoding="utf-8")):
+        for src in IMAGE_DE_PAGE.findall(texte):
             # Relative à la page : images/ de la racine, en/images/ ou fr/images/ de la doc.
             image = urljoin(SITE + dossier, src)
             if image not in vues:
