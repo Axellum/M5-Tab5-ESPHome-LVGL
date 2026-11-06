@@ -333,12 +333,34 @@
     - en: Hardware
       fr: Matériel
       page: docs/hardware.md
+      h1_fr: "Matériel du M5Stack Tab5 : révisions d'écran, fiche technique et alimentation"
       titre_onglet:
-        en: M5Stack Tab5 ST7121, ST7123, ILI9881C — Home Assistant
-        fr: M5Stack Tab5 ST7121, ST7123, ILI9881C — écran Home Assistant
+        en: M5Stack Tab5 specs and display chips — Home Assistant
+        fr: "M5Stack Tab5 : fiche technique et puces écran — Home Assistant"
       description:
-        en: Which display chip is in your M5Stack Tab5? The ST7123 and ST7121 run this ESPHome firmware for Home Assistant, the ILI9881C builds. How to tell and choose.
-        fr: Quelle puce écran dans votre M5Stack Tab5 ? La ST7123 et la ST7121 font tourner ce firmware ESPHome pour Home Assistant, l'ILI9881C compile. Comment choisir.
+        en: "M5Stack Tab5 specs for ESPHome and Home Assistant: ESP32-P4, ESP32-C6, 5-inch 1280×720 screen, display chips ST7123, ST7121, ILI9881C, what is used."
+        fr: "Fiche du M5Stack Tab5 pour ESPHome et Home Assistant : ESP32-P4, ESP32-C6, écran 5 pouces 1280×720, puces écran ST7123, ST7121, ILI9881C, ce qui sert."
+      pages:
+        - en: Tab5 battery and power
+          fr: Batterie et alimentation du Tab5
+          page: docs/tab5-battery.md
+          h1_fr: "Batterie et alimentation du M5Stack Tab5 dans Home Assistant : chargeur, niveau et sécurité"
+          titre_onglet:
+            en: "M5Stack Tab5 battery: charger, 80 % limit — Home Assistant"
+            fr: "Batterie M5Stack Tab5 : chargeur, limite 80 % — Home Assistant"
+          description:
+            en: "How the M5Stack Tab5 battery works with this ESPHome firmware: detection, charger safety locks, 80 % charge limit, discharge curve, low-battery alert."
+            fr: "Batterie du M5Stack Tab5 avec ce firmware ESPHome : détection, verrous du chargeur, limite de charge à 80 %, courbe de décharge, alerte de batterie faible."
+        - en: Tab5 pinout
+          fr: Brochage du Tab5
+          page: docs/tab5-pinout.md
+          h1_fr: "Brochage du M5Stack Tab5 : GPIO, expandeurs d'E/S et adresses I2C"
+          titre_onglet:
+            en: "M5Stack Tab5 pinout: GPIO, I2C addresses — Home Assistant"
+            fr: "Brochage M5Stack Tab5 : GPIO, adresses I2C — Home Assistant"
+          description:
+            en: "M5Stack Tab5 pinout for ESPHome: every GPIO and I/O expander pin, the I2C addresses, the ESP32-C6 SDIO link, with a wiring diagram checked against the YAML."
+            fr: "Brochage du M5Stack Tab5 pour ESPHome : chaque GPIO et broche d'expandeur, adresses I2C, liaison SDIO de l'ESP32-C6, schéma de câblage vérifié contre le YAML."
     - en: Waveshare 7B board
       fr: Carte Waveshare 7B
       page: docs/waveshare-7b.md
