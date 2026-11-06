@@ -342,12 +342,23 @@
     - en: Waveshare 7B board
       fr: Carte Waveshare 7B
       page: docs/waveshare-7b.md
+      h1_fr: Waveshare ESP32-P4 7B en écran Home Assistant
       titre_onglet:
         en: Waveshare ESP32-P4 7B as a Home Assistant screen (ESPHome)
         fr: Waveshare ESP32-P4 7B en écran Home Assistant (ESPHome)
       description:
-        en: Turn the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600) into a Home Assistant wall screen, with ESPHome and LVGL firmware installed from the browser.
-        fr: La Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600) en écran mural Home Assistant, avec un firmware ESPHome et LVGL installé depuis le navigateur.
+        en: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600) as a Home Assistant screen: ESPHome firmware, install, pins, what works and what is missing."
+        fr: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600) en écran Home Assistant : firmware ESPHome, installation, broches, ce qui marche et ce qui manque."
+    - en: Tab5 or Waveshare 7B?
+      fr: Tab5 ou Waveshare 7B ?
+      page: docs/tab5-vs-waveshare-7b.md
+      h1_fr: "Quel écran : M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant"
+      titre_onglet:
+        en: M5Stack Tab5 or Waveshare ESP32-P4 7B for Home Assistant?
+        fr: M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant ?
+      description:
+        en: "M5Stack Tab5 or Waveshare ESP32-P4 7B as a Home Assistant screen: size, battery, clock, games, price and install, side by side, and which to pick."
+        fr: "M5Stack Tab5 ou Waveshare ESP32-P4 7B en écran Home Assistant : taille, batterie, horloge, jeux, prix et installation côte à côte, et lequel choisir."
     - en: User interface (LVGL)
       fr: Interface (LVGL)
       page: docs/ui_design.md
