@@ -318,6 +318,32 @@ def test_pied_de_page_renvoie_au_site_de_l_auteur(site, langue):
 
 
 @pytest.mark.parametrize("langue", construire.LANGUES)
+def test_pied_de_page_renvoie_a_la_chaine_youtube(site, langue):
+    """Chaque page porte dans son pied (`extra.social`) deux icônes : la chaîne YouTube et sa
+    playlist, avec un nom dans la langue de la page (un lien, pas une vidéo : aucune n'est
+    chargée depuis YouTube)."""
+    nom_chaine, nom_playlist = construire.LIENS_YOUTUBE[langue]
+    pages_html = sorted((site / langue).rglob("*.html"))
+    assert pages_html
+    for page in pages_html:
+        texte = page.read_text(encoding="utf-8")
+        pied = re.search(r'<div class="md-social">(.*?)\n\s*</div>', texte, re.S)
+        assert pied, page
+        assert f'href="{construire.CHAINE_YOUTUBE}"' in pied.group(1) and f'title="{nom_chaine}"' in pied.group(1), page
+        assert f'href="{construire.PLAYLIST_YOUTUBE}"' in pied.group(1) and f'title="{nom_playlist}"' in pied.group(1), page
+
+
+def test_une_video_au_plus_par_page():
+    """Une page de la documentation (et la page d'installation) cite une seule vidéo YouTube,
+    en vignette cliquable ; le README, lui, présente la série. Les deux langues d'une page
+    citent la même."""
+    video = re.compile(r"https://(?:youtu\.be/|(?:www\.)?youtube\.com/(?:shorts/|watch\?v=))([\w-]{11})")
+    for page in [*sorted((REPO / "docs").rglob("*.md")), REPO / "web" / "install" / "index.html"]:
+        vues = set(video.findall(page.read_text(encoding="utf-8")))
+        assert len(vues) <= 1, f"{page.relative_to(REPO)} : {sorted(vues)}"
+
+
+@pytest.mark.parametrize("langue", construire.LANGUES)
 def test_titre_et_description_du_menu(site, plan, langue):
     """`titre_onglet:` et `description:` de menu.yml remplacent le <title>, og:title et la
     description tirés de la page (ce qu'affiche un moteur de recherche)."""

@@ -12,6 +12,10 @@ The choice of the board is one line at build time ([ADR-0061](decisions/0061-boa
 
 ![The home screen of the firmware on the author's Waveshare ESP32-P4 7B, photographed on 29 Oct 2026: clock, temperatures, energy, work hours and a five-day weather forecast](images/home-assistant-dashboard-waveshare-esp32-p4-7-inch.webp)
 
+[<img src="images/home-assistant-two-screens-one-firmware-short-video.webp" width="180" loading="lazy" alt="Video: one firmware on two Home Assistant screens, the Waveshare 7B above and the M5Stack Tab5 below, both on the home screen">](https://youtube.com/shorts/xdu9M5caVIY)
+
+▶ **Both screens in 29 seconds**: [One firmware, two Home Assistant screens](https://youtube.com/shorts/xdu9M5caVIY), a YouTube Short (English texts on screen).
+
 ## At a glance
 
 | | Waveshare ESP32-P4-WIFI6-Touch-LCD-7B |
@@ -150,6 +154,10 @@ Le même firmware que celui du M5Stack Tab5 tourne aussi sur une deuxième carte
 Le choix de la carte tient en une ligne à la compilation ([ADR-0061](decisions/0061-board-and-screen-size.md)) ; sur le Tab5, rien ne change. Pas sûr de votre écran ? [M5Stack Tab5 ou Waveshare 7B](tab5-vs-waveshare-7b.md#version-française), côte à côte.
 
 ![L'écran d'accueil du firmware sur la Waveshare ESP32-P4 7B de l'auteur, photographié le 29/10/2026 : heure, températures, énergie, horaires et prévisions météo à 5 jours](images/home-assistant-dashboard-waveshare-esp32-p4-7-inch.webp)
+
+[<img src="images/home-assistant-two-screens-one-firmware-short-video.webp" width="180" loading="lazy" alt="Vidéo : un même firmware sur deux écrans Home Assistant, la Waveshare 7B au-dessus et le M5Stack Tab5 en dessous, sur l'écran d'accueil">](https://youtube.com/shorts/xdu9M5caVIY)
+
+▶ **Les deux écrans en 29 secondes** : [Un firmware, deux écrans Home Assistant](https://youtube.com/shorts/xdu9M5caVIY), un Short YouTube (textes à l'écran en anglais).
 
 ## En un coup d'œil
 

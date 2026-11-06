@@ -135,6 +135,8 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 |:-:|:-:|
 | [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Video: every setting of the ESP32-P4 Home Assistant screen picked in a Home Assistant blueprint">](https://youtu.be/4NPOXTlYok8) | [<img src="docs/images/home-assistant-voice-assistant-esp32-p4-video.webp" width="260" loading="lazy" alt="Video: the voice assistant of the ESP32-P4 Home Assistant wall screen, a follow-up question answered without saying the wake word again">](https://youtu.be/gTc45PRshdk) |
 
+More on the [YouTube channel](https://www.youtube.com/channel/UCmMnfENr9qX3K3oTaCP0SUg), and these videos together in one [playlist](https://www.youtube.com/playlist?list=PLXM1iF7NzMhs).
+
 **Photos of the real screens** (29 October 2026, the Waveshare 7B in the default theme, the Tab5 in a dark theme):
 
 | Home Assistant dashboard, home screen (Waveshare ESP32-P4 7B) | Light control: a lamp's colour wheel, opened by a long press |
@@ -365,6 +367,8 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 | [Tout se règle dans Home Assistant](https://youtu.be/4NPOXTlYok8) | [L'assistant vocal : « Okay Nabu » et questions de suite](https://youtu.be/gTc45PRshdk) |
 |:-:|:-:|
 | [<img src="docs/images/home-assistant-screen-settings-blueprint-video.webp" width="260" loading="lazy" alt="Vidéo : tous les réglages de l'écran Home Assistant ESP32-P4 choisis dans un blueprint Home Assistant">](https://youtu.be/4NPOXTlYok8) | [<img src="docs/images/home-assistant-voice-assistant-esp32-p4-video.webp" width="260" loading="lazy" alt="Vidéo : l'assistant vocal de l'écran mural Home Assistant ESP32-P4, une question de suite posée sans redire le mot de réveil">](https://youtu.be/gTc45PRshdk) |
+
+La suite sur la [chaîne YouTube](https://www.youtube.com/channel/UCmMnfENr9qX3K3oTaCP0SUg), et ces vidéos réunies dans une [playlist](https://www.youtube.com/playlist?list=PLXM1iF7NzMhs).
 
 **Photos des vrais écrans** (29 octobre 2026, la Waveshare 7B dans le thème par défaut, le Tab5 dans un thème sombre) :
 
