@@ -15,7 +15,11 @@ puis MkDocs (thème Material, sans autre plugin que sa recherche) les met en pag
      vers un fichier absent fait échouer la construction ;
   4. alertes de GitHub (« > [!WARNING] ») → encarts de Material, titrés dans la langue ;
      description de la page (premier paragraphe), pour les moteurs de recherche ;
-  5. mkdocs.yml de la langue, qui hérite de tools/site/mkdocs.yml, puis construction en
+  5. balisage pour les moteurs de recherche (début de chaque page, lu par theme/main.html) :
+     fil d'Ariane (chemin du menu), titre de l'article, langue du texte ; une page écrite
+     dans une seule langue et reprise sur l'autre site (une « copie ») a son canonical vers
+     la page de sa langue d'origine et aucun hreflang (pages.py ne la met pas au plan) ;
+  6. mkdocs.yml de la langue, qui hérite de tools/site/mkdocs.yml, puis construction en
      mode strict : un lien ou une ancre cassés font échouer.
 
 Le travail est ici plutôt que dans des plugins : Material for MkDocs est en maintenance
@@ -61,6 +65,12 @@ TITRES_ACCUEIL = {
 }
 # Image de partage du site (pages.py la publie sous ce nom).
 IMAGE_PARTAGE = "images/m5stack-tab5-home-assistant-screen-card.jpg"
+# og:locale (Open Graph : langue_PAYS) de chaque langue du site.
+LOCALES = {"en": "en_US", "fr": "fr_FR"}
+# Longueur du titre de l'article (JSON-LD) et d'un nom du fil d'Ariane : Google conseille un
+# titre court ; le « # » d'un ADR peut dépasser 250 caractères.
+LIMITE_TITRE_ARTICLE = 110
+LIMITE_NOM_FIL = 70
 
 MARQUE_FR = re.compile(r"^## Version [Ff]ran[çc]aise[ \t]*\r?$", re.M)
 ENTETE_EN = re.compile(r"^## English\b[^\n]*\n", re.M)
@@ -430,6 +440,76 @@ def description(texte: str, limite: int = 160, minimum: int = 60) -> str:
     return texte
 
 
+# --- Balisage pour les moteurs de recherche ------------------------------------------
+
+def court(texte: str, limite: int) -> str:
+    """`texte` sur une ligne, coupé à un mot et suivi de « … » s'il dépasse `limite`."""
+    texte = re.sub(r"\s+", " ", texte).strip()
+    if len(texte) <= limite:
+        return texte
+    return texte[:limite - 1].rsplit(" ", 1)[0].rstrip(",;:—-") + "…"
+
+
+def est_une_copie(page: Page, langue: str) -> bool:
+    """Page écrite dans une seule langue, vue sur le site de l'autre (les ADR en anglais sur le
+    site français, `arcade.md` en français sur le site anglais) : même texte que l'original."""
+    return bool(page.langue) and page.langue != langue
+
+
+def url_absolue(adresse: str, langue: str, source: str) -> str:
+    return f"{adresse}{langue}/{url_page(source)}"
+
+
+def chemin_menu(plan: Plan, source: str, entrees: list | None = None) -> list[dict] | None:
+    """Les entrées du menu, de la première à celle de la page `source` (None : absente).
+
+    Une page d'un `dossier:` n'a pas d'entrée à elle : on lui en fait une, avec son titre."""
+    for e in plan.arbre if entrees is None else entrees:
+        if e.get("page") == source:
+            return [e]
+        if "dossier" in e and posixpath.dirname(source) == e["dossier"] and source in plan.pages:
+            return [e, {**plan.pages[source].titres, "page": source}]
+        if "pages" in e and (sous := chemin_menu(plan, source, e["pages"])):
+            return [e, *sous]
+    return None
+
+
+def fil_d_ariane(plan: Plan, source: str, langue: str, adresse: str) -> list[dict]:
+    """Chemin de la page dans le menu, de l'accueil à elle, dans `langue` : [{nom, url}, …].
+
+    Seules les entrées qui ont une page y figurent (une section sans page, « Install » ou
+    « Under the hood », n'a pas d'adresse à donner). Vide s'il ne reste qu'une étape : la
+    page d'accueil, car Google veut deux éléments au moins (BreadcrumbList)."""
+    chemin = chemin_menu(plan, source) or []
+    etapes = [{"nom": court(e[langue], LIMITE_NOM_FIL), "url": url_absolue(adresse, langue, e["page"])}
+              for e in chemin if "page" in e]
+    accueil = plan.arbre[0]
+    if etapes and accueil.get("page") == ACCUEIL and etapes[0]["url"] != url_absolue(adresse, langue, ACCUEIL):
+        etapes.insert(0, {"nom": court(accueil[langue], LIMITE_NOM_FIL), "url": url_absolue(adresse, langue, ACCUEIL)})
+    return etapes if len(etapes) >= 2 else []
+
+
+def balisage(plan: Plan, page: Page, langue: str, texte: str, adresse: str) -> dict:
+    """Champs du début de la page que lit le thème (theme/main.html) pour le JSON-LD
+    (BreadcrumbList, TechArticle) et les balises de langue.
+
+    Tout décrit la page canonique : pour une copie, celle de la langue d'origine (adresse,
+    langue du texte, fil d'Ariane dans cette langue). Une copie n'a pas de hreflang
+    (`une_seule_langue`) : elle et son original n'ont pas de version dans l'autre langue."""
+    langue_texte = page.langue or langue
+    meta: dict = {"langue_texte": langue_texte}
+    if page.langue:
+        meta["une_seule_langue"] = True
+        meta["canonique"] = url_absolue(adresse, langue_texte, page.source)
+    h1 = re.search(r"^# (.+)$", texte, re.M)
+    if h1:
+        meta["titre_article"] = court(_texte_simple(h1.group(1)), LIMITE_TITRE_ARTICLE)
+    fil = fil_d_ariane(plan, page.source, langue_texte, adresse)
+    if fil:
+        meta["fil"] = fil
+    return meta
+
+
 # --- Construction ------------------------------------------------------------------
 
 def contenu(page: Page, langue: str) -> str:
@@ -483,6 +563,7 @@ def preparer_langue(plan: Plan, langue: str, sources: Path, adresse: str) -> set
         meta = {"description": (page.resume or {}).get(langue) or description(texte) or DESCRIPTIONS[langue]}
         if page.titre_onglet:
             meta["titre_onglet"] = page.titre_onglet[langue]
+        meta.update(balisage(plan, page, langue, texte, adresse))
         tete = yaml.safe_dump(meta, allow_unicode=True, width=1000)
         cible = sources / chemin_site(page.source)
         cible.parent.mkdir(parents=True, exist_ok=True)
@@ -521,6 +602,7 @@ def configuration(plan: Plan, langue: str, sources: Path, sortie: Path, adresse:
             "depot": DEPOT,
             "racine": adresse,
             "image_partage": SITE + IMAGE_PARTAGE,
+            "locales": LOCALES,
             "alternate": [{"name": NOMS_LANGUES[lg], "link": adresse + lg + "/", "lang": lg} for lg in LANGUES],
         },
     }
