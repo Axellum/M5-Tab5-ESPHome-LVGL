@@ -27,6 +27,17 @@
   fr: Documentation
   page: docs/README.md
 
+- en: FAQ
+  fr: FAQ
+  page: docs/faq.md
+  h1_fr: "Questions fréquentes : écran Home Assistant M5Stack Tab5 et Waveshare 7B"
+  titre_onglet:
+    en: "FAQ: M5Stack Tab5 and Waveshare 7B Home Assistant screen"
+    fr: "FAQ : écran Home Assistant M5Stack Tab5 et Waveshare 7B"
+  description:
+    en: "Answers about the M5Stack Tab5 and Waveshare 7B Home Assistant screen: install, Wi-Fi, updates, voice, languages, power, demo and troubleshooting."
+    fr: "Réponses sur l'écran Home Assistant M5Stack Tab5 et Waveshare 7B : installation, Wi-Fi, mises à jour, voix, langues, alimentation, démo, dépannage."
+
 - en: Install
   fr: Installer
   pages:
