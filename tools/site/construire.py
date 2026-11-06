@@ -124,6 +124,14 @@ PIED = {
     "fr": "Licence MIT · partagé au cas où ça serve · fait avec l'aide de l'IA · "
           + LIEN_AUTEUR.format(SITE_AUTEUR["fr"]),
 }
+# La chaîne YouTube du projet et sa playlist (les vidéos que citent les pages), deux icônes
+# dans le pied de chaque page (`extra.social` de Material ; tests/test_site_doc.py).
+CHAINE_YOUTUBE = "https://www.youtube.com/channel/UCmMnfENr9qX3K3oTaCP0SUg"
+PLAYLIST_YOUTUBE = "https://www.youtube.com/playlist?list=PLXM1iF7NzMhs"
+LIENS_YOUTUBE = {
+    "en": ("YouTube channel", "Video playlist"),
+    "fr": ("Chaîne YouTube", "Playlist des vidéos"),
+}
 
 
 # Material 9.7 lit le plan du site à côté de chaque <link rel="alternate"> de la page
@@ -604,6 +612,10 @@ def configuration(plan: Plan, langue: str, sources: Path, sortie: Path, adresse:
             "image_partage": SITE + IMAGE_PARTAGE,
             "locales": LOCALES,
             "alternate": [{"name": NOMS_LANGUES[lg], "link": adresse + lg + "/", "lang": lg} for lg in LANGUES],
+            "social": [
+                {"icon": "fontawesome/brands/youtube", "link": CHAINE_YOUTUBE, "name": LIENS_YOUTUBE[langue][0]},
+                {"icon": "material/playlist-play", "link": PLAYLIST_YOUTUBE, "name": LIENS_YOUTUBE[langue][1]},
+            ],
         },
     }
 

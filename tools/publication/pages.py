@@ -61,6 +61,9 @@ IMAGES = {
     # page de la documentation (tools/site/construire.py, IMAGE_PARTAGE). Les autres images
     # du site sont celles des pages de la documentation, sous en/images/ et fr/images/.
     "m5stack-tab5-home-assistant-screen-card.jpg": "tab5_social_preview.jpg",
+    # Vignette de la vidéo d'installation, cliquable vers YouTube, sur la page d'installation
+    # (rien n'est chargé depuis YouTube).
+    "home-assistant-screen-install-esphome-video.webp": "home-assistant-screen-install-esphome-video.webp",
 }
 IMAGE_DE_PAGE = re.compile(r'<img\b[^>]*\bsrc="((?:\.\./)*images/[^"]+)"')
 # Adresse canonique d'une page (<link rel="canonical">) : elle n'est au plan du site que si c'est la sienne.

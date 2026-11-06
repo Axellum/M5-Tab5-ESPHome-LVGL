@@ -8,6 +8,10 @@ Seven steps, in this order: nothing to compile, the firmware installs from the b
 
 > **Just want to see it first?** The [demo mode](../demo_mode.md) shows the full dashboard on a flashed tablet, with no Home Assistant at all.
 
+[<img src="../images/home-assistant-screen-install-esphome-video.webp" width="320" loading="lazy" alt="Video: installing the Home Assistant screen with ESPHome from the browser, the blueprint and the 7-inch screen">](https://youtu.be/6OZMtD_UTSs)
+
+▶ **Prefer a video?** [Install it in 7 steps, nothing to compile](https://youtu.be/6OZMtD_UTSs) (1 min 43, English texts on screen, subtitles in seven languages).
+
 ## What you need
 
 - An **M5Stack Tab5**, and the name of its **display chip**: it is printed on the sticker on the back, above the Espressif logo (ST7123, ST7121 or ILI9881C, see [hardware revisions](../hardware.md#hardware-revisions)). The 7-inch **Waveshare ESP32-P4 7B** also runs it: its firmware installs from the same page from 3.9.0, or you build it on your computer ([Waveshare 7B](../waveshare-7b.md)).
@@ -63,6 +67,10 @@ Something went wrong? [Known incidents](../troubleshooting.md).
 Sept étapes, dans cet ordre : rien à compiler, le firmware s'installe depuis le navigateur. Les étapes 1 à 6 sont nécessaires, la 7 est facultative.
 
 > **Envie de voir d'abord ?** Le [mode démo](../demo_mode.md#version-française) montre le tableau de bord complet sur une tablette flashée, sans aucun Home Assistant.
+
+[<img src="../images/home-assistant-screen-install-esphome-video.webp" width="320" loading="lazy" alt="Vidéo : installer l'écran Home Assistant avec ESPHome depuis le navigateur, le blueprint et l'écran 7 pouces">](https://youtu.be/6OZMtD_UTSs)
+
+▶ **Plutôt en vidéo ?** [L'installer en 7 étapes, sans rien compiler](https://youtu.be/6OZMtD_UTSs) (1 min 43, textes à l'écran en anglais, sous-titres en sept langues dont le français).
 
 ## Ce qu'il faut
 

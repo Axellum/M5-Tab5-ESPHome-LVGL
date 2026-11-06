@@ -6,6 +6,10 @@
 
 This project turns two ESP32-P4 touch screens into Home Assistant wall screens with the same firmware: the 5-inch **M5Stack Tab5** and the 7-inch **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B** (« the 7B »). This page puts them side by side, then says which one to pick. The facts come from this project's own pages ([hardware](hardware.md), [Waveshare 7B](waveshare-7b.md)) and its YAML; the prices and the makers' specifications were read on their product pages on 6 Nov 2026.
 
+[<img src="images/home-assistant-two-screens-one-firmware-short-video.webp" width="180" loading="lazy" alt="Video: one firmware on two Home Assistant screens, the Waveshare 7B above and the M5Stack Tab5 below, both on the home screen">](https://youtube.com/shorts/xdu9M5caVIY)
+
+▶ **Side by side in 29 seconds**: [One firmware, two Home Assistant screens](https://youtube.com/shorts/xdu9M5caVIY), a YouTube Short (English texts on screen).
+
 ## Side by side
 
 | | M5Stack Tab5 | Waveshare ESP32-P4 7B |
@@ -68,6 +72,10 @@ Own one of these boards and willing to try? Say how it went in [Discussions → 
 ---
 
 Ce projet transforme deux écrans tactiles ESP32-P4 en écrans muraux Home Assistant avec le même firmware : le **M5Stack Tab5** de 5 pouces et la **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B** de 7 pouces (« la 7B »). Cette page les met côte à côte, puis dit lequel choisir. Les faits viennent des pages du projet ([matériel](hardware.md#version-française), [Waveshare 7B](waveshare-7b.md#version-française)) et de son YAML ; les prix et les caractéristiques des fabricants ont été lus sur leurs pages produit le 06/11/2026.
+
+[<img src="images/home-assistant-two-screens-one-firmware-short-video.webp" width="180" loading="lazy" alt="Vidéo : un même firmware sur deux écrans Home Assistant, la Waveshare 7B au-dessus et le M5Stack Tab5 en dessous, sur l'écran d'accueil">](https://youtube.com/shorts/xdu9M5caVIY)
+
+▶ **Côte à côte en 29 secondes** : [Un firmware, deux écrans Home Assistant](https://youtube.com/shorts/xdu9M5caVIY), un Short YouTube (textes à l'écran en anglais).
 
 ## Côte à côte
 

@@ -14,6 +14,10 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 
 <p><img src="../images/ha_reglages_tablette.png" width="57%" alt="« Tablette » column of the Settings view: screen language, theme, light or dark, wake with a tap, battery fitted, night switch, audio output, Wi-Fi antenna"> <img src="../images/ha_appareil_configuration.png" width="40%" alt="Configuration card of the tablet's device page in Home Assistant: screen to show, voice settings, light or dark, language, night switch, theme, volume"></p>
 
+[<img src="../images/home-assistant-screen-settings-blueprint-video.webp" width="320" loading="lazy" alt="Video: every setting of the ESP32-P4 Home Assistant screen picked in a Home Assistant blueprint">](https://youtu.be/4NPOXTlYok8)
+
+▶ **Prefer a video?** [Every setting from Home Assistant](https://youtu.be/4NPOXTlYok8) (54 s, English texts on screen, subtitles in seven languages).
+
 ## Theme, light or dark
 
 | Entity | Values | What it does |
@@ -102,6 +106,10 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 **La page de l'appareil montre les entités sous leur nom anglais, quelle que soit la langue de l'écran.** Depuis la 3.9.0-rc.8, l'intégration Tab5 propose la réparation « Tab5 : passer les entités à leurs noms anglais » : un clic donne aux entités de la tablette un nom et un identifiant anglais dans Home Assistant, avec leur historique, et la tablette garde ses réglages. Avant elle, les entités gardent leurs anciens noms français (« Réveil » pour « Alarm », « Thème » pour « Theme »…). Le firmware garde lui-même ses noms français : Home Assistant reconnaît une entité ESPHome à ce nom, la traduction se fait donc dans le registre de Home Assistant. Pour des libellés dans votre langue, passez par le tableau de bord : il suit la langue de l'écran, ou écrivez-le avec `tab5_dashboard(langue='English')` ([étape 7](dashboard.md#version-française)). Les listes « Tab5 · » des fichiers Home Assistant sont nommées en anglais.
 
 <p><img src="../images/ha_reglages_tablette.png" width="57%" alt="Colonne « Tablette » de la vue Réglages : langue de l'écran, thème, clair ou sombre, rallumer d'une tape, batterie montée, nuit, sortie audio, antenne Wi-Fi"> <img src="../images/ha_appareil_configuration.png" width="40%" alt="Carte Configuration de la page de la tablette dans Home Assistant : écran à afficher, réglages de la voix, clair ou sombre, langue, nuit, thème, volume"></p>
+
+[<img src="../images/home-assistant-screen-settings-blueprint-video.webp" width="320" loading="lazy" alt="Vidéo : tous les réglages de l'écran Home Assistant ESP32-P4 choisis dans un blueprint Home Assistant">](https://youtu.be/4NPOXTlYok8)
+
+▶ **Plutôt en vidéo ?** [Tout se règle dans Home Assistant](https://youtu.be/4NPOXTlYok8) (54 s, textes à l'écran en anglais, sous-titres en sept langues dont le français).
 
 ## Thème, clair ou sombre
 
