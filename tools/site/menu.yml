@@ -38,6 +38,61 @@
     en: "Answers about the M5Stack Tab5 and Waveshare 7B Home Assistant screen: install, Wi-Fi, updates, voice, languages, power, demo and troubleshooting."
     fr: "Réponses sur l'écran Home Assistant M5Stack Tab5 et Waveshare 7B : installation, Wi-Fi, mises à jour, voix, langues, alimentation, démo, dépannage."
 
+- en: Hardware
+  fr: Matériel
+  pages:
+    - en: Tab5 or Waveshare 7B?
+      fr: Tab5 ou Waveshare 7B ?
+      page: docs/tab5-vs-waveshare-7b.md
+      h1_fr: "Quel écran : M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant"
+      titre_onglet:
+        en: M5Stack Tab5 or Waveshare ESP32-P4 7B for Home Assistant?
+        fr: M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant ?
+      description:
+        en: "M5Stack Tab5 or Waveshare ESP32-P4 7B as a Home Assistant screen: size, battery, clock, games, price and install, side by side, and which to pick."
+        fr: "M5Stack Tab5 ou Waveshare ESP32-P4 7B en écran Home Assistant : taille, batterie, horloge, jeux, prix et installation côte à côte, et lequel choisir."
+    - en: M5Stack Tab5
+      fr: M5Stack Tab5
+      page: docs/hardware.md
+      h1_fr: "Matériel du M5Stack Tab5 : révisions d'écran, fiche technique et alimentation"
+      titre_onglet:
+        en: M5Stack Tab5 specs and display chips — Home Assistant
+        fr: "M5Stack Tab5 : fiche technique et puces écran — Home Assistant"
+      description:
+        en: "M5Stack Tab5 specs for ESPHome and Home Assistant: ESP32-P4, ESP32-C6, 5-inch 1280×720 screen, display chips ST7123, ST7121, ILI9881C, what is used."
+        fr: "Fiche du M5Stack Tab5 pour ESPHome et Home Assistant : ESP32-P4, ESP32-C6, écran 5 pouces 1280×720, puces écran ST7123, ST7121, ILI9881C, ce qui sert."
+      pages:
+        - en: Tab5 battery and power
+          fr: Batterie et alimentation du Tab5
+          page: docs/tab5-battery.md
+          h1_fr: "Batterie et alimentation du M5Stack Tab5 dans Home Assistant : chargeur, niveau et sécurité"
+          titre_onglet:
+            en: "M5Stack Tab5 battery: charger, 80 % limit — Home Assistant"
+            fr: "Batterie M5Stack Tab5 : chargeur, limite 80 % — Home Assistant"
+          description:
+            en: "How the M5Stack Tab5 battery works with this ESPHome firmware: detection, charger safety locks, 80 % charge limit, discharge curve, low-battery alert."
+            fr: "Batterie du M5Stack Tab5 avec ce firmware ESPHome : détection, verrous du chargeur, limite de charge à 80 %, courbe de décharge, alerte de batterie faible."
+        - en: Tab5 pinout
+          fr: Brochage du Tab5
+          page: docs/tab5-pinout.md
+          h1_fr: "Brochage du M5Stack Tab5 : GPIO, expandeurs d'E/S et adresses I2C"
+          titre_onglet:
+            en: "M5Stack Tab5 pinout: GPIO, I2C addresses — Home Assistant"
+            fr: "Brochage M5Stack Tab5 : GPIO, adresses I2C — Home Assistant"
+          description:
+            en: "M5Stack Tab5 pinout for ESPHome: every GPIO and I/O expander pin, the I2C addresses, the ESP32-C6 SDIO link, with a wiring diagram checked against the YAML."
+            fr: "Brochage du M5Stack Tab5 pour ESPHome : chaque GPIO et broche d'expandeur, adresses I2C, liaison SDIO de l'ESP32-C6, schéma de câblage vérifié contre le YAML."
+    - en: Waveshare 7B
+      fr: Waveshare 7B
+      page: docs/waveshare-7b.md
+      h1_fr: Waveshare ESP32-P4 7B en écran Home Assistant
+      titre_onglet:
+        en: Waveshare ESP32-P4 7B as a Home Assistant screen (ESPHome)
+        fr: Waveshare ESP32-P4 7B en écran Home Assistant (ESPHome)
+      description:
+        en: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600) as a Home Assistant screen: ESPHome firmware, install, pins, what works and what is missing."
+        fr: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600) en écran Home Assistant : firmware ESPHome, installation, broches, ce qui marche et ce qui manque."
+
 - en: Install
   fr: Installer
   pages:
@@ -356,57 +411,6 @@
       description:
         en: "How each M5Stack Tab5 screen works inside: ESPHome and LVGL files, C++ functions, sizes in pixels, timings and the decisions behind them. For developers."
         fr: "Comment marche chaque écran du M5Stack Tab5 : fichiers ESPHome et LVGL, fonctions C++, tailles en pixels, temporisations et décisions. Pour les développeurs."
-    - en: Hardware
-      fr: Matériel
-      page: docs/hardware.md
-      h1_fr: "Matériel du M5Stack Tab5 : révisions d'écran, fiche technique et alimentation"
-      titre_onglet:
-        en: M5Stack Tab5 specs and display chips — Home Assistant
-        fr: "M5Stack Tab5 : fiche technique et puces écran — Home Assistant"
-      description:
-        en: "M5Stack Tab5 specs for ESPHome and Home Assistant: ESP32-P4, ESP32-C6, 5-inch 1280×720 screen, display chips ST7123, ST7121, ILI9881C, what is used."
-        fr: "Fiche du M5Stack Tab5 pour ESPHome et Home Assistant : ESP32-P4, ESP32-C6, écran 5 pouces 1280×720, puces écran ST7123, ST7121, ILI9881C, ce qui sert."
-      pages:
-        - en: Tab5 battery and power
-          fr: Batterie et alimentation du Tab5
-          page: docs/tab5-battery.md
-          h1_fr: "Batterie et alimentation du M5Stack Tab5 dans Home Assistant : chargeur, niveau et sécurité"
-          titre_onglet:
-            en: "M5Stack Tab5 battery: charger, 80 % limit — Home Assistant"
-            fr: "Batterie M5Stack Tab5 : chargeur, limite 80 % — Home Assistant"
-          description:
-            en: "How the M5Stack Tab5 battery works with this ESPHome firmware: detection, charger safety locks, 80 % charge limit, discharge curve, low-battery alert."
-            fr: "Batterie du M5Stack Tab5 avec ce firmware ESPHome : détection, verrous du chargeur, limite de charge à 80 %, courbe de décharge, alerte de batterie faible."
-        - en: Tab5 pinout
-          fr: Brochage du Tab5
-          page: docs/tab5-pinout.md
-          h1_fr: "Brochage du M5Stack Tab5 : GPIO, expandeurs d'E/S et adresses I2C"
-          titre_onglet:
-            en: "M5Stack Tab5 pinout: GPIO, I2C addresses — Home Assistant"
-            fr: "Brochage M5Stack Tab5 : GPIO, adresses I2C — Home Assistant"
-          description:
-            en: "M5Stack Tab5 pinout for ESPHome: every GPIO and I/O expander pin, the I2C addresses, the ESP32-C6 SDIO link, with a wiring diagram checked against the YAML."
-            fr: "Brochage du M5Stack Tab5 pour ESPHome : chaque GPIO et broche d'expandeur, adresses I2C, liaison SDIO de l'ESP32-C6, schéma de câblage vérifié contre le YAML."
-    - en: Waveshare 7B board
-      fr: Carte Waveshare 7B
-      page: docs/waveshare-7b.md
-      h1_fr: Waveshare ESP32-P4 7B en écran Home Assistant
-      titre_onglet:
-        en: Waveshare ESP32-P4 7B as a Home Assistant screen (ESPHome)
-        fr: Waveshare ESP32-P4 7B en écran Home Assistant (ESPHome)
-      description:
-        en: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600) as a Home Assistant screen: ESPHome firmware, install, pins, what works and what is missing."
-        fr: "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600) en écran Home Assistant : firmware ESPHome, installation, broches, ce qui marche et ce qui manque."
-    - en: Tab5 or Waveshare 7B?
-      fr: Tab5 ou Waveshare 7B ?
-      page: docs/tab5-vs-waveshare-7b.md
-      h1_fr: "Quel écran : M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant"
-      titre_onglet:
-        en: M5Stack Tab5 or Waveshare ESP32-P4 7B for Home Assistant?
-        fr: M5Stack Tab5 ou Waveshare ESP32-P4 7B pour Home Assistant ?
-      description:
-        en: "M5Stack Tab5 or Waveshare ESP32-P4 7B as a Home Assistant screen: size, battery, clock, games, price and install, side by side, and which to pick."
-        fr: "M5Stack Tab5 ou Waveshare ESP32-P4 7B en écran Home Assistant : taille, batterie, horloge, jeux, prix et installation côte à côte, et lequel choisir."
     - en: User interface (LVGL)
       fr: Interface (LVGL)
       page: docs/ui_design.md

@@ -21,7 +21,6 @@ theme:
   features:
     - navigation.indexes     # le titre d'une section ouvre sa page d'accueil
     - navigation.footer      # « Précédent / Suivant » en bas de page
-    - navigation.path        # fil d'Ariane au-dessus du titre : le BreadcrumbList du JSON-LD (theme/main.html) y correspond
     - navigation.top
     - navigation.tracking
     - search.suggest
