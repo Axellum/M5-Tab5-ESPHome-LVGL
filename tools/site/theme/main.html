@@ -5,7 +5,12 @@
   de partage. La description vient du premier paragraphe de la page (construire.py),
   ou de `description:` dans menu.yml ; `titre_onglet:` y remplace le <title> d'une page.
   La page d'accueil (le README du dépôt) a son propre <title> et la fiche JSON-LD du
-  projet, reprises de l'ancienne vitrine.
+  projet, reprises de l'ancienne vitrine ; les autres pages ont un TechArticle, et toutes
+  (sauf l'accueil : un fil d'une seule étape n'est pas valide) un BreadcrumbList. Ces
+  champs (`fil`, `titre_article`, `langue_texte`, `canonique`, `une_seule_langue`) sont écrits
+  par construire.py (balisage) : une page d'une seule langue reprise sur l'autre site (une
+  copie) a son canonical vers la page de sa langue d'origine et aucun lien hreflang.
+  Pas de HowTo ni de FAQPage : Google ne les affiche plus (ADR-0030, avenant du 06/11/2026).
 -#}
 {% extends "base.html" %}
 {% block htmltitle %}
@@ -28,8 +33,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="{{ description | e }}">
   <meta name="author" content="{{ config.site_author }}">
-  {%- if page and page.canonical_url %}
-  <link rel="canonical" href="{{ page.canonical_url }}">
+  {%- set canonique = page.meta.canonique if page and page.meta and page.meta.canonique else (page.canonical_url if page else none) -%}
+  {%- if canonique %}
+  <link rel="canonical" href="{{ canonique }}">
   {%- endif %}
   {%- if page and page.previous_page %}
   <link rel="prev" href="{{ page.previous_page.url | url }}">
@@ -37,6 +43,9 @@
   {%- if page and page.next_page %}
   <link rel="next" href="{{ page.next_page.url | url }}">
   {%- endif %}
+  {#- Une page d'une seule langue (et sa copie sur l'autre site) n'a pas de version dans
+      l'autre langue : aucun hreflang. -#}
+  {%- if not (page and page.meta and page.meta.une_seule_langue) %}
   {%- for alt in config.extra.alternate %}
   <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.link }}{{ chemin }}">
   {%- endfor %}
@@ -45,6 +54,7 @@
   <link rel="alternate" hreflang="x-default" href="{{ config.extra.racine }}">
   {%- else %}
   <link rel="alternate" hreflang="x-default" href="{{ config.extra.alternate[0].link }}{{ chemin }}">
+  {%- endif %}
   {%- endif %}
   <link rel="icon" href="{{ config.theme.favicon | url }}">
   <meta name="generator" content="mkdocs-{{ mkdocs_version }}, mkdocs-material">
@@ -61,8 +71,16 @@
   <meta property="og:site_name" content="{{ config.site_name }}">
   <meta property="og:title" content="{{ titre | e }}">
   <meta property="og:description" content="{{ (page.meta.description if page and page.meta and page.meta.description else config.site_description) | e }}">
-  {%- if page and page.canonical_url %}
-  <meta property="og:url" content="{{ page.canonical_url }}">
+  {%- set canonique = page.meta.canonique if page and page.meta and page.meta.canonique else (page.canonical_url if page else none) -%}
+  {%- set langue_texte = page.meta.langue_texte if page and page.meta and page.meta.langue_texte else config.theme.language -%}
+  {%- if canonique %}
+  <meta property="og:url" content="{{ canonique }}">
+  {%- endif %}
+  <meta property="og:locale" content="{{ config.extra.locales[langue_texte] }}">
+  {%- if not (page and page.meta and page.meta.une_seule_langue) %}
+  {%- for lg, locale in config.extra.locales.items() if lg != langue_texte %}
+  <meta property="og:locale:alternate" content="{{ locale }}">
+  {%- endfor %}
   {%- endif %}
   <meta property="og:image" content="{{ config.extra.image_partage }}">
   <meta property="og:image:width" content="1280">
@@ -84,6 +102,30 @@
     "image": config.extra.image_partage,
     "author": {"@type": "Person", "name": "Axellum", "url": "https://github.com/Axellum"}
   } | tojson }}
+  </script>
+  {%- elif page and page.meta and page.meta.titre_article %}
+  <script type="application/ld+json">
+  {{ {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": page.meta.titre_article,
+    "description": (page.meta.description if page.meta.description else config.site_description),
+    "url": canonique,
+    "mainEntityOfPage": canonique,
+    "inLanguage": langue_texte,
+    "image": config.extra.image_partage,
+    "author": {"@type": "Person", "name": "Axellum", "url": "https://github.com/Axellum"},
+    "isPartOf": {"@type": "WebSite", "name": config.site_name, "url": config.extra.racine}
+  } | tojson }}
+  </script>
+  {%- endif %}
+  {%- if page and page.meta and page.meta.fil %}
+  {%- set elements = [] %}
+  {%- for etape in page.meta.fil %}
+  {%- set _ = elements.append({"@type": "ListItem", "position": loop.index, "name": etape.nom, "item": etape.url}) %}
+  {%- endfor %}
+  <script type="application/ld+json">
+  {{ {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": elements} | tojson }}
   </script>
   {%- endif %}
 {% endblock %}

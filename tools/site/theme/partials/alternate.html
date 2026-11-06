@@ -1,6 +1,8 @@
 {#-
   Sélecteur de langue (ADR-0030), repris de Material 9.7 : il mène à la même page dans
   l'autre langue, pas à l'accueil de l'autre site (les deux arbres ont les mêmes chemins).
+  Pour une page d'une seule langue (les ADR en anglais, `arcade.md` en français), il mène à
+  sa copie ou à son original, sans attribut hreflang : la copie n'est pas une traduction.
 -#}
 <div class="md-header__option">
   <div class="md-select">
@@ -12,7 +14,7 @@
       <ul class="md-select__list">
         {% for alt in config.extra.alternate %}
           <li class="md-select__item">
-            <a href="{{ alt.link }}{{ page.url if page and page.url else '' }}" hreflang="{{ alt.lang }}" lang="{{ alt.lang }}" class="md-select__link">
+            <a href="{{ alt.link }}{{ page.url if page and page.url else '' }}"{% if not (page and page.meta and page.meta.une_seule_langue) %} hreflang="{{ alt.lang }}"{% endif %} lang="{{ alt.lang }}" class="md-select__link">
               {{ alt.name }}
             </a>
           </li>

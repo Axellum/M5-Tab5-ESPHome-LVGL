@@ -189,11 +189,13 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)
 
-**Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026.
+**Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026. **Solved since 24 October 2026** (below).
 
-**Root cause:** neither the tablet nor this repository. Since 23 October 2026, GitHub answers a release download with a redirect that carries a Content-Security-Policy header of about 9 KB (9,242 bytes measured on `tab5_hacs.zip` on 24 October), and HACS 2.0.5 refuses any header line over 8,190 bytes. Every integration that HACS installs from a release archive is hit. Tracked by HACS: [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), fix proposed in [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (not released on 24 October).
+**Root cause:** neither the tablet, nor this repository, nor HACS itself. From 23 October 2026, GitHub answered a release download with a redirect that carries a Content-Security-Policy header of about 9 KB (9,242 bytes measured on `tab5_hacs.zip` on 24 October), and the HTTP client of Home Assistant refuses any header line over 8,190 bytes. Every integration that HACS installs from a release archive was hit. Tracked by HACS: [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), closed on 25 October.
 
-**Fix:** wait for a HACS release that fixes it, then *Download* again. Meanwhile, the files go in by hand, without HACS: [parts A to C](installation/home-assistant-files.md#a-download-and-unzip). Do not copy the integration from the repository: it holds the code but not the files (« no Home Assistant files in the integration », below).
+**How it ended:** on the evening of 24 October GitHub shrank the header (HACS's maintainer said it was solved by a change on GitHub's side; measured again on 6 November 2026: 3,994 bytes on `tab5_hacs.zip`), and Home Assistant 2026.10.4, released the same day ([home-assistant/core#188329](https://github.com/home-assistant/core/pull/188329)), accepts headers up to 64 KiB. HACS itself did not change: 2.0.5 is still its latest release on 6 November. A Tab5 download through HACS was not run again by the author after the fix, when this was written.
+
+**Fix:** nothing to do now, *Download* again. If the error comes back, update Home Assistant to 2026.10.4 or newer, or put the files in by hand, without HACS: [parts A to C](installation/home-assistant-files.md#a-download-and-unzip). Do not copy the integration from the repository: it holds the code but not the files (« no Home Assistant files in the integration », below).
 
 ---
 
@@ -444,11 +446,13 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)
 
-**Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026.
+**Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026. **Résolu depuis le 24 octobre 2026** (plus bas).
 
-**Cause racine :** ni la tablette ni ce dépôt. Depuis le 23 octobre 2026, GitHub répond au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et HACS 2.0.5 refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release sont touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), correctif proposé dans [hacs/integration#5644](https://github.com/hacs/integration/pull/5644) (pas publié le 24 octobre).
+**Cause racine :** ni la tablette, ni ce dépôt, ni HACS lui-même. Depuis le 23 octobre 2026, GitHub répondait au téléchargement d'une release par une redirection qui porte un en-tête Content-Security-Policy d'environ 9 Ko (9 242 octets mesurés sur `tab5_hacs.zip` le 24 octobre), et le client HTTP de Home Assistant refuse toute ligne d'en-tête de plus de 8 190 octets. Toutes les intégrations que HACS installe depuis une archive de release étaient touchées. Suivi par HACS : [hacs/integration#5643](https://github.com/hacs/integration/issues/5643), fermé le 25 octobre.
 
-**Correctif :** attendre une version de HACS qui le corrige, puis *Download* de nouveau. En attendant, les fichiers se posent à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
+**Comment ça s'est terminé :** le soir du 24 octobre, GitHub a réduit l'en-tête (le mainteneur de HACS a dit que c'était résolu par un changement du côté de GitHub ; mesuré de nouveau le 6 novembre 2026 : 3 994 octets sur `tab5_hacs.zip`), et Home Assistant 2026.10.4, sorti le même jour ([home-assistant/core#188329](https://github.com/home-assistant/core/pull/188329)), accepte des en-têtes jusqu'à 64 Kio. HACS lui-même n'a pas changé : la 2.0.5 est toujours sa dernière release au 6 novembre. Un téléchargement de Tab5 par HACS n'a pas été refait par l'auteur après le correctif, au moment d'écrire ces lignes.
+
+**Correctif :** rien à faire maintenant, *Download* de nouveau. Si l'erreur revient, mettre Home Assistant à jour en 2026.10.4 ou plus récent, ou poser les fichiers à la main, sans HACS : [parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser). Ne pas copier l'intégration depuis le dépôt : elle porte le code mais pas les fichiers (« aucun fichier Home Assistant dans l'intégration », plus bas).
 
 ### Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe
 
