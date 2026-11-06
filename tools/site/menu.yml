@@ -276,6 +276,12 @@
     - en: Screens and features
       fr: Écrans et fonctions
       page: docs/screens.md
+      titre_onglet:
+        en: "M5Stack Tab5 screens and features — Home Assistant display"
+        fr: "M5Stack Tab5 : écrans et fonctions — écran Home Assistant"
+      description:
+        en: "Every screen and window of the M5Stack Tab5 Home Assistant display: home, climate, lights, alarm, energy, cameras, weather. A picture and a manual link each."
+        fr: "Tous les écrans et fenêtres du Tab5 en écran mural Home Assistant : accueil, clim, lumières, réveil, énergie, caméras, météo. Image et lien de notice chacun."
     - en: Voice assistant
       fr: Assistant vocal
       page: docs/voice_assistant.md
@@ -330,6 +336,15 @@
       description:
         en: "How the M5Stack Tab5 Home Assistant firmware is built: one ESPHome entry file, YAML packages by concern, native LVGL, data pushed in, events sent back."
         fr: "Comment est construit le firmware du M5Stack Tab5 pour Home Assistant : un fichier ESPHome d'entrée, des packages YAML, LVGL natif, données poussées."
+    - en: Screen internals
+      fr: "Écrans : détails techniques"
+      page: docs/screens_internals.md
+      titre_onglet:
+        en: "M5Stack Tab5 screen internals (ESPHome, LVGL) — Home Assistant"
+        fr: "M5Stack Tab5 : écrans, détails techniques — Home Assistant"
+      description:
+        en: "How each M5Stack Tab5 screen works inside: ESPHome and LVGL files, C++ functions, sizes in pixels, timings and the decisions behind them. For developers."
+        fr: "Comment marche chaque écran du M5Stack Tab5 : fichiers ESPHome et LVGL, fonctions C++, tailles en pixels, temporisations et décisions. Pour les développeurs."
     - en: Hardware
       fr: Matériel
       page: docs/hardware.md

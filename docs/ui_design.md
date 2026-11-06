@@ -94,6 +94,8 @@ A few LVGL patterns that look innocent but are expensive on a microcontroller:
 
 **Frequent full-screen invalidations.** Calling `lv_obj_invalidate(lv_scr_act())` forces a full repaint on the next tick. The correct pattern is to call `lv_obj_invalidate(specific_widget)` so only the changed area is redrawn.
 
+Screen by screen, what each part shows and how it works: [Screens and features](screens.md) and [Screen internals](screens_internals.md).
+
 ---
 
 ---
@@ -191,3 +193,5 @@ Quelques patterns LVGL qui semblent anodins mais sont coûteux sur un microcontr
 **Padding inutilisé.** Toute valeur de padding non nulle fait inclure le widget dans les passes de détection de collision. Les conteneurs purement structurels devraient avoir `pad_all: 0` et `border_width: 0`.
 
 **Invalidations fréquentes plein écran.** Appeler `lv_obj_invalidate(lv_scr_act())` force une repeinte complète au prochain tick. Le bon pattern est d'appeler `lv_obj_invalidate(widget_spécifique)` pour que seule la zone modifiée soit redessinée.
+
+Écran par écran, ce que montre chaque partie et comment elle marche : [Écrans et fonctions](screens.md#version-française) et [Écrans : détails techniques](screens_internals.md#version-française).
