@@ -9,4 +9,6 @@
 
 ### Corrigé
 
+- **Les tablettes de l'auteur dans [`docs/hardware.md`](docs/hardware.md)** : la page disait que l'auteur n'a pas de ST7121 et que seule la ST7123 tourne chez lui. D'après [`docs/installation/flash.md`](docs/installation/flash.md), la ST7121 est sa deuxième tablette depuis le 21/10/2026 (et celle d'un autre utilisateur) : le tableau des révisions et les deux phrases « ce projet tourne sur… » le disent maintenant ; la ST7123 y est « la première tablette de l'auteur », sans état actuel.
+- **Sources de la fiche** : le 360 MHz du processeur et les 32 Mo de PSRAM ne sont que sur la page M5Stack (la page ESPHome de l'appareil ne les donne pas) : les cellules « Processor » et « Memory » ne citent plus qu'elle.
 - **Dates de version de la batterie** : la doc disait « prochaine version » pour onze fonctions déjà publiées. D'après le code de chaque tag : limite de charge, mode de charge, Wi-Fi éco, alerte de batterie faible, consommation et mesure depuis la 3.8.0 ; courbe de décharge mesurée, verrou électrique, sonde avant tout allumage et seuil de retour de l'économie d'énergie à 60 % depuis la 3.9.0. La 3.6.0 a été publiée le 05/10/2026 (la page disait le 04).
