@@ -1,4 +1,0 @@
-### Modifié
-
-- **Sommaire de la documentation** (documentation seulement) : `docs/README.md` renvoie maintenant vers la FAQ, le comparatif Tab5 / 7B, les détails techniques des écrans, le brochage et la batterie du Tab5 ; la section « Waveshare ESP32-P4 7B » de `docs/hardware.md` renvoie vers le comparatif. `CARTOGRAPHIE_TAB5.md` compte les 25 fichiers de `docs/*.md`.
-- **La ST7121 est aussi la deuxième tablette de l'auteur** (documentation seulement) : `Tab5/README.md` ne dit plus que la ST7123 est la seule testée sur un appareil, et le brouillon du forum de `docs/press/forum_ha_en.md` dit que l'auteur a essayé la ST7123 et la ST7121, comme `docs/installation/flash.md`. Le commentaire de `Tab5/paquets/ecran-st7121.yaml` (« l'auteur n'a pas de ST7121 ») reste à corriger dans une PR du firmware.
