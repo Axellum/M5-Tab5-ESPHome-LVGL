@@ -4,8 +4,61 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [3.9.1] — 2026-11-08
+
+De `v3.9.0` à aujourd'hui : cinquante et une pull requests (#554 → #606, sans #579 ni #583, absentes
+de `main`), dont dix-huit de Dependabot (outils de test, de publication et du site, jamais le
+firmware), vingt-quatre de documentation, et celle de la release. Version corrective, quatorze jours
+après la 3.9.0 : quatre corrections de l'écran (popup Assistant vocal, tampon audio, nom du thème,
+zone vidée du blueprint), une côté Home Assistant (« none » sans source météo), deux outils de
+contrôle pour l'auteur et beaucoup de documentation (fiche du Tab5, batterie, brochage, comparatif
+Tab5 / 7B, FAQ, référencement, vidéos). Aucune fonction nouvelle dans le firmware.
+
+**Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.9.0).
+
+**À faire en mettant à jour depuis la 3.9.0** :
+1. **Le firmware** (entité « Firmware » de la tablette), quand vous voulez : firmware et fichiers Home
+   Assistant dans n'importe quel ordre.
+2. **Les fichiers Home Assistant, avec l'intégration** (mise à jour HACS, ou les fichiers de
+   `tab5_home_assistant.zip` et `tab5_hacs.zip`), seulement pour le « none » du tableau de bord :
+   `packages/tab5_meteo_sources.yaml` et `custom_templates/tab5_dashboard.jinja`, puis « Recharger
+   toute la configuration YAML » et réécrire le tableau de bord (étape 7 du guide d'installation).
+
+**Mesures de la version** : non refaites pour cette version corrective. Le seul changement de
+mémoire est le tampon de lecture de 2 s (384 Kio de PSRAM pendant qu'un son joue, voir l'entrée
+« Moins de grésillements » plus bas).
+
+**Problèmes connus** :
+- La build publiée n'a pas été installée sur une tablette avant la publication : la CI la compile
+  pour les trois écrans et passe les tests, mais les quatre corrections du firmware n'ont pas été
+  revues sur l'écran dans cette build. Le firmware ST7123 n'a pas été essayé sur un appareil pour
+  cette version ; l'ILI9881C est compilée, jamais lancée.
+- Jeux absents par défaut sur la 7B (pas d'IMU, écrans pas adaptés).
+- Les codes lus par la tablette et les packages, le libellé « Tab5 · alerte », les descriptions
+  des scripts et les notifications restent en français.
 ### Ajouté
 
+- **Les vidéos YouTube reliées aux pages qui les concernent** (documentation et site seulement, aucun firmware ni fichier Home Assistant) : une vignette cliquable (image du dépôt, rien n'est chargé depuis YouTube) et une ligne « Plutôt en vidéo ? » sur le guide d'installation (`docs/installation/README.md`) et sur la page d'installation du site (`web/install/index.html`, l'image est publiée sous `images/` par `tools/publication/pages.py`) pour « L'installer en 7 étapes », sur `docs/installation/settings.md` pour « Tout se règle dans Home Assistant », et, pour le Short « Un firmware, deux écrans Home Assistant », sur `docs/waveshare-7b.md` et `docs/tab5-vs-waveshare-7b.md` (nouvelle vignette `docs/images/home-assistant-two-screens-one-firmware-short-video.webp`, tirée de la miniature du Short sans son bandeau d'annonce). Une seule vidéo par page, texte alternatif en anglais et en français ; `tests/test_site_doc.py` garde le compte.
+- **Chaîne YouTube et playlist** : deux icônes dans le pied de chaque page du site (`extra.social` de Material, `tools/site/construire.py`, noms en anglais et en français) et une ligne dans « See it in action » / « En images » du `README.md`.
+- **FAQ du site** (documentation seulement) : `docs/faq.md`, vingt questions courtes en anglais et en français (le projet, l'installation, Home Assistant et la maison, l'écran, le matériel), chacune renvoyant à la page qui détaille ; entrée « FAQ » du menu (`tools/site/menu.yml`) avec son titre d'onglet et sa description, anglais et français.
+- **Documentation du matériel du Tab5 : fiche technique, page de la batterie, page du brochage** : [`docs/hardware.md`](docs/hardware.md) s'ouvre sur « Tab5 at a glance », un tableau de ce que le Tab5 a (écran, processeur, mémoire, radio, audio, capteurs, horloge, batterie, alimentation, caméra, microSD, USB, RS485, connecteurs d'extension, dimensions) et de ce que ce firmware en utilise ou non, sourcé sur la page M5Stack et la page ESPHome de l'appareil lues le 06/11/2026 ; le titre de la page est devenu « M5Stack Tab5 hardware: display revisions, specs and power » et son titre d'onglet et sa description sont dans `tools/site/menu.yml`. Deux pages nouvelles : [`docs/tab5-battery.md`](docs/tab5-battery.md) (un tableau en tête, puis un thème par section, les passages « prochaine version » réécrits en « depuis la 3.x » d'après le code des tags, une table « ce qui a changé quand », ce que dit M5Stack de la batterie) et [`docs/tab5-pinout.md`](docs/tab5-pinout.md) (le tableau des broches, les adresses I2C, la comparaison avec le brochage de M5Stack et le `config.yaml` d'ESPHome, les broches non utilisées, le connecteur M-Bus, et deux schémas SVG `docs/images/m5stack-tab5-pinout-diagram*.svg`).
+- **Page « M5Stack Tab5 ou Waveshare ESP32-P4 7B ? »** : [`docs/tab5-vs-waveshare-7b.md`](docs/tab5-vs-waveshare-7b.md), les deux écrans côte à côte (écran, mémoire, radio, batterie, capteur de mouvement, horloge, caméra, audio, ports, jeux, prise en charge, installation, mises à jour, puissance, prix lus le 06/11/2026), un court « lequel choisir » et une section « autres écrans ESP32-P4 » présentée comme non prise en charge. Au menu du site.
+- **Preuve d'un flash par l'API** (outil du PC, aucun changement de firmware) : `tools/prouver_flash.py`
+  prend avant le flash un instantané de l'appareil (`--avant` : MAC, version, heure de compilation,
+  heure et raison du démarrage, état de chaque entité, réglages) et le compare après (`--apres`) : même
+  appareil, version et heure de compilation attendues, un seul redémarrage depuis l'instantané et
+  aucun pendant `--attente` (120 s), raison sans plantage, aucune entité perdue, aucun réglage changé ;
+  code de sortie non nul si un contrôle échoue. La clé vient de Home Assistant (`tools/tab5_cle_api.py`)
+  et n'est jamais affichée. Comparaison testée sans appareil (`tests/test_prouver_flash.py`) ; ce
+  script avait été réécrit au brouillon par au moins huit sessions (audit du 30/10/2026).
+- **Plus de conflit de CHANGELOG ni de numéro d'ADR entre PR parallèles** (outillage, audit du
+  30/10/2026, lot A) : une PR ne touche plus `CHANGELOG.md`, elle dépose son entrée dans
+  `changelog.d/<branche>.md` (format dans [`changelog.d/README.md`](changelog.d/README.md)) ;
+  `tools/changelog_assembler.py` les range sous `[Unreleased]` (ou sous la section d'une version)
+  à la release, puis les supprime, et `tests/test_changelog_fragments.py` valide chaque fragment.
+  `tools/prochain_adr.py` donne le prochain numéro d'ADR libre en comptant les PR ouvertes, et
+  `--write` recale le nombre d'ADR du README et de la cartographie. Les étiquettes « Contrat HA ↔
+  firmware » se lisent aussi dans les fragments. Aucun changement de firmware.
 - **Consignes des agents IA par dossier** (doc seule) : `AGENTS.md`, que `CLAUDE.md` importe
   dans chaque session, passe de 38 805 à environ 8 400 octets. Le détail est rangé au plus
   près du code, dans un `AGENTS.md` par dossier (`Tab5/`, `Tab5/socle/`, `Tab5/ecran/`,
@@ -50,8 +103,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
   [Related projects](docs/related_projects.md) y renvoie en tête de ses deux langues.
   Aucun changement de firmware.
 
+### Modifié
+
+- **Menu du site : un seul groupe « Matériel »** (documentation seulement, aucun firmware ni fichier Home Assistant) : la M5Stack Tab5 (fiche, batterie, brochage), la Waveshare 7B et le comparatif « Tab5 ou Waveshare 7B ? » sont réunis sous un groupe « Matériel » placé avant « Installer », au lieu d'être dans « Comprendre le projet », la Tab5 d'un côté et la 7B à part. Les adresses des pages ne changent pas ; `tools/site/menu.yml`.
+- **Fil d'Ariane visible retiré** : le chemin du menu n'est plus affiché au-dessus du titre de chaque page (`navigation.path` de `tools/site/mkdocs.yml`). Le `BreadcrumbList` du balisage pour les moteurs de recherche reste.
+- **Sommaire de la documentation** (documentation seulement) : `docs/README.md` renvoie maintenant vers la FAQ, le comparatif Tab5 / 7B, les détails techniques des écrans, le brochage et la batterie du Tab5 ; la section « Waveshare ESP32-P4 7B » de `docs/hardware.md` renvoie vers le comparatif. `CARTOGRAPHIE_TAB5.md` compte les 25 fichiers de `docs/*.md`.
+- **La ST7121 est aussi la deuxième tablette de l'auteur** (documentation seulement) : `Tab5/README.md` ne dit plus que la ST7123 est la seule testée sur un appareil, et le brouillon du forum de `docs/press/forum_ha_en.md` dit que l'auteur a essayé la ST7123 et la ST7121, comme `docs/installation/flash.md`. Le commentaire de `Tab5/paquets/ecran-st7121.yaml` (« l'auteur n'a pas de ST7121 ») reste à corriger dans une PR du firmware.
+- **Six pages minces étoffées** (documentation seulement) : `docs/notice/plants.md`, `calendar.md`, `alerts.md`, `tv.md`, `voice.md` et `docs/installation/wifi.md` disent maintenant ce que l'écran montre, comment on l'ouvre, les gestes, ce qui se règle dans Home Assistant, les limites connues et l'incident correspondant du dépannage quand il existe, vérifiés dans le code. Aucun firmware ni fichier Home Assistant ne change.
+- **Documentation des écrans : une page lisible, le détail technique à part** (lot 4a de la « super doc des écrans », documentation seule, aucun changement de firmware) : [`docs/screens.md`](docs/screens.md) devient la page de l'utilisateur, « Écrans et fonctions » (environ 5 000 mots anglais au lieu de 13 600) : pour chaque zone et chaque fenêtre, une description courte, une image et le lien vers sa notice. Le détail technique (fichiers, services, constantes, mesures) est déplacé tel quel, section par section et sous le même titre, dans la nouvelle page [`docs/screens_internals.md`](docs/screens_internals.md) (« Écrans : détails techniques », menu « Comprendre le projet ») ; aucun paragraphe n'est supprimé, une comparaison mécanique avant / après le prouve (corps de la PR). Les deux pages ont leur `titre_onglet` et leur `description` (anglais et français) dans `tools/site/menu.yml` ; `tests/test_site_doc.py` garde la même structure en anglais et en français, la taille de `screens.md` et le rangement des titres. La version française gagne la section « Ok Nabu » et la puce « Défilement » de la rangée sous l'horloge, qui n'existaient qu'en anglais.
+- **Dépannage : un index « symptôme → incident »** : [`docs/troubleshooting.md`](docs/troubleshooting.md) s'ouvre sur un tableau (anglais et français) qui renvoie, depuis ce qu'on voit à l'écran, vers chacun des 21 incidents ; les incidents eux-mêmes ne changent pas. Un test vérifie que l'index cite chaque incident une fois, dans l'ordre de la page.
+- **`tests/test_doc_broches.py` suit le tableau des broches du Tab5** : il est lu dans `docs/tab5-pinout.md` (même vérification stricte, anglais et français) ; le test compare en plus les adresses I2C écrites dans le YAML à leur tableau et les GPIO, broches d'expandeur et adresses des deux schémas SVG au YAML, et exige un texte alternatif dans chaque langue.
+- **Les sections « Power » et « Pin map » de `docs/hardware.md`** sont déplacées vers les deux nouvelles pages et ne gardent qu'un renvoi (les ancres `#power` et `#pin-map` restent) ; les « Notes from another Tab5 project » passent en bas de la page ; les liens de `docs/installation/`, `docs/performance.md`, `docs/troubleshooting.md` et `docs/debugging.md` visent les nouvelles ancres.
+- **Page de la Waveshare 7B réordonnée pour qui cherche une fiche** : titre parlant (« Waveshare ESP32-P4 7B as a Home Assistant screen »), le statut, puis « en un coup d'œil » (le tableau du matériel, avec le prix et la page produit de Waveshare lus le 06/11/2026), puis l'installation, ce qui change à l'écran, ce qui reste à faire, l'historique des problèmes et les mesures ; les broches en fin de page. Rien n'est supprimé, les ancres citées ailleurs sont gardées. Affirmations datées relues : le firmware publié a tourné sur la carte (rc.7 le 21/10, 3.9.0 le 26/10), le micro, le mot d'activation et le popup Caméras ont été essayés, et ce qui a marché le 29/10 (esptool) est dit à côté de l'échec de la page d'installation. Description du site corrigée : elle ne promet plus une installation depuis le navigateur.
+- **Site de documentation, référencement** (lot « SEO rapide » de l'audit du 06/11/2026, [ADR-0030](docs/decisions/0030-documentation-site.md), avenant du 06/11/2026) :
+  - **Pages d'une seule langue** : les 72 pages `fr/decisions/*` (texte anglais, même titre que `en/decisions/*`) et `en/arcade/` (texte français) ne sont plus au plan du site (258 adresses → 185). Elles restent en ligne, dans le menu et derrière le sélecteur de langue ; leur `canonical` mène à la page de leur langue d'origine et ni elles ni leur original n'ont de `hreflang`.
+  - **Titres d'onglet et descriptions écrits à la main**, en anglais et en français, pour 29 pages qui comptent (guide d'installation et ses sept étapes, notice, assistant vocal, mode démo, langues, dépannage, diagnostic, architecture, performances, consommation, projets voisins, histoire) dans `tools/site/menu.yml` ; le titre de l'étape 7 en français tient en 65 caractères.
+  - **Balisage** : `BreadcrumbList` (chemin du menu, dans le balisage seulement : le fil d'Ariane visible a été retiré) sur toutes les pages sauf l'accueil, `TechArticle` sur les pages de documentation, `og:locale` et `og:locale:alternate`. Pas de `HowTo` ni de `FAQPage` : Google ne les affiche plus.
+  - **Accueil** : la phrase du `README.md` qui disait que le firmware tourne « as an experiment » sur une carte Waveshare 7 pouces dit maintenant : carte prise en charge, firmware publié à chaque release, trois cartes testées (deux versions du Tab5 et la 7B), le Tab5 comme la 7B en service chez l'auteur (la 7B depuis le 15/10/2026), une seule 7B essayée. Le tableau de compatibilité et la liste des cartes ne disent plus que l'auteur n'a pas de ST7121 : la ST7123 est sa première tablette, la ST7121 sa seconde (depuis le 21/10/2026), comme dans `docs/installation/flash.md`.
+
 ### Corrigé
 
+- **La ST7121 tourne aussi sur la deuxième tablette de l'auteur** (commentaires et documentation seulement, aucun changement de comportement du firmware : mêmes lignes de configuration résolue avant et après, `esphome config` sur la révision ST7121) : l'en-tête de [`Tab5/paquets/ecran-st7121.yaml`](Tab5/paquets/ecran-st7121.yaml) disait « l'auteur n'a pas de ST7121 », et [`docs/architecture.md`](docs/architecture.md) ne citait qu'un utilisateur. D'après [`docs/installation/flash.md`](docs/installation/flash.md), la ST7121 tourne sur la deuxième tablette de l'auteur depuis le 21/10/2026 et chez un autre utilisateur depuis octobre 2026.
+- **Les tablettes de l'auteur dans [`docs/hardware.md`](docs/hardware.md)** : la page disait que l'auteur n'a pas de ST7121 et que seule la ST7123 tourne chez lui. D'après [`docs/installation/flash.md`](docs/installation/flash.md), la ST7121 est sa deuxième tablette depuis le 21/10/2026 (et celle d'un autre utilisateur) : le tableau des révisions et les deux phrases « ce projet tourne sur… » le disent maintenant ; la ST7123 y est « la première tablette de l'auteur », sans état actuel.
+- **Sources de la fiche** : le 360 MHz du processeur et les 32 Mo de PSRAM ne sont que sur la page M5Stack (la page ESPHome de l'appareil ne les donne pas) : les cellules « Processor » et « Memory » ne citent plus qu'elle.
+- **Dates de version de la batterie** : la doc disait « prochaine version » pour onze fonctions déjà publiées. D'après le code de chaque tag : limite de charge, mode de charge, Wi-Fi éco, alerte de batterie faible, consommation et mesure depuis la 3.8.0 ; courbe de décharge mesurée, verrou électrique, sonde avant tout allumage et seuil de retour de l'économie d'énergie à 60 % depuis la 3.9.0. La 3.6.0 a été publiée le 05/10/2026 (la page disait le 04).
+- **Documentation HACS : le défaut « Got more than 8190 bytes » est résolu** : la page d'installation, le
+  guide « Fichiers Home Assistant » et l'entrée de dépannage disaient encore « défaut de HACS 2.0.5, posez
+  les fichiers à la main jusqu'à ce que HACS soit corrigé ». Vérifié le 06/11/2026 : l'en-tête de GitHub
+  mesure 3 994 octets sur `tab5_hacs.zip` (il en faisait plus de 9 000 les 23 et 24 octobre), Home Assistant
+  2026.10.4 accepte des en-têtes jusqu'à 64 Kio (home-assistant/core#188329), le ticket hacs/integration#5643
+  est fermé, et HACS lui-même n'a pas changé (2.0.5 reste sa dernière release). Les textes disent maintenant
+  que c'est résolu et gardent la copie à la main pour un Home Assistant plus ancien. Un téléchargement de
+  Tab5 par HACS n'a pas été refait après le correctif (dit dans le dépannage).
+- **Plus de rectangle vide dans le popup Assistant vocal** : la demande reconnue s'affichait « tarte tatin▯? », parce que la reconnaissance vocale en français de Home Assistant Cloud met une espace insécable devant « ? », que les polices de l'écran n'ont pas. La demande et la réponse passent maintenant par le même filtre que les noms des tuiles : une espace insécable ou fine (U+00A0, U+202F, U+2009…) devient une espace, un caractère que les polices n'ont pas (un emoji, par exemple) disparaît au lieu de s'afficher en rectangle. Le filtre est rangé dans le socle et testé sur PC ([langues](docs/translations.md)).
+- **Moins de grésillements dans les réponses vocales** : le tampon de lecture du haut-parleur passe de 500 ms à 2 s sur le Tab5 et la Waveshare 7B. La réponse arrive de Home Assistant pendant qu'elle est générée, et chaque hoquet du Wi-Fi vidait l'ancien tampon : le haut-parleur comblait avec du silence, ce qui s'entendait sur les longues réponses d'un modèle de langage. Aucun délai ajouté ; 384 Kio de PSRAM pendant qu'un son joue ([voix](docs/voice_assistant.md)).
 - **Le nom du thème suit la langue de l'écran** (Réglages, page Apparence) : un écran en anglais
   montrait « Craie et ardoise » quand Home Assistant disait « Chalk and slate ». Les 21 noms
   passent par `tr()` et ont leur ligne dans les six langues ; en anglais, le même nom que le

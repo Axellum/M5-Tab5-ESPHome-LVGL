@@ -1,3 +1,0 @@
-### Corrigé
-
-- **La ST7121 tourne aussi sur la deuxième tablette de l'auteur** (commentaires et documentation seulement, aucun changement de comportement du firmware : mêmes lignes de configuration résolue avant et après, `esphome config` sur la révision ST7121) : l'en-tête de [`Tab5/paquets/ecran-st7121.yaml`](Tab5/paquets/ecran-st7121.yaml) disait « l'auteur n'a pas de ST7121 », et [`docs/architecture.md`](docs/architecture.md) ne citait qu'un utilisateur. D'après [`docs/installation/flash.md`](docs/installation/flash.md), la ST7121 tourne sur la deuxième tablette de l'auteur depuis le 21/10/2026 et chez un autre utilisateur depuis octobre 2026.
