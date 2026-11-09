@@ -91,6 +91,10 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_voiture": {"rang": "1", "payload": "Model Y|78|412|km|3|7200|12.4|90|95|1"},
     # Les dernières charges des voitures (page Charges) : rang|jour|heure|durée en minutes|kWh|part du soleil.
     "tab5_maj_voiture_charges": {"payload": "2|2026-11-09|09:02|103|12.4|76;1|2026-11-09|01:00|120|14.4|0"},
+    # La consommation du jour empilée de la page Aujourd'hui (ADR-0078) : rang (0 la maison sans les voitures,
+    # 1 et 2 les voitures), le jour, puis 24 kWh par heure locale (vides : heures sans ligne).
+    "tab5_maj_voiture_jour": {"rang": "1", "debut": "2026-11-09",
+                              "valeurs": "0;0;3.1;3.2;0;0;0;0;0.4;1.9;2.6;3;3.1;;;;;;;;;;;"},
     "tab5_maj_energie_historique": {"vue": "heures", "debut": "2026-06-16",
                                     "valeurs": "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"},
     # Pages « Aujourd'hui » et « Bilan » (ADR-0058) : les 24 valeurs de prevu et de clair, un créneau,

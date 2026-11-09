@@ -23,6 +23,11 @@ obj:
   hidden: true
   styles: style_glass_card
   scrollable: false
+  # Un appui court sur un cercle de voiture (n 4 et 5, ADR-0076) ouvre le popup Voitures (ADR-0079) ;
+  # ui_appui_glisse() : la fin d'un balayage de page ou d'un appui long n'ouvre rien. Les quatre
+  # premiers cercles (solaire, maison, réseau, batterie) ne réagissent pas, comme avant.
+  on_short_click:
+    - lambda: 'if (${n} >= 4 && !ui_appui_glisse()) id(tab5_ecran_ouvrir).execute((int) Ecran::VOITURES);'
   widgets:
     - label: { id: "energie_flux_icone_${n}", text: "", align: TOP_MID, y: 12, text_font: mdi_font_45, styles: style_text_dim }
     - label: { id: "energie_flux_valeur_${n}", text: "--", align: TOP_MID, y: 60, text_font: roboto_32_b }

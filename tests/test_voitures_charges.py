@@ -396,6 +396,30 @@ def test_kwh_par_heure_du_jour():
     assert hier["jour_1"].split(";") == ["0.0"] * 23 + ["7.0"]
 
 
+def test_maison_sans_les_voitures_par_heure():
+    """ADR-0078. « nuit » (le 16/06 à 14:37) : 300 W de maison hors voiture, la voiture à 7 kW de 0 h à
+    2 h, un capteur de maison qui la compte (7,3 kW) : la voiture est retranchée, 0,3 kWh à chaque heure ;
+    14 h n'a que 35 minutes de lignes (14:00 à 14:30, 7 créneaux) : 0,175 kWh ; les heures à venir sont vides."""
+    r = rep("nuit")
+    assert r["jour_maison"].split(";") == ["0.3"] * 14 + ["0.175"] + [""] * 9
+
+
+def test_maison_sans_les_voitures_selon_le_capteur():
+    """Un capteur qui ne compte pas les voitures est pris tel quel (1 kW : 1 kWh par heure, 14 h partielle) ;
+    sans capteur de maison ou sans voiture, rien à empiler : tout est vide."""
+    assert rep("maison_sans_voiture")["jour_maison"].split(";") == ["1.0"] * 14 + ["0.583"] + [""] * 9
+    assert rep("sans_maison")["jour_maison"] == ""
+    assert rep("sans_voiture")["jour_maison"] == ""
+
+
+def test_maison_jamais_sous_zero_si_la_voiture_depasse_la_maison():
+    """Un capteur de maison qui compte la voiture mais lit moins qu'elle (retard d'une mesure, voiture
+    déclarée à tort : ici 6,5 kW pour 7 kW de charge) ne donne pas une heure négative : 0."""
+    cas_ = une_voiture(lambda t: 7000 if entre(t, D(15, 23), D(16, 2)) else 0, maison_hors=-500)
+    h = ref.reponse(**cas_)["jour_maison"].split(";")
+    assert h[:2] == ["0.0", "0.0"] and len(h) == 24
+
+
 def test_jour_hors_fenetre_ou_invalide():
     assert rep("jour_30_fevrier")["jour_debut"] == "2026-03-02"      # débordement : un 30 février n'est pas un jour
     assert rep("jour_texte")["jour_debut"] == "2026-06-16"           # texte invalide : aujourd'hui

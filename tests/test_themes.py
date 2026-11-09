@@ -346,7 +346,7 @@ def _contraste(a: int, b: int) -> float:
 SURFACES = ("GLASS_HI_PAGE", "GLASS_LO_PAGE", "GLASS_HI_MODAL", "GLASS_LO_MODAL")
 MINIMUMS = {
     "TEXT_PRIMARY": 7.0, "TEXT_SOFT": 7.0, "TEXT_DIM": 4.5,
-    "ACCENT": 3.0, "SUCCESS": 3.0, "WARNING": 3.0, "ERROR": 3.0, "INFO": 3.0, "GOLD": 3.0,
+    "ACCENT": 3.0, "SUCCESS": 3.0, "WARNING": 3.0, "ERROR": 3.0, "INFO": 3.0, "GOLD": 3.0, "POWER_GRID": 3.0,
     "TEMP_MAX": 3.0, "TEMP_MIN": 3.0, "EARLY": 3.0,
 }
 
@@ -361,6 +361,74 @@ def test_chaque_mode_reste_lisible():
                     if r < minimum:
                         trop_faibles.append(f"{theme.nom} ({mode}) : {role} sur {surface} = {r:.2f} < {minimum}")
     assert not trop_faibles, "\n".join(trop_faibles)
+
+
+def _lab(c: int) -> tuple[float, float, float]:
+    """Couleur 0xRRGGBB en CIE L*a*b* (sRGB, D65)."""
+    def lin(v: int) -> float:
+        v /= 255
+        return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+
+    r, g, b = lin((c >> 16) & 0xFF), lin((c >> 8) & 0xFF), lin(c & 0xFF)
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
+
+    def f(t: float) -> float:
+        return t ** (1 / 3) if t > 0.008856 else 7.787 * t + 16 / 116
+
+    return 116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))
+
+
+def _ecart_teinte(a: int, b: int) -> float:
+    """Écart de couleur CIE76 : au-dessus de 20, deux aplats voisins se distinguent d'un coup d'œil."""
+    return sum((p - q) ** 2 for p, q in zip(_lab(a), _lab(b))) ** 0.5
+
+
+# Les couleurs que le réseau côtoie sur l'écran : le soleil, la batterie (le Flux les met côte à côte et
+# colle leurs parts sur un même anneau), la charge ou la vente, la maison et les voitures.
+VOISINES_DU_RESEAU = ("GOLD", "ACCENT_ALT", "SUCCESS", "INFO")
+
+
+def _teinte(c: int) -> float:
+    """Teinte HSL en degrés (0 = rouge, 120 = vert, 240 = bleu)."""
+    import colorsys
+    h, _, _ = colorsys.rgb_to_hls(((c >> 16) & 0xFF) / 255, ((c >> 8) & 0xFF) / 255, (c & 0xFF) / 255)
+    return h * 360
+
+
+def test_reseau_violet_et_distinct_dans_chaque_mode():
+    """Retour d'Axel (09/11/2026), sur son Tab5 : « le jaune est trop proche, on ne reconnaît pas
+    le soleil et le réseau » (page Charges, puis page Flux). Le réseau avait WARNING, un jaune-orange
+    à 0-35 de GOLD (0 dans « Pixel »). Il a choisi le violet, pour les deux pages : le rôle
+    POWER_GRID, une valeur par thème et par mode. Chacune est un violet (teinte 240 à 280), à 30
+    d'écart au moins de GOLD, ACCENT_ALT, SUCCESS et INFO (les couleurs qui l'entourent sur le Flux ;
+    ACCENT_ALT est la batterie, et dans Ardoise le même violet) et tient 3:1 sur le verre
+    (MINIMUMS). Le Flux et la page Charges le lisent, plus WARNING ni ACCENT_ALT."""
+    cpp = (TAB5 / "ecran" / "tab5_energie.cpp").read_text(encoding="utf-8").replace("\r\n", "\n")
+    # Charges : la barre (réseau derrière) et la pastille de la légende.
+    assert "soleil ? UIColor.POWER_GRID : UIColor.ARC_TRACK" in cpp
+    assert "marques[kChLegendes] = {UIColor.SUCCESS, UIColor.GOLD, UIColor.POWER_GRID};" in cpp
+    # Flux : le cercle, les trois traits (maison, batterie, voitures) et les parts d'anneau.
+    assert "r.etat < 0 ? UIColor.SUCCESS : UIColor.POWER_GRID);" in cpp
+    assert "f.reseau_maison, UIColor.POWER_GRID);" in cpp
+    assert "achat_batterie ? UIColor.POWER_GRID : UIColor.SUCCESS" in cpp
+    assert "rv[j], UIColor.POWER_GRID);" in cpp
+    assert cpp.count("360, UIColor.POWER_GRID);") == 2, "la part du réseau des anneaux (maison et voiture)"
+    assert "r.etat > 0 ? UIColor.POWER_GRID" in cpp
+    assert "A_RESEAU" in cpp and "A_RESEAU], a2 > 360 ? 360 : a2, 360, UIColor.WARNING" not in cpp
+    confus, pas_violets = [], []
+    for theme in gen_themes.charger():
+        for mode, p in theme.modes.items():
+            for autre in VOISINES_DU_RESEAU:
+                ecart = _ecart_teinte(p["POWER_GRID"], p[autre])
+                if ecart < 30.0:
+                    confus.append(f"{theme.nom} ({mode}) : POWER_GRID / {autre} = {ecart:.1f}")
+            h = _teinte(p["POWER_GRID"])
+            if not 240.0 <= h <= 280.0:
+                pas_violets.append(f"{theme.nom} ({mode}) : POWER_GRID {p['POWER_GRID']:06X} a la teinte {h:.0f}")
+    assert not confus, "\n".join(confus)
+    assert not pas_violets, "\n".join(pas_violets)
 
 
 def test_console_lisible_dans_chaque_mode():

@@ -229,6 +229,33 @@ def serie_heures(a: dict) -> str:
     return ";".join(str(round(a["heures"][h] / 1000, 3)) if h in a["heures"] else "" for h in range(24))
 
 
+def serie_maison(mesures: dict, cap: dict, f: dict, analyse: dict) -> str:
+    """24 kWh par heure locale du jour demandé pour la maison SANS les voitures (ADR-0078, page
+    « Aujourd'hui » : la pile de consommation) : le capteur de la maison, moins la charge des voitures
+    quand ce capteur la compte (jamais sous 0). Vide = aucun capteur de maison, aucune voiture (rien à
+    empiler), ou aucune ligne de maison dans cette heure (heure à venir)."""
+    if not cap["maison"] or not cap["voitures"]:
+        return ""
+    wh = {}
+    for (t, d, p, iso) in mesures.get(cap["maison"], []):
+        if f["j0"] <= t < f["j1"]:
+            h = _locale(iso, f).hour
+            wh[h] = wh.get(h, 0) + p * d / 3600
+    sortie = []
+    for h in range(24):
+        if h not in wh:
+            sortie.append("")
+            continue
+        v = wh[h]
+        if cap["inclut"]:
+            voitures = 0
+            for x in cap["voitures"]:
+                voitures = voitures + analyse[x["rang"]]["heures"].get(h, 0)
+            v = max(0, v - voitures)
+        sortie.append(str(round(v / 1000, 3)))
+    return ";".join(sortie)
+
+
 def charge_en_texte(analyse: dict, cap: dict, f: dict) -> dict:
     """Les chaînes `charges` (toutes voitures, NB_CHARGES plus récentes d'abord) et `charges_<rang>`."""
     avec = bool(cap["solaires"])
@@ -302,7 +329,8 @@ def reponse(stats5: dict, stats1: dict, odo: dict, capteurs, maintenant: dt.date
                                     par « ; » (NB_CHARGES au plus, la plus récente d'abord)
     jour_debut                      AAAA-MM-JJ du jour des heures
     jour_1, jour_2                  24 kWh par heure du jour, séparés par « ; »
-    bilan_debut                     AAAA-MM-01 du mois du bilan
+    jour_maison                     24 kWh par heure du jour pour la maison sans les voitures (ADR-0078)
+    bilan_debut                    AAAA-MM-01 du mois du bilan
     bilan                           11 champs « | » (voir bilan_en_texte)
     precision                       5min | heure | mixte | aucune
     """
@@ -318,6 +346,7 @@ def reponse(stats5: dict, stats1: dict, odo: dict, capteurs, maintenant: dt.date
     r["jour_debut"] = f["jour"]
     r["jour_1"] = serie_heures(a["1"]) if "1" in a else ""
     r["jour_2"] = serie_heures(a["2"]) if "2" in a else ""
+    r["jour_maison"] = serie_maison(mesures, cap, f, a)
     r["bilan_debut"] = f["mois"]
     r["bilan"] = bilan_en_texte(a, cap, f, mesures, kilometres(odo, cap)) if cap["voitures"] else ""
     r["precision"] = precision(mesures, cap)

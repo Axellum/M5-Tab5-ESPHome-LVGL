@@ -43,6 +43,7 @@ sombre:
   WARM_PINK: 0xF472B6          # pink-400
   ACCENT: 0x22D3EE             # cyan-400
   ACCENT_ALT: 0xA78BFA         # violet-400
+  POWER_GRID: 0xBFB0E8  # réseau électrique : violet, à 30 au moins de GOLD, ACCENT_ALT, SUCCESS et INFO (tests/test_themes.py)
   EARLY: 0xFB923C              # orange-400
   PAST: 0x64748B               # slate-500
   TEMP_MAX: 0xF87171           # red-400
@@ -121,6 +122,7 @@ clair:
   WARM_PINK: 0xB0306F
   ACCENT: 0x0E6E85
   ACCENT_ALT: 0x6548BE
+  POWER_GRID: 0x6933FF  # réseau électrique : violet, à 30 au moins de GOLD, ACCENT_ALT, SUCCESS et INFO (tests/test_themes.py)
   EARLY: 0xB4500B
   PAST: 0x6F7988
   TEMP_MAX: 0xBE1E2D

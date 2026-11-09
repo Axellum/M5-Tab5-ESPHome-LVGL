@@ -109,6 +109,7 @@ struct Palette {
     uint32_t WARM_PINK;        // température intérieure chaude, anniversaires
     uint32_t ACCENT;           // accent primaire / halo
     uint32_t ACCENT_ALT;       // accent secondaire
+    uint32_t POWER_GRID;       // réseau électrique (page Énergie : cercle, traits et anneaux du Flux, barre de Charges)
     uint32_t EARLY;            // embauche < 9 h (distinct de ERROR)
     uint32_t PAST;             // jour passé, estompé
     uint32_t TEMP_MAX;         // température maximale (chaud)
@@ -206,6 +207,7 @@ inline constexpr Palette PALETTE_SOMBRE = {
     .WARM_PINK           = 0xF472B6,
     .ACCENT              = 0x22D3EE,
     .ACCENT_ALT          = 0xA78BFA,
+    .POWER_GRID          = 0xBFB0E8,
     .EARLY               = 0xFB923C,
     .PAST                = 0x64748B,
     .TEMP_MAX            = 0xF87171,
