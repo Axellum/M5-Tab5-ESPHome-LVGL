@@ -890,8 +890,8 @@ Vu vu_reseau() {
     snprintf(r.ligne, sizeof(r.ligne), "%s", std::isnan(v) ? "" : sens);
     snprintf(r.cercle, sizeof(r.cercle), "%s", r.ligne);
     r.couleur_valeur = UIColor.TEXT_PRIMARY;
-    r.couleur = r.etat > 0 ? UIColor.WARNING : r.etat < 0 ? UIColor.SUCCESS
-                                                          : UIColor.TEXT_DIM;
+    r.couleur = r.etat > 0 ? UIColor.POWER_GRID : r.etat < 0 ? UIColor.SUCCESS
+                                                             : UIColor.TEXT_DIM;
     return r;
 }
 
@@ -1251,7 +1251,7 @@ void peindre_anneau_voiture(lv_obj_t* const* arcs, bool montre, float solaire, f
     const int32_t a2 = a1 + static_cast<int32_t>(std::lround(360.0f * batterie / entre));
     peindre_part(arcs[A_SOLAIRE], 0, a1, UIColor.GOLD);
     peindre_part(arcs[A_BATTERIE], a1, a2 > 360 ? 360 : a2, UIColor.ACCENT_ALT);
-    peindre_part(arcs[A_RESEAU], a2 > 360 ? 360 : a2, 360, UIColor.WARNING);
+    peindre_part(arcs[A_RESEAU], a2 > 360 ? 360 : a2, 360, UIColor.POWER_GRID);
 }
 
 // Les deux lignes au coin de la page d'une voiture (v nul : cachées) : l'énergie ajoutée par la
@@ -1326,7 +1326,7 @@ void peindre_flux() {
     // Réseau : bord de l'achat, ou de la vente quand il en reçoit.
     if (reseau) {
         const Vu r = vu_reseau();
-        peindre_noeud(RESEAU, r, r.etat < 0 ? UIColor.SUCCESS : UIColor.WARNING);
+        peindre_noeud(RESEAU, r, r.etat < 0 ? UIColor.SUCCESS : UIColor.POWER_GRID);
     } else {
         ui_hidden(u.flux_noeud[RESEAU], true);
     }
@@ -1345,21 +1345,23 @@ void peindre_flux() {
         peindre_noeud(VOITURE_1 + j, vv.vu, vv.bord);
     }
 
-    // Traits : la couleur de la source (solaire, achat ; vente ; batterie), l'épaisseur du flux.
+    // Traits : la couleur de la source (solaire, achat ; vente ; batterie), l'épaisseur du flux. Le réseau est
+    // en POWER_GRID (un violet par thème) : ni le jaune du soleil (GOLD) ni la couleur de la batterie (ACCENT_ALT),
+    // « on ne reconnaît pas le soleil et le réseau » (Axel, 09/11/2026).
     // Un trait que la disposition ne trace pas (il traverserait un cercle) reste caché.
     const auto trace = [sans_trait](int t, bool montre) { return montre && (sans_trait & bit_trait(t)) == 0; };
     peindre_trait(T_SOL_MAISON, true, f.solaire_maison, UIColor.GOLD);
     peindre_trait(T_SOL_RESEAU, reseau, f.solaire_reseau, UIColor.SUCCESS);
-    peindre_trait(T_RESEAU_MAISON, reseau, f.reseau_maison, UIColor.WARNING);
+    peindre_trait(T_RESEAU_MAISON, reseau, f.reseau_maison, UIColor.POWER_GRID);
     peindre_trait(T_SOL_BATT, batterie, f.solaire_batterie, UIColor.GOLD);
     peindre_trait(T_BATT_MAISON, batterie, f.batterie_maison, UIColor.ACCENT_ALT);
     const bool achat_batterie = f.reseau_batterie >= f.batterie_reseau;
     peindre_trait(T_RESEAU_BATT, trace(T_RESEAU_BATT, reseau && batterie),
                   achat_batterie ? f.reseau_batterie : f.batterie_reseau,
-                  achat_batterie ? UIColor.WARNING : UIColor.SUCCESS);
+                  achat_batterie ? UIColor.POWER_GRID : UIColor.SUCCESS);
     for (int j = 0; j < kVoituresMax; j++) {
         peindre_trait(T_SOL_V1 + j, trace(T_SOL_V1 + j, j < noeuds), sv[j], UIColor.GOLD);
-        peindre_trait(T_RESEAU_V1 + j, trace(T_RESEAU_V1 + j, j < noeuds && reseau), rv[j], UIColor.WARNING);
+        peindre_trait(T_RESEAU_V1 + j, trace(T_RESEAU_V1 + j, j < noeuds && reseau), rv[j], UIColor.POWER_GRID);
     }
 
     // Anneau de la maison : parts solaire, batterie, réseau de ce qui y entre.
@@ -1370,7 +1372,7 @@ void peindre_flux() {
         const int32_t a2 = a1 + static_cast<int32_t>(std::lround(360.0f * f.batterie_maison / entre));
         peindre_part(s_flux.anneau[A_SOLAIRE], 0, a1, UIColor.GOLD);
         peindre_part(s_flux.anneau[A_BATTERIE], a1, a2 > 360 ? 360 : a2, UIColor.ACCENT_ALT);
-        peindre_part(s_flux.anneau[A_RESEAU], a2 > 360 ? 360 : a2, 360, UIColor.WARNING);
+        peindre_part(s_flux.anneau[A_RESEAU], a2 > 360 ? 360 : a2, 360, UIColor.POWER_GRID);
     } else {
         for (int a = A_SOLAIRE; a < NB_ANNEAUX; a++) ui_hidden(s_flux.anneau[a], true);
     }
@@ -1451,8 +1453,10 @@ void peindre_charges() {
         ui_text(l.pct, x);
         ui_text_color(l.pct, soleil && pct > 0 ? UIColor.TEXT_PRIMARY : UIColor.TEXT_DIM);
         if (kChBarre) {
-            // Le réseau en fond, le soleil devant ; sans part connue, une piste vide.
-            ui_style_couleur(l.piste, LV_STYLE_BG_COLOR, soleil ? UIColor.WARNING : UIColor.ARC_TRACK);
+            // Le réseau en fond, le soleil devant ; sans part connue, une piste vide. Le réseau
+            // est en POWER_GRID, comme sur le Flux : l'ancien jaune (WARNING) était presque celui du
+            // soleil (GOLD), « on ne reconnaît pas le soleil et le réseau » (Axel, 09/11/2026).
+            ui_style_couleur(l.piste, LV_STYLE_BG_COLOR, soleil ? UIColor.POWER_GRID : UIColor.ARC_TRACK);
             const int32_t w = soleil ? static_cast<int32_t>(std::lround(kChBarreL * c.soleil / 100.0f)) : 0;
             ui_hidden(l.soleil, w < 1);
             if (w >= 1 && lv_obj_get_style_width(l.soleil, LV_PART_MAIN) != w) lv_obj_set_width(l.soleil, w);
@@ -2304,7 +2308,7 @@ void couleurs() {
     ChargesUI& ch = s_ch;
     ui_text_color(ch.titre, UIColor.ACCENT);
     ui_style_couleur(ch.filet_titre, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
-    const uint32_t marques[kChLegendes] = {UIColor.SUCCESS, UIColor.GOLD, UIColor.WARNING};
+    const uint32_t marques[kChLegendes] = {UIColor.SUCCESS, UIColor.GOLD, UIColor.POWER_GRID};
     for (int j = 0; j < kChLegendes; j++) {
         ui_style_couleur(ch.marque[j], LV_STYLE_BG_COLOR, marques[j]);
         ui_text_color(ch.legende[j], UIColor.TEXT_SOFT);
