@@ -292,6 +292,23 @@
           }
         }
       }
+    },
+    "tableau_a_mettre_a_jour": {
+      "title": "Tab5: Das Dashboard „{tableau}“ kann aktualisiert werden",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5-Dashboard aktualisieren",
+            "description": "Das Dashboard „{tableau}“ wurde mit den Tab5-Dateien {avant} geschrieben; aktiv sind die Dateien {version}. Bestätigen schreibt es mit der aktuellen Vorlage neu, mit denselben Aufrufeinstellungen (Adresse, Sprache, Tablet) und den Entitäten Ihres Zuhauses von heute.\n\nAlles, was Sie von Hand hinzugefügt oder geändert haben, wird ersetzt: Das alte Dashboard bleibt in `tab5_sauvegardes/tableaux/` erhalten (Text, der unverändert in den Roh-Konfigurationseditor des Dashboards eingefügt werden kann).\n\nBestätigen Sie, um das Dashboard zu aktualisieren."
+          }
+        },
+        "error": {
+          "api": "Home Assistant antwortet nicht so, wie diese Integration es erwartet (der Zugriff auf Dashboards hat sich geändert). Nichts wurde geändert: Aktualisieren Sie das Dashboard von Hand, Schritte 2 und 3 der Dashboard-Anleitung.",
+          "introuvable": "Dieses Dashboard existiert nicht mehr oder hat die Tab5-Markierung nicht mehr. Nichts wurde geändert.",
+          "rendu": "Die Vorlage hat nichts Brauchbares ergeben (ist das Tablet mit Home Assistant verbunden?). Nichts wurde geändert; Einzelheiten stehen im Protokoll (Einstellungen → System → Protokolle, „tab5“).",
+          "version": "Die Tab5-Dateien dieser Version sind noch nicht aktiv: Starten Sie Home Assistant neu, wenn eine andere Reparatur es verlangt. Nichts wurde geändert."
+        }
+      }
     }
   }
 }
