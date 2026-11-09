@@ -2487,3 +2487,132 @@ def test_blueprint_voitures_vides_par_defaut():
     capteurs = _capteurs_envoyes(p)
     assert capteurs["voitures"] == [SANS_VOITURE, SANS_VOITURE]
     assert capteurs["voitures_compteur_compte"] is True, "par défaut le compteur de la maison compte les voitures"
+
+
+# ─── Package : tab5_maj_voiture_charges (ADR-0077) ───────────────────────────
+
+SCRIPT_ANALYSE = "script.tab5_voitures_analyse"
+
+
+def _etape_charges():
+    """L'étape de la boucle qui analyse les charges puis les pousse (le bloc `if` / `then`)."""
+    bloc = _chercher(_script()["sequence"], lambda d: "voitures_analyse" in str(d.get("if", "")))
+    assert bloc, "étape des charges introuvable dans la boucle de script.tab5_energie"
+    return bloc
+
+
+def _passe_charges(voitures, vue="heures", analyse=True):
+    """Un passage de la boucle ; `analyse=False` : le script d'analyse n'existe pas dans HA."""
+    etats = _etats_model_y()
+    if analyse:
+        etats[SCRIPT_ANALYSE] = EtatHA(SCRIPT_ANALYSE, "off")
+    capteurs = dict(CAPTEURS, voitures=voitures, voitures_compteur_compte=True)
+    return Passe(capteurs, _maison(**etats), vue=vue, cinq=_reponse(_lignes_5min()))
+
+
+def _lancer_l_analyse(p, charges_t=None):
+    """La condition de l'étape rendue comme HA le ferait (`charges_t` : l'instant de la dernière analyse)."""
+    if charges_t is not None:
+        p.ctx["charges_t"] = charges_t
+    return _rendre(p.env, _etape_charges()["if"], p.ctx)
+
+
+def test_charges_l_action_et_ses_variables():
+    """Le script appelle l'analyse avec les capteurs qu'elle lit, puis pousse tab5_maj_voiture_charges avec
+    exactement les variables du service du firmware, les deux appels en continue_on_error (un firmware
+    d'avant n'a pas l'action ; une analyse en échec ne pousse rien)."""
+    miseajour, analyse, pousse = _etape_charges()["then"]
+    assert set(miseajour["variables"]) == {"charges_t"}
+    assert analyse["action"] == SCRIPT_ANALYSE and analyse["continue_on_error"] is True
+    assert analyse["response_variable"] == "analyse_voitures"
+    assert set(analyse["data"]) == {"capteurs"}
+    assert set(analyse["data"]["capteurs"]) == {"solaires", "maison", "maison_inclut_voitures", "voitures"}
+    action = pousse["then"][0]
+    assert action["action"] == "esphome.{{ tablette }}_tab5_maj_voiture_charges" and action["continue_on_error"] is True
+    assert set(action["data"]) == set(demo_pusher.lire_contrat()[demo_pusher.SERVICE_VOITURE_CHARGES]) == {"payload"}
+
+
+def test_charges_les_voitures_analysees():
+    """Une voiture est analysée quand elle a un capteur de puissance de charge, sous son rang dans le
+    blueprint (« 1 » ou « 2 »), avec le nom et le capteur que lit script.tab5_voitures_analyse."""
+    un = {"rang": "1", "nom": "Model Y", "puissance_charge": "sensor.model_y_puissance"}
+    assert _passe_charges([MODEL_Y, SANS_VOITURE])["voitures_analyse"] == [un]
+    # Le rang vient de la place dans le blueprint, pas de l'ordre des voitures présentes.
+    assert _passe_charges([SANS_VOITURE, MODEL_Y])["voitures_analyse"] == [dict(un, rang="2")]
+    assert _passe_charges([MODEL_Y, MODEL_Y])["voitures_analyse"] == [un, dict(un, rang="2")]
+    # Sans capteur de puissance, rien à analyser (la voiture reste sur la page Flux).
+    sans_puissance = dict(MODEL_Y, puissance="")
+    assert _passe_charges([sans_puissance, SANS_VOITURE])["voitures_actives"] == 1
+    assert _passe_charges([sans_puissance, SANS_VOITURE])["voitures_analyse"] == []
+    # Aucune voiture, ou un blueprint d'avant (pas de clé `voitures`) : rien.
+    assert _passe_charges([SANS_VOITURE, SANS_VOITURE])["voitures_analyse"] == []
+    sans_cle = Passe(CAPTEURS, _maison(), cinq=_reponse(_lignes_5min()))
+    assert sans_cle["voitures_analyse"] == []
+
+
+def test_charges_a_l_ouverture_puis_toutes_les_5_minutes():
+    """L'analyse parcourt des milliers de lignes du recorder : au premier tour (la vue des heures, ouverture
+    du popup), puis au plus toutes les 5 minutes, jamais à chaque tour de la boucle (5 s)."""
+    ouverture = _passe_charges([MODEL_Y, SANS_VOITURE], vue="heures")
+    assert ouverture["charges_t"] == 0
+    assert _lancer_l_analyse(ouverture) is True
+    maintenant = MAINTENANT.timestamp()
+    assert _lancer_l_analyse(ouverture, maintenant - 5) is False       # le tour suivant
+    assert _lancer_l_analyse(ouverture, maintenant - 299) is False
+    assert _lancer_l_analyse(ouverture, maintenant - 300) is True      # 5 minutes après
+    # Un changement de vue relance le script sans rouvrir le popup : la tablette garde ses charges.
+    for vue in ("jours", "mois"):
+        autre = _passe_charges([MODEL_Y, SANS_VOITURE], vue=vue)
+        assert autre["charges_t"] == pytest.approx(maintenant)
+        assert _lancer_l_analyse(autre) is False
+
+
+def test_charges_rien_sans_voiture_ni_sans_script_d_analyse():
+    """Sans voiture munie d'un capteur de puissance, ou si le package de l'analyse n'est pas installé,
+    rien n'est calculé ni poussé (la page « Charges » n'existe pas)."""
+    assert _lancer_l_analyse(_passe_charges([SANS_VOITURE, SANS_VOITURE])) is False
+    assert _lancer_l_analyse(_passe_charges([dict(MODEL_Y, puissance=""), SANS_VOITURE])) is False
+    assert _lancer_l_analyse(_passe_charges([MODEL_Y, SANS_VOITURE], analyse=False)) is False
+
+
+def test_charges_la_reponse_de_l_analyse_est_poussee_telle_quelle():
+    """La chaîne `charges` de la réponse est le payload, sans conversion ; une analyse en échec (pas de
+    réponse) ne pousse rien."""
+    pousse = _etape_charges()["then"][2]
+    p = _passe_charges([MODEL_Y, SANS_VOITURE])
+    charges = "1|2026-06-16|06:02|103|12.40|76;2|2026-06-15|01:00|120|14.40|0;1|2026-06-12|10:20|165|19.80|nan"
+    p.ctx["analyse_voitures"] = {"charges": charges, "charges_1": "x", "jour_1": "y"}
+    assert _rendre(p.env, pousse["if"], p.ctx) is True
+    assert _rendre(p.env, pousse["then"][0]["data"]["payload"], p.ctx) == charges
+    # Aucune charge trouvée : la chaîne est vide et la tablette retire la page.
+    p.ctx["analyse_voitures"] = {"charges": "", "bilan": "1|2|3"}
+    assert _rendre(p.env, pousse["then"][0]["data"]["payload"], p.ctx) == ""
+    for echec in ("", None, "erreur"):
+        p.ctx["analyse_voitures"] = echec
+        assert _rendre(p.env, pousse["if"], p.ctx) is False, echec
+    del p.ctx["analyse_voitures"]
+    assert _rendre(p.env, pousse["if"], p.ctx) is False
+
+
+LIGNE_CHARGE = re.compile(r"^[12]\|\d{4}-\d{2}-\d{2}\|\d{2}:\d{2}\|\d+\|\d+(\.\d+)?\|(\d+|nan)?$")
+
+
+def test_charges_la_demo_suit_le_format_du_contrat():
+    """Le payload de la démo est celui de la sortie du script d'analyse : six lignes au plus, la plus
+    récente d'abord, « rang|jour|heure|duree_min|kwh|part_soleil_pct »."""
+    jour = dt.date(2026, 6, 16)
+    lignes = scenarios.build_charges_payload(jour).split(";")
+    assert len(lignes) == scenarios.CHARGES_MAX == 6
+    assert all(LIGNE_CHARGE.match(ligne) for ligne in lignes), lignes
+    debuts = [tuple(ligne.split("|")[1:3]) for ligne in lignes]
+    assert debuts == sorted(debuts, reverse=True), "la plus récente d'abord"
+    assert lignes[0].split("|")[1] == jour.isoformat(), "la première est d'aujourd'hui"
+    assert {ligne.split("|")[0] for ligne in lignes} == {"1", "2"}
+    # Pas de charge : le payload est vide (la page disparaît) ; au-delà de six, la démo refuse.
+    assert scenarios.build_charges_payload(jour, ()) == ""
+    with pytest.raises(AssertionError):
+        scenarios.build_charges_payload(jour, scenarios.CHARGES + scenarios.CHARGES[:1])
+    with pytest.raises(AssertionError):
+        scenarios.build_charges_payload(jour, ((3, 0, "06:02", 103, "12.4", "76"),))
+    with pytest.raises(AssertionError):
+        scenarios.build_charges_payload(jour, ((1, 0, "6:02", 103, "12.4", "76"),))

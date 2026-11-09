@@ -1,0 +1,7 @@
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.1).
+
+### Ajouté
+
+- **La page « Charges » du popup Énergie** : une cinquième page, entre « Production » et « Bilan », avec les six dernières charges des voitures — une ligne chacune : la voiture, le jour et l'heure (« Aujourd'hui · 09:02 », « Hier », « Dim 8 »), la durée, les kWh, une barre soleil / réseau et la part du soleil en %, puis un total (« Total : 95.1 kWh, dont 62 % par le soleil »). La charge en cours est marquée d'un éclair. La page n'existe que lorsque Home Assistant a envoyé des charges : sans voiture choisie, le popup garde ses quatre onglets, tel qu'avant. Sur la 7B, la même liste sans la barre. Action `tab5_maj_voiture_charges` (contrat 1.6.0, ajout pur), textes dans les sept langues, [ADR-0077](docs/decisions/0077-charges-page.md).
+- **Côté Home Assistant** : le script `tab5_energie` appelle l'analyse du recorder (`script.tab5_voitures_analyse`, [ADR-0074](docs/decisions/0074-car-charges-analysis.md)) avec les capteurs de la section « Énergie : voitures » du blueprint et pousse sa liste de charges à l'ouverture du popup, puis au plus toutes les 5 minutes. Rien n'est calculé ni poussé sans voiture munie d'un capteur de puissance de charge.
+- **Démo et rendu** : `demo_pusher.py --voitures` envoie aussi six charges, et trois captures de la page (une voiture, deux voitures, sans charge : page absente). Les deux voitures de la démo s'appellent « Tesla 2023 » et « Tesla 2025 » (les modèles de la maison réelle ne sont pas connus).

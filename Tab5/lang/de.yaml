@@ -1216,6 +1216,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Limite %d %%": "Limit %d %%"
 "Prête dans %s": "Fertig in %s"
 "Voiture %d": "Auto %d"
+# Page « Charges » du popup Énergie (lot B3)
+# Onglet « Laden » (6 car.) : « Ladevorgänge » serait trop large pour l'onglet de 158 px.
+"Charges": "Laden"
+"Dernières charges": "Letzte Ladevorgänge"
+"en cours": "läuft"
+"Soleil": "Sonne"
+"energie|Réseau": "Netz"
+"Hier": "Gestern"
+"Total : %s, dont %d %% par le soleil": "Gesamt: %s, davon %d %% Sonne"
+"Total : %s": "Gesamt: %s"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "NETZSPEICHER"
 "d'avance sur le réseau ce mois-ci": "Vorsprung aufs Netz diesen Monat"

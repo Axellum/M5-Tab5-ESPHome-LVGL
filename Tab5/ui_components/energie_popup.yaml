@@ -2,14 +2,17 @@
 # [AI-CONTEXT]
 # @file energie_popup.yaml
 # @role Popup « Énergie » (ADR-0028, 04/10/2026, discussion #278 ; pages : ADR-0058,
-#       10/10/2026). Quatre pages, changées au doigt (glisser à gauche ou à droite) ou par
-#       leur nom en haut, celles qui ont des données seulement :
+#       10/10/2026 ; page Charges : ADR-0077). Cinq pages, changées au doigt (glisser à
+#       gauche ou à droite) ou par leur nom en haut, celles qui ont des données seulement :
 #         - « Flux » : solaire, maison, réseau et batterie en cercles reliés par des traits
 #           dont l'épaisseur suit la puissance, anneau solaire / réseau sur la maison ;
 #         - « Aujourd'hui » : l'arc du soleil, les 24 heures (production, prévision, courbe
 #           ciel clair, meilleur créneau) et, à droite, produit, prévu, demain ;
 #         - « Production » : l'instantané en cartes et l'historique de la production en
 #           barres (Heures / Jours / Mois) avec son total (la page d'avant l'ADR-0058) ;
+#         - « Charges » (ADR-0077) : les six dernières charges des voitures, une ligne chacune
+#           (jour, heure, durée, énergie, part du soleil), dessinées par tab5_energie.cpp dans une
+#           carte de verre pleine largeur ; absente tant que HA n'a envoyé aucune charge ;
 #         - « Bilan » (en kWh, ADR-0062) : la « batterie réseau » du mois civil à gauche,
 #           le net par heure, jour ou mois en barres et son cumul en courbe à droite.
 #       Ouvert par une tuile cap à l'option e (capteur de la section « Énergie » du
@@ -27,7 +30,8 @@
 #       768 × 598 à x 458 (zone 764 × 530 à x 0, y 64, sous le titre et les boutons).
 #       Aujourd'hui : carte de 846 × 598 à x 24 (zone 810 × 570 à x 18, y 14) et
 #       carte de 340 × 598 à x 886 (zone 304 × 570). Flux : zone des traits sur toute la
-#       page, cercles de 200 px placés par le C++.
+#       page, cercles de 200 px placés par le C++. Charges : une carte de 1202 × 598 à x 24
+#       (zone de 1198 × 594, l'intérieur du verre).
 #       Sur une autre carte (lot 4 du portage 1024×600, ADR-0061) : ces nombres sont ceux du
 #       Tab5, ramenés au corps (`v * corps_w // 1202`, `v * corps_h // 598`), le graphique et
 #       les zones prennent le reste du corps ; tab5_energie.cpp fait le même calcul (kZoneH,
@@ -65,6 +69,7 @@ obj:
           - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_1, page: 1, choisir: energie_page } }
           - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_2, page: 2, choisir: energie_page } }
           - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_3, page: 3, choisir: energie_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_4, page: 4, choisir: energie_page } }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE FLUX (instantané avec un capteur solaire)
@@ -201,6 +206,40 @@ obj:
 
                 # Avant le premier instantané de Home Assistant (ou sans le package tab5_energie).
                 - label: { id: energie_attente, text: "En attente de Home Assistant", align: CENTER, y: 0, styles: style_text_dim }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE CHARGES (tab5_maj_voiture_charges, ADR-0077) : les dernières charges des voitures
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: energie_page_charges
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: ${corps_h}
+              hidden: true
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                # La carte de verre pleine largeur ; titre, légende, lignes et total : tab5_energie.cpp.
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: ${corps_w}
+                    height: ${corps_h}
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - obj:
+                          id: energie_charges_zone
+                          align: TOP_LEFT
+                          x: 0
+                          y: 0
+                          width: ${ corps_w | int - 4 }
+                          height: ${ corps_h | int - 4 }
+                          styles: style_transparent
+                          scrollable: false
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE BILAN (tab5_maj_energie_bilan, ADR-0062) : en kWh, mêmes vues que Production

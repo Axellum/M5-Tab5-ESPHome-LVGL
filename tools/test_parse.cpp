@@ -2142,6 +2142,101 @@ static void test_energie_flux_voitures() {
     expect(tout_egal, "voitures : aucune voiture (nul, zéro, 0 W, n = 0) = exactement le résultat d'avant");
 }
 
+// Page « Charges » du popup Énergie (tab5_maj_voiture_charges) : « rang|jour|heure|duree_min|kwh|part_soleil_pct »
+// séparées par « ; », la sortie de `charges` du script tab5_voitures_analyse (ADR-0074).
+static void test_charges_lire() {
+    ChargeLue c[kChargesMax];
+    // Le format exact du script : deux voitures, la plus récente d'abord.
+    int n = charges_lire(ch("2|2026-11-09|09:02|103|12.4|76;1|2026-11-09|01:00|120|14.4|0;2|2026-11-08|11:15|133|15.9|74"), c);
+    expect(n == 3 && c[0].rang == 2 && c[0].annee == 2026 && c[0].mois == 11 && c[0].jour == 9 && c[0].heure == 9 &&
+               c[0].minute == 2 && proche(c[0].duree, 103.0f) && proche(c[0].kwh, 12.4f) && proche(c[0].soleil, 76.0f),
+           "charges : une ligne, tous ses champs");
+    expect(c[1].rang == 1 && c[1].heure == 1 && c[1].minute == 0 && proche(c[1].soleil, 0.0f) && c[2].jour == 8 &&
+               c[2].heure == 11 && c[2].minute == 15,
+           "charges : l'ordre reçu est gardé, 0 % est une part connue");
+    // Vide, ou rien de lisible : aucune charge (la page disparaît).
+    expect(charges_lire(ch(""), c) == 0 && charges_lire(Champ{nullptr, 5}, c) == 0 && charges_lire(ch(";;;"), c) == 0 &&
+               charges_lire(ch("||||||"), c) == 0,
+           "charges : vide, pointeur nul, lignes vides = aucune");
+    // Part du soleil : vide (aucun capteur solaire) et « nan » (non calculable) = inconnue, jamais 0.
+    expect(charges_lire(ch("1|2026-06-15|11:00|120|7.40|"), c) == 1 && std::isnan(c[0].soleil) && proche(c[0].kwh, 7.4f) &&
+               charges_lire(ch("1|2026-06-15|11:00|120|7.40|nan"), c) == 1 && std::isnan(c[0].soleil) &&
+               charges_lire(ch("1|2026-06-15|11:00|120|7.40"), c) == 1 && std::isnan(c[0].soleil),
+           "charges : part du soleil vide, « nan » ou absente = inconnue");
+    // Hors bornes ou illisible : inconnu, jamais une valeur fausse ; la ligne reste si une valeur se lit.
+    expect(charges_lire(ch("1|2026-06-15|11:00|-5|-2|101"), c) == 1 && std::isnan(c[0].duree) && std::isnan(c[0].kwh) &&
+               std::isnan(c[0].soleil) && c[0].heure == 11,
+           "charges : durée, énergie, part hors bornes = inconnues");
+    expect(charges_lire(ch("1|2026-06-15|11:00|1e99|abc|inf"), c) == 1 && std::isnan(c[0].duree) && std::isnan(c[0].kwh) &&
+               std::isnan(c[0].soleil),
+           "charges : non fini ou illisible = inconnu");
+    expect(charges_lire(ch("1|2026-06-15|11:00|10080|1000000|100"), c) == 1 && proche(c[0].duree, 10080.0f) &&
+               proche(c[0].kwh, 1000000.0f) && proche(c[0].soleil, 100.0f),
+           "charges : bornes incluses");
+    // Jour et heure stricts : un faux jour ou une fausse heure ne se lit pas, le reste oui.
+    expect(charges_lire(ch("1|2026-02-30|11:00|60|3|50"), c) == 1 && c[0].annee == 0 && c[0].heure == 11 &&
+               charges_lire(ch("1|2026-6-15|11:00|60|3|50"), c) == 1 && c[0].annee == 0 &&
+               charges_lire(ch("1|2026-06-15|24:00|60|3|50"), c) == 1 && c[0].annee == 2026 && c[0].heure == -1 &&
+               charges_lire(ch("1|2026-06-15|9:05|60|3|50"), c) == 1 && c[0].heure == -1 &&
+               charges_lire(ch("1|1969-12-31|11:00|60|3|50"), c) == 1 && c[0].annee == 0 &&
+               charges_lire(ch("1|2024-02-29|23:59|60|3|50"), c) == 1 && c[0].annee == 2024 && c[0].jour == 29 &&
+               c[0].heure == 23 && c[0].minute == 59,
+           "charges : jour AAAA-MM-JJ et heure HH:MM stricts (29 février d'une année bissextile compris)");
+    // Une ligne sans voiture connue est ignorée ; sans aucune valeur lisible aussi.
+    expect(charges_lire(ch("0|2026-06-15|11:00|60|3|50;3|2026-06-15|11:00|60|3|50;x|2026-06-15|11:00|60|3|50"), c) == 0,
+           "charges : rang 0, 3 ou illisible = ligne ignorée");
+    expect(charges_lire(ch("1|||||;2|x|y|z|w|v;1|2026-06-15|11:00|60|3|50"), c) == 1 && proche(c[0].kwh, 3.0f),
+           "charges : une ligne sans rien de lisible est ignorée, la suivante garde sa place");
+    // Moins de champs (payload court), champs de trop ignorés.
+    expect(charges_lire(ch("1|2026-06-15"), c) == 1 && c[0].annee == 2026 && c[0].heure == -1 && std::isnan(c[0].duree) &&
+               std::isnan(c[0].kwh) && std::isnan(c[0].soleil) &&
+               charges_lire(ch("1|2026-06-15|11:00|60|3|50|trop|encore"), c) == 1 && proche(c[0].soleil, 50.0f),
+           "charges : payload court = champs inconnus, champs de trop ignorés");
+    // Au plus six lignes : la septième est ignorée.
+    n = charges_lire(ch("1|2026-06-15|11:00|60|1|50;1|2026-06-14|11:00|60|2|50;1|2026-06-13|11:00|60|3|50;"
+                        "1|2026-06-12|11:00|60|4|50;1|2026-06-11|11:00|60|5|50;1|2026-06-10|11:00|60|6|50;"
+                        "1|2026-06-09|11:00|60|7|50"),
+                     c);
+    expect(n == kChargesMax && proche(c[5].kwh, 6.0f), "charges : six lignes au plus");
+    // Total : l'énergie des lignes qui en ont une, la part du soleil pondérée par l'énergie des lignes qui en ont une.
+    n = charges_lire(ch("2|2026-11-09|09:02|103|12.4|76;1|2026-11-09|01:00|120|14.4|0"), c);
+    ChargesTotal t = charges_total(c, n);
+    expect(proche(t.kwh, 26.8f) && std::fabs(t.soleil - 35.1642f) < 0.01f,
+           "charges : total 26,8 kWh dont 35 % par le soleil (12,4 kWh à 76 % et 14,4 kWh à 0 %)");
+    n = charges_lire(ch("1|2026-06-15|11:00|120|7.4|;2|2026-06-15|13:00|60|3.0|50"), c);
+    t = charges_total(c, n);
+    expect(proche(t.kwh, 10.4f) && proche(t.soleil, 50.0f),
+           "charges : la part du soleil ne compte que les lignes où elle est connue");
+    n = charges_lire(ch("1|2026-06-15|11:00|120|7.4|;2|2026-06-15|13:00|60|3.0|nan"), c);
+    t = charges_total(c, n);
+    expect(proche(t.kwh, 10.4f) && std::isnan(t.soleil), "charges : aucune part connue = total sans part du soleil");
+    n = charges_lire(ch("1|2026-06-15|11:00|120||50"), c);
+    t = charges_total(c, n);
+    expect(n == 1 && std::isnan(t.kwh) && std::isnan(t.soleil), "charges : aucune énergie lisible = total inconnu");
+    t = charges_total(nullptr, 3);
+    expect(std::isnan(t.kwh) && std::isnan(t.soleil) && std::isnan(charges_total(c, 0).kwh), "charges : total sans charge");
+    // La charge en cours : sa fin tombe de 30 minutes avant à 10 minutes après maintenant (07:45 le 16/06/2026).
+    const int32_t ce_matin = jour_civil(2026, 6, 16) * 1440 + 7 * 60 + 45;
+    n = charges_lire(ch("1|2026-06-16|06:02|103|12.4|76"), c);   // 06:02 + 1 h 43 = 07:45
+    expect(n == 1 && charge_en_cours(c[0], ce_matin) && charge_en_cours(c[0], ce_matin + 30) &&
+               charge_en_cours(c[0], ce_matin - 10) && !charge_en_cours(c[0], ce_matin + 31) &&
+               !charge_en_cours(c[0], ce_matin - 11),
+           "charge en cours : la fin de 10 minutes après à 30 minutes avant maintenant");
+    n = charges_lire(ch("1|2026-06-15|06:02|103|12.4|76"), c);   // la même, la veille
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : la charge d'hier ne l'est pas");
+    n = charges_lire(ch("1|2026-06-15|23:00|480|40.0|50"), c);   // finie à 07:00 aujourd'hui, 45 minutes avant
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin) && charge_en_cours(c[0], ce_matin - 30),
+           "charge en cours : une charge de la nuit se compte d'un jour à l'autre");
+    n = charges_lire(ch("1|2026-06-16|06:02|103|12.4|76"), c);
+    expect(!charge_en_cours(c[0], -1) && !charge_en_cours(c[0], 0), "charge en cours : sans horloge réglée, non");
+    n = charges_lire(ch("1|2026-06-16|06:02||12.4|76"), c);   // durée inconnue
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : sans durée lisible, non");
+    n = charges_lire(ch("1|2026-06-16||103|12.4|76"), c);   // heure inconnue
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : sans heure lisible, non");
+    n = charges_lire(ch("1||06:02|103|12.4|76"), c);   // jour inconnu
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : sans jour lisible, non");
+}
+
 static void test_voiture_lire() {
     VoitureLue v;
     expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95"), v) && v.presente && champ_est(v.nom, "Model Y") &&
@@ -2248,6 +2343,7 @@ int main() {
     test_energie_flux();
     test_energie_flux_voitures();
     test_voiture_lire();
+    test_charges_lire();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

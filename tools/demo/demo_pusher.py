@@ -74,6 +74,7 @@ from scenarios import (
     ENERGIE_INSTANTANE_VOITURES,
     VOITURES,
     build_voiture_payload,
+    build_charges_payload,
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -117,6 +118,9 @@ SERVICE_ENERGIE_BILAN = "tab5_maj_energie_bilan"
 # qu'avec --voitures (deux voitures et l'instantané qui va avec) : sans l'option, la maison solaire
 # de la démo, et ses captures, restent celles d'avant.
 SERVICE_VOITURE = "tab5_maj_voiture"
+# Page « Charges » du popup Énergie (ADR-0077) : les six dernières charges des deux voitures, poussées
+# avec elles (--voitures) ; absente d'un firmware plus ancien (la page n'existe pas sans elle).
+SERVICE_VOITURE_CHARGES = "tab5_maj_voiture_charges"
 # Popup Température (ADR-0032) : absent d'un firmware plus ancien. HA ne pousse qu'à
 # l'ouverture du popup (événement esphome.tab5_historique) et le popup ignore une réponse
 # pour une autre température : la démo ne répond qu'à l'événement (le rendu pousse
@@ -343,7 +347,8 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
     popup Énergie ; les deux actions de l'ADR-0058 manquent seules sur un firmware qui ne les
     a pas encore. `voitures` (--voitures) : l'instantané d'une maison sans batterie dont deux
     voitures tirent (ENERGIE_INSTANTANE_VOITURES) et, juste après, ces deux voitures
-    (tab5_maj_voiture, ADR-0076) ; absentes d'un firmware qui n'a pas l'action."""
+    (tab5_maj_voiture, ADR-0076) et leurs six dernières charges (tab5_maj_voiture_charges,
+    ADR-0077, datées de `aujourd_hui`) ; absentes d'un firmware qui n'a pas l'action."""
     if SERVICE_ENERGIE not in services_par_nom:
         return
     jour = aujourd_hui or _dt.date.today()
@@ -353,6 +358,9 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
         for rang, voiture in enumerate(VOITURES, start=1):
             await _appeler(client, services_par_nom, SERVICE_VOITURE, rang=str(rang),
                            payload=build_voiture_payload(voiture))
+        if SERVICE_VOITURE_CHARGES in services_par_nom:
+            await _appeler(client, services_par_nom, SERVICE_VOITURE_CHARGES,
+                           payload=build_charges_payload(jour))
     if SERVICE_ENERGIE_SOLEIL in services_par_nom:
         await _appeler(client, services_par_nom, SERVICE_ENERGIE_SOLEIL, payload=build_energie_soleil())
     if "heures" not in vues:

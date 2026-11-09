@@ -1250,6 +1250,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Limite %d %%": "Limite %d %%"
 "Prête dans %s": "Pronta in %s"
 "Voiture %d": "Auto %d"
+# Page « Charges » du popup Énergie (lot B3)
+# Onglet « Ricariche » (9 car.) : « Cariche » prêterait à confusion avec « Carica » (charge de batterie).
+"Charges": "Ricariche"
+"Dernières charges": "Ultime ricariche"
+"en cours": "in corso"
+"Soleil": "Sole"
+"energie|Réseau": "Rete"
+"Hier": "Ieri"
+"Total : %s, dont %d %% par le soleil": "Totale: %s, di cui %d %% dal sole"
+"Total : %s": "Totale: %s"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "BATTERIA DI RETE"
 "d'avance sur le réseau ce mois-ci": "di vantaggio sulla rete questo mese"

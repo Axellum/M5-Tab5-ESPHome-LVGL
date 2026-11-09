@@ -707,15 +707,17 @@ def build_energie_payload(instantane: dict | None = None) -> str:
 # 1 débranchée / 2 branchée / 3 en charge, puissance en W entiers, energie en kWh ajoutés,
 # minutes avant la fin de la charge, compteur « 1 » = le compteur de la maison compte les
 # voitures. Champ vide = inconnu ; payload vide = voiture absente (la tablette retire son cercle).
-# La démo montre deux voitures : la première en charge à 7,2 kW, la seconde branchée.
+# La démo montre deux voitures : la première en charge à 7,2 kW, la seconde branchée. Leurs noms
+# sont ceux d'une maison réelle, sans modèle (« Tesla 2023 », « Tesla 2025 ») : les modèles ne sont
+# pas connus.
 # ---------------------------------------------------------------------------
 
 VOITURE_CHAMPS = ("nom", "batterie", "autonomie", "unite_distance", "etat", "puissance", "energie",
                   "limite", "minutes", "compteur")
 VOITURES = (
-    {"nom": "Model Y", "batterie": "78", "autonomie": "412", "unite_distance": "km", "etat": "3",
+    {"nom": "Tesla 2023", "batterie": "78", "autonomie": "412", "unite_distance": "km", "etat": "3",
      "puissance": "7200", "energie": "12.4", "limite": "90", "minutes": "95", "compteur": "1"},
-    {"nom": "Model 3", "batterie": "52", "autonomie": "275", "unite_distance": "km", "etat": "2",
+    {"nom": "Tesla 2025", "batterie": "52", "autonomie": "275", "unite_distance": "km", "etat": "2",
      "puissance": "0", "energie": "", "limite": "80", "minutes": "", "compteur": "1"},
 )
 # Instantané qui va avec (une maison solaire sans batterie, en pleine journée) : 6,4 kW de soleil,
@@ -751,6 +753,48 @@ def build_voiture_payload(voiture: dict | None) -> str:
     assert d["puissance"] == "" or float(d["puissance"]).is_integer(), "puissance : W entiers"
     assert d["compteur"] in ("", "0", "1"), "compteur : 0 ou 1"
     return "|".join(valeurs)
+
+
+# ---------------------------------------------------------------------------
+# Charges des voitures, page « Charges » du popup Énergie (ADR-0077) —
+# tab5_maj_voiture_charges(payload) : jusqu'à six lignes séparées par « ; », la plus récente d'abord,
+# chacune « rang|jour|heure|duree_min|kwh|part_soleil_pct » (la chaîne `charges` de
+# script.tab5_voitures_analyse, ADR-0074) : rang 1 ou 2 (la voiture de tab5_maj_voiture), jour
+# AAAA-MM-JJ et heure HH:MM locaux du début, durée en minutes, énergie en kWh, part du soleil de 0 à
+# 100 (vide : aucun capteur solaire choisi ; « nan » : non calculable). Payload vide = aucune charge :
+# la page disparaît. La démo montre six charges des deux voitures : la plus récente est en cours
+# (la voiture 1 charge à 7,2 kW depuis 06:02 quand l'horloge des captures marque 07:45).
+# ---------------------------------------------------------------------------
+
+CHARGES_CHAMPS = ("rang", "jour", "heure", "duree_min", "kwh", "part_soleil_pct")
+CHARGES_MAX = 6
+# (rang, jours avant aujourd'hui, heure, minutes, kWh, part du soleil en %) : « Aujourd'hui », « Hier »,
+# puis des jours de la semaine (un 12 juin est un vendredi).
+CHARGES = (
+    (1, 0, "06:02", 103, "12.4", "76"),
+    (2, 0, "01:00", 120, "14.4", "0"),
+    (2, 1, "11:15", 133, "15.9", "74"),
+    (1, 3, "14:05", 92, "11.0", "92"),
+    (2, 3, "10:40", 180, "21.6", "78"),
+    (1, 4, "10:20", 165, "19.8", "54"),
+)
+
+
+def build_charges_payload(aujourd_hui: _dt.date, charges=CHARGES) -> str:
+    """tab5_maj_voiture_charges : les lignes de `charges` (rang, jours avant `aujourd_hui`, heure, minutes,
+    kWh, part du soleil) dans le format du contrat, la plus récente d'abord ; () = payload vide (aucune
+    charge : la page « Charges » disparaît)."""
+    assert len(charges) <= CHARGES_MAX, f"{CHARGES_MAX} charges au plus"
+    lignes = []
+    for rang, avant, heure, minutes, kwh, soleil in charges:
+        assert rang in (1, 2), "rang : 1 ou 2"
+        assert re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", heure), f"heure HH:MM : {heure!r}"
+        assert 0 <= minutes <= 7 * 24 * 60, "durée : de 0 à une semaine"
+        assert _nombre(kwh) is not None and float(kwh) >= 0, f"kwh : {kwh!r}"
+        assert soleil in ("", "nan") or 0 <= float(soleil) <= 100, f"part du soleil : {soleil!r}"
+        jour = aujourd_hui - _dt.timedelta(days=avant)
+        lignes.append("|".join((str(rang), jour.isoformat(), heure, str(minutes), kwh, soleil)))
+    return ";".join(lignes)
 
 
 # ---------------------------------------------------------------------------

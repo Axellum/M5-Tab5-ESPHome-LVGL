@@ -642,6 +642,16 @@ api:
       then:
         - lambda: 'energie_voiture(rang, payload);'
 
+    - service: tab5_maj_voiture_charges
+      description: "Popup Énergie, page Charges : les dernières charges des voitures (ADR-0077), poussées avec l'instantané."
+      variables:
+        payload:
+          type: string
+          description: "Jusqu'à six lignes séparées par « ; », la plus récente d'abord, chacune « rang|jour|heure|duree_min|kwh|part_soleil_pct » — rang : 1 ou 2 (la voiture de tab5_maj_voiture) ; jour AAAA-MM-JJ et heure HH:MM locaux du début de la charge ; duree_min en minutes ; kwh : l'énergie reçue par la voiture ; part_soleil_pct de 0 à 100 (vide : aucun capteur solaire choisi). Champ vide = inconnu. Vide = aucune charge (la page Charges disparaît). Toujours ajouter à la fin."
+          example: "2|2026-11-09|09:02|103|12.4|76;1|2026-11-09|01:00|120|14.4|0"
+      then:
+        - lambda: 'energie_voiture_charges(payload);'
+
     - service: tab5_maj_energie_historique
       description: "Popup Énergie : la production d'une vue en barres (heures du jour, 30 derniers jours, 12 derniers mois)."
       variables:

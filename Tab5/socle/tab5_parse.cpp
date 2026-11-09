@@ -1909,3 +1909,96 @@ bool voiture_lire(const Champ& payload, VoitureLue& out) {
     out.compteur_compte = champ_entier(f[9], 1, 1) != 0;   // « 0 » seul dit non
     return true;
 }
+
+// ─── 18. Charges des voitures (page « Charges » du popup Énergie, tab5_maj_voiture_charges) ───
+// Nouveau, écrit ici d'emblée. Les formats sont ceux de la sortie `charges` du script
+// tab5_voitures_analyse (ADR-0074) ; la page qui les montre est tab5_energie.cpp.
+
+namespace {
+constexpr int kChargeChamps = 6;   // rang, jour, heure, durée, énergie, part du soleil
+
+// Entier de `n` chiffres décimaux à partir de c.p[debut] ; -1 si un caractère n'en est pas un.
+int charge_chiffres(const Champ& c, size_t debut, size_t n) {
+    int v = 0;
+    for (size_t i = 0; i < n; i++) {
+        const char ch = c.p[debut + i];
+        if (ch < '0' || ch > '9') return -1;
+        v = v * 10 + (ch - '0');
+    }
+    return v;
+}
+
+// « AAAA-MM-JJ » (dix caractères, un vrai jour du calendrier, de 1970 à 2200) ; faux sinon.
+bool charge_jour(const Champ& c, int& annee, int& mois, int& jour) {
+    if (c.p == nullptr || c.n != 10 || c.p[4] != '-' || c.p[7] != '-') return false;
+    const int a = charge_chiffres(c, 0, 4), m = charge_chiffres(c, 5, 2), j = charge_chiffres(c, 8, 2);
+    if (a < 1970 || a > 2200 || m < 1 || m > 12 || j < 1 || j > jours_du_mois(a, m)) return false;
+    annee = a;
+    mois = m;
+    jour = j;
+    return true;
+}
+
+// « HH:MM » (cinq caractères, 00:00 à 23:59) ; faux sinon.
+bool charge_heure(const Champ& c, int& heure, int& minute) {
+    if (c.p == nullptr || c.n != 5 || c.p[2] != ':') return false;
+    const int h = charge_chiffres(c, 0, 2), m = charge_chiffres(c, 3, 2);
+    if (h < 0 || h > 23 || m < 0 || m > 59) return false;
+    heure = h;
+    minute = m;
+    return true;
+}
+}  // namespace
+
+int charges_lire(const Champ& payload, ChargeLue out[kChargesMax]) {
+    for (int i = 0; i < kChargesMax; i++) out[i] = ChargeLue{};
+    if (payload.p == nullptr || payload.n == 0) return 0;
+    Champ lignes[kChargesMax];
+    const int nl = champs_decouper(payload.p, payload.n, ';', lignes, kChargesMax);
+    int n = 0;
+    for (int l = 0; l < nl; l++) {
+        Champ f[kChargeChamps];
+        const int k = champs_decouper(lignes[l].p, lignes[l].n, '|', f, kChargeChamps);
+        for (int i = k; i < kChargeChamps; i++) f[i] = Champ{lignes[l].p + lignes[l].n, 0};
+        ChargeLue c;
+        c.rang = static_cast<int>(champ_entier(f[0], 2, 0));
+        if (c.rang < 1) continue;   // ni la voiture 1 ni la 2 : pas une charge de nos voitures
+        if (!charge_jour(f[1], c.annee, c.mois, c.jour)) c.annee = c.mois = c.jour = 0;
+        if (!charge_heure(f[2], c.heure, c.minute)) c.heure = c.minute = -1;
+        c.duree = voiture_borne(f[3], kChargeDureeMax);
+        c.kwh = energie_kwh(f[4]);
+        c.soleil = voiture_pct(f[5]);
+        if (c.annee == 0 && c.heure < 0 && !std::isfinite(c.duree) && !std::isfinite(c.kwh)) continue;
+        out[n++] = c;
+    }
+    return n;
+}
+
+ChargesTotal charges_total(const ChargeLue* charges, int n) {
+    ChargesTotal t;
+    if (charges == nullptr) return t;
+    float kwh = 0.0f, kwh_connu = 0.0f, soleil = 0.0f;
+    bool a_kwh = false;
+    for (int i = 0; i < n; i++) {
+        const ChargeLue& c = charges[i];
+        if (!std::isfinite(c.kwh)) continue;
+        a_kwh = true;
+        kwh += c.kwh;
+        if (!std::isfinite(c.soleil)) continue;
+        kwh_connu += c.kwh;
+        soleil += c.kwh * c.soleil / 100.0f;
+    }
+    if (a_kwh) t.kwh = kwh;
+    if (kwh_connu > 0.0f) t.soleil = 100.0f * soleil / kwh_connu;
+    return t;
+}
+
+bool charge_en_cours(const ChargeLue& charge, int32_t maintenant) {
+    constexpr int32_t kEnRetardMax = 30;   // minutes : la fin de la charge est avant maintenant
+    constexpr int32_t kEnAvanceMax = 10;   // minutes : ou un peu après (créneau de 5 minutes arrondi)
+    if (maintenant < 0 || charge.annee <= 0 || charge.heure < 0 || !std::isfinite(charge.duree)) return false;
+    const int32_t fin = jour_civil(charge.annee, charge.mois, charge.jour) * 1440 + charge.heure * 60 + charge.minute +
+                        static_cast<int32_t>(std::lround(charge.duree));
+    const int32_t retard = maintenant - fin;
+    return retard >= -kEnAvanceMax && retard <= kEnRetardMax;
+}

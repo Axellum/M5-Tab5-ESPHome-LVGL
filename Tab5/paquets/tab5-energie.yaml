@@ -30,11 +30,13 @@ script:
             u.page[0] = id(energie_page_flux);
             u.page[1] = id(energie_page_soleil);
             u.page[2] = id(energie_page_production);
-            u.page[3] = id(energie_page_bilan);
+            u.page[3] = id(energie_page_charges);
+            u.page[4] = id(energie_page_bilan);
             u.onglet[0] = id(energie_onglet_0);
             u.onglet[1] = id(energie_onglet_1);
             u.onglet[2] = id(energie_onglet_2);
             u.onglet[3] = id(energie_onglet_3);
+            u.onglet[4] = id(energie_onglet_4);
             u.carte[0] = id(energie_carte_0);
             u.carte[1] = id(energie_carte_1);
             u.carte[2] = id(energie_carte_2);
@@ -99,6 +101,7 @@ script:
             u.flux_detail[5] = id(energie_flux_detail_5);
             u.soleil_zone = id(energie_soleil_zone);
             u.soleil_infos = id(energie_soleil_infos);
+            u.charges_zone = id(energie_charges_zone);
             u.bilan_heros = id(energie_bilan_heros);
             u.bilan_titre = id(energie_bilan_titre);
             u.bilan_vue_btn[0] = id(energie_bilan_vue_0);
@@ -108,6 +111,7 @@ script:
             u.police = id(roboto_22);
             u.police_grasse = id(roboto_32_b);
             u.police_grande = id(roboto_55_b);
+            u.police_icone = id(mdi_font_45);
             u.demander = [](const char* vue) { id(tab5_energie_demande).execute(std::string(vue)); };
             // En dernier : energie_ouvrir() ne fait rien tant que popup est nul.
             u.popup = id(energie_popup);

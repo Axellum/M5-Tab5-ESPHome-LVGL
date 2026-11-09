@@ -89,6 +89,8 @@ GRAINES: dict[str, dict[str, str]] = {
     # Une voiture électrique du Flux (ADR-0076) : rang, puis nom, batterie, autonomie, unité, état
     # (3 = en charge), W, kWh ajoutés, limite, minutes restantes, « le compteur compte la voiture ».
     "tab5_maj_voiture": {"rang": "1", "payload": "Model Y|78|412|km|3|7200|12.4|90|95|1"},
+    # Les dernières charges des voitures (page Charges) : rang|jour|heure|durée en minutes|kWh|part du soleil.
+    "tab5_maj_voiture_charges": {"payload": "2|2026-11-09|09:02|103|12.4|76;1|2026-11-09|01:00|120|14.4|0"},
     "tab5_maj_energie_historique": {"vue": "heures", "debut": "2026-06-16",
                                     "valeurs": "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"},
     # Pages « Aujourd'hui » et « Bilan » (ADR-0058) : les 24 valeurs de prevu et de clair, un créneau,
