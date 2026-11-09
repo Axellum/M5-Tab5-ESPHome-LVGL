@@ -1,0 +1,8 @@
+### Ajouté
+
+- **Ce qu'une mise à jour demande, calculé** : [`tools/gestes_maj.py`](tools/gestes_maj.py) lit le diff de deux versions (`python tools/gestes_maj.py v3.9.0..v3.9.1`) et dit, pour chaque profil — **intégration de HACS** d'un côté, **zip à la main** de l'autre, jamais mélangés —, quels gestes sont REQUIS, FACULTATIFS ou INUTILES : fichiers Home Assistant (paquets, modèles, blueprint), firmware, tableau de bord. « Requis » seulement quand c'est prouvé (contrat HA ↔ firmware lu par `tools/contrat_api.py`, version minimale de Home Assistant relevée, rechargement après une copie à la main). `--notes` écrit le bloc « À faire » du CHANGELOG, `--en --notes` le « Upgrading from … » des notes de release, `--json` sert aux tests. Lecture seule, rien n'est compilé ni flashé. Joué par `tests/test_gestes_maj.py` (dépôt jetable, et la 3.9.1 sur les vrais tags : deux fichiers Home Assistant utiles, rien dans `custom_components/`, tableau de bord et fichiers HA facultatifs).
+
+### Modifié
+
+- **Page des mises à jour** : [`docs/installation/updates.md`](docs/installation/updates.md) ouvre sur un tableau par profil (intégration de HACS, zip à la main) avec ce qui est requis, facultatif ou inutile ; les sections « Home Assistant files » et « Fichiers Home Assistant » se séparent en « Avec l'intégration », « À la main (zip) » et « Dans les deux cas ». Les ancres citées par les autres pages sont gardées.
+- **Notes de release** : le skill `release-tab5` prend le bloc « À faire » du CHANGELOG et la section « Upgrading from … » des notes de release dans la sortie de `tools/gestes_maj.py`, au lieu de les écrire à la main, pour ne plus mélanger l'intégration et le zip dans une même phrase.

@@ -4,7 +4,25 @@
 
 ---
 
-**In this order: the Home Assistant files first, then the firmware.** Each release says what changes in its notes ([releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)).
+**What an update asks of you depends on how the Home Assistant files were put in place**, so there are two columns below, and they never mix. Do what your column says: the release notes then mark each step **required**, **optional** or **not needed** for that release.
+
+## What an update asks of you
+
+| | With the HACS integration | By hand (zip) |
+|---|---|---|
+| You are here if | « Tab5 — fichiers HA · HA files » shows in *Settings → Updates* ([installed this way](home-assistant-files.md#with-hacs)) | you unzipped `tab5_home_assistant.zip` into `config/` ([installed this way](home-assistant-files.md)) |
+| 1. Home Assistant files | *Settings → Updates → « Tab5 — fichiers HA » → Install*, then restart Home Assistant | download `tab5_home_assistant.zip` from the release, copy its files over `config/`, then *Developer tools → YAML → All YAML configuration* and the action `homeassistant.reload_custom_templates` (or restart Home Assistant) |
+| 2. Firmware | follows by itself once the files are in place (« Then update the tablet » ticked, the default); otherwise *Settings → Updates → « Firmware » → Install* | *Settings → Updates → « Firmware » → Install* |
+| 3. Dashboard, if you have one | its items 2 and 3 again ([dashboard](dashboard.md)) | its items 2 and 3 again ([dashboard](dashboard.md)) |
+| `tab5_hacs.zip`, the other file of a release | never to download: HACS reads it for you | never to download: only HACS reads it |
+
+For one release, in your column, each step is:
+
+- **required**: leaving it out breaks something, or leaves the step before it without effect; the release notes say what, and in which order when it matters;
+- **optional**: the release changes it, but the previous version keeps working without it; you only get the fix or the new thing if you do it;
+- **not needed**: this release does not change it, or the integration does it by itself.
+
+The notes of the releases after 3.9.1 give this list for each column. It is computed from the difference between the two releases by `tools/gestes_maj.py` (`python tools/gestes_maj.py v3.9.0..v3.9.1` prints it), and « required » is only written when it is proven: the contract between the firmware and the files, a higher minimum Home Assistant version, the reload that makes copied files count. If the order matters, the notes say it (« Home Assistant files first », « firmware first »); otherwise either order is fine.
 
 ## The firmware, from Home Assistant
 
@@ -14,7 +32,9 @@ The tablet follows the channel it was installed from (Stable or Beta); to switch
 
 ## Home Assistant files
 
-**With the HACS integration** ([installed this way](home-assistant-files.md#with-hacs)): each release shows up in *Settings → Updates* as « Tab5 — fichiers HA · HA files ». *Install*, then restart Home Assistant. **The integration must also be added** in *Settings → Devices & services* (it is listed there as « Tab5 — fichiers HA · HA files », apart from the tablet under ESPHome): an update downloaded by HACS for an integration that was never added does nothing ([troubleshooting](../troubleshooting.md#tab5-integration-hacs-downloaded-but-nothing-happens)). At start, the integration:
+### With the HACS integration
+
+Each release shows up in *Settings → Updates* as « Tab5 — fichiers HA · HA files » ([how it is installed](home-assistant-files.md#with-hacs)). *Install*, then restart Home Assistant. **The integration must also be added** in *Settings → Devices & services* (it is listed there as « Tab5 — fichiers HA · HA files », apart from the tablet under ESPHome): an update downloaded by HACS for an integration that was never added does nothing ([troubleshooting](../troubleshooting.md#tab5-integration-hacs-downloaded-but-nothing-happens)). At start, the integration:
 
 - saves the current files in `config/tab5_sauvegardes/` (the 5 latest backups are kept);
 - puts the new ones in place: a Tab5 file you edited by hand is replaced too, and the notification names it (its copy stays in the backup); a Tab5 file that was already there without coming from the integration (copied by hand) and differs is also named in *Settings → System → Repairs*, with its backup folder;
@@ -24,11 +44,22 @@ The tablet follows the channel it was installed from (Stable or Beta); to switch
 
 A problem shows in *Settings → System → Repairs*: missing `packages:` line, files refused, restart needed ([what to do](../troubleshooting.md#tab5-integration-hacs-a-message-in-repairs)). HACS offers full releases only: pre-releases (Beta channel) only if beta versions are switched on for this repository in HACS. To put the files back after a mistake: *Settings → Devices & services → Tab5 → Configure*, « Install the files of this version again now ».
 
-**By hand, they do not update themselves**: replace them with those of `tab5_home_assistant.zip` from the same release ([step 1](home-assistant-files.md)), then *Developer tools → YAML → All YAML configuration*, and run the action `homeassistant.reload_custom_templates` (or restart Home Assistant). A blueprint imported from its URL rather than unzipped: import it again.
+### By hand (zip)
+
+**They do not update themselves.** For each release:
+
+1. Replace the files with those of `tab5_home_assistant.zip` from the same release ([step 1](home-assistant-files.md): *Assets*, at the bottom of the release, unzipped over `config/`).
+2. A file the release no longer ships stays in `config/` until you delete it: the notes name them, or compare `config/packages/` with the archive.
+3. *Developer tools → YAML → All YAML configuration*, then run the action `homeassistant.reload_custom_templates` (or restart Home Assistant).
+4. A blueprint imported from its URL rather than unzipped: import it again.
+
+`tab5_hacs.zip`, the other file of a release, is read by HACS only: do not download it by hand.
+
+### Both ways
 
 The files of an archive know their version: when the tablet runs a newer major or minor release (X.Y; a patch release alone does not count), Home Assistant says so (notification « Tab5 : fichiers Home Assistant à mettre à jour », sensor « Tab5 · HA files out of date »). Files copied from the repository have no version and are never compared.
 
-Using the [dashboard](dashboard.md)? After an update that adds entities, do its items 2 and 3 again.
+Using the [dashboard](dashboard.md)? The release notes say whether it matters; after an update that adds entities, do its items 2 and 3 again.
 
 ### Putting older files back by hand
 
@@ -88,7 +119,25 @@ Then `secrets.yaml` can go (keep the old key only if you may flash 2.x again), a
 
 ---
 
-**Dans cet ordre : les fichiers Home Assistant d'abord, puis le firmware.** Chaque release dit ce qui change dans ses notes ([releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)).
+**Ce qu'une mise à jour vous demande dépend de la façon dont les fichiers Home Assistant ont été posés** : il y a donc deux colonnes ci-dessous, qui ne se mélangent jamais. Faites ce que dit la vôtre : les notes de la release marquent ensuite chaque geste **requis**, **facultatif** ou **inutile** pour cette version.
+
+## Ce qu'une mise à jour demande
+
+| | Avec l'intégration de HACS | À la main (zip) |
+|---|---|---|
+| Vous êtes ici si | « Tab5 — fichiers HA · HA files » apparaît dans *Paramètres → Mises à jour* ([installée ainsi](home-assistant-files.md#avec-hacs)) | vous avez décompressé `tab5_home_assistant.zip` dans `config/` ([installés ainsi](home-assistant-files.md#version-française)) |
+| 1. Fichiers Home Assistant | *Paramètres → Mises à jour → « Tab5 — fichiers HA » → Installer*, puis redémarrez Home Assistant | téléchargez `tab5_home_assistant.zip` de la release, copiez ses fichiers sur `config/`, puis *Outils de développement → YAML → Toute la configuration YAML* et l'action `homeassistant.reload_custom_templates` (ou redémarrez Home Assistant) |
+| 2. Firmware | suit tout seul une fois les fichiers posés (« Mettre ensuite la tablette à jour » coché, par défaut) ; sinon *Paramètres → Mises à jour → « Firmware » → Installer* | *Paramètres → Mises à jour → « Firmware » → Installer* |
+| 3. Tableau de bord, si vous en avez un | ses points 2 et 3 à refaire ([tableau de bord](dashboard.md#version-française)) | ses points 2 et 3 à refaire ([tableau de bord](dashboard.md#version-française)) |
+| `tab5_hacs.zip`, l'autre fichier d'une release | à ne jamais télécharger : HACS le lit pour vous | à ne jamais télécharger : seul HACS le lit |
+
+Pour une release, dans votre colonne, chaque geste est :
+
+- **requis** : s'en passer casse quelque chose, ou laisse sans effet le geste d'avant ; les notes disent quoi, et dans quel ordre quand cela compte ;
+- **facultatif** : la release le change, mais la version précédente continue de marcher sans lui ; vous n'avez la correction ou la nouveauté que si vous le faites ;
+- **inutile** : cette release ne le change pas, ou l'intégration le fait toute seule.
+
+Les notes des releases qui suivent la 3.9.1 donnent cette liste pour chaque colonne. Elle est calculée d'après la différence entre les deux releases par `tools/gestes_maj.py` (`python tools/gestes_maj.py v3.9.0..v3.9.1` l'affiche), et « requis » n'est écrit que s'il est prouvé : le contrat entre le firmware et les fichiers, une version minimale de Home Assistant relevée, le rechargement qui fait compter des fichiers copiés. Si l'ordre compte, les notes le disent (« les fichiers Home Assistant d'abord », « le firmware d'abord ») ; sinon l'un ou l'autre.
 
 ## Le firmware, depuis Home Assistant
 
@@ -98,7 +147,9 @@ La tablette suit le canal depuis lequel elle a été installée (Stable ou Bêta
 
 ## Fichiers Home Assistant
 
-**Avec l'intégration de HACS** ([installée ainsi](home-assistant-files.md#avec-hacs)) : chaque release apparaît dans *Paramètres → Mises à jour*, « Tab5 — fichiers HA · HA files ». *Installer*, puis redémarrez Home Assistant. **L'intégration doit aussi être ajoutée** dans *Paramètres → Appareils et services* (elle y apparaît sous « Tab5 — fichiers HA · HA files », à part de la tablette rangée sous ESPHome) : une mise à jour téléchargée par HACS pour une intégration jamais ajoutée ne fait rien ([incidents connus](../troubleshooting.md#intégration-tab5-hacs--téléchargée-mais-rien-ne-se-passe)). Au démarrage, l'intégration :
+### Avec l'intégration de HACS
+
+Chaque release apparaît dans *Paramètres → Mises à jour*, « Tab5 — fichiers HA · HA files » ([comment elle s'installe](home-assistant-files.md#avec-hacs)). *Installer*, puis redémarrez Home Assistant. **L'intégration doit aussi être ajoutée** dans *Paramètres → Appareils et services* (elle y apparaît sous « Tab5 — fichiers HA · HA files », à part de la tablette rangée sous ESPHome) : une mise à jour téléchargée par HACS pour une intégration jamais ajoutée ne fait rien ([incidents connus](../troubleshooting.md#intégration-tab5-hacs--téléchargée-mais-rien-ne-se-passe)). Au démarrage, l'intégration :
 
 - garde les fichiers actuels dans `config/tab5_sauvegardes/` (les 5 dernières sauvegardes sont gardées) ;
 - pose les nouveaux : un fichier du Tab5 modifié à la main est remplacé lui aussi, et la notification le nomme (sa copie reste dans la sauvegarde) ; un fichier du Tab5 déjà là sans venir de l'intégration (copié à la main) et différent est aussi nommé dans *Paramètres → Système → Corrections*, avec son dossier de sauvegarde ;
@@ -108,11 +159,22 @@ La tablette suit le canal depuis lequel elle a été installée (Stable ou Bêta
 
 Un problème s'affiche dans *Paramètres → Système → Corrections* : ligne `packages:` absente, fichiers refusés, redémarrage nécessaire ([que faire](../troubleshooting.md#intégration-tab5-hacs--un-message-dans-corrections)). HACS ne propose que les releases complètes : les pré-releases (canal Bêta) seulement si les versions bêta sont activées pour ce dépôt dans HACS. Pour remettre les fichiers après une erreur : *Paramètres → Appareils et services → Tab5 → Configurer*, « Réinstaller maintenant les fichiers de cette version ».
 
-**À la main, ils ne se mettent pas à jour seuls** : remplacez-les par ceux de `tab5_home_assistant.zip` de la même release ([étape 1](home-assistant-files.md#version-française)), puis *Outils de développement → YAML → Toute la configuration YAML*, et lancez l'action `homeassistant.reload_custom_templates` (ou redémarrez Home Assistant). Un blueprint importé depuis son adresse plutôt que décompressé : importez-le de nouveau.
+### À la main (zip)
+
+**Ils ne se mettent pas à jour seuls.** À chaque release :
+
+1. Remplacez les fichiers par ceux de `tab5_home_assistant.zip` de la même release ([étape 1](home-assistant-files.md#version-française) : *Assets*, au bas de la release, décompressé sur `config/`).
+2. Un fichier que la release ne livre plus reste dans `config/` tant que vous ne le supprimez pas : les notes les nomment, ou comparez `config/packages/` avec l'archive.
+3. *Outils de développement → YAML → Toute la configuration YAML*, puis lancez l'action `homeassistant.reload_custom_templates` (ou redémarrez Home Assistant).
+4. Un blueprint importé depuis son adresse plutôt que décompressé : importez-le de nouveau.
+
+`tab5_hacs.zip`, l'autre fichier d'une release, n'est lu que par HACS : ne le téléchargez pas à la main.
+
+### Dans les deux cas
 
 Les fichiers d'une archive connaissent leur version : quand la tablette tourne une release majeure ou mineure plus récente (X.Y ; une version corrective seule ne compte pas), Home Assistant le dit (notification « Tab5 : fichiers Home Assistant à mettre à jour », capteur « Tab5 · HA files out of date »). Des fichiers copiés depuis le dépôt n'ont pas de version et ne sont jamais comparés.
 
-Vous utilisez le [tableau de bord](dashboard.md#version-française) ? Après une mise à jour qui ajoute des entités, refaites ses points 2 et 3.
+Vous utilisez le [tableau de bord](dashboard.md#version-française) ? Les notes de la release disent si cela compte ; après une mise à jour qui ajoute des entités, refaites ses points 2 et 3.
 
 ### Remettre à la main des fichiers plus anciens
 

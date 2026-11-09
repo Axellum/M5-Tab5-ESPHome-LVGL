@@ -67,6 +67,12 @@ Le test C++ fait foi. Un miroir Python ne prouve le C++ que s'il est tenu à jou
 | `fnb58.py` | lit le testeur USB FNIRSI FNB58 par son port micro-USB « PC » (HID, paquet `hidapi`) : 100 échantillons/s, résumé ou CSV ; décodage testé par `tests/test_fnb58.py` |
 | `campagne_mesures.py` | consommation d'un écran alimenté par USB, au FNB58, pendant qu'il est piloté par son API : rétroéclairage, chaque écran, redémarrages ; remet l'état de départ ; `--analyser` résume une campagne (docs/consumption.md, Waveshare 7B) |
 
+## Préparer une release (lecture seule)
+
+| Outil | Rôle |
+|---|---|
+| `gestes_maj.py` | d'après le diff de deux révisions (`python tools/gestes_maj.py v3.9.0..v3.9.1`, ou une seule contre `HEAD`), ce qu'une mise à jour demande à chaque profil, **intégration HACS** et **zip à la main** : chaque geste REQUIS, FACULTATIF ou INUTILE (« requis » seulement s'il est prouvé : contrat HA ↔ firmware via `contrat_api.py`, version minimale de Home Assistant, rechargement après une copie). `--notes` écrit le bloc « À faire » du CHANGELOG (français) ou `--en --notes` « Upgrading from … » des notes de release ; `--json` pour un test. Ne modifie rien ; tags récupérés (`git fetch --tags`). Joué par `tests/test_gestes_maj.py` (dépôt jetable, et la 3.9.1 sur les vrais tags) |
+
 ## Sous-dossiers
 
 | Dossier | Rôle |
