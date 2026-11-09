@@ -33,6 +33,8 @@ namespace esphome { namespace font { class Font; } }
 // « Batterie réseau » et graphique du net, construits en C++ : ADR-0062).
 constexpr int kEnergieCartes = 4;
 constexpr int kEnergiePages = 4;
+// Cercles de la page Flux : les quatre cartes, puis une voiture ou deux (ADR-0076).
+constexpr int kEnergieNoeuds = 6;
 struct EnergieUI {
     lv_obj_t* popup = nullptr;            // energie_popup
     lv_obj_t* page[kEnergiePages] = {};   // energie_page_flux, _soleil, _production, _bilan
@@ -48,14 +50,14 @@ struct EnergieUI {
     lv_obj_t* vue_btn[3] = {};            // energie_vue_N
     lv_obj_t* zone = nullptr;             // energie_zone : barres, construites en C++
     lv_obj_t* attente = nullptr;          // energie_attente : avant le premier instantané
-    // Page Flux : un cercle par carte (0 solaire, 1 maison, 2 réseau, 3 batterie,
-    // energie_flux_noeud.yaml), sous eux la zone des traits et de l'anneau.
+    // Page Flux : un cercle par nœud (0 solaire, 1 maison, 2 réseau, 3 batterie, 4 et 5 les
+    // voitures, energie_flux_noeud.yaml), sous eux la zone des traits et des anneaux.
     lv_obj_t* flux_zone = nullptr;        // energie_flux_zone
-    lv_obj_t* flux_noeud[4] = {};         // energie_flux_N
-    lv_obj_t* flux_icone[4] = {};         // energie_flux_icone_N (mdi_font_45)
-    lv_obj_t* flux_valeur[4] = {};        // energie_flux_valeur_N
-    lv_obj_t* flux_texte[4] = {};         // energie_flux_texte_N : « Aujourd'hui », « Charge »…
-    lv_obj_t* flux_detail[4] = {};        // energie_flux_detail_N : « 1.47 kWh », « 400 W »…
+    lv_obj_t* flux_noeud[kEnergieNoeuds] = {};   // energie_flux_N
+    lv_obj_t* flux_icone[kEnergieNoeuds] = {};   // energie_flux_icone_N (mdi_font_45)
+    lv_obj_t* flux_valeur[kEnergieNoeuds] = {};  // energie_flux_valeur_N
+    lv_obj_t* flux_texte[kEnergieNoeuds] = {};   // energie_flux_texte_N : « Aujourd'hui », « Charge », le nom d'une voiture…
+    lv_obj_t* flux_detail[kEnergieNoeuds] = {};  // energie_flux_detail_N : « 1.47 kWh », « 400 W », « 7.20 kW »…
     // Page Aujourd'hui : soleil et heures (carte de gauche), chiffres (carte de droite).
     lv_obj_t* soleil_zone = nullptr;      // energie_soleil_zone
     lv_obj_t* soleil_infos = nullptr;     // energie_soleil_infos
@@ -77,6 +79,11 @@ extern EnergieUI g_energie_ui;
 // carte ou sa ligne disparaît), « nan » = choisi sans valeur (« -- »). Puissances en W
 // (réseau : + achat, − vente ; batterie : + charge, − décharge), jour en kWh.
 void energie_instantane(const std::string& payload);
+// Action tab5_maj_voiture (ADR-0076) : rang (« 1 » ou « 2 ») et « nom|batterie_pct|autonomie|
+// unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|minutes_restantes|
+// compteur_compte » (tab5_parse.h, voiture_lire). Payload vide = voiture absente. Page Flux :
+// un cercle par voiture, la charge retranchée de la maison.
+void energie_voiture(const std::string& rang, const std::string& payload);
 // Action tab5_maj_energie_historique : vue (heures | jours | mois), début (AAAA-MM-JJ :
 // le jour des heures, le premier des jours, le 1er du premier mois), valeurs en kWh
 // séparées par « ; » (vide = pas de donnée). 24, 30 et 12 valeurs au plus.

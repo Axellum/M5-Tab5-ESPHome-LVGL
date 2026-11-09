@@ -1241,6 +1241,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Prévision : externe": "Previsione: esterna"
 "Produit": "Prodotto"
 "Consommé": "Consumato"
+# Voitures du Flux (lot B1, ADR-0076)
+"Branchée": "Collegata"
+"Débranchée": "Scollegata"
+"Pas en charge": "Non in carica"
+"%d voitures": "%d auto"
+"+%s ajoutés": "+%s aggiunti"
+"Limite %d %%": "Limite %d %%"
+"Prête dans %s": "Pronta in %s"
+"Voiture %d": "Auto %d"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "BATTERIA DI RETE"
 "d'avance sur le réseau ce mois-ci": "di vantaggio sulla rete questo mese"

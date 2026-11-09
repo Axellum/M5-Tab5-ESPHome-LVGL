@@ -1235,6 +1235,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Prévision : externe": "Tahmin: harici"
 "Produit": "Üretilen"
 "Consommé": "Tüketilen"
+# Voitures du Flux (lot B1, ADR-0076)
+"Branchée": "Bağlı"
+"Débranchée": "Bağlı değil"
+"Pas en charge": "Şarj olmuyor"
+"%d voitures": "%d araç"
+"+%s ajoutés": "+%s eklendi"
+"Limite %d %%": "Sınır %d %%"
+"Prête dans %s": "%s içinde hazır"
+"Voiture %d": "Araç %d"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "ŞEBEKE BATARYASI"
 "d'avance sur le réseau ce mois-ci": "bu ay şebekeye karşı fazla"
