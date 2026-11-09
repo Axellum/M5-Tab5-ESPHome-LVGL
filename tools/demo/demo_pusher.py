@@ -71,6 +71,9 @@ from scenarios import (
     pieces_de,
     SERVEUR_IA_SCENES,
     build_serveur_ia_payload,
+    ENERGIE_INSTANTANE_VOITURES,
+    VOITURES,
+    build_voiture_payload,
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -110,6 +113,10 @@ SERVICE_ENERGIE_HISTORIQUE = "tab5_maj_energie_historique"
 # que la démo n'appelle alors pas (comme HA, dont les appels sont en continue_on_error).
 SERVICE_ENERGIE_SOLEIL = "tab5_maj_energie_soleil"
 SERVICE_ENERGIE_BILAN = "tab5_maj_energie_bilan"
+# Voitures de la page Flux (ADR-0076) : absentes d'un firmware plus ancien. La démo ne les pousse
+# qu'avec --voitures (deux voitures et l'instantané qui va avec) : sans l'option, la maison solaire
+# de la démo, et ses captures, restent celles d'avant.
+SERVICE_VOITURE = "tab5_maj_voiture"
 # Popup Température (ADR-0032) : absent d'un firmware plus ancien. HA ne pousse qu'à
 # l'ouverture du popup (événement esphome.tab5_historique) et le popup ignore une réponse
 # pour une autre température : la démo ne répond qu'à l'événement (le rendu pousse
@@ -259,6 +266,12 @@ def _dry_run(absentes: frozenset) -> None:
                 debut = len(tablette.appels)
                 asyncio.run(_pousser_scene(tablette, services, scene, absentes, attendre=_sans_attente))
                 appels_par_scene.append((scene.nom, tablette.appels[debut:]))
+            # Voitures de la page Flux (ADR-0076, --voitures) : la première scène avec deux voitures.
+            debut = len(tablette.appels)
+            asyncio.run(_pousser_scene(tablette, services, SCENES[0], absentes, attendre=_sans_attente,
+                                       voitures=True))
+            appels_par_scene.append((f"{SCENES[0].nom} + deux voitures (--voitures, ADR-0076)",
+                                     tablette.appels[debut:]))
             # Popup Température (ADR-0032) : la réponse à chaque événement possible.
             debut = len(tablette.appels)
             for cle in HISTORIQUE_CLES:
@@ -322,17 +335,24 @@ async def _pousser_zones(client, services_par_nom: dict, absentes: frozenset) ->
 
 
 async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VUES),
-                           aujourd_hui: _dt.date | None = None) -> None:
+                           aujourd_hui: _dt.date | None = None, voitures: bool = False) -> None:
     """Réponse de script.tab5_energie (packages/tab5_energie.yaml) : l'instantané, le soleil et
     la prévision du jour (ADR-0058), les heures du jour (la page « Aujourd'hui » les dessine
     quelle que soit la vue), l'historique de chaque vue de `vues`, puis le bilan de leurs vues
     civiles (ADR-0062, vues_bilan : le mois civil toujours). Rien sur un firmware sans le
     popup Énergie ; les deux actions de l'ADR-0058 manquent seules sur un firmware qui ne les
-    a pas encore."""
+    a pas encore. `voitures` (--voitures) : l'instantané d'une maison sans batterie dont deux
+    voitures tirent (ENERGIE_INSTANTANE_VOITURES) et, juste après, ces deux voitures
+    (tab5_maj_voiture, ADR-0076) ; absentes d'un firmware qui n'a pas l'action."""
     if SERVICE_ENERGIE not in services_par_nom:
         return
     jour = aujourd_hui or _dt.date.today()
-    await _appeler(client, services_par_nom, SERVICE_ENERGIE, payload=build_energie_payload())
+    await _appeler(client, services_par_nom, SERVICE_ENERGIE,
+                   payload=build_energie_payload(ENERGIE_INSTANTANE_VOITURES if voitures else None))
+    if voitures and SERVICE_VOITURE in services_par_nom:
+        for rang, voiture in enumerate(VOITURES, start=1):
+            await _appeler(client, services_par_nom, SERVICE_VOITURE, rang=str(rang),
+                           payload=build_voiture_payload(voiture))
     if SERVICE_ENERGIE_SOLEIL in services_par_nom:
         await _appeler(client, services_par_nom, SERVICE_ENERGIE_SOLEIL, payload=build_energie_soleil())
     if "heures" not in vues:
@@ -361,14 +381,15 @@ async def _pousser_historique(client, services_par_nom: dict, cle: str, vue: str
 
 
 async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozenset,
-                         attendre=None, aujourd_hui: _dt.date | None = None) -> None:
+                         attendre=None, aujourd_hui: _dt.date | None = None, voitures: bool = False) -> None:
     """Appelle les services tab5_maj_* d'une scène, avec le pacing de prod. Comme le
     package HA (lot 5b), rien pour la clim ni le volet quand leur zone est absente.
     Les définitions des pièces (tab5_maj_tuiles) partent à chaque scène, juste avant
     les états : la tablette ne réécrit ses définitions en NVS que si elles changent
     (ADR-0023), et le rendu (tools/rendu/capturer.py) n'a pas d'autre moment pour les
     recevoir. `attendre` remplace asyncio.sleep (--dry-run : aucune attente).
-    `aujourd_hui` : date de l'historique de l'énergie (le rendu la fige)."""
+    `aujourd_hui` : date de l'historique de l'énergie (le rendu la fige). `voitures` : la maison
+    solaire avec deux voitures (_pousser_energie)."""
 
     attendre = attendre or asyncio.sleep
 
@@ -437,7 +458,7 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     # Popup Énergie (ADR-0028) : la maison solaire de la démo, sauf maison minimale.
     if not absentes:
         await attendre(DELAI_ENTRE_BLOCS)
-        await _pousser_energie(client, services_par_nom, aujourd_hui=aujourd_hui)
+        await _pousser_energie(client, services_par_nom, aujourd_hui=aujourd_hui, voitures=voitures)
 
     # Popup Serveur IA (ADR-0059) : le serveur de la scène, sauf maison minimale.
     if not absentes and SERVICE_SERVEUR_IA in services_par_nom:
@@ -500,7 +521,8 @@ def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None 
     return _gerer
 
 
-async def _run(host: str, key: str | None, interval: float, interactive: bool, absentes: frozenset) -> None:
+async def _run(host: str, key: str | None, interval: float, interactive: bool, absentes: frozenset,
+               voitures: bool = False) -> None:
     import aioesphomeapi
 
     if not key:
@@ -541,7 +563,7 @@ async def _run(host: str, key: str | None, interval: float, interactive: bool, a
         vues = (vue,) if vue in ENERGIE_VUES else ("heures",)
         logger.info("Popup Énergie -> instantané et %s", vues[0])
         tache = asyncio.get_running_loop().create_task(
-            _pousser_energie(client, services_par_nom, vues))
+            _pousser_energie(client, services_par_nom, vues, voitures=voitures))
         taches.add(tache)
         tache.add_done_callback(taches.discard)
 
@@ -567,7 +589,7 @@ async def _run(host: str, key: str | None, interval: float, interactive: bool, a
         while True:
             for scene in SCENES:
                 logger.info("Scène : %s", scene.nom)
-                await _pousser_scene(client, services_par_nom, scene, absentes)
+                await _pousser_scene(client, services_par_nom, scene, absentes, voitures=voitures)
                 await asyncio.sleep(interval)
     finally:
         await client.disconnect()
@@ -591,6 +613,11 @@ def main() -> None:
                               "pots 3 à 5, volet ni planning ; en 3.2, une seule pièce (PC et deux "
                               "lampes). Redémarrer la tablette en passant d'une démo complète à "
                               "celle-ci : une donnée déjà reçue garde sa zone")
+    parser.add_argument("--voitures", action="store_true",
+                         help="Page Flux du popup Énergie (ADR-0076) : une maison solaire sans batterie dont "
+                              "deux voitures tirent, la première en charge à 7,2 kW, la seconde branchée "
+                              "(tab5_maj_voiture) ; sans l'option, la maison solaire d'avant. Redémarrer la "
+                              "tablette pour retirer les voitures : une donnée déjà reçue reste")
     parser.add_argument("--dry-run", action="store_true",
                          help="Affiche les payloads sans se connecter (aucune dépendance requise)")
     args = parser.parse_args()
@@ -609,7 +636,7 @@ def main() -> None:
         parser.error(f"clé de HA illisible : {err}")
 
     try:
-        asyncio.run(_run(args.host, key, args.interval, args.interactive, absentes))
+        asyncio.run(_run(args.host, key, args.interval, args.interactive, absentes, args.voitures))
     except KeyboardInterrupt:
         pass
 

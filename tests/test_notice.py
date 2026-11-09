@@ -76,6 +76,16 @@ NON_MONTREES = {
     "energie-bilan-jours": "energie-bilan montre la même page ; la vue des jours est décrite",
     "energie-bilan-mois": "energie-bilan-jours montre la même page ; la vue des mois est décrite",
     "energie-bilan-prix": "energie-bilan-jours montre la même page ; les économies sont décrites",
+    # Voitures électriques sur la page Flux (ADR-0076, 09/11/2026) : pas encore décrites dans
+    # energy.md. À faire une fois le rendu validé par Axel : décrire, tirer les images du rendu
+    # de la PR, puis les citer et retirer ces lignes.
+    "energie-flux-sans-voiture": "energie-flux montre la même page : sans voiture, c'est la page d'avant",
+    "energie-flux-1-voiture": "page Flux avec une voiture ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-flux-2-voitures": "page Flux avec deux voitures ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-flux-1-voiture-batterie": "page Flux avec la batterie et une voiture ; à décrire dans energy.md, "
+                                       "image à tirer du rendu",
+    "energie-flux-2-voitures-batterie": "page Flux avec la batterie et deux voitures (un seul cercle) ; à décrire "
+                                        "dans energy.md, image à tirer du rendu",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
