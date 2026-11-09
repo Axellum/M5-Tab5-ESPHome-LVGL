@@ -14,6 +14,27 @@ A still image of each camera you picked in the « Caméras · Cameras » section
 - **Video (optional).** Check « Vidéo de la caméra en grand · Video of the enlarged camera » in the blueprint's section: the camera shown large then plays Home Assistant's own video stream (MJPEG, no add-on, no sound) instead of one image every 5 seconds. What you get depends on the camera: ESPHome, MJPEG and ffmpeg / ONVIF / TP-Link (Tapo) cameras send their real frames; the others, two images per second at most. A picture larger than 1280 × 736 pixels (the main stream of a Full HD camera) is not played: the tablet goes back to still images by itself and tries the video again after 1, 5, then 30 minutes. Unchecked (the default), nothing changes. The mosaic always shows still images, and the video does not keep the window open: the 45-second return still applies without a touch.
 - The room, the camera and the view you chose (mosaic or large) are **remembered**, even after a restart. Coming back to a camera shows its last image at once while the new one arrives; the cameras next to the one shown large are fetched in advance (not while it plays video).
 
+**How smooth the video is, and what sets it.** The tablet shows the most recent image it has received and decodes it in 3 to 4 ms, so the rate is the one the camera sends. With an ESP32 camera on ESPHome, that is almost always the camera itself: it makes each JPEG on its own chip, one image at a time. Measured on the author's camera (M5Stack AtomS3R-CAM, 640 × 480 sensor, ESPHome 2026.9.0), the tablet showed 1.5 to 1.7 images per second, and reading Home Assistant's stream from a PC, or the camera directly, gave the same: the tablet was not the limit. Two settings in the camera's ESPHome file brought the same picture to about 2.5 to 2.8 images per second, and a smaller picture goes further:
+
+```yaml
+esp32:
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "32768"   # bigger TCP send buffer (5760 by default)
+esp32_camera:
+  frame_buffer_count: 2   # capture the next image while the last one is being sent
+```
+
+| `resolution` of `esp32_camera` | Picture | JPEG size | Images per second |
+|---|---|---|---|
+| `VGA`, default settings | 640 × 480 | about 48 KB | 1.4 to 1.5 |
+| `VGA` and the two settings above | 640 × 480 | about 46 KB | 2.5 to 2.8 |
+| `CIF` and the two settings | 400 × 296 | about 24 KB | 6.0 to 6.3 |
+| `QVGA` and the two settings | 320 × 240 | about 18 KB | 8.9 to 9.3 |
+
+Shared in case it helps, with its limits: **one camera on one network**, 30 seconds per measure and two or three measures per line, read from a PC on Home Assistant's stream (`/api/camera_proxy_stream`), **not on the tablet**, which was not measured again after the change. A smaller picture is enlarged to fill the window: faster, but softer. The second image buffer takes about 0.6 MB of the camera's PSRAM at 640 × 480. Sending the new file to the camera by OTA makes it unavailable in Home Assistant for about 45 seconds. Tried without a gain worth keeping: compiling the camera for speed (`compiler_optimization: PERF`, no change) and a lower JPEG quality (`jpeg_quality: 30`, +6 %, softer picture). A camera that is not on ESPHome sets its own rate; nothing here applies to it.
+
 What the window can say instead of an image:
 
 - « En attente de Home Assistant »: the tablet has asked Home Assistant for the cameras and has no answer yet (the blueprint's automation must be up to date).
@@ -41,6 +62,27 @@ Une image fixe de chaque caméra choisie dans la section « Caméras · Cameras 
 - **Une caméra en grand.** **Toucher** une petite image montre cette caméra en grand, une nouvelle image environ toutes les 5 secondes ; **glisser** montre la caméra suivante de la pièce ; **toucher** l'image revient à la mosaïque. Sous l'image, « Pièce · Caméra » et l'heure de l'image (« Image de 14:32:05 »).
 - **Vidéo (facultative).** Cocher « Vidéo de la caméra en grand · Video of the enlarged camera » dans la section du blueprint : la caméra montrée en grand est alors lue dans le flux vidéo de Home Assistant lui-même (MJPEG, sans module ni son) au lieu d'une image toutes les 5 secondes. Le résultat dépend de la caméra : les caméras ESPHome, MJPEG et ffmpeg / ONVIF / TP-Link (Tapo) envoient leurs vraies images ; les autres, deux images par seconde au plus. Une image de plus de 1280 × 736 pixels (le flux principal d'une caméra Full HD) n'est pas lue : la tablette revient seule aux images fixes et retente la vidéo après 1, 5 puis 30 minutes. Décochée (par défaut), rien ne change. La mosaïque montre toujours des images fixes, et la vidéo ne garde pas la fenêtre ouverte : le retour au bout de 45 s sans toucher reste.
 - La pièce, la caméra et la vue choisies (mosaïque ou en grand) sont **gardées**, même après un redémarrage. Revenir sur une caméra montre tout de suite sa dernière image, le temps que la nouvelle arrive ; les caméras voisines de celle montrée en grand sont chargées d'avance (pas pendant sa vidéo).
+
+**La fluidité de la vidéo, et ce qui la fixe.** La tablette montre l'image la plus récente qu'elle a reçue et la décode en 3 à 4 ms : la cadence est celle que la caméra envoie. Avec une caméra ESP32 sous ESPHome, c'est presque toujours la caméra elle-même : elle fabrique chaque JPEG avec sa propre puce, une image à la fois. Mesuré sur la caméra de l'auteur (M5Stack AtomS3R-CAM, capteur 640 × 480, ESPHome 2026.9.0), la tablette montrait 1,5 à 1,7 image par seconde, et la lecture du flux de Home Assistant depuis un PC, ou de la caméra directement, donnait la même chose : la tablette n'était pas la limite. Deux réglages dans le fichier ESPHome de la caméra ont porté la même image à environ 2,5 à 2,8 images par seconde, et une image plus petite va plus loin :
+
+```yaml
+esp32:
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "32768"   # tampon d'envoi TCP plus grand (5760 par défaut)
+esp32_camera:
+  frame_buffer_count: 2   # capture l'image suivante pendant l'envoi de la précédente
+```
+
+| `resolution` de `esp32_camera` | Image | Taille du JPEG | Images par seconde |
+|---|---|---|---|
+| `VGA`, réglages par défaut | 640 × 480 | environ 48 Ko | 1,4 à 1,5 |
+| `VGA` et les deux réglages ci-dessus | 640 × 480 | environ 46 Ko | 2,5 à 2,8 |
+| `CIF` et les deux réglages | 400 × 296 | environ 24 Ko | 6,0 à 6,3 |
+| `QVGA` et les deux réglages | 320 × 240 | environ 18 Ko | 8,9 à 9,3 |
+
+Partagé au cas où cela servirait, avec ses limites : **une seule caméra sur un seul réseau**, 30 secondes par mesure et deux ou trois mesures par ligne, lues depuis un PC sur le flux de Home Assistant (`/api/camera_proxy_stream`), **pas sur la tablette**, qui n'a pas été remesurée après le changement. Une image plus petite est agrandie pour remplir la fenêtre : plus rapide, mais plus floue. Le deuxième tampon d'image prend environ 0,6 Mo de la PSRAM de la caméra en 640 × 480. Envoyer le nouveau fichier à la caméra par OTA la rend indisponible dans Home Assistant pendant environ 45 secondes. Essayés sans gain qui vaille d'être gardé : compiler la caméra pour la vitesse (`compiler_optimization: PERF`, aucun changement) et une qualité JPEG plus basse (`jpeg_quality: 30`, +6 %, image plus floue). Une caméra qui n'est pas sous ESPHome fixe sa propre cadence ; rien de ceci ne s'y applique.
 
 Ce que la fenêtre peut dire à la place d'une image :
 
