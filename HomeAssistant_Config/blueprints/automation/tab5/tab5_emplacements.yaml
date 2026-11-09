@@ -3484,14 +3484,13 @@ variables:
   # cette tablette seule, comme avant (une automatisation par tablette). Chaque envoi
   # est une boucle sur `tablettes` qui pose `tablette` ; hors des boucles, `tablette`
   # est la première (celle qui demande), passée aux scripts Énergie et Température.
+  # Calculé ici au déclenchement ; pour la connexion d'un écran, recalculé après l'attente
+  # (début des actions) : à cet instant le préfixe d'un écran qui vient de redémarrer n'est
+  # pas encore publié, et la liste tombait sur « tab5_ha_hmi » (09/11/2026).
   tablette_choisie: !input tablette
   tablettes: >-
-    {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
-    {%- if (tablette_choisie | default('', true) | string) not in ['', 'tab5_ha_hmi'] -%}
-      {{ [tablette_choisie | string] }}
-    {%- else -%}
-      {{ tab5_destinataires(trigger.event.data.device_id | default('', true) if (trigger.platform | default('')) == 'event' else '').split(',') | select | list }}
-    {%- endif -%}
+    {%- from 'tab5_tablette.jinja' import tab5_tablettes -%}
+    {{ tab5_tablettes(tablette_choisie, trigger) }}
   tablette: "{{ tablettes[0] if tablettes else (tablette_choisie | default('tab5_ha_hmi', true)) }}"
   choix:
     lumiere_1: !input lumiere_1
@@ -5135,6 +5134,10 @@ actions:
   # le « HA API Status » de CET écran, 10 s au plus (tab5_pret, tab5_tablette.jinja) ;
   # les envois vont déjà à lui seul (`tablettes`). Le démarrage de HA (demarrage_ha) n'a
   # pas d'écran à attendre : la condition « tablette connectée » l'a déjà vérifié.
+  # tab5_pret attend aussi le PRÉFIXE de l'écran, et `tablettes` est recalculé juste après :
+  # le 09/11/2026 à 17:42, la liste calculée au déclenchement (préfixe `unavailable`) retombait
+  # sur « tab5_ha_hmi », et toute la poussée de connexion (pots, températures, clim, tuiles)
+  # partait vers une autre carte, hors ligne : « Not connected to tab5-ha-hmi ».
   - if: "{{ trigger.platform == 'event' and trigger.event.event_type == 'esphome.tab5_connected' }}"
     then:
       - wait_template: >-
@@ -5142,6 +5145,17 @@ actions:
           {{ tab5_pret(trigger.event.data.device_id | default('', true) | string) == 'oui' }}
         timeout: "00:00:10"
         continue_on_timeout: true
+  - variables:
+      # Même calcul qu'au déclenchement, refait pour une connexion seulement (les autres
+      # déclencheurs gardent la liste déjà calculée).
+      tablettes: >-
+        {%- if trigger.platform == 'event' and trigger.event.event_type == 'esphome.tab5_connected' -%}
+          {%- from 'tab5_tablette.jinja' import tab5_tablettes -%}
+          {{ tab5_tablettes(tablette_choisie, trigger) }}
+        {%- else -%}
+          {{ tablettes }}
+        {%- endif -%}
+      tablette: "{{ tablettes[0] if tablettes else (tablette_choisie | default('tab5_ha_hmi', true)) }}"
   - variables:
       # « clé|état|valeur; » : état tel quel, valeur = luminosité (lampes) ou nombre de
       # l'état (capteurs), nan sinon. Une entité absente n'est pas poussée (zone absente).
