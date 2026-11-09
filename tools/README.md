@@ -67,6 +67,12 @@ Le test C++ fait foi. Un miroir Python ne prouve le C++ que s'il est tenu à jou
 | `fnb58.py` | lit le testeur USB FNIRSI FNB58 par son port micro-USB « PC » (HID, paquet `hidapi`) : 100 échantillons/s, résumé ou CSV ; décodage testé par `tests/test_fnb58.py` |
 | `campagne_mesures.py` | consommation d'un écran alimenté par USB, au FNB58, pendant qu'il est piloté par son API : rétroéclairage, chaque écran, redémarrages ; remet l'état de départ ; `--analyser` résume une campagne (docs/consumption.md, Waveshare 7B) |
 
+## Préparer une release
+
+| Outil | Rôle |
+|---|---|
+| `gestes_maj.py` | `python tools/gestes_maj.py v3.9.0 v3.9.1 [--en]` : ce que la release demande à l'utilisateur, par façon d'avoir installé (intégration HACS / zip à la main), d'après les fichiers changés entre les deux révisions et l'ordre du contrat (`contrat_api.py`) : chaque geste requis, recommandé, facultatif ou fait par l'intégration, les fichiers HA apportés, les gestes comptés (bloc « À faire » des notes ; lecture seule) ; testé par `tests/test_gestes_maj.py` |
+
 ## Sous-dossiers
 
 | Dossier | Rôle |
