@@ -1,4 +1,4 @@
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.0).
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.1).
 
 ### Ajouté
 

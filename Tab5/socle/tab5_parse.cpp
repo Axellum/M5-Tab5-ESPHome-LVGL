@@ -1028,6 +1028,7 @@ int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax], int* piec
         const Champ image = champ_suivant(q, qf, '|');
         const Champ piece = champ_suivant(q, qf, '|');
         const Champ hors = champ_suivant(q, qf, '|');
+        const Champ video = champ_suivant(q, qf, '|');
         const uint32_t hors_ligne = champ_entier(hors, 0xFFFFFFFEu, 0);
         // Vide, « ;; » ou « nom| » : rien à montrer. Une caméra hors ligne sans image est
         // gardée : l'écran dit depuis quand.
@@ -1038,6 +1039,7 @@ int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax], int* piec
         l.image = image;
         l.piece = piece;
         l.hors_ligne = hors_ligne;
+        l.video = champ_est(video, "1");
         n++;
     }
     // Rangs des pièces : dans l'ordre de leur première caméra, la pièce vide en dernier.
@@ -1075,6 +1077,29 @@ bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, 
             return false;
         }
     }
+    return true;
+}
+
+bool camera_flux_url(const Champ& image, const char* base, char* out, size_t n) {
+    if (!ha_image_url(image, base, out, n)) return false;
+    static const char kImage[] = "/api/camera_proxy/";
+    static const char kFlux[] = "/api/camera_proxy_stream/";
+    constexpr size_t kLImage = sizeof(kImage) - 1;
+    constexpr size_t kLFlux = sizeof(kFlux) - 1;
+    char* p = std::strstr(out, kImage);
+    // Une URL qui n'est pas celle d'une image de caméra de HA n'a pas de flux. « width= » et
+    // « height= » : le flux les ignore, ils n'ont rien à y faire.
+    if (p == nullptr || std::strstr(out, "width=") != nullptr || std::strstr(out, "height=") != nullptr) {
+        out[0] = '\0';
+        return false;
+    }
+    const size_t reste = std::strlen(p + kLImage);   // l'entité, « ? » et le jeton
+    if (static_cast<size_t>(p - out) + kLFlux + reste + 1 > n) {
+        out[0] = '\0';
+        return false;
+    }
+    std::memmove(p + kLFlux, p + kLImage, reste + 1);
+    std::memcpy(p, kFlux, kLFlux);
     return true;
 }
 

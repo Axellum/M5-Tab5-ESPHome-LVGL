@@ -29,7 +29,7 @@ On the tablet, ESPHome 2026.9 has `online_image` (already used for the image of 
 
 - **A tile for a camera.** A new tile type (`cam`) would have to be added to the tile model, the blueprint's tile domains, the room pages and the tile popups; the popup with the select and a gesture covers the need for a fraction of the cost. It can come later, opening this popup on the camera.
 - **Hiding the wheel button when no camera is chosen** — see the navigation wheel above.
-- **Live video or MJPEG** (`/api/camera_proxy_stream`): a never-ending response would hold the main loop of `online_image`; no H.264/H.265 decoder.
+- **Live video or MJPEG** (`/api/camera_proxy_stream`): a never-ending response would hold the main loop of `online_image`; no H.264/H.265 decoder. (The MJPEG objection fell once the images were read off the main loop; the enlarged camera can now play the stream, off by default: [ADR-0073](0073-cameras-video.md).)
 - **HA pushing the image itself** (base64 in a service call): an ESPHome API string is not meant for 100 kB payloads, and HA would push while nobody looks.
 - **A script and a package in HA re-pushing on token change** (the request's first idea): it works, but needs one more file to install and a loop per open popup, for what a 4-minute request of the tablet does.
 

@@ -1334,6 +1334,50 @@ static void test_cameras_pieces() {
     expect(lire("A||Salon|0") == 0, "hors ligne : 0 sans image = sautée");
 }
 
+// ADR-0073 : le cinquième champ autorise la vidéo ; absent ou autre chose que « 1 » = images fixes.
+static void test_cameras_video() {
+    CameraLue c[kCamerasMax];
+    auto lire = [&c](const std::string& s) { return cameras_lire(Champ{s.data(), s.size()}, c); };
+    expect(lire("A|/a|Salon||1;B|/b|Salon||;C|/c|Salon||0;D|/d|Salon||oui;E|/e|Salon;F|/f") == 6 && c[0].video && !c[1].video &&
+               !c[2].video && !c[3].video && !c[4].video && !c[5].video,
+           "vidéo : seul « 1 » l'autorise, absent ou illisible = images fixes");
+    expect(lire("A|/a|Salon|1760000000|1;B|/b||0|1") == 2 && c[0].hors_ligne == 1760000000u && c[0].video && c[1].video,
+           "vidéo : champ lu après l'heure de mise hors ligne, pièce vide comprise");
+    expect(lire("A|/a|Salon||1|en trop") == 1 && c[0].video, "vidéo : champ en trop ignoré");
+}
+
+static void test_camera_flux_url() {
+    char u[kCameraUrlMax];
+    auto url = [&u](const char* image, const char* base) {
+        return camera_flux_url(Champ{image, image ? std::strlen(image) : 0}, base, u, sizeof(u));
+    };
+    expect(url("/api/camera_proxy/camera.entree?token=abc", "http://192.0.2.10:8123") &&
+               std::strcmp(u, "http://192.0.2.10:8123/api/camera_proxy_stream/camera.entree?token=abc") == 0,
+           "flux : le chemin du proxy devient celui du flux, jeton gardé, rien d'ajouté");
+    expect(url("https://ha.example.com/api/camera_proxy/camera.x?token=t", "") &&
+               std::strcmp(u, "https://ha.example.com/api/camera_proxy_stream/camera.x?token=t") == 0,
+           "flux : URL complète, sans base");
+    expect(url("/api/camera_proxy/camera.x", "https://ha.maison:8123/") &&
+               std::strcmp(u, "https://ha.maison:8123/api/camera_proxy_stream/camera.x") == 0,
+           "flux : « / » final de la base retiré, pas de jeton");
+    expect(!url("/api/camera_proxy_stream/camera.x?token=t", "http://h:8123") && u[0] == '\0',
+           "flux : une URL déjà de flux n'est pas refaite");
+    expect(!url("/local/porte.jpg", "http://h:8123") && u[0] == '\0', "flux : une image qui n'est pas du proxy n'a pas de flux");
+    expect(!url("/api/camera_proxy/camera.x?token=t&width=960&height=540", "http://h:8123") && u[0] == '\0',
+           "flux : « width= » refusé (le flux l'ignore)");
+    expect(!url("/api/camera_proxy/camera.x?token=t", "") && !url("", "http://h:8123") && !url(nullptr, "http://h:8123"),
+           "flux : sans base pour un chemin, ou image vide, refusé");
+    expect(!url("/api/camera_proxy/camera.x y", "http://h:8123"), "flux : espace refusé");
+    // Le chemin s'allonge de sept caractères : à une octet près du tampon.
+    const char* image = "/api/camera_proxy/camera.x?token=t";
+    const std::string attendu = "http://h:8123/api/camera_proxy_stream/camera.x?token=t";
+    char juste[64];
+    expect(camera_flux_url(Champ{image, std::strlen(image)}, "http://h:8123", juste, attendu.size() + 1) && attendu == juste,
+           "flux : tient pile dans le tampon");
+    expect(!camera_flux_url(Champ{image, std::strlen(image)}, "http://h:8123", juste, attendu.size()) && juste[0] == '\0',
+           "flux : un octet de moins, vidé");
+}
+
 static void test_camera_url() {
     char u[kCameraUrlMax];
     auto url = [&u](const char* image, const char* base, int l = 960, int h = 540) {
@@ -2187,6 +2231,8 @@ int main() {
     test_cameras_lire();
     test_cameras_pieces();
     test_camera_url();
+    test_cameras_video();
+    test_camera_flux_url();
     test_suivis_lire();
     test_suivi_textes();
     test_froid_lire();

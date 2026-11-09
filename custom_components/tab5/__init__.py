@@ -35,12 +35,19 @@
            tablette dès que son entité « Firmware » propose CETTE version (même release) ;
            `firmware_attendu` n'est oublié qu'une fois cette version lue sur la tablette, un
            essai sans effet est refait (firmware.py), puis la réparation « firmware_echec »
-           le dit.
+           le dit ;
+        7. cherche les tableaux de bord Tab5 (mode stockage) dont le marqueur de version est
+           plus ancien que les fichiers actifs et ouvre, pour chacun, la réparation
+           « tableau_a_mettre_a_jour » : un clic le réécrit avec la macro (tableau.py,
+           tableau_ha.py, ADR-0075), après avoir gardé l'ancien dans tab5_sauvegardes/tableaux/.
+           API interne de HA, protégée : si elle manque, la notification et les étapes
+           manuelles restent la voie.
 @contraintes L'ordre fichiers puis firmware est le contrat du projet
       (docs/installation/updates.md) : le firmware n'est jamais lancé avant que l'étape 4 ait
       constaté la nouvelle version. Rien ici n'écrit hors de config/packages,
-      custom_templates, blueprints et tab5_sauvegardes ; retirer l'intégration laisse les
-      fichiers en place.
+      custom_templates, blueprints et tab5_sauvegardes ; le tableau de bord, lui, n'est
+      écrit que par la réparation que l'utilisateur valide (jamais seul) ; retirer
+      l'intégration laisse les fichiers en place.
 @ai_instruction La logique de fichiers reste dans installation.py (pure, testée par pytest
       sans HA) ; ici seulement ce qui parle à Home Assistant. Le test bout à bout est
       tools/installation_ha/verifier_integration.py (vrai HA en conteneur, CI
@@ -72,7 +79,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 
-from . import assistant_flux, firmware, installation, messages, renommage
+from . import assistant_flux, firmware, installation, messages, renommage, tableau, tableau_ha
 from .const import (
     ATTENTE_CAPTEUR_S,
     CAPTEUR_VERSION,
@@ -88,9 +95,11 @@ from .const import (
     ISSUE_PACKAGES,
     ISSUE_REDEMARRAGE,
     ISSUE_REMPLACES,
+    ISSUE_TABLEAU,
     MODELE_TABLETTE,
     NOTIFICATION,
     PACKAGE_TEMOIN,
+    SEPARATEUR_TABLEAU,
     STOCKAGE_CLE,
     STOCKAGE_VERSION,
     URL_SIGNALER,
@@ -117,6 +126,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: Tab5ConfigEntry) -> bool
         gestionnaire.proposer_migration()
 
     entry.async_on_unload(async_at_started(hass, _au_demarrage))
+
+    # Un tableau enregistré (par l'utilisateur, ou par la réparation) : son marqueur a pu changer,
+    # la réparation « tableau_a_mettre_a_jour » suit. Le nom de l'événement est un texte : une
+    # constante de HA qui changerait de module ne casserait pas l'intégration.
+    @callback
+    def _tableau_enregistre(_event: Event) -> None:
+        hass.async_create_task(gestionnaire.async_evaluer_tableaux())
+
+    entry.async_on_unload(hass.bus.async_listen(tableau_ha.EVENEMENT_TABLEAU_ENREGISTRE, _tableau_enregistre))
     # Une entité ESPHome créée (le firmware anglais vient de parler) : migration à proposer.
     # @callback : sinon HA l'appellerait hors de la boucle, et le registre ne se lit qu'ici.
     @callback
@@ -139,6 +157,10 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     for cle in (ISSUE_FICHIERS_ABSENTS, ISSUE_CONFIGURATION, ISSUE_PACKAGES, ISSUE_REDEMARRAGE,
                 ISSUE_REMPLACES, ISSUE_FIRMWARE, ISSUE_ASSISTANT, ISSUE_MIGRATION):
         ir.async_delete_issue(hass, DOMAIN, cle)
+    # Une réparation par tableau de bord : identifiants construits (ISSUE_TABLEAU + adresse).
+    for domaine, cle in list(ir.async_get(hass).issues):
+        if domaine == DOMAIN and cle.startswith(ISSUE_TABLEAU + SEPARATEUR_TABLEAU):
+            ir.async_delete_issue(hass, DOMAIN, cle)
 
 
 async def _options_changees(hass: HomeAssistant, entry: Tab5ConfigEntry) -> None:
@@ -168,6 +190,7 @@ class Gestionnaire:
         self.donnees: dict[str, Any] = {}
         self._verrou = asyncio.Lock()
         self._minuterie: Callable[[], None] | None = None
+        self._api_tableau_signalee = False
 
     async def async_charger(self) -> None:
         self.donnees = await self._store.async_load() or {}
@@ -198,6 +221,7 @@ class Gestionnaire:
             await self._proposer_assistant()
         except Exception:  # noqa: BLE001 — une proposition ratée n'empêche pas le firmware
             _LOGGER.exception("Tab5 : proposition de l'assistant de configuration impossible")
+        await self.async_evaluer_tableaux()
         await self.async_verifier_firmware(rafraichir=True)
 
     async def _proposer_assistant(self) -> None:
@@ -377,6 +401,76 @@ class Gestionnaire:
                   reparable: bool = False, persistant: bool = False) -> None:
         ir.async_create_issue(self.hass, DOMAIN, cle, is_fixable=reparable, is_persistent=persistant,
                               severity=gravite, translation_key=cle, translation_placeholders=valeurs)
+
+    # ── Tableau de bord (tableau.py, tableau_ha.py, ADR-0075) ───────────────
+
+    @staticmethod
+    def _id_tableau(url_path: str | None) -> str:
+        return f"{ISSUE_TABLEAU}{SEPARATEUR_TABLEAU}{url_path or 'defaut'}"
+
+    async def async_evaluer_tableaux(self) -> None:
+        """Une réparation par tableau de bord (mode stockage) dont le marqueur est plus ancien
+        que les fichiers actifs ; retirée dès que le tableau est à jour (réécrit par la
+        réparation, ou collé à la main). Ne lève jamais : une vérification ratée ne doit rien
+        casser, et sans cette API la notification et les étapes manuelles restent la voie."""
+        try:
+            await self._evaluer_tableaux()
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("Tab5 : vérification du tableau de bord impossible")
+
+    async def _evaluer_tableaux(self) -> None:
+        if not self._version_active():
+            return  # fichiers pas encore actifs (chez l'auteur : « dépôt ») : rien à comparer
+        try:
+            trouves = await tableau_ha.tableaux_tab5(self.hass)
+        except tableau.TableauRefuse as err:
+            if not self._api_tableau_signalee:
+                self._api_tableau_signalee = True
+                _LOGGER.warning("Tab5 : tableaux de bord pas lus (%s) : mise à jour en un clic "
+                                "indisponible, étapes manuelles de docs/installation/dashboard.md", err)
+            return
+        en_retard = {self._id_tableau(c.url_path): c for c in trouves
+                     if tableau.en_retard(c.marqueur, self.version)}
+        for cle, cible in en_retard.items():
+            ir.async_create_issue(
+                self.hass, DOMAIN, cle, is_fixable=True, is_persistent=False,
+                severity=ir.IssueSeverity.WARNING, translation_key=ISSUE_TABLEAU,
+                translation_placeholders={"tableau": cible.titre, "avant": cible.marqueur.version or "?",
+                                          "version": self.version},
+                data={"url_path": cible.url_path})
+        for domaine, cle in list(ir.async_get(self.hass).issues):
+            if domaine == DOMAIN and cle.startswith(ISSUE_TABLEAU + SEPARATEUR_TABLEAU) and cle not in en_retard:
+                ir.async_delete_issue(self.hass, DOMAIN, cle)
+
+    async def async_mettre_a_jour_tableau(self, url_path: str | None) -> None:
+        """La correction « Mettre à jour le tableau de bord » : rend la macro avec les
+        arguments du marqueur, vérifie le rendu, garde l'ancien tableau dans
+        tab5_sauvegardes/tableaux/, enregistre, relit. TableauRefuse (code = clé de
+        traduction) AVANT d'écrire quoi que ce soit si une des étapes ne va pas."""
+        async with self._verrou:
+            if not self._version_active():
+                raise tableau.TableauRefuse(tableau.ERREUR_VERSION, "fichiers pas encore actifs")
+            trouves = await tableau_ha.tableaux_tab5(self.hass)
+            cible = next((c for c in trouves if c.url_path == url_path), None)
+            if cible is None:
+                raise tableau.TableauRefuse(tableau.ERREUR_INTROUVABLE,
+                                            f"tableau {url_path!r} sans marqueur ou disparu")
+            texte = await tableau_ha.rendre(self.hass, cible.marqueur)
+            nouveau = await tableau_ha.lire_yaml(self.hass, texte)
+            tableau.valider_rendu(nouveau, self.version, cible.marqueur)
+            sauvegarde = await self.hass.async_add_executor_job(
+                tableau.sauvegarder, self.config, url_path, cible.config, cible.marqueur.version,
+                dt_util.now())
+            await tableau_ha.enregistrer(cible, nouveau)
+            relu = await tableau_ha.tableaux_tab5(self.hass)
+            apres = next((c for c in relu if c.url_path == url_path), None)
+            if apres is None or tableau.en_retard(apres.marqueur, self.version):
+                # Enregistré mais HA ne le voit pas à jour : l'ancien est dans la sauvegarde.
+                raise tableau.TableauRefuse(tableau.ERREUR_API, "HA ne voit pas le tableau enregistré à jour")
+            _LOGGER.info("Tab5 : tableau %r réécrit (marqueur %s → %s), ancien gardé dans %s",
+                         url_path or "défaut", cible.marqueur.version or "?", self.version,
+                         sauvegarde.relative_to(self.config).as_posix())
+        await self.async_evaluer_tableaux()
 
     # ── Noms anglais (renommage.py) ─────────────────────────────────────────
 

@@ -369,6 +369,27 @@ def test_journal_de_ha():
     assert [verifier.concerne_le_tab5(e) for e in entrees] == [True, True, False]
 
 
+def test_journal_de_ha_2026_11_heure_avec_decalage():
+    """HA 2026.11.0 écrit « 2026-11-09 11:53:12.873+01:00 ERROR (MainThread) … » : l'ancien motif ne
+    reconnaissait aucune ligne (CI du 09/11/2026, « journal HA illisible : 0 ligne reconnue »)."""
+    import datetime as dt
+    journal = (
+        "\x1b[31m2026-11-09 11:53:12.873+01:00 ERROR (MainThread) [habluetooth.manager] Missing permissions\x1b[0m\n"
+        "2026-11-09 11:53:14.412+01:00 WARNING (MainThread) [homeassistant.components.esphome.manager] "
+        "Can't connect to ESPHome API for tab5-ha-hmi:\n"
+        "  detail sur la ligne suivante\n"
+        "2026-11-09 10:53:15.000Z INFO (MainThread) [homeassistant.components.esphome] heure en UTC\n"
+    )
+    entrees = verifier.lignes_du_journal(journal)
+    assert [e["niveau"] for e in entrees] == ["ERROR", "WARNING", "INFO"]
+    assert [e["logger"] for e in entrees][1:] == ["homeassistant.components.esphome.manager",
+                                                  "homeassistant.components.esphome"]
+    utc = dt.timezone.utc
+    assert entrees[0]["quand"] == dt.datetime(2026, 11, 9, 10, 53, 12, 873000, tzinfo=utc).timestamp()
+    assert entrees[2]["quand"] == dt.datetime(2026, 11, 9, 10, 53, 15, tzinfo=utc).timestamp()
+    assert "detail sur la ligne suivante" in entrees[1]["message"]
+
+
 def test_classer_le_journal():
     """Erreur Tab5 : fautive avant comme après la connexion (défaut 3 du 28/09/2026 :
     les poussées attendent la tablette), sauf « Not connected » pendant une déconnexion

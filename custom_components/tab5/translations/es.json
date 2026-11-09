@@ -292,6 +292,23 @@
           }
         }
       }
+    },
+    "tableau_a_mettre_a_jour": {
+      "title": "Tab5: el panel «{tableau}» se puede actualizar",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Actualizar el panel de Tab5",
+            "description": "El panel «{tableau}» se escribió con los archivos de Tab5 {avant}; los archivos activos son los {version}. Confirmar lo reescribe con la plantilla actual, con los mismos ajustes de llamada (dirección, idioma, tableta) y las entidades de su casa de hoy.\n\nTodo lo que haya añadido o cambiado a mano se sustituye: el panel anterior se guarda en `tab5_sauvegardes/tableaux/` (texto que se puede volver a pegar tal cual en el editor de configuración sin procesar del panel).\n\nConfirme para actualizar el panel."
+          }
+        },
+        "error": {
+          "api": "Home Assistant no responde como espera esta integración (el acceso a los paneles ha cambiado). No se ha modificado nada: actualice el panel a mano, pasos 2 y 3 de la guía del panel.",
+          "introuvable": "Este panel ya no existe o ya no tiene la marca de Tab5. No se ha modificado nada.",
+          "rendu": "La plantilla no dio nada utilizable (¿está la tableta conectada a Home Assistant?). No se ha modificado nada; el detalle está en el registro (Ajustes → Sistema → Registros, «tab5»).",
+          "version": "Los archivos de Tab5 de esta versión aún no están activos: reinicie Home Assistant si otra reparación lo pide. No se ha modificado nada."
+        }
+      }
     }
   }
 }
