@@ -384,11 +384,33 @@ CONNEXION_7B = {"id": "tab5_connected", "platform": "event",
                 "event": {"event_type": "esphome.tab5_connected", "data": {"device_id": "d_7b"}}}
 
 
+def _avec_prefixe(appareil, valeur, maison=MAISON):
+    """La maison de test où le capteur « Préfixe des actions » de `appareil` vaut `valeur`."""
+    modele, nom, ents = maison[appareil]
+    capteur = next(e for e in ents if "action_prefix" in e)
+    return {**maison, appareil: (modele, nom, {**ents, capteur: valeur})}
+
+
+def _7b_connectee():
+    """La 7B connectée, son préfixe publié (dans MAISON elle n'en a pas encore : `unknown`)."""
+    return _avec_prefixe("d_7b", "tab5_ha_hmi")
+
+
 def test_pret_attend_l_ecran_qui_se_connecte():
     assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_7b') }}", _7b_pas_encore_on()) == ""
-    assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_7b') }}") == "oui"
+    assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_7b') }}", _7b_connectee()) == "oui"
     # Sans écran : une tablette connectée suffit, comme tab5_connectee().
     assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('') }}", _7b_pas_encore_on()) == "oui"
+
+
+def test_pret_attend_aussi_le_prefixe_de_l_ecran():
+    """09/11/2026, 17:42 : le « HA API Status » passe à on, le préfixe est publié ~30 ms après.
+    Un écran dont le préfixe est `unknown` (MAISON : la 7B) ou `unavailable` n'est pas prêt."""
+    pret = "{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_7b') }}"
+    assert _macro(pret) == "", "préfixe unknown : pas prêt"
+    assert _macro(pret, _avec_prefixe("d_7b", "unavailable")) == ""
+    assert _macro(pret, _avec_prefixe("d_7b", "tab5_ha_hmi")) == "oui"
+    assert _macro("{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_tab5') }}") == "oui"
 
 
 def test_appareil_de_la_connexion():
@@ -407,7 +429,8 @@ def test_poussee_complete_de_l_ecran_qui_se_connecte():
     assert appareil == "d_7b"
     attente = auto["actions"][1]["then"][0]["wait_template"]
     assert env.from_string(attente).render(appareil=appareil).strip() == "False", "la 7B pas encore on : on attend"
-    assert _env().from_string(attente).render(appareil=appareil).strip() == "True"
+    assert _env().from_string(attente).render(appareil=appareil).strip() == "False", "on, mais son préfixe n'est pas publié"
+    assert _env(_7b_connectee()).from_string(attente).render(appareil=appareil).strip() == "True"
     # Les envois : la 7B seule, même avant son « on » (avant : le Tab5 seul).
     envoi = next(a for a in auto["actions"] if "if" in a and "repeat" in str(a.get("then")))
     for_each = envoi["then"][0]["repeat"]["for_each"]
@@ -419,6 +442,45 @@ def test_poussee_complete_de_l_ecran_qui_se_connecte():
     appels += [b for a in auto["actions"] if "then" in a for b in a["then"]
                if str(b.get("action", "")).startswith("script.tab5_push_")]
     assert len(appels) == 4 and all(a["data"]["appareil"] == "{{ appareil }}" for a in appels)
+
+
+def test_le_blueprint_recalcule_ses_destinataires_apres_l_attente_de_la_connexion():
+    """09/11/2026, 17:42 : le Tab5 redémarre. L'événement esphome.tab5_connected arrive quand son
+    préfixe d'actions est encore `unavailable` ; la liste des destinataires, calculée à ce
+    moment, retombait sur « tab5_ha_hmi » (une autre carte, hors ligne : « Not connected »)
+    et pots, températures, clim et tuiles étaient perdus. Le préfixe `tab5` est publié
+    ~30 ms plus tard : la liste doit être recalculée APRÈS l'attente."""
+    bp = yaml.load((HA / "blueprints" / "automation" / "tab5" / "tab5_emplacements.yaml").read_text(encoding="utf-8"),
+                   Loader=ChargeurSansBalises)
+    actions = bp["actions"]
+    i_attente = next(i for i, a in enumerate(actions) if "if" in a and "wait_template" in yaml.safe_dump(a))
+    i_recalcul = next(i for i, a in enumerate(actions) if "tablettes" in (a.get("variables") or {}))
+    assert i_attente < i_recalcul, "les destinataires se recalculent après l'attente, pas avant"
+    recalcul = actions[i_recalcul]["variables"]
+
+    def liste(modele, maison, **contexte):
+        return ast.literal_eval(_env(maison).from_string(modele).render(**contexte).strip())
+
+    connexion = {"id": "connexion", "platform": "event",
+                 "event": {"event_type": "esphome.tab5_connected", "data": {"device_id": "d_tab5"}}}
+    contexte = {"trigger": connexion, "tablette_choisie": "tab5_ha_hmi"}
+    avant = _avec_prefixe("d_tab5", "unavailable")
+    # Au déclenchement : le préfixe n'est pas publié, la liste retombe sur le nom par défaut…
+    haut = liste(bp["variables"]["tablettes"], avant, **contexte)
+    assert haut == ["tab5_ha_hmi"]
+    # … et l'attente (tab5_pret) ne laisse pas passer : l'écran n'est pas prêt.
+    pret = "{% from 'tab5_tablette.jinja' import tab5_pret %}{{ tab5_pret('d_tab5') }}"
+    assert _macro(pret, avant) == "" and _macro(pret) == "oui"
+    # Après l'attente, le préfixe est publié : la poussée va à `tab5`, pas à `tab5_ha_hmi`.
+    assert liste(recalcul["tablettes"], MAISON, tablettes=haut, **contexte) == ["tab5"]
+    # Un autre déclencheur garde la liste déjà calculée.
+    heure = {"trigger": {"platform": "time_pattern"}, "tablette_choisie": "tab5_ha_hmi"}
+    assert liste(recalcul["tablettes"], MAISON, tablettes=["tab5", "tab5_ha_hmi"], **heure) == ["tab5", "tab5_ha_hmi"]
+    # Une tablette choisie dans le blueprint passe avant tout.
+    assert liste(recalcul["tablettes"], MAISON, tablettes=[], trigger=connexion, tablette_choisie="salon") == ["salon"]
+    # `tablette` (la première) suit la nouvelle liste.
+    assert _env(MAISON).from_string(recalcul["tablette"]).render(
+        tablettes=["tab5"], tablette_choisie="tab5_ha_hmi").strip() == "tab5"
 
 
 @pytest.mark.parametrize("paquet", ["tab5_push.yaml", "tab5_reveil.yaml", "tab5_lecteur.yaml", "tab5_suivi.yaml",
