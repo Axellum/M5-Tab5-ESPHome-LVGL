@@ -719,6 +719,8 @@ bool musique_element_conteneur(const MusiqueElementLu& e);
 //              blueprint d'avant (« nom|image ») : vide aussi ;
 //   hors_ligne horodatage Unix (secondes) depuis lequel HA la dit « unavailable », vide ou
 //              0 = en ligne ; absent chez un blueprint d'avant.
+//   video      « 1 » : le blueprint autorise la vidéo (flux MJPEG, ADR-0073) pour cette caméra
+//              en vue grande ; vide ou absent = images fixes seulement.
 // Un firmware d'avant lit « nom|image » et ignore la suite. La base de HA vient de
 // ha_base_depuis_hote() (section 9), comme les pochettes du lecteur.
 constexpr int kCamerasMax = 16;
@@ -733,6 +735,7 @@ struct CameraLue {
     Champ piece{nullptr, 0};
     uint32_t hors_ligne = 0;   // horodatage Unix, 0 : en ligne
     int8_t piece_i = 0;        // rang de sa pièce parmi les pièces distinctes (cameras_lire)
+    bool video = false;        // le blueprint autorise le flux vidéo en grand (champ « 1 », ADR-0073)
 };
 
 // Au plus kCamerasMax caméras, dans l'ordre. Un enregistrement sans image ni hors_ligne
@@ -749,6 +752,14 @@ int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax], int* piec
 // que L et H sont positifs : HA réduit alors l'image avant de l'envoyer. Faux (out vidé)
 // dans les cas de ha_image_url() ou si la taille ne tient pas dans `n`.
 bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, char* out, size_t n);
+
+// URL du FLUX MJPEG de la même caméra (ADR-0073) : celle de ha_image_url() dont le chemin
+// « /api/camera_proxy/ » devient « /api/camera_proxy_stream/ » (même jeton, même hôte ; le
+// jeton n'est vérifié qu'à la connexion et son changement n'interrompt pas un flux ouvert).
+// Faux (out vidé) dans les cas de ha_image_url(), pour une URL qui n'est pas celle d'une
+// image de caméra de HA, qui porte « width= » ou « height= » (le flux les ignore), ou si le
+// chemin allongé ne tient pas dans `n`.
+bool camera_flux_url(const Champ& image, const char* base, char* out, size_t n);
 
 // ─── 11. Suivi de capteurs (tab5_maj_suivi, ADR-0054) ───
 // Une variable, poussée par packages/tab5_suivi.yaml : un enregistrement par capteur de la

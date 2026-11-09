@@ -15,9 +15,13 @@ from tests.test_tuiles_blueprint import MAINTENANT, Etat, Passage, _chercher, _e
 ALIAS = "La tablette demande ses caméras"
 
 
-def _reponse(etats, cameras, adresse=""):
-    """Les données de l'action tab5_maj_cameras, rendues comme HA les enverrait."""
-    p = Passage({"cameras_liste": cameras, "cameras_adresse": adresse}, etats, _evenement("cameras"))
+def _reponse(etats, cameras, adresse="", video=None):
+    """Les données de l'action tab5_maj_cameras, rendues comme HA les enverrait. `video` :
+    l'entrée cameras_video (None : celle par défaut du blueprint)."""
+    entrees = {"cameras_liste": cameras, "cameras_adresse": adresse}
+    if video is not None:
+        entrees["cameras_video"] = video
+    p = Passage(entrees, etats, _evenement("cameras"))
     # as_timestamp de HA : un datetime → secondes Unix (float), `defaut` sinon.
     p.env.globals["as_timestamp"] = lambda v, defaut=None: v.timestamp() if isinstance(v, dt.datetime) else defaut
     p.env.tests["list"] = lambda v: isinstance(v, list)   # test « is list » de HA
@@ -78,6 +82,48 @@ def test_seize_au_plus():
 
 def test_section_vide_reponse_vide():
     assert _reponse([], [])["cameras"] == ""
+
+
+def test_video_decochee_par_defaut_reponse_inchangee():
+    """ADR-0073 : l'entrée cameras_video est décochée par défaut, et décochée la réponse est
+    celle d'avant le lot, octet pour octet (pas de champ de plus, pas de « | » en fin)."""
+    from tests.test_tuiles_blueprint import _blueprint, _entrees
+    entree = _entrees(_blueprint())["cameras_video"]
+    assert entree["default"] is False and "boolean" in entree["selector"]
+    etats = [_cam("camera.a", "A", aire="Salon"),
+             _cam("camera.b", "B", aire="Salon", image=False, etat="unavailable", age=600)]
+    sans = _reponse(etats, ["camera.a", "camera.b"])["cameras"]
+    explicite = _reponse(etats, ["camera.a", "camera.b"], video=False)["cameras"]
+    depuis = int((MAINTENANT - dt.timedelta(seconds=600)).timestamp())
+    assert sans == explicite == f"A|/api/camera_proxy/camera.a?token=t|Salon|;B||Salon|{depuis}"
+
+
+def test_video_cochee_cinquieme_champ_des_cameras_en_ligne():
+    """Cochée : « |1 » en 5e champ de chaque caméra en ligne avec image (pas d'une caméra
+    indisponible, que la tablette ne demande pas), le reste de l'enregistrement inchangé."""
+    etats = [_cam("camera.a", "A", aire="Salon"),
+             _cam("camera.b", "B", aire="Salon", image=False, etat="unavailable", age=600),
+             _cam("camera.c", "C"),
+             _cam("camera.d", "D", aire="Salon", etat="unavailable", age=60)]   # HA garde son image
+    r = _reponse(etats, [e.entity_id for e in etats], video=True)["cameras"].split(";")
+    depuis_b = int((MAINTENANT - dt.timedelta(seconds=600)).timestamp())
+    depuis_d = int((MAINTENANT - dt.timedelta(seconds=60)).timestamp())
+    assert r == [
+        "A|/api/camera_proxy/camera.a?token=t|Salon||1",
+        f"B||Salon|{depuis_b}",
+        "C|/api/camera_proxy/camera.c?token=t|||1",
+        f"D|/api/camera_proxy/camera.d?token=t|Salon|{depuis_d}",
+    ]
+
+
+def test_video_lisible_par_un_firmware_sans_video():
+    """Un firmware d'avant la vidéo lit quatre champs et ignore le cinquième : ses quatre
+    premiers champs ne changent pas quand l'option est cochée."""
+    etats = [_cam("camera.a", "A", aire="Salon"), _cam("camera.c", "C")]
+    liste = [e.entity_id for e in etats]
+    sans = [e.split("|")[:4] for e in _reponse(etats, liste)["cameras"].split(";")]
+    avec = [e.split("|")[:4] for e in _reponse(etats, liste, video=True)["cameras"].split(";")]
+    assert sans == avec
 
 
 def test_lisible_par_un_firmware_d_avant():

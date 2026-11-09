@@ -260,7 +260,7 @@ The weather in graphs, on three pages named at the top (tap a name or swipe): **
 
 ## Cameras popup — a still image of each camera
 
-A still image of each camera you picked in the blueprint (sixteen at most) — no video: new images are fetched, one at a time, only while the window is open. With two cameras or more, a **mosaic** of up to four squares per page (swipe for the next four); a tap on a square shows that camera large, a tap on the large image goes back. With two rooms or more, a column on the left filters by room. A camera that is offline says so. It opens from the navigation wheel (Agenda ▸ Caméras) or from Home Assistant, for instance when the doorbell rings.
+A still image of each camera you picked in the blueprint (sixteen at most): new images are fetched, one at a time, only while the window is open; the camera shown large can play as video (optional, off by default). With two cameras or more, a **mosaic** of up to four squares per page (swipe for the next four); a tap on a square shows that camera large, a tap on the large image goes back. With two rooms or more, a column on the left filters by room. A camera that is offline says so. It opens from the navigation wheel (Agenda ▸ Caméras) or from Home Assistant, for instance when the doorbell rings.
 
 **User manual:** [Cameras](notice/cameras.md) · **Internals:** [details](screens_internals.md#cameras-popup--a-still-image-of-each-camera)
 
@@ -634,7 +634,7 @@ La météo en graphiques, sur trois pages nommées en haut (touchez un nom ou gl
 
 ## Popup Caméras — une image fixe de chaque caméra
 
-Une image fixe de chaque caméra choisie dans le blueprint (seize au plus) — pas de vidéo : de nouvelles images sont récupérées, une à la fois, seulement tant que la fenêtre est ouverte. À partir de deux caméras, une **mosaïque** de quatre carrés au plus par page (glissez pour les quatre suivantes) ; un appui sur un carré montre cette caméra en grand, un appui sur la grande image revient à la mosaïque. À partir de deux pièces, une colonne à gauche filtre par pièce. Une caméra hors ligne le dit. Elle s'ouvre par la roue de navigation (Agenda ▸ Caméras) ou depuis Home Assistant, par exemple quand on sonne à la porte.
+Une image fixe de chaque caméra choisie dans le blueprint (seize au plus) : de nouvelles images sont récupérées, une à la fois, seulement tant que la fenêtre est ouverte ; la caméra montrée en grand peut passer en vidéo (facultatif, désactivé par défaut). À partir de deux caméras, une **mosaïque** de quatre carrés au plus par page (glissez pour les quatre suivantes) ; un appui sur un carré montre cette caméra en grand, un appui sur la grande image revient à la mosaïque. À partir de deux pièces, une colonne à gauche filtre par pièce. Une caméra hors ligne le dit. Elle s'ouvre par la roue de navigation (Agenda ▸ Caméras) ou depuis Home Assistant, par exemple quand on sonne à la porte.
 
 **Notice :** [Caméras](notice/cameras.md#version-française) · **Détails techniques :** [le détail](screens_internals.md#popup-caméras--une-image-fixe-de-chaque-caméra)
 

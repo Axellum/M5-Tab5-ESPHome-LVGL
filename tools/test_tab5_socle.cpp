@@ -19,7 +19,10 @@
  *     la zone, pixel par pixel ;
  *   - la disposition des éléments d'une pièce sur les cinq places (Tab5/socle/tab5_disposition.h,
  *     ADR-0066, 18/10/2026) : table de l'ADR, n = 0 … 20, pièces à trous, positions fixes du mode
- *     météo, rectangles des cases.
+ *     météo, rectangles des cases ;
+ *   - l'extraction des images d'un flux MJPEG en morceaux (Tab5/socle/tab5_flux_mjpeg.h,
+ *     ADR-0073, 09/11/2026) : formats de HA et de ffmpeg, avec et sans Content-Length, lecture
+ *     par morceaux de toute taille, flux abîmés.
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
@@ -35,6 +38,7 @@
 #include "tab5_decoupe.h"
 #include "tab5_demarrage.h"
 #include "tab5_disposition.h"
+#include "tab5_flux_mjpeg.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
 
@@ -44,6 +48,7 @@
 #include <cstring>
 #include <ctime>
 #include <string>
+#include <vector>
 
 // Globaux que le firmware définit dans tab5_custom.cpp (tab5_core.cpp s'en sert).
 DayForecastData cal_jours_data[15];
@@ -817,6 +822,178 @@ static void test_disposition() {
     expect(dedans, "case : dans la place, disjointes, 4 px d'écart au moins (places de 150 à 260 px)");
 }
 
+// ── Flux MJPEG en morceaux (tab5_flux_mjpeg.h, ADR-0073) ────────────────────
+static bool g_flux_borne = true;   // consomme et image toujours dans le tampon
+
+// Un JPEG fictif de `n` octets : FF D8, des octets variés, FF D9.
+static std::string jpeg_fictif(size_t n, uint8_t graine) {
+    std::string s;
+    s.push_back(static_cast<char>(0xFF));
+    s.push_back(static_cast<char>(0xD8));
+    for (size_t i = 0; i + 4 < n; i++) s.push_back(static_cast<char>((graine + i * 7) & 0x7F));   // jamais 0xFF
+    s.push_back(static_cast<char>(0xFF));
+    s.push_back(static_cast<char>(0xD9));
+    return s;
+}
+
+// Une partie : « --delim\r\n<nom_longueur>: N\r\n(Content-type)\r\n\r\n<jpeg>\r\n ». Pas de ligne
+// de longueur si `nom_longueur` est vide.
+static std::string flux_partie(const std::string& delim, const std::string& nom_longueur, const std::string& jpeg) {
+    std::string s = "--" + delim + "\r\nContent-type: image/jpeg\r\n";
+    if (!nom_longueur.empty()) s += nom_longueur + ": " + std::to_string(jpeg.size()) + "\r\n";
+    return s + "\r\n" + jpeg + "\r\n";
+}
+
+// Lit `flux` comme le chargeur : par morceaux de `pas` octets ajoutés à un tampon dont on retire
+// ce qui est consommé. Renvoie le dernier état ; les images lues vont dans `images`.
+static flux::Etat flux_lire(const std::string& flux_entier, size_t pas, size_t max, std::vector<std::string>* images) {
+    std::string tampon;
+    flux::Etat etat = flux::Etat::ATTENDRE;
+    for (size_t i = 0; i < flux_entier.size(); i += pas) {
+        tampon.append(flux_entier, i, pas);
+        for (;;) {
+            flux::Image img;
+            size_t consomme = 0;
+            etat = flux::extraire(reinterpret_cast<const uint8_t*>(tampon.data()), tampon.size(), max, &img, &consomme);
+            if (consomme > tampon.size() || (etat == flux::Etat::IMAGE && img.debut + img.n > tampon.size()) ||
+                (etat == flux::Etat::IMAGE && img.debut + img.n > consomme))
+                g_flux_borne = false;
+            if (consomme > tampon.size()) consomme = tampon.size();
+            if (etat == flux::Etat::IMAGE && img.debut + img.n <= tampon.size())
+                images->push_back(tampon.substr(img.debut, img.n));
+            tampon.erase(0, consomme);
+            if (etat != flux::Etat::IMAGE) break;
+        }
+        if (etat == flux::Etat::ILLISIBLE || etat == flux::Etat::TROP_GRANDE || etat == flux::Etat::FIN) break;
+    }
+    return etat;
+}
+
+static void test_flux_mjpeg() {
+    using flux::Etat;
+    const std::string a = jpeg_fictif(20, 1), b = jpeg_fictif(300, 2), c = jpeg_fictif(5000, 3);
+    std::string b_piege = b;   // « \r\n-- » au milieu des données : sans importance avec Content-Length
+    b_piege.replace(100, 4, "\r\n--");
+    const size_t pas_liste[] = {1, 2, 3, 7, 64, 4096, 100000};
+
+    // 1. ffmpeg : « --ffmpeg », « Content-length », une image de 5 Kio à la fin.
+    {
+        const std::string flux_ffmpeg = flux_partie("ffmpeg", "Content-length", a) + flux_partie("ffmpeg", "Content-length", b_piege) +
+                                        flux_partie("ffmpeg", "Content-length", c);
+        bool tous = true;
+        for (size_t pas : pas_liste) {
+            std::vector<std::string> v;
+            const Etat e = flux_lire(flux_ffmpeg, pas, 1 << 20, &v);
+            tous = tous && e == Etat::ATTENDRE && v.size() == 3 && v[0] == a && v[1] == b_piege && v[2] == c;
+        }
+        expect(tous, "flux ffmpeg : trois images, lues par morceaux de 1 à 100 000 octets");
+    }
+    // 2. HA (images fixes en boucle, ESPHome) : « --frameboundary », « Content-Type », « Content-Length ».
+    {
+        std::string ha = "--frameboundary\r\nContent-Type: image/jpeg\r\nContent-Length: " + std::to_string(a.size()) + "\r\n\r\n" + a + "\r\n";
+        ha += "--frameboundary\r\nContent-Type: image/jpeg\r\nContent-Length: " + std::to_string(b.size()) + "\r\n\r\n" + b + "\r\n";
+        bool tous = true;
+        for (size_t pas : pas_liste) {
+            std::vector<std::string> v;
+            const Etat e = flux_lire(ha, pas, 1 << 20, &v);
+            tous = tous && e == Etat::ATTENDRE && v.size() == 2 && v[0] == a && v[1] == b;
+        }
+        expect(tous, "flux HA : deux images, délimiteur « frameboundary », casse de Content-Length");
+    }
+    // 3. Longueur écrite autrement : casse libre, espaces, tabulation.
+    {
+        std::string f = "--x\r\nCONTENT-LENGTH:\t " + std::to_string(a.size()) + " \r\n\r\n" + a + "\r\n";
+        std::vector<std::string> v;
+        flux_lire(f, 5, 1 << 20, &v);
+        expect(v.size() == 1 && v[0] == a, "flux : Content-Length en majuscules, tabulation et espaces tolérés");
+    }
+    // 4. Sans Content-Length (plateforme « mjpeg ») : jusqu'au « \r\n-- » précédé de FF D9. Un
+    //    « \r\n-- » au milieu des données n'est pas une fin.
+    {
+        const std::string flux_sans = flux_partie("myboundary", "", a) + flux_partie("myboundary", "", b_piege) + "--myboundary\r\n";
+        bool tous = true;
+        for (size_t pas : pas_liste) {
+            std::vector<std::string> v;
+            flux_lire(flux_sans, pas, 1 << 20, &v);
+            tous = tous && v.size() == 2 && v[0] == a && v[1] == b_piege;
+        }
+        expect(tous, "flux sans Content-Length : images coupées au délimiteur précédé de FF D9, pas au « \\r\\n-- » des données");
+        // La dernière image n'est rendue qu'avec le délimiteur suivant.
+        std::vector<std::string> v;
+        const Etat e = flux_lire(flux_partie("m", "", a), 1000, 1 << 20, &v);
+        expect(e == Etat::ATTENDRE && v.empty(), "flux sans Content-Length : la dernière image attend le délimiteur suivant");
+    }
+    // 5. Des « \r\n » avant le premier délimiteur sont jetés ; la clôture « --nom-- » finit le flux.
+    {
+        std::vector<std::string> v;
+        const Etat e = flux_lire("\r\n\r\n" + flux_partie("ffmpeg", "Content-length", a) + "--ffmpeg--\r\n", 11, 1 << 20, &v);
+        expect(e == Etat::FIN && v.size() == 1 && v[0] == a, "flux : octets de tête jetés, délimiteur de clôture = FIN");
+    }
+    // 6. Premiers octets : rien à jeter ne se perd, et « -- » seul attend la suite.
+    {
+        flux::Image img;
+        size_t consomme = 99;
+        const uint8_t crlf[] = {'\r', '\n', '\r', '\n'};
+        expect(flux::extraire(crlf, 4, 1000, &img, &consomme) == Etat::ATTENDRE && consomme == 4,
+               "flux : des « \\r\\n » seuls sont retirables");
+        const uint8_t tirets[] = {'-', '-'};
+        expect(flux::extraire(tirets, 2, 1000, &img, &consomme) == Etat::ATTENDRE && consomme == 0,
+               "flux : « -- » seul attend la suite");
+        expect(flux::extraire(tirets, 0, 1000, &img, &consomme) == Etat::ATTENDRE && consomme == 0, "flux : tampon vide");
+    }
+    // 7. Taille : annoncée trop grande, ou jamais terminée sans longueur.
+    {
+        std::vector<std::string> v;
+        expect(flux_lire("--x\r\nContent-Length: 2000000000\r\n\r\n", 9, 1 << 20, &v) == Etat::TROP_GRANDE,
+               "flux : 2 Go annoncés = TROP_GRANDE");
+        std::vector<std::string> w;
+        expect(flux_lire(flux_partie("x", "Content-Length", c), 50, 1000, &w) == Etat::TROP_GRANDE && w.empty(),
+               "flux : une image de 5 Kio avec un maximum de 1 Kio = TROP_GRANDE");
+        std::vector<std::string> z;
+        const std::string sans_fin = "--x\r\n\r\n" + jpeg_fictif(3000, 9).substr(0, 2000);
+        expect(flux_lire(sans_fin, 100, 1000, &z) == Etat::TROP_GRANDE, "flux sans longueur ni fin : TROP_GRANDE au-delà du maximum");
+    }
+    // 8. Ce qui n'est pas un flux d'images : abandon.
+    {
+        std::vector<std::string> v;
+        expect(flux_lire("<html>502</html>", 4, 1000, &v) == Etat::ILLISIBLE, "flux : une page HTML est ILLISIBLE");
+        std::vector<std::string> w;
+        expect(flux_lire(a, 4, 1000, &w) == Etat::ILLISIBLE, "flux : un JPEG seul (pas de flux) est ILLISIBLE");
+        std::vector<std::string> x;
+        expect(flux_lire("--" + std::string(300, 'z'), 20, 1000, &x) == Etat::ILLISIBLE, "flux : une ligne de délimiteur trop longue");
+        std::vector<std::string> y;
+        expect(flux_lire("--x\r\nContent-Length: 10\r\n\r\n0123456789\r\n", 6, 1000, &y) == Etat::ILLISIBLE,
+               "flux : un corps qui ne commence pas par FF D8");
+        std::vector<std::string> t;
+        expect(flux_lire("--x\r\nContent-Length: 2\r\n\r\n\xFF\xD8\r\n", 3, 1000, &t) == Etat::ILLISIBLE, "flux : longueur de 2 octets");
+        std::vector<std::string> u;
+        std::string entetes = "--x\r\n";
+        for (int i = 0; i < 40; i++) entetes += "X-Bavard: 0123456789\r\n";
+        expect(flux_lire(entetes + "\r\n", 16, 1000, &u) == Etat::ILLISIBLE, "flux : trop d'en-têtes");
+    }
+    // 9. Un flux abîmé (octets changés, coupé) ne fait jamais sortir du tampon ni boucler.
+    {
+        const std::string base = flux_partie("ffmpeg", "Content-length", a) + flux_partie("ffmpeg", "Content-length", b) +
+                                 flux_partie("ffmpeg", "", c) + flux_partie("ffmpeg", "Content-length", a);
+        uint32_t etat = 2463534242u;   // xorshift32, graine fixe
+        auto alea = [&etat]() {
+            etat ^= etat << 13;
+            etat ^= etat >> 17;
+            etat ^= etat << 5;
+            return etat;
+        };
+        for (int tour = 0; tour < 3000; tour++) {
+            std::string abime = base;
+            const int changes = 1 + static_cast<int>(alea() % 6);
+            for (int k = 0; k < changes; k++) abime[alea() % abime.size()] = static_cast<char>(alea() & 0xFF);
+            if (alea() % 3 == 0) abime.resize(alea() % abime.size());
+            std::vector<std::string> v;
+            flux_lire(abime, 1 + alea() % 40, 1 << 16, &v);
+        }
+        expect(g_flux_borne, "flux abîmé : `consomme` et l'image restent dans le tampon (3 000 flux)");
+    }
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -839,6 +1016,7 @@ int main() {
     test_sens_ecran();
     test_decoupe_carte();
     test_disposition();
+    test_flux_mjpeg();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;
