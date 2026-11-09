@@ -292,6 +292,23 @@
           }
         }
       }
+    },
+    "tableau_a_mettre_a_jour": {
+      "title": "Tab5 : le tableau de bord « {tableau} » peut être mis à jour",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Mettre à jour le tableau de bord Tab5",
+            "description": "Le tableau de bord « {tableau} » a été écrit avec les fichiers Tab5 {avant} ; les fichiers actifs sont les {version}. Valider le réécrit avec le modèle à jour, avec les mêmes réglages d'appel (adresse, langue, tablette) et les entités de votre maison d'aujourd'hui.\n\nTout ce que vous y aviez ajouté ou modifié à la main est remplacé : l'ancien tableau est gardé dans `tab5_sauvegardes/tableaux/` (du texte à recoller tel quel dans l'éditeur de configuration brute du tableau).\n\nValidez pour mettre le tableau à jour."
+          }
+        },
+        "error": {
+          "api": "Home Assistant ne répond pas comme cette intégration le prévoit (l'accès aux tableaux de bord a changé). Rien n'a été modifié : mettez le tableau à jour à la main, étapes 2 et 3 du guide du tableau de bord.",
+          "introuvable": "Ce tableau de bord n'existe plus ou n'a plus le marqueur Tab5. Rien n'a été modifié.",
+          "rendu": "Le modèle n'a rien donné d'utilisable (la tablette est-elle connectée à Home Assistant ?). Rien n'a été modifié ; le détail est dans le journal (Paramètres → Système → Journaux, « tab5 »).",
+          "version": "Les fichiers Tab5 de cette version ne sont pas encore actifs : redémarrez Home Assistant si une autre réparation le demande. Rien n'a été modifié."
+        }
+      }
     }
   }
 }

@@ -283,7 +283,7 @@ def _rendre(maison, noter=None, appel=None, **variables):
     env.tests.update(match=lambda v, motif, ignorecase=False: bool(re.match(motif, str(v), re.I if ignorecase else 0)))
     env.filters["states"] = etats  # map('states') de tab5_prefixe()
     if appel:
-        return env.from_string(appel).render()
+        return env.from_string(appel).render(**variables)
     if not variables:
         return env.from_string(verifier.APPEL_TABLEAU).render()  # la ligne de la doc, telle quelle
     arguments = ", ".join(f"{nom}={valeur!r}" for nom, valeur in variables.items())
@@ -464,9 +464,17 @@ def test_un_jeu_de_vues_par_ecran():
 
 
 def test_un_seul_ecran_comme_avant():
-    """Un seul écran : tab5_dashboard_ecrans() rend exactement tab5_dashboard()."""
+    """Un seul écran : tab5_dashboard_ecrans() rend exactement tab5_dashboard(), à la ligne du
+    marqueur près (ADR-0075 : il garde QUELLE macro a écrit le tableau, pour qu'une mise à jour
+    en un clic réécrive avec la même, et suive l'arrivée d'un second écran)."""
     maison = _maison(_tablette())
-    assert _rendre(maison, appel=APPEL_ECRANS) == _rendre(maison)
+
+    def sans_marqueur(texte):
+        return "\n".join(l for l in texte.splitlines() if not l.startswith("tab5_dashboard:"))
+
+    seul, ecrans = _rendre(maison), _rendre(maison, appel=APPEL_ECRANS)
+    assert sans_marqueur(ecrans) == sans_marqueur(seul)
+    assert '"macro": "tab5_dashboard_ecrans"' in ecrans and '"macro": "tab5_dashboard"' in seul
 
 
 # ─────────────────────────────────────────────────────────────────────────────

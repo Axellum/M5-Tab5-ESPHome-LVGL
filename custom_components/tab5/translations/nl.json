@@ -292,6 +292,23 @@
           }
         }
       }
+    },
+    "tableau_a_mettre_a_jour": {
+      "title": "Tab5: het dashboard “{tableau}” kan worden bijgewerkt",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5-dashboard bijwerken",
+            "description": "Het dashboard “{tableau}” is geschreven met de Tab5-bestanden {avant}; de actieve bestanden zijn {version}. Bevestigen schrijft het opnieuw met de actuele sjabloon, met dezelfde aanroepinstellingen (adres, taal, tablet) en de entiteiten van uw huis van vandaag.\n\nAlles wat u er met de hand aan hebt toegevoegd of gewijzigd, wordt vervangen: het oude dashboard blijft bewaard in `tab5_sauvegardes/tableaux/` (tekst die u ongewijzigd in de ruwe configuratie-editor van het dashboard kunt plakken).\n\nBevestig om het dashboard bij te werken."
+          }
+        },
+        "error": {
+          "api": "Home Assistant antwoordt niet zoals deze integratie verwacht (de toegang tot dashboards is veranderd). Er is niets gewijzigd: werk het dashboard met de hand bij, stap 2 en 3 van de dashboardgids.",
+          "introuvable": "Dit dashboard bestaat niet meer of heeft de Tab5-markering niet meer. Er is niets gewijzigd.",
+          "rendu": "De sjabloon gaf niets bruikbaars (is de tablet verbonden met Home Assistant?). Er is niets gewijzigd; de details staan in het logboek (Instellingen → Systeem → Logboeken, “tab5”).",
+          "version": "De Tab5-bestanden van deze versie zijn nog niet actief: start Home Assistant opnieuw als een andere reparatie dat vraagt. Er is niets gewijzigd."
+        }
+      }
     }
   }
 }

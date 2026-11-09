@@ -30,7 +30,8 @@
       tab5_dashboard('dashboard-tab5', appareil='<nom de l'appareil>')), copiez le résultat (à droite).
       3. Ouvrez le tableau de bord Tab5 → crayon → ⋮ → « Éditeur de configuration
       brute », remplacez tout par le résultat, enregistrez. À refaire après une mise à
-      jour qui ajoute des entités.
+      jour qui ajoute des entités ; avec l'intégration `tab5` (HACS), une correction de
+      Paramètres → Système → Corrections le fait en un clic (voir @marqueur).
       ENGLISH — 1. Settings → Dashboards → "Add dashboard" → "New dashboard from scratch",
       title "Tab5" (address /dashboard-tab5). 2. Developer tools → Template: replace the
       editor content with the line above (other address: tab5_dashboard('dashboard-xxx');
@@ -38,7 +39,15 @@
       or one with tab5_dashboard('dashboard-tab5', appareil='<device name>')),
       copy the result (right). 3. Open the Tab5 dashboard → pencil → ⋮ → "Raw
       configuration editor", replace everything with the result, save. Redo after an
-      update that adds entities.
+      update that adds entities; with the `tab5` integration (HACS), a repair in
+      Settings → System → Repairs does it in one click (see @marqueur).
+@marqueur Le tableau écrit porte à sa racine une clé `tab5_dashboard` (macro, arguments, version
+      des fichiers HA qui l'a écrit : tab5_marqueur ci-dessous, ADR-0075). L'intégration `tab5`
+      la lit : tableau en mode stockage plus ancien que les fichiers actifs → réparation
+      « mettre à jour le tableau de bord », qui sauvegarde l'ancien dans
+      config/tab5_sauvegardes/tableaux/ puis réécrit le tableau avec le même appel. Le frontend
+      de HA garde cette clé inconnue. Un tableau collé avant cette version n'en a pas : il se
+      met à jour à la main une fois, et porte le marqueur ensuite.
 @langue Libellés dans la langue de l'écran (select « Langue ») : français, anglais,
       allemand, néerlandais, espagnol, italien ou turc ; une autre langue = l'anglais.
       tab5_dashboard(langue='English') force la langue. Un texte s'écrit t(français,
@@ -64,7 +73,21 @@
       utilisez « … ». Le contenu de la carte Markdown « En bref » est du Jinja rendu
       par la carte elle-même, à garder entre {% raw %} et {% endraw %}.
 ============================================================================ -#}
-{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='', chemin='tab5', titre='', vues_seules=false) -%}
+{#- Marqueur de version (ADR-0075) : une clé à la racine de la configuration du tableau, que le frontend
+    de HA garde à l'enregistrement. Elle dit quelle macro a écrit le tableau, avec quels arguments, et
+    avec quelle version des fichiers HA (capteur « Tab5 · HA files version », vide s'il ne donne pas un
+    numéro : « dépôt », « unknown »). L'intégration `tab5` (custom_components/tab5/tableau.py) le lit
+    et propose, quand les fichiers sont plus récents, de réécrire le tableau en un clic. Les noms de
+    clés sont ceux de tableau.MACROS ; tests/test_integration_tableau.py rend cette macro et lit son
+    résultat avec ce module. -#}
+{%- macro tab5_marqueur(macro, adresse, langue, appareil='', chemin='tab5', titre='') -%}
+{%- set v = states('sensor.tab5_version_des_fichiers_ha') -%}
+{%- set v = v if v is match('^[0-9]+[.][0-9]+') else '' -%}
+{%- set a = {'adresse': adresse, 'langue': langue} if macro == 'tab5_dashboard_ecrans'
+             else {'adresse': adresse, 'langue': langue, 'appareil': appareil, 'chemin': chemin, 'titre': titre} -%}
+tab5_dashboard: {{ dict(a, macro=macro, version=v) | tojson }}
+{%- endmacro -%}
+{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='', chemin='tab5', titre='', vues_seules=false, origine='tab5_dashboard') -%}
 {%- from 'tab5_tablette.jinja' import tab5_ecran_libelle -%}
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
@@ -218,6 +241,7 @@
        "Tablet not found: add it to Home Assistant (ESPHome integration), then try again.") }}
 {%- else -%}
 {%- if not vues_seules %}
+{{ tab5_marqueur(origine, adresse, langue, appareil, chemin, titre) }}
 views:
 {%- endif %}
   # ─── Vue principale : l'usage courant ───
@@ -1621,9 +1645,10 @@ views:
   {%- endfor -%}
   {%- set ecrans = ns.l | sort(attribute='nom') -%}
   {%- if ecrans | count <= 1 -%}
-    {{- tab5_dashboard(adresse, langue) -}}
+    {{- tab5_dashboard(adresse, langue, origine='tab5_dashboard_ecrans') -}}
   {%- else -%}
     {%- set vu = namespace(chemins=[]) -%}
+{{ tab5_marqueur('tab5_dashboard_ecrans', adresse, langue) }}
 views:
     {%- for e in ecrans -%}
       {%- set chemin = tab5_prefixe(e.d) | replace('_', '-') -%}
