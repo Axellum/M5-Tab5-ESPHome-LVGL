@@ -1193,8 +1193,12 @@ async def capturer(ha: HA, dossier: Path, nom: str, rapport: Rapport) -> None:
 # Ligne du journal de HA (docker logs) : « 2026-09-28 11:17:49.794 ERROR (MainThread)
 # [logger] message », à l'heure locale du conteneur (TZ=Europe/Paris) ; les lignes
 # suivantes sans en-tête (pile d'appels, détail d'une condition) prolongent le message.
-LIGNE_JOURNAL = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3}) (DEBUG|INFO|WARNING|ERROR|CRITICAL) "
-                           r"\([^)]*\) \[([^\]]+)\] (.*)$")
+#
+# Depuis HA 2026.11.0 l'heure porte son décalage : « 2026-11-09 11:53:12.873+01:00 ERROR (MainThread) … »
+# (CI du 09/11/2026 : « 0 ligne reconnue » avec l'ancien motif). Le décalage est facultatif, pour garder
+# les HA d'avant (plancher 2026.8.3), et sert à dater la ligne quand il est là.
+LIGNE_JOURNAL = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3})([+-]\d\d:\d\d|Z)? "
+                           r"(DEBUG|INFO|WARNING|ERROR|CRITICAL) \([^)]*\) \[([^\]]+)\] (.*)$")
 # Couleurs de la console de HA (« \x1b[31m » devant chaque ligne d'erreur).
 COULEURS = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -1207,9 +1211,12 @@ def lignes_du_journal(texte: str) -> list[dict]:
     entrees: list[dict] = []
     for ligne in COULEURS.sub("", texte).splitlines():
         if m := LIGNE_JOURNAL.match(ligne):
-            quand = dt.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=fuseau)
-            entrees.append({"quand": quand.timestamp(), "niveau": m.group(2),
-                            "logger": m.group(3), "message": m.group(4)})
+            if m.group(2):  # HA 2026.11 et après : l'heure dit son décalage
+                quand = dt.datetime.strptime(m.group(1) + m.group(2), "%Y-%m-%d %H:%M:%S.%f%z")
+            else:
+                quand = dt.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=fuseau)
+            entrees.append({"quand": quand.timestamp(), "niveau": m.group(3),
+                            "logger": m.group(4), "message": m.group(5)})
         elif entrees and ligne.strip():
             entrees[-1]["message"] += "\n" + ligne.rstrip()
     return entrees
