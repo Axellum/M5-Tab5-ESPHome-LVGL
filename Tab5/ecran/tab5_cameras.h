@@ -71,7 +71,8 @@ extern CamerasUI g_cameras_ui;
 
 // Action tab5_maj_cameras : `adresse` = base de Home Assistant vue par la tablette
 // (« http://192.0.2.10:8123 », vide = celle du client de l'API), `cameras` =
-// « nom|image|pièce|hors_ligne;… » (tab5_parse.h, section 10 ; vide = aucune caméra).
+// « nom|image|pièce|hors_ligne|vidéo;… » (tab5_parse.h, section 10 ; vide = aucune caméra ;
+// vidéo = « 1 » : la caméra peut passer en flux MJPEG en grand, ADR-0073).
 void cameras_recues(const std::string& adresse, const std::string& cameras);
 // Ouvre le popup (dernière pièce et dernière caméra montrées, gardées en NVS), le peint,
 // et demande la liste à HA.

@@ -93,12 +93,16 @@ jobs:
 
   ha:
     # Versions de Home Assistant du test, relevées à la main (même logique que ESPHOME_PUBLICATION
-    # dans publication.yml) : la dernière, et le plancher annoncé (hacs.json, docs). 2026.8.3 = dernier
-    # tag 2026.8.x publié le 09/10/2026.
+    # dans publication.yml) : le dernier correctif de chaque série que des utilisateurs font tourner,
+    # et le plancher annoncé (hacs.json, docs). Relevé le 09/11/2026 (gh api repos/home-assistant/core/
+    # releases ; image ghcr.io vérifiée) : 2026.11.0 (04/11), 2026.10.4 (24/10), 2026.9.4 (27/09),
+    # 2026.8.3 (plancher, dernier tag 2026.8.x publié le 09/10/2026). Une série nouvelle s'ajoute ici
+    # et dans installation-ha.yml le jour de sa sortie ; le plancher reste tant que hacs.json
+    # annonce 2026.8.0.
     strategy:
       fail-fast: false
       matrix:
-        ha: ["2026.9.4", "2026.8.3"]
+        ha: ["2026.11.0", "2026.10.4", "2026.9.4", "2026.8.3"]
     env:
       HA_IMAGE: ghcr.io/home-assistant/home-assistant:${{ matrix.ha }}
     runs-on: ubuntu-latest

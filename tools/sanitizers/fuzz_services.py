@@ -123,7 +123,7 @@ GRAINES: dict[str, dict[str, str]] = {
     # Caméras (ADR-0049) : la liste que le blueprint pousse à l'ouverture du popup.
     "tab5_maj_cameras": {"adresse": "http://homeassistant.local:8123",
                          "cameras": "Entrée|/api/camera_proxy/camera.entree?token=abc123|Entrée|;"
-                                    "Jardin|/api/camera_proxy/camera.jardin?token=def456|Jardin|;"
+                                    "Jardin|/api/camera_proxy/camera.jardin?token=def456|Jardin||1;"   # vidéo (ADR-0073)
                                     "Portail||Jardin|1760000000"},
     # Suivi de capteurs (ADR-0054) : une variation du jour, un écart, un capteur sans
     # courbe ni valeur, des points manquants.

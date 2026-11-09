@@ -10,6 +10,11 @@
  *           image à l'autre (pas de poignée de main TLS à chaque image), 12 s au plus.
  *         - Décodage : le décodeur JPEG MATÉRIEL de l'ESP32-P4 (esp_driver_jpeg), en
  *           RGB565 petit-boutiste, le format natif de LVGL : aucune conversion après.
+ *         - Flux vidéo (ADR-0073, 09/11/2026) : camera_charge_lancer_flux() ouvre un flux MJPEG
+ *           de HA et le GARDE ouvert ; chaque appel rend l'image la plus récente reçue (les
+ *           plus anciennes, déjà arrivées, sont lues et jetées sans décodage). Lecture sans
+ *           attente (délai 0) : esp_http_client_read() remplit sinon son tampon avant de
+ *           rendre la main. L'analyse du flux (partie pure) : socle/tab5_flux_mjpeg.h.
  *         - Tampon de sortie (ADR-0057, 10/10/2026) : la tâche décode dans SON tampon ;
  *           camera_charge_prendre() le DONNE à la boucle principale (l'écran garde la
  *           dernière image de chaque caméra), qui le rend par camera_image_rendre() quand
@@ -53,6 +58,19 @@ enum class CameraCharge : uint8_t {
 // Faux si un chargement est déjà en cours ou si la tâche ou le décodeur n'ont pas pu
 // être créés (à traiter comme un échec).
 bool camera_charge_lancer(const char* url);
+// Vidéo (ADR-0073) : `url` est un flux MJPEG de Home Assistant (camera_flux_url()). Même
+// contrat que camera_charge_lancer() — EN_COURS puis PRETE ou ECHEC —, mais la connexion
+// reste ouverte d'une image à l'autre : le premier appel (ou une autre caméra) ouvre le
+// flux et attend sa première image, les suivants rendent la PLUS RÉCENTE reçue entre-temps
+// (les plus anciennes sont lues et jetées, sans décodage : pas de retard qui s'accumule).
+// Le jeton de l'URL ne sert qu'à l'ouverture : un flux ouvert continue à son changement.
+// ECHEC ferme le flux (flux fini, pas du JPEG, image trop grande, décodage refusé).
+bool camera_charge_lancer_flux(const char* url);
+// Un flux est-il ouvert (connexion à HA gardée) ?
+bool camera_flux_ouvert();
+// Ferme le flux ouvert, et avec lui le travail de HA pour la caméra. Faux pendant EN_COURS
+// (rien n'est fait : l'appelant réessaie à la fin du chargement).
+bool camera_flux_fermer();
 // Lu par la boucle principale (sondage) : EN_COURS tant que la tâche travaille.
 CameraCharge camera_charge_etat();
 // PRETE : *img décrit l'image décodée, dont le tampon APPARTIENT désormais à l'appelant
