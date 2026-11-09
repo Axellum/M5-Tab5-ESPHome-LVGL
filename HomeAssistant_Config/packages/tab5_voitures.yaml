@@ -1,0 +1,398 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_voitures.yaml
+# @role Analyse des charges d'une ou deux voitures électriques (ADR-0074, lot 2 des voitures du
+#       popup Énergie). Home Assistant (Tesla Fleet, Teslemetry) ne donne ni la part du soleil
+#       d'une charge, ni la liste des charges, ni les kWh par heure d'une voiture, ni le bilan du
+#       mois : ce script les CALCULE à partir des statistiques du recorder, comme le popup Énergie.
+#       Il ne pousse RIEN à la tablette (aucune action `esphome.*`) et n'appelle aucun service de
+#       l'intégration de la voiture : il lit le recorder et répond. Le lot suivant pousse sa réponse.
+#       Il ne réveille donc jamais la voiture.
+# @input script.tab5_voitures_analyse, champs :
+#       capteurs (dictionnaire, comme `tab5_energie`) :
+#         solaires  liste de capteurs de puissance solaire (somme de ceux qui ont une valeur)
+#         maison    capteur de puissance de la maison (texte vide = non choisi)
+#         maison_inclut_voitures  booléen, vrai par défaut : la maison compte la charge des voitures
+#         voitures  liste de 1 ou 2 : rang « 1 » / « 2 », nom, puissance_charge, energie_ajoutee
+#                   (facultatif, reçue mais pas utilisée), odometre (facultatif)
+#       jour (AAAA-MM-JJ, heure locale, aujourd'hui par défaut) : le jour des kWh par heure.
+#       Les puissances sont lues en W (l'action `recorder.get_statistics` convertit les kW des
+#       capteurs : `units: {power: W}`), l'odomètre en km (`units: {distance: km}`).
+# @output response_variable (dictionnaire de chaînes, formats du plan §5 des voitures) :
+#       charges, charges_1, charges_2  « rang|jour|heure|duree_min|kwh|part_soleil_pct » séparées
+#           par « ; », 6 au plus, la plus récente d'abord (`charges` : toutes voitures, par date) ;
+#           jour AAAA-MM-JJ et heure HH:MM LOCAUX du début, kwh à 2 décimales, part en % entier :
+#           vide = aucun capteur solaire choisi, « nan » = non calculable (pas de capteur de
+#           maison, aucune ligne de maison pendant la charge)
+#       jour_debut, jour_1, jour_2     le jour et 24 kWh par heure locale (3 décimales) séparés par
+#           « ; » ; vide = aucune ligne pour la voiture cette heure (heure à venir, voiture muette)
+#       bilan_debut, bilan             le 1er du mois (AAAA-MM-01) et 11 champs séparés par « | » :
+#           voiture 1 puis voiture 2, 5 champs chacune (vides si la voiture n'existe pas) :
+#           kwh (1 décimale) | part_soleil_pct | km | kwh_100km | reseau_kwh (kWh pris au réseau,
+#           1 décimale) ; puis la part de la maison (voitures / consommation de la maison, en %)
+#       precision                      5min | heure | mixte | aucune : les statistiques lues
+# @method Voir tools/voitures_charges.py (la RÉFÉRENCE Python, testée à la main) : ce modèle fait
+#       les mêmes opérations dans le même ordre, tests/test_voitures.py exige les mêmes chaînes.
+#       Une modification de la méthode se fait dans les deux, et dans l'ADR-0074.
+#       - Créneaux : lignes de 5 minutes là où le recorder les a encore (`purge_keep_days`, 10 jours
+#         par défaut), lignes horaires avant. La frontière est l'heure pleine qui suit la première
+#         ligne de 5 minutes ; un créneau vaut 300 s ou 3600 s.
+#       - Une voiture CHARGE dans un créneau quand sa puissance moyenne dépasse `seuil_w`
+#         (100 W). Une charge = des créneaux qui chargent séparés de `trou_s` (30 min) au plus :
+#         un trou de données ou une pause ne la coupe pas. Durée = de la première à la dernière
+#         ligne qui charge ; énergie = Σ puissance × durée.
+#       - Part du soleil, créneau par créneau : solaire (somme des capteurs qui ont une ligne,
+#         0 sinon : un onduleur éteint la nuit) − maison hors voitures (maison − charge des voitures
+#         si elle les compte) = disponible (≥ 0) ; chaque voiture reçoit la fraction
+#         min(1, disponible / charge de toutes les voitures) de sa puissance. Un créneau sans ligne
+#         de maison est exclu (ni au numérateur ni au dénominateur).
+#       - Mois : du 1er à maintenant, mêmes créneaux. kWh/100 km = énergie chargée / km, seulement
+#         au-delà de `km_min_conso` km : c'est une approximation, pas une consommation mesurée.
+# @precision Lignes de 5 minutes (les ~10 derniers jours) : début et fin à 5 minutes près.
+#       Lignes horaires seules (au-delà, ou purge courte) : l'énergie reste exacte (moyenne × durée),
+#       le début est arrondi à l'heure, la durée compte les heures entières touchées (jusqu'à
+#       2 heures de trop), la part du soleil est celle de moyennes horaires (un nuage de 20 minutes
+#       disparaît). Mixte : une charge à cheval sur la frontière garde les deux.
+# @limits La puissance de charge d'une voiture n'est pas la puissance tirée sur le réseau (pertes
+#       de charge). Une batterie de maison n'est pas comptée comme du solaire. Une charge faite
+#       ailleurs (borne publique) que rapporte le capteur de la voiture entre dans les listes et
+#       le bilan, avec une part du soleil sans valeur. Une charge en cours apparaît avec sa durée
+#       déjà écoulée. Le calcul parcourt des milliers de lignes dans la boucle d'événements de HA
+#       (~3 400 créneaux pour 30 jours à 5 minutes sur 10 jours, puis horaires) : à appeler à
+#       l'ouverture du popup puis au plus toutes les 5 minutes, jamais en continu.
+#       Non vérifié sur un vrai Home Assistant ni avec une vraie voiture : `units: {distance: km}`
+#       (la clé `distance`), le nom et le `state_class` des capteurs de la voiture endormie.
+# @ai_warning Ne JAMAIS passer now() brut à une action : les bornes sont des datetimes locaux remis
+#       à minuit, envoyés en ISO avec leur décalage horaire (piège de packages/tab5_push.yaml).
+#       Aucune entité réelle, aucun placeholder, aucun secret ici (ADR-0024).
+# @tests tests/test_voitures.py rend ces modèles sur des réponses de get_statistics simulées et
+#       compare à tools/voitures_charges.py ; tests/test_voitures_charges.py teste la référence.
+# @install Nécessite homeassistant.packages: !include_dir_named packages
+# ============================================================================
+
+script:
+  tab5_voitures_analyse:
+    alias: "Tab5 — Cars charge analysis (charges, solar share, hours, month)"
+    description: >-
+      Calcule, à partir des statistiques du recorder, les dernières charges des voitures (début,
+      durée, kWh, part du soleil), leurs kWh par heure d'un jour et le bilan du mois, et les
+      renvoie en réponse. Ne pousse rien à la tablette, n'appelle pas l'intégration de la
+      voiture (ADR-0074).
+    mode: queued
+    max: 3
+    fields:
+      capteurs:
+        description: >-
+          Dictionnaire : solaires (liste de capteurs de puissance), maison (capteur de puissance),
+          maison_inclut_voitures (booléen, vrai par défaut), voitures (liste de 1 ou 2 : rang,
+          nom, puissance_charge, energie_ajoutee et odometre facultatifs).
+      jour:
+        description: "Jour des kWh par heure (AAAA-MM-JJ, heure locale). Aujourd'hui par défaut."
+        example: "2026-06-15"
+    variables:
+      # Choix de la méthode (tools/voitures_charges.py : mêmes valeurs, tests/test_voitures.py).
+      seuil_w: 100          # une voiture charge au-dessus de cette puissance moyenne (W)
+      trou_s: 1800          # un trou de 30 minutes au plus ne coupe pas une charge
+      nb_charges: 6         # charges de la liste
+      km_min_conso: 20      # en dessous, pas de kWh/100 km
+      c: "{{ capteurs if capteurs is defined and capteurs is mapping else {} }}"
+      # Capteurs solaires : chaîne, liste ou vide ; sans doublon.
+      solaires: >-
+        {%- set v = c.get('solaires', []) -%}
+        {%- set l = [v] if v is string else ((v | list) if v else []) -%}
+        {{ l | select('string') | reject('eq', '') | unique | list }}
+      maison: "{{ c.get('maison') if c.get('maison') is string else '' }}"
+      inclut: "{{ c.get('maison_inclut_voitures', true) not in [false, 'false', 'off'] }}"
+      # Une ou deux voitures qui ont un capteur de puissance : {rang, puissance, odometre}.
+      voitures: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- set brut = c.get('voitures', []) -%}
+        {%- for v in (brut if brut is iterable and brut is not string and brut is not mapping else []) -%}
+          {%- if v is mapping and v.get('puissance_charge') and ns.l | count < 2 -%}
+            {%- set ns.l = ns.l + [{'rang': (v.get('rang') or ((ns.l | count) + 1)) | string,
+                                    'puissance': v.get('puissance_charge'),
+                                    'odometre': v.get('odometre') if v.get('odometre') is string else ''}] -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.l }}
+      ids: >-
+        {{ (solaires + ([maison] if maison else []) + (voitures | map(attribute='puissance') | list))
+           | unique | list }}
+      odometres: "{{ voitures | map(attribute='odometre') | select | unique | list }}"
+      # Bornes de temps (secondes depuis 1970, heure locale) : le jour demandé, le mois en cours,
+      # et le début des statistiques à lire (le plus ancien : le jour, le 1er du mois, il y a
+      # 29 jours). Un jour mal écrit donne aujourd'hui ; un 30 février déborde sur mars.
+      fen: >-
+        {%- set n = now() -%}
+        {%- set minuit = n.replace(hour=0, minute=0, second=0, microsecond=0) -%}
+        {%- set p = (jour | string).split('-') if jour is defined else [] -%}
+        {%- set ok = p | count == 3 and (p | select('match', '[0-9]+$') | list | count) == 3
+                     and 2000 < (p[0] | int) < 3000 and 1 <= (p[1] | int) <= 12 and 1 <= (p[2] | int) <= 31 -%}
+        {%- set j0 = (minuit.replace(year=p[0] | int, month=p[1] | int, day=1) + timedelta(days=(p[2] | int) - 1)) if ok else minuit -%}
+        {%- set j1 = j0 + timedelta(days=1) -%}
+        {%- set m0 = minuit.replace(day=1) -%}
+        {%- set debut = [m0, minuit - timedelta(days=29), j0] | min -%}
+        {{ {'jour': j0.strftime('%Y-%m-%d'), 'j0': j0.timestamp() | int, 'j1': j1.timestamp() | int,
+            'mois': m0.strftime('%Y-%m-%d'), 'm0': m0.timestamp() | int,
+            'mois_iso': m0.isoformat(), 'debut': debut.isoformat()} }}
+    sequence:
+      # Les statistiques : 5 minutes (gardées `purge_keep_days` jours) et heures (gardées
+      # longtemps) du même début ; HA répond avec ce qui existe. Les puissances en W, la moyenne
+      # (state_class measurement). Aucune demande sans voiture ni capteur.
+      - if: "{{ voitures | count > 0 and ids | count > 0 }}"
+        then:
+          - action: recorder.get_statistics
+            data:
+              start_time: "{{ fen.debut }}"
+              statistic_ids: "{{ ids }}"
+              period: 5minute
+              types:
+                - mean
+              units:
+                power: W
+            response_variable: s5
+            continue_on_error: true
+          - action: recorder.get_statistics
+            data:
+              start_time: "{{ fen.debut }}"
+              statistic_ids: "{{ ids }}"
+              period: hour
+              types:
+                - mean
+              units:
+                power: W
+            response_variable: s1
+            continue_on_error: true
+          # Kilomètres du mois : l'odomètre (désactivé par défaut dans les intégrations Tesla).
+          - if: "{{ odometres | count > 0 }}"
+            then:
+              - action: recorder.get_statistics
+                data:
+                  start_time: "{{ fen.mois_iso }}"
+                  statistic_ids: "{{ odometres }}"
+                  period: month
+                  types:
+                    - change
+                  units:
+                    distance: km
+                response_variable: odo
+                continue_on_error: true
+      - variables:
+          # Les créneaux de chaque capteur : [début (s), durée (s), puissance moyenne (W),
+          # début ISO]. Heures avant la première heure pleine couverte par les 5 minutes, 5 minutes
+          # ensuite (la ligne horaire de l'heure partielle existe toujours : compilée avant la
+          # purge). Une ligne sans moyenne est ignorée.
+          mesures: >-
+            {%- set st5 = s5.statistics if s5 is defined and s5 is mapping and s5.statistics is defined else {} -%}
+            {%- set st1 = s1.statistics if s1 is defined and s1 is mapping and s1.statistics is defined else {} -%}
+            {%- set pr = namespace(t=none) -%}
+            {%- for lignes in st5.values() if lignes -%}
+              {%- set t = as_timestamp(lignes[0].start) -%}
+              {%- if pr.t is none or t < pr.t -%}{%- set pr.t = t -%}{%- endif -%}
+            {%- endfor -%}
+            {%- set h1 = ((((pr.t // 3600) | int) + (1 if pr.t % 3600 > 0 else 0)) * 3600) if pr.t is not none else none -%}
+            {%- set out = namespace(d={}) -%}
+            {%- for sid in ids -%}
+              {%- set a = namespace(l=[]) -%}
+              {%- for r in st1.get(sid, []) if r.get('mean') is not none -%}
+                {%- set t = as_timestamp(r.start) -%}
+                {%- if h1 is none or t < h1 -%}
+                  {%- set a.l = a.l + [[t | int, 3600, r.mean | float, r.start]] -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- if h1 is not none -%}
+                {%- for r in st5.get(sid, []) if r.get('mean') is not none -%}
+                  {%- set t = as_timestamp(r.start) -%}
+                  {%- if t >= h1 -%}
+                    {%- set a.l = a.l + [[t | int, 300, r.mean | float, r.start]] -%}
+                  {%- endif -%}
+                {%- endfor -%}
+              {%- endif -%}
+              {%- set out.d = dict(out.d, **{sid: a.l}) -%}
+            {%- endfor -%}
+            {{ out.d }}
+          # Puissance de chaque capteur par début de créneau : {capteur: {début (texte): W}}.
+          idx: >-
+            {%- set out = namespace(d={}) -%}
+            {%- for sid, rows in mesures.items() -%}
+              {%- set a = namespace(p=[]) -%}
+              {%- for r in rows -%}
+                {%- set a.p = a.p + [[r[0] | string, r[2]]] -%}
+              {%- endfor -%}
+              {%- set out.d = dict(out.d, **{sid: dict(a.p)}) -%}
+            {%- endfor -%}
+            {{ out.d }}
+          # Par voiture (clé = rang) : ses charges de la plus ancienne à la plus récente
+          # ({d: début s, iso, f: fin s, wh, cwh: Wh à part du soleil connue, swh: Wh du
+          # soleil}), ses Wh par heure locale du jour demandé (clé = heure en texte, présente
+          # s'il y a une ligne), ses totaux du mois.
+          analyse: >-
+            {%- set sortie = namespace(d={}) -%}
+            {%- for v in voitures -%}
+              {%- set autre = voitures[1 - loop.index0] if voitures | count == 2 else none -%}
+              {%- set a = namespace(ouvert=false, d=0, iso='', f=0, wh=0, cwh=0, swh=0, l=[], mwh=0, mcwh=0, mswh=0, h={}) -%}
+              {%- for r in mesures.get(v.puissance, []) -%}
+                {%- set t = r[0] -%}
+                {%- set d = r[1] -%}
+                {%- set p = r[2] -%}
+                {%- if fen.j0 <= t < fen.j1 -%}
+                  {%- set h = (as_local(as_datetime(r[3])).hour) | string -%}
+                  {%- set a.h = dict(a.h, **{h: a.h.get(h, 0) + (p if p > seuil_w else 0) * d / 3600}) -%}
+                {%- endif -%}
+                {%- if p > seuil_w -%}
+                  {%- set ts = t | string -%}
+                  {%- set s = namespace(w=0) -%}
+                  {%- for sid in solaires -%}
+                    {%- set x = idx.get(sid, {}).get(ts) -%}
+                    {%- if x is not none -%}{%- set s.w = s.w + x -%}{%- endif -%}
+                  {%- endfor -%}
+                  {%- set m = idx.get(maison, {}).get(ts) if maison else none -%}
+                  {%- set po = idx.get(autre.puissance, {}).get(ts) if autre else none -%}
+                  {%- set po = po if po is not none and po > seuil_w else 0 -%}
+                  {%- set tot = p + po -%}
+                  {%- set wh = p * d / 3600 -%}
+                  {%- if m is not none -%}
+                    {%- set hors = ([m - tot, 0] | max) if inclut else ([m, 0] | max) -%}
+                    {%- set dispo = [s.w - hors, 0] | max -%}
+                    {%- set part = [1, dispo / tot] | min -%}
+                    {%- set cwh = wh -%}
+                    {%- set swh = p * part * d / 3600 -%}
+                  {%- else -%}
+                    {%- set cwh = 0 -%}
+                    {%- set swh = 0 -%}
+                  {%- endif -%}
+                  {%- if a.ouvert and t - a.f <= trou_s -%}
+                    {%- set a.f = t + d -%}
+                    {%- set a.wh = a.wh + wh -%}
+                    {%- set a.cwh = a.cwh + cwh -%}
+                    {%- set a.swh = a.swh + swh -%}
+                  {%- else -%}
+                    {%- if a.ouvert -%}
+                      {%- set a.l = a.l + [{'d': a.d, 'iso': a.iso, 'f': a.f, 'wh': a.wh, 'cwh': a.cwh, 'swh': a.swh}] -%}
+                    {%- endif -%}
+                    {%- set a.ouvert = true -%}
+                    {%- set a.d = t -%}
+                    {%- set a.iso = r[3] -%}
+                    {%- set a.f = t + d -%}
+                    {%- set a.wh = wh -%}
+                    {%- set a.cwh = cwh -%}
+                    {%- set a.swh = swh -%}
+                  {%- endif -%}
+                  {%- if t >= fen.m0 -%}
+                    {%- set a.mwh = a.mwh + wh -%}
+                    {%- set a.mcwh = a.mcwh + cwh -%}
+                    {%- set a.mswh = a.mswh + swh -%}
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- if a.ouvert -%}
+                {%- set a.l = a.l + [{'d': a.d, 'iso': a.iso, 'f': a.f, 'wh': a.wh, 'cwh': a.cwh, 'swh': a.swh}] -%}
+              {%- endif -%}
+              {%- set sortie.d = dict(sortie.d, **{v.rang: {'charges': a.l, 'mois': {'wh': a.mwh, 'cwh': a.mcwh, 'swh': a.mswh}, 'heures': a.h}}) -%}
+            {%- endfor -%}
+            {{ sortie.d }}
+          # Kilomètres du mois par rang (None : pas d'odomètre ou pas de ligne).
+          km: >-
+            {%- set st = odo.statistics if odo is defined and odo is mapping and odo.statistics is defined else {} -%}
+            {%- set out = namespace(d={}) -%}
+            {%- for v in voitures -%}
+              {%- set lignes = st.get(v.odometre, []) if v.odometre else [] -%}
+              {%- set k = namespace(s=0) -%}
+              {%- for r in lignes -%}
+                {%- set k.s = k.s + (r.get('change') | float(0)) -%}
+              {%- endfor -%}
+              {%- set out.d = dict(out.d, **{v.rang: (k.s | float) if lignes else none}) -%}
+            {%- endfor -%}
+            {{ out.d }}
+          # Les chaînes : « rang|jour|heure|duree_min|kwh|part_soleil_pct ».
+          charges_txt: >-
+            {%- macro ligne(rang, c) -%}
+              {%- set debut = as_local(as_datetime(c.iso)) -%}
+              {%- if not solaires -%}
+                {%- set part = '' -%}
+              {%- elif c.cwh <= 0 -%}
+                {%- set part = 'nan' -%}
+              {%- else -%}
+                {%- set part = [[(100 * c.swh / c.cwh) | round(0) | int, 0] | max, 100] | min -%}
+              {%- endif -%}
+              {{ [rang, debut.strftime('%Y-%m-%d'), debut.strftime('%H:%M'), ((c.f - c.d) / 60) | round(0) | int,
+                  (c.wh / 1000) | round(2), part] | join('|') }}
+            {%- endmacro -%}
+            {%- set sortie = namespace(d={}, tout=[]) -%}
+            {%- for v in voitures -%}
+              {%- set recentes = (analyse[v.rang].charges | reverse | list)[:nb_charges] -%}
+              {%- set lg = namespace(l=[]) -%}
+              {%- for c in recentes -%}
+                {%- set lg.l = lg.l + [ligne(v.rang, c)] -%}
+                {%- set sortie.tout = sortie.tout + [dict(c, rang=v.rang)] -%}
+              {%- endfor -%}
+              {%- set sortie.d = dict(sortie.d, **{v.rang: lg.l | join(';')}) -%}
+            {%- endfor -%}
+            {%- set recentes = (sortie.tout | sort(attribute='d', reverse=true))[:nb_charges] -%}
+            {%- set lg = namespace(l=[]) -%}
+            {%- for c in recentes -%}
+              {%- set lg.l = lg.l + [ligne(c.rang, c)] -%}
+            {%- endfor -%}
+            {%- set sortie.d = dict(sortie.d, **{'tout': lg.l | join(';')}) -%}
+            {{ sortie.d }}
+          # 24 kWh par heure locale du jour, pour chaque voiture (clé = rang).
+          jour_txt: >-
+            {%- set sortie = namespace(d={}) -%}
+            {%- for v in voitures -%}
+              {%- set hh = analyse[v.rang].heures -%}
+              {%- set lg = namespace(l=[]) -%}
+              {%- for h in range(24) -%}
+                {%- set lg.l = lg.l + [((hh[h | string] / 1000) | round(3) | string) if (h | string) in hh else ''] -%}
+              {%- endfor -%}
+              {%- set sortie.d = dict(sortie.d, **{v.rang: lg.l | join(';')}) -%}
+            {%- endfor -%}
+            {{ sortie.d }}
+          # Le bilan du mois, 11 champs : 5 par voiture (kwh | part | km | kwh_100km | reseau),
+          # puis la part de la maison.
+          bilan_txt: >-
+            {%- set champs = namespace(l=[], total=0) -%}
+            {%- for rang in ['1', '2'] -%}
+              {%- set v = voitures | selectattr('rang', 'eq', rang) | first | default(none) -%}
+              {%- if v is none -%}
+                {%- set champs.l = champs.l + ['', '', '', '', ''] -%}
+              {%- else -%}
+                {%- set m = analyse[rang].mois -%}
+                {%- set champs.total = champs.total + m.wh -%}
+                {%- set kmv = km.get(rang) -%}
+                {%- if not solaires -%}
+                  {%- set part = '' -%}
+                {%- elif m.cwh <= 0 -%}
+                  {%- set part = 'nan' -%}
+                {%- else -%}
+                  {%- set part = [[(100 * m.swh / m.cwh) | round(0) | int, 0] | max, 100] | min -%}
+                {%- endif -%}
+                {%- set conso = ((m.wh / 1000 / kmv * 100) | round(1)) if kmv is not none and kmv >= km_min_conso else '' -%}
+                {%- set reseau = ((m.wh / 1000 * (1 - m.swh / m.cwh)) | round(1)) if solaires and m.cwh > 0 else '' -%}
+                {%- set champs.l = champs.l + [(m.wh / 1000) | round(1), part,
+                                               (kmv | round(0) | int) if kmv is not none else '', conso, reseau] -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {#- Consommation de la maison depuis le 1er (Wh) : somme des créneaux de son capteur. -#}
+            {%- set mm = namespace(wh=0) -%}
+            {%- for r in (mesures.get(maison, []) if maison else []) if r[0] >= fen.m0 -%}
+              {%- set mm.wh = mm.wh + r[2] * r[1] / 3600 -%}
+            {%- endfor -%}
+            {%- set base = mm.wh if inclut else mm.wh + champs.total -%}
+            {%- set pm = [[(100 * champs.total / base) | round(0) | int, 0] | max, 100] | min if maison and base > 0 else '' -%}
+            {{ (champs.l + [pm]) | join('|') }}
+          # Quelles statistiques ont servi aux voitures.
+          precision: >-
+            {%- set n = namespace(tout=0, c5=0) -%}
+            {%- for v in voitures -%}
+              {%- set rows = mesures.get(v.puissance, []) -%}
+              {%- set n.tout = n.tout + (rows | count) -%}
+              {%- set n.c5 = n.c5 + (rows | selectattr('1', 'eq', 300) | list | count) -%}
+            {%- endfor -%}
+            {{ 'aucune' if n.tout == 0 else ('heure' if n.c5 == 0 else ('5min' if n.c5 == n.tout else 'mixte')) }}
+          reponse: >-
+            {{ {'charges': charges_txt.get('tout', ''), 'charges_1': charges_txt.get('1', ''),
+                'charges_2': charges_txt.get('2', ''), 'jour_debut': fen.jour,
+                'jour_1': jour_txt.get('1', ''), 'jour_2': jour_txt.get('2', ''),
+                'bilan_debut': fen.mois, 'bilan': bilan_txt if voitures else '', 'precision': precision} }}
+      - stop: "Cars charge analysis done"
+        response_variable: reponse
