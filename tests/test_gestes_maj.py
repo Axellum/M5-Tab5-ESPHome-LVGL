@@ -136,6 +136,29 @@ def test_les_traductions_ne_comptent_pas_dans_le_nombre_de_fichiers():
     assert "fichier(s) de firmware" not in gm.rendre(seules, "indifferent", "v3.9.0", "fr")
 
 
+def test_tableau_de_bord_de_l_integration_selon_la_reparation():
+    # Sans la réparation (3.9.1 et avant) : étape 7, 3 gestes. Avec, une confirmation : 1 geste.
+    # La première release qui la porte : étape 7 une dernière fois (le tableau collé n'a pas de marqueur).
+    for etat, cle, gestes in ((gm.MANUEL, "tableau", 3), (gm.PREMIERE_FOIS, "tableau_premiere", 3),
+                              (gm.UN_CLIC, "tableau_clic", 1)):
+        c = gm.classer({MACRO: "M"})
+        c.tableau_integration = etat
+        g = gm.besoins(c, "indifferent")
+        assert _par(g, "integration", cle).nombre == gestes
+        assert _par(g, "integration", cle).statut == gm.FACULTATIF
+        assert _par(g, "zip", "tableau").nombre == 3                      # à la main : toujours l'étape 7
+        assert gm.totaux(g, "integration") == (0, 0, 2 + gestes)
+    fr = gm.rendre(c, "indifferent", "v3.9.1", "fr")
+    assert "peut être mis à jour » dans Paramètres → Système → Corrections, une confirmation" in fr
+    c.tableau_integration = gm.PREMIERE_FOIS
+    assert "une dernière fois" in gm.rendre(c, "indifferent", "v3.9.1", "fr")
+    assert "one last time" in gm.rendre(c, "indifferent", "v3.9.1", "en")
+    # Rien à refaire si ni la macro ni une entité n'a changé : pas de ligne du tableau.
+    rien = gm.classer({PACKAGE: "M"})
+    rien.tableau_integration = gm.UN_CLIC
+    assert "Tableau de bord" not in gm.rendre(rien, "indifferent", "v3.9.1", "fr")
+
+
 def test_les_deux_formes_de_revisions():
     assert gm.reviser("v3.9.0", None) == ("v3.9.0", "HEAD")
     assert gm.reviser("v3.9.0", "v3.9.1") == ("v3.9.0", "v3.9.1")
@@ -184,3 +207,17 @@ def test_v3_9_0_vers_v3_9_1(capsys):
     # La forme de git donne le même texte.
     assert gm.main([f"{depuis}..{courant}"]) == 0
     assert capsys.readouterr().out == texte
+    # 3.9.1 n'a pas la réparation du tableau de bord : étape 7, 3 gestes (le chiffre « 5 » ci-dessus).
+    assert faits["changements"]["tableau_integration"] == gm.MANUEL
+
+
+def test_reparation_du_tableau_de_bord_entre_deux_revisions_reelles(capsys):
+    """La réparation (ADR-0075) est dans `main`, pas dans la 3.9.1 : la première release qui la
+    porte demande l'étape 7 une dernière fois, la suivante une confirmation."""
+    v391 = _tag("v3.9.1")
+    assert gm.reparation_tableau("v3.9.0", v391) == gm.MANUEL
+    assert gm.reparation_tableau(v391, "HEAD") == gm.PREMIERE_FOIS
+    assert gm.reparation_tableau("HEAD", "HEAD") == gm.UN_CLIC
+    assert gm.main([v391, "HEAD"]) == 0
+    texte = capsys.readouterr().out
+    assert "une dernière fois" in texte
