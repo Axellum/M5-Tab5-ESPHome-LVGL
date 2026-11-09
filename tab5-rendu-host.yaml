@@ -106,6 +106,7 @@ esphome:
     - Tab5/ecran/tab5_cameras_charge.h
     - Tab5/ecran/tab5_froid.h
     - Tab5/ecran/tab5_serveur_ia.h
+    - Tab5/ecran/tab5_voitures.h
     - Tab5/ecran/tab5_telecommande.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_barre_demarrage.h
@@ -158,6 +159,7 @@ esphome:
     - Tab5/ecran/tab5_cameras_charge.cpp
     - Tab5/ecran/tab5_froid.cpp
     - Tab5/ecran/tab5_serveur_ia.cpp
+    - Tab5/ecran/tab5_voitures.cpp
     - Tab5/ecran/tab5_telecommande.cpp
     - Tab5/ecran/tab5_registry.h
     - Tab5/ecran/tab5_registry.cpp
@@ -277,6 +279,7 @@ packages:
   tab5_suivi: !include Tab5/paquets/tab5-suivi.yaml
   tab5_froid: !include Tab5/paquets/tab5-froid.yaml
   tab5_serveur_ia: !include Tab5/paquets/tab5-serveur-ia.yaml
+  tab5_voitures: !include Tab5/paquets/tab5-voitures.yaml
   tab5_telecommande: !include Tab5/paquets/tab5-telecommande.yaml
   tab5_zones: !include Tab5/paquets/tab5-zones.yaml
   tab5_reglages: !include Tab5/paquets/tab5-reglages.yaml

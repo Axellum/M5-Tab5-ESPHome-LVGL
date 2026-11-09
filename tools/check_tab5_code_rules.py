@@ -353,6 +353,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # celles des cercles de la page Flux (energie_flux_noeud.yaml). Le Bilan n'a plus d'icône
     # (ADR-0062).
     ("tab5_energie.cpp", "glyphe_carte"): ("energie_icone_*", "energie_flux_icone_*"),
+    # Popup Voitures (ADR-0079) : l'icône d'état de chaque carte (voitures_carte.yaml, mdi_font_45).
+    ("tab5_voitures.cpp", "glyphe_etat"): ("voitures_etat_icone_*",),
     # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches
     # de l'accueil), ampoule et flèche du volet sur les épaules droites de toutes les tuiles.
     # Le popup Maison (ADR-0037) montre la carte de chaque tuile, héritage compris (maison_icone_*, mdi_font_32),

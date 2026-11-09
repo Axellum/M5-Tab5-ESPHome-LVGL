@@ -8,9 +8,13 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1323;
+static const uint16_t kI18nKeyCount = 1327;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1558,6 +1562,7 @@ static const char* const kI18nKeys[] = {
     "Aucune question jouée",
     "Aucune question jouée pour le moment",
     "Aucune sonnerie prévue",
+    "Aucune voiture reçue",
     "Aucune âme créditée : le mode dieu ne compte pas.",
     "Auj",
     "Auj.",
@@ -1649,6 +1654,7 @@ static const char* const kI18nKeys[] = {
     "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA ».",
     "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».",
     "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».",
+    "Choisissez-les dans le blueprint, section « Énergie : voitures ».",
     "Choix du mode, de la couleur, du niveau et de la pendule",
     "Chute nette. Reprends ton souffle.",
     "Ciel clair",
@@ -2497,6 +2503,7 @@ static const char* const kI18nKeys[] = {
     "Voir le classement",
     "Voit les prises simples et les répond",
     "Voiture %d",
+    "Voitures",
     "Volet",
     "Volet arrêté.",
     "Volets",
@@ -2529,6 +2536,7 @@ static const char* const kI18nKeys[] = {
     "cumul de l'année",
     "cumul du jour",
     "cumul du mois",
+    "d'autonomie",
     "d'avance sur le réseau ce mois-ci",
     "de retard sur le réseau ce mois-ci",
     "de ta conso couverte par le soleil",
@@ -2885,6 +2893,7 @@ static const char* const kI18n_en[] = {
     "No questions played",  // "Aucune question jouée"
     "No questions played yet",  // "Aucune question jouée pour le moment"
     "No alarm scheduled",  // "Aucune sonnerie prévue"
+    "No car received",  // "Aucune voiture reçue"
     "No souls credited: god mode doesn't count.",  // "Aucune âme créditée : le mode dieu ne compte pas."
     "Today",  // "Auj"
     "Today",  // "Auj."
@@ -2976,6 +2985,7 @@ static const char* const kI18n_en[] = {
     "Choose its sensors in Home Assistant: lists “Tab5 · serveur IA · AI server”.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Choose your sensors in Home Assistant: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Choose your players in Home Assistant: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
+    "Choose them in the blueprint, section “Energy: cars”.",  // "Choisissez-les dans le blueprint, section « Énergie : voitures »."
     "Choose mode, color, level and clock",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Clean fall. Catch your breath.",  // "Chute nette. Reprends ton souffle."
     "Clear sky",  // "Ciel clair"
@@ -3824,6 +3834,7 @@ static const char* const kI18n_en[] = {
     "View leaderboard",  // "Voir le classement"
     "Sees simple captures and answers them",  // "Voit les prises simples et les répond"
     "Car %d",  // "Voiture %d"
+    "Cars",  // "Voitures"
     "Shutter",  // "Volet"
     "Shutter stopped.",  // "Volet arrêté."
     "Shutters",  // "Volets"
@@ -3856,6 +3867,7 @@ static const char* const kI18n_en[] = {
     "year's total",  // "cumul de l'année"
     "today's total",  // "cumul du jour"
     "month's total",  // "cumul du mois"
+    "of range",  // "d'autonomie"
     "ahead of the grid this month",  // "d'avance sur le réseau ce mois-ci"
     "behind the grid this month",  // "de retard sur le réseau ce mois-ci"
     "of your use covered by the sun",  // "de ta conso couverte par le soleil"
@@ -4212,6 +4224,7 @@ static const char* const kI18n_de[] = {
     "Keine Fragen gespielt",  // "Aucune question jouée"
     "Noch keine Fragen gespielt",  // "Aucune question jouée pour le moment"
     "Kein Wecker geplant",  // "Aucune sonnerie prévue"
+    "Keine Autos empfangen",  // "Aucune voiture reçue"
     "Keine Seelen gutgeschrieben: Gottmodus zählt nicht.",  // "Aucune âme créditée : le mode dieu ne compte pas."
     "Heute",  // "Auj"
     "Heute",  // "Auj."
@@ -4303,6 +4316,7 @@ static const char* const kI18n_de[] = {
     "Wähle seine Sensoren in Home Assistant: Listen „Tab5 · serveur IA · AI server“.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Wähle deine Sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors“.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Wähle deine Player in Home Assistant: „Tab5 · lecteurs de musique · music players“.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
+    "Wähle sie im Blueprint, Bereich „Énergie : voitures · Energy: cars“.",  // "Choisissez-les dans le blueprint, section « Énergie : voitures »."
     "Modus, Farbe, Stufe und Uhr wählen",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Glatter Sturz. Atme durch.",  // "Chute nette. Reprends ton souffle."
     "Klarer Himmel",  // "Ciel clair"
@@ -5151,6 +5165,7 @@ static const char* const kI18n_de[] = {
     "Zur Bestenliste",  // "Voir le classement"
     "Sieht einfache Schläge und antwortet",  // "Voit les prises simples et les répond"
     "Auto %d",  // "Voiture %d"
+    "Autos",  // "Voitures"
     "Rollladen",  // "Volet"
     "Rollladen gestoppt.",  // "Volet arrêté."
     "Rollläden",  // "Volets"
@@ -5183,6 +5198,7 @@ static const char* const kI18n_de[] = {
     "Jahressumme",  // "cumul de l'année"
     "Tagessumme",  // "cumul du jour"
     "Monatssumme",  // "cumul du mois"
+    "Reichweite",  // "d'autonomie"
     "Vorsprung aufs Netz diesen Monat",  // "d'avance sur le réseau ce mois-ci"
     "Rückstand zum Netz diesen Monat",  // "de retard sur le réseau ce mois-ci"
     "deines Verbrauchs von der Sonne gedeckt",  // "de ta conso couverte par le soleil"
@@ -5539,6 +5555,7 @@ static const char* const kI18n_nl[] = {
     "Geen vragen gespeeld",  // "Aucune question jouée"
     "Nog geen vragen gespeeld",  // "Aucune question jouée pour le moment"
     "Geen alarm gepland",  // "Aucune sonnerie prévue"
+    "Geen auto ontvangen",  // "Aucune voiture reçue"
     "Geen zielen bijgeschreven: godmodus telt niet.",  // "Aucune âme créditée : le mode dieu ne compte pas."
     "Vandaag",  // "Auj"
     "Vand.",  // "Auj."
@@ -5630,6 +5647,7 @@ static const char* const kI18n_nl[] = {
     "Kies de sensoren in Home Assistant: lijsten „Tab5 · serveur IA · AI server”.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Kies je sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Kies je spelers in Home Assistant: „Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
+    "Kies ze in de blueprint, sectie „Énergie : voitures · Energy: cars”.",  // "Choisissez-les dans le blueprint, section « Énergie : voitures »."
     "Kies modus, kleur, niveau en klok",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Zuivere val. Kom even op adem.",  // "Chute nette. Reprends ton souffle."
     "Heldere hemel",  // "Ciel clair"
@@ -6478,6 +6496,7 @@ static const char* const kI18n_nl[] = {
     "Bekijk ranglijst",  // "Voir le classement"
     "Ziet simpele slagen en beantwoordt ze",  // "Voit les prises simples et les répond"
     "Auto %d",  // "Voiture %d"
+    "Auto's",  // "Voitures"
     "Rolluik",  // "Volet"
     "Rolluik gestopt.",  // "Volet arrêté."
     "Rolluiken",  // "Volets"
@@ -6510,6 +6529,7 @@ static const char* const kI18n_nl[] = {
     "jaartotaal",  // "cumul de l'année"
     "dagtotaal",  // "cumul du jour"
     "maandtotaal",  // "cumul du mois"
+    "actieradius",  // "d'autonomie"
     "voorsprong op het net deze maand",  // "d'avance sur le réseau ce mois-ci"
     "achterstand op het net deze maand",  // "de retard sur le réseau ce mois-ci"
     "van je verbruik gedekt door de zon",  // "de ta conso couverte par le soleil"
@@ -6866,6 +6886,7 @@ static const char* const kI18n_es[] = {
     "Sin preguntas jugadas",  // "Aucune question jouée"
     "Aún no hay preguntas jugadas",  // "Aucune question jouée pour le moment"
     "Ninguna alarma prevista",  // "Aucune sonnerie prévue"
+    "Ningún coche recibido",  // "Aucune voiture reçue"
     "No se suman almas: el modo dios no cuenta.",  // "Aucune âme créditée : le mode dieu ne compte pas."
     "Hoy",  // "Auj"
     "Hoy",  // "Auj."
@@ -6957,6 +6978,7 @@ static const char* const kI18n_es[] = {
     "Elige sus sensores en Home Assistant: listas «Tab5 · serveur IA · AI server».",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Elige tus sensores en Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Elige tus reproductores en Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
+    "Elígelos en el blueprint, sección «Énergie : voitures · Energy: cars».",  // "Choisissez-les dans le blueprint, section « Énergie : voitures »."
     "Elige modo, color, nivel y reloj",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caída limpia. Recupera el aliento.",  // "Chute nette. Reprends ton souffle."
     "Cielo despejado",  // "Ciel clair"
@@ -7805,6 +7827,7 @@ static const char* const kI18n_es[] = {
     "Ver clasificación",  // "Voir le classement"
     "Ve las capturas simples y las responde",  // "Voit les prises simples et les répond"
     "Coche %d",  // "Voiture %d"
+    "Coches",  // "Voitures"
     "Persiana",  // "Volet"
     "Persiana detenida.",  // "Volet arrêté."
     "Persianas",  // "Volets"
@@ -7837,6 +7860,7 @@ static const char* const kI18n_es[] = {
     "acumulado año",  // "cumul de l'année"
     "acumulado día",  // "cumul du jour"
     "acumulado mes",  // "cumul du mois"
+    "de autonomía",  // "d'autonomie"
     "de ventaja sobre la red este mes",  // "d'avance sur le réseau ce mois-ci"
     "de retraso con la red este mes",  // "de retard sur le réseau ce mois-ci"
     "de tu consumo cubierto por el sol",  // "de ta conso couverte par le soleil"
@@ -8193,6 +8217,7 @@ static const char* const kI18n_it[] = {
     "Nessuna domanda giocata",  // "Aucune question jouée"
     "Ancora nessuna domanda giocata",  // "Aucune question jouée pour le moment"
     "Nessuna sveglia prevista",  // "Aucune sonnerie prévue"
+    "Nessuna auto ricevuta",  // "Aucune voiture reçue"
     "Nessuna anima accreditata: la modalità Dio non conta.",  // "Aucune âme créditée : le mode dieu ne compte pas."
     "Oggi",  // "Auj"
     "Oggi",  // "Auj."
@@ -8284,6 +8309,7 @@ static const char* const kI18n_it[] = {
     "Scegli i suoi sensori in Home Assistant: liste «Tab5 · serveur IA · AI server».",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Scegli i tuoi sensori in Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Scegli i tuoi lettori in Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
+    "Scegli le auto nel blueprint, sezione «Énergie : voitures · Energy: cars».",  // "Choisissez-les dans le blueprint, section « Énergie : voitures »."
     "Scegli modalità, colore, livello e orologio",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caduta netta. Riprendi fiato.",  // "Chute nette. Reprends ton souffle."
     "Cielo sereno",  // "Ciel clair"
@@ -9132,6 +9158,7 @@ static const char* const kI18n_it[] = {
     "Vedi la classifica",  // "Voir le classement"
     "Vede le prese semplici e risponde",  // "Voit les prises simples et les répond"
     "Auto %d",  // "Voiture %d"
+    "Auto",  // "Voitures"
     "Tapparella",  // "Volet"
     "Tapparella fermata.",  // "Volet arrêté."
     "Tapparelle",  // "Volets"
@@ -9164,6 +9191,7 @@ static const char* const kI18n_it[] = {
     "cumulato anno",  // "cumul de l'année"
     "cumulato giorno",  // "cumul du jour"
     "cumulato mese",  // "cumul du mois"
+    "di autonomia",  // "d'autonomie"
     "di vantaggio sulla rete questo mese",  // "d'avance sur le réseau ce mois-ci"
     "di ritardo sulla rete questo mese",  // "de retard sur le réseau ce mois-ci"
     "dei tuoi consumi coperti dal sole",  // "de ta conso couverte par le soleil"
@@ -9520,6 +9548,7 @@ static const char* const kI18n_tr[] = {
     "Oynanan soru yok",  // "Aucune question jouée"
     "Henüz oynanan soru yok",  // "Aucune question jouée pour le moment"
     "Planlı alarm yok",  // "Aucune sonnerie prévue"
+    "Hiç araç alınmadı",  // "Aucune voiture reçue"
     "Ruh eklenmedi: tanrı modu sayılmaz.",  // "Aucune âme créditée : le mode dieu ne compte pas."
     "Bugün",  // "Auj"
     "Bugün",  // "Auj."
@@ -9611,6 +9640,7 @@ static const char* const kI18n_tr[] = {
     "Sensörlerini Home Assistant'ta seçin: “Tab5 · serveur IA · AI server” listeleri.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Sensörlerinizi Home Assistant'ta seçin: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Oynatıcılarınızı Home Assistant'ta seçin: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
+    "Bunları blueprint'te “Énergie : voitures · Energy: cars” bölümünden seçin.",  // "Choisissez-les dans le blueprint, section « Énergie : voitures »."
     "Mod, renk, seviye ve saat seçimi",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Temiz bir düşüş. Nefes al.",  // "Chute nette. Reprends ton souffle."
     "Açık gökyüzü",  // "Ciel clair"
@@ -10459,6 +10489,7 @@ static const char* const kI18n_tr[] = {
     "Sıralamayı gör",  // "Voir le classement"
     "Basit almaları görür, karşılık verir",  // "Voit les prises simples et les répond"
     "Araç %d",  // "Voiture %d"
+    "Araçlar",  // "Voitures"
     "Panjur",  // "Volet"
     "Panjur durdu.",  // "Volet arrêté."
     "Panjurlar",  // "Volets"
@@ -10491,6 +10522,7 @@ static const char* const kI18n_tr[] = {
     "yıllık toplam",  // "cumul de l'année"
     "günlük toplam",  // "cumul du jour"
     "aylık toplam",  // "cumul du mois"
+    "menzil",  // "d'autonomie"
     "bu ay şebekeye karşı fazla",  // "d'avance sur le réseau ce mois-ci"
     "bu ay şebekeye karşı eksik",  // "de retard sur le réseau ce mois-ci"
     "tüketiminin güneşten karşılanan kısmı",  // "de ta conso couverte par le soleil"

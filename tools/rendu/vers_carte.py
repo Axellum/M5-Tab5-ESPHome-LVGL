@@ -58,7 +58,7 @@ ONGLETS_AVANT_LE_BORD = 102
 # tab5_tuiles_roue.cpp) : x ramené dans [480, 800], y 460 sur le Tab5.
 CLIM_ANCRE_X, CLIM_ANCRE_Y = (480, 800), 460
 # Valeur d'Ecran::ARCADE (Tab5/ecran/tab5_zones.h) : tests/test_vers_carte.py la relit.
-ECRAN_ARCADE = 22
+ECRAN_ARCADE = 23
 # Marge des points ramenés dans l'écran (gestes, toucher qui ferme une roue).
 BORD = 15
 # Carte du popup Musique (tab5-ui-tokens.yaml : lecteur_card_w, lecteur_card_h), centrée,
