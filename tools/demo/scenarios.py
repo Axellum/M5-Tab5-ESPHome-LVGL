@@ -701,6 +701,59 @@ def build_energie_payload(instantane: dict | None = None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Voitures de la page Flux (ADR-0076) — tab5_maj_voiture(rang, payload), payload d'une voiture :
+#   « nom|batterie|autonomie|unite_distance|etat|puissance|energie|limite|minutes|compteur »
+# batterie et limite en % (0-100), autonomie dans l'unité donnée (km ou mi), etat 0 inconnu /
+# 1 débranchée / 2 branchée / 3 en charge, puissance en W entiers, energie en kWh ajoutés,
+# minutes avant la fin de la charge, compteur « 1 » = le compteur de la maison compte les
+# voitures. Champ vide = inconnu ; payload vide = voiture absente (la tablette retire son cercle).
+# La démo montre deux voitures : la première en charge à 7,2 kW, la seconde branchée.
+# ---------------------------------------------------------------------------
+
+VOITURE_CHAMPS = ("nom", "batterie", "autonomie", "unite_distance", "etat", "puissance", "energie",
+                  "limite", "minutes", "compteur")
+VOITURES = (
+    {"nom": "Model Y", "batterie": "78", "autonomie": "412", "unite_distance": "km", "etat": "3",
+     "puissance": "7200", "energie": "12.4", "limite": "90", "minutes": "95", "compteur": "1"},
+    {"nom": "Model 3", "batterie": "52", "autonomie": "275", "unite_distance": "km", "etat": "2",
+     "puissance": "0", "energie": "", "limite": "80", "minutes": "", "compteur": "1"},
+)
+# Instantané qui va avec (une maison solaire sans batterie, en pleine journée) : 6,4 kW de soleil,
+# la maison mesurée à 8,1 kW avec la voiture en charge (7,2 kW) dedans, donc 0,9 kW pour la
+# maison seule, et 1,7 kW achetés au réseau pour finir la charge.
+ENERGIE_INSTANTANE_VOITURES = {
+    "solaire": "6400", "maison": "8100", "reseau": "1700", "batterie": "", "batterie_puissance": "",
+    "batterie_temperature": "", "unite_temperature": "", "jour": "21.4",
+}
+# La même journée avec la batterie de la démo, qui se vide de 500 W vers la voiture : 6400 de
+# soleil + 1200 du réseau + 500 de la batterie = 8100 mesurés à la maison, dont 7200 pour la voiture.
+ENERGIE_INSTANTANE_VOITURES_BATTERIE = {
+    "solaire": "6400", "maison": "8100", "reseau": "1200", "batterie": "64", "batterie_puissance": "-500",
+    "batterie_temperature": "21.5", "unite_temperature": "°C", "jour": "21.4",
+}
+
+
+def build_voiture_payload(voiture: dict | None) -> str:
+    """tab5_maj_voiture : les dix champs dans l'ordre du contrat, séparés par « | » ; None = payload
+    vide (voiture absente)."""
+    if voiture is None:
+        return ""
+    assert set(voiture) <= set(VOITURE_CHAMPS), f"champ inconnu : {set(voiture) - set(VOITURE_CHAMPS)}"
+    valeurs = [str(voiture.get(c, "")) for c in VOITURE_CHAMPS]
+    for champ, v in zip(VOITURE_CHAMPS, valeurs):
+        assert "|" not in v and ";" not in v, f"{champ} : séparateur dans {v!r}"
+        if champ not in ("nom", "unite_distance"):
+            assert v == "" or _nombre(v) is not None, f"{champ} : {v!r} n'est pas un nombre"
+    d = dict(zip(VOITURE_CHAMPS, valeurs))
+    for champ in ("batterie", "limite"):
+        assert d[champ] == "" or 0 <= float(d[champ]) <= 100, f"{champ} : un pourcentage"
+    assert d["etat"] in ("", "0", "1", "2", "3"), "etat : 0 à 3"
+    assert d["puissance"] == "" or float(d["puissance"]).is_integer(), "puissance : W entiers"
+    assert d["compteur"] in ("", "0", "1"), "compteur : 0 ou 1"
+    return "|".join(valeurs)
+
+
+# ---------------------------------------------------------------------------
 # Popup Serveur IA (ADR-0059) — tab5_maj_serveur_ia, payload d'un serveur :
 #   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance|actions »
 # etat 1 / 0 / vide ; nombres à point décimal, vides si inconnus ; niveau 0-2 (seuils de

@@ -2033,6 +2033,162 @@ static void test_energie_flux() {
            "flux : solaire négatif = 0, valeurs non finies ou absurdes ignorées");
 }
 
+// Les watts de la page « Flux » : au centième de watt près (les parts sont des fractions).
+static bool proche_w(float a, float b) { return std::fabs(a - b) < 0.01f; }
+
+// Deux résultats strictement égaux, champ par champ (NAN égal à NAN) : « sans voiture, rien ne bouge ».
+static bool flux_egal(const EnergieFlux& a, const EnergieFlux& b) {
+    if (a.solaire_maison != b.solaire_maison || a.solaire_reseau != b.solaire_reseau ||
+        a.solaire_batterie != b.solaire_batterie || a.reseau_maison != b.reseau_maison ||
+        a.reseau_batterie != b.reseau_batterie || a.batterie_maison != b.batterie_maison ||
+        a.batterie_reseau != b.batterie_reseau)
+        return false;
+    if (!(std::isnan(a.maison) ? std::isnan(b.maison) : a.maison == b.maison)) return false;
+    for (int i = 0; i < kVoituresMax; i++)
+        if (a.charge_voiture[i] != b.charge_voiture[i] || a.solaire_voiture[i] != b.solaire_voiture[i] ||
+            a.batterie_voiture[i] != b.batterie_voiture[i] || a.reseau_voiture[i] != b.reseau_voiture[i])
+            return false;
+    return true;
+}
+
+static void test_energie_flux_voitures() {
+    // L'esquisse du plan : 6,4 kW de soleil, 1,7 kW pris au réseau, compteur de la maison à
+    // 8,1 kW, une voiture à 7,2 kW. La maison reste à 0,9 kW, toute au soleil ; la voiture
+    // prend 5,5 kW de soleil et 1,7 kW de réseau.
+    const float une[1] = {7200.0f};
+    EnergieFlux f = energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, une, 1, true);
+    expect(proche_w(f.solaire_maison, 900.0f) && proche_w(f.reseau_maison, 0.0f) && proche_w(f.batterie_maison, 0.0f) &&
+               proche_w(f.maison, 900.0f),
+           "voiture : la maison garde 0,9 kW, tout du soleil, le compteur moins la voiture");
+    expect(proche_w(f.charge_voiture[0], 7200.0f) && proche_w(f.solaire_voiture[0], 5500.0f) &&
+               proche_w(f.reseau_voiture[0], 1700.0f) && proche_w(f.batterie_voiture[0], 0.0f) &&
+               f.charge_voiture[1] == 0.0f && f.solaire_voiture[1] == 0.0f,
+           "voiture : 5,5 kW de soleil et 1,7 kW de réseau, rien pour la seconde");
+    // Le compteur de la maison ne compte pas la voiture : la mesure est montrée telle quelle.
+    f = energie_flux_calculer(6400.0f, 900.0f, 1700.0f, NAN, une, 1, false);
+    expect(proche_w(f.maison, 900.0f) && proche_w(f.solaire_voiture[0], 5500.0f) && proche_w(f.solaire_maison, 900.0f),
+           "voiture : le compteur sans la voiture n'est pas retouché");
+    f = energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, une, 1, false);
+    expect(proche_w(f.maison, 8100.0f), "voiture : option « le compteur ne compte pas la voiture » : mesure telle quelle");
+    // Pas de mesure de la maison : la somme de ce qui lui reste (voitures retirées).
+    f = energie_flux_calculer(6400.0f, NAN, 1700.0f, NAN, une, 1, true);
+    expect(proche_w(f.maison, 900.0f), "voiture : maison estimée sans la voiture");
+
+    // Deux voitures : la maison d'abord, le reste partagé au prorata de leurs puissances.
+    const float deux[2] = {3000.0f, 1000.0f};
+    f = energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, deux, 2, true);
+    expect(proche_w(f.solaire_maison, 4100.0f) && proche_w(f.reseau_maison, 0.0f) && proche_w(f.maison, 4100.0f),
+           "voitures : la maison prend 4,1 kW de soleil");
+    expect(proche_w(f.solaire_voiture[0], 1725.0f) && proche_w(f.reseau_voiture[0], 1275.0f) &&
+               proche_w(f.solaire_voiture[1], 575.0f) && proche_w(f.reseau_voiture[1], 425.0f),
+           "voitures : le reste en trois quarts / un quart");
+    // Elles demandent plus que ce qui entre : plafonnées, au prorata, la maison à zéro.
+    const float trop[2] = {7200.0f, 3600.0f};
+    f = energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, trop, 2, true);
+    expect(proche_w(f.solaire_maison, 0.0f) && proche_w(f.reseau_maison, 0.0f) && proche_w(f.maison, 0.0f) &&
+               proche_w(f.charge_voiture[0], 7200.0f) && proche_w(f.charge_voiture[1], 3600.0f) &&
+               proche_w(f.solaire_voiture[0], 4266.6667f) && proche_w(f.reseau_voiture[0], 1133.3333f) &&
+               proche_w(f.solaire_voiture[1], 2133.3333f) && proche_w(f.reseau_voiture[1], 566.6667f),
+           "voitures : plafonnées à ce qui entre, la puissance lue reste celle de la voiture");
+
+    // Batterie qui se décharge : la maison la prend avant le réseau, la voiture le reste.
+    const float v2k[1] = {2000.0f};
+    f = energie_flux_calculer(0.0f, 3000.0f, 0.0f, -3000.0f, v2k, 1, true);
+    expect(proche_w(f.batterie_maison, 1000.0f) && proche_w(f.batterie_voiture[0], 2000.0f) && proche_w(f.maison, 1000.0f),
+           "voiture : sur la batterie qui se décharge");
+    // Pas de soleil : tout du réseau.
+    const float v72[1] = {7200.0f};
+    f = energie_flux_calculer(0.0f, 8000.0f, 7200.0f, NAN, v72, 1, true);
+    expect(proche_w(f.reseau_voiture[0], 7200.0f) && proche_w(f.reseau_maison, 0.0f) && proche_w(f.maison, 800.0f),
+           "voiture : sans soleil, tout du réseau");
+    // Rien de connu côté maison : la voiture garde sa puissance lue, aucun flux inventé.
+    const float v5k[1] = {5000.0f};
+    f = energie_flux_calculer(NAN, NAN, NAN, NAN, v5k, 1, true);
+    expect(proche_w(f.charge_voiture[0], 5000.0f) && f.solaire_voiture[0] == 0.0f && f.reseau_voiture[0] == 0.0f &&
+               std::isnan(f.maison),
+           "voiture : sans aucun flux connu, pas de part inventée");
+
+    // Valeurs absurdes : négative, non finie, hors bornes = 0 ; au-delà de kVoituresMax, ignoré.
+    const float louches[3] = {-5.0f, NAN, 4000.0f};
+    f = energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, louches, 3, true);
+    expect(flux_egal(f, energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN)),
+           "voitures : négative, non finie ou au-delà de deux = comme sans voiture");
+    const float enorme[1] = {1e12f};
+    f = energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, enorme, 1, true);
+    expect(flux_egal(f, energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN)), "voiture : puissance absurde ignorée");
+
+    // Sans voiture, le résultat est celui d'avant, valeur pour valeur (garde-fou du plan :
+    // le Flux à zéro voiture ne bouge pas).
+    const float zeros[2] = {0.0f, 0.0f};
+    const float entrees[][4] = {
+        {3000.0f, 1000.0f, -2000.0f, NAN},
+        {500.0f, NAN, 800.0f, 400.0f},
+        {0.0f, 1500.0f, 1000.0f, 600.0f},
+        {0.0f, 700.0f, -300.0f, -1000.0f},
+        {NAN, NAN, NAN, NAN},
+        {-50.0f, INFINITY, 1e12f, NAN},
+        {6400.0f, 8100.0f, 1700.0f, NAN},
+        {1234.5f, 777.7f, -33.3f, 41.9f},
+        {2000.0f, NAN, NAN, -500.0f},
+    };
+    bool tout_egal = true;
+    for (const auto& e : entrees) {
+        const EnergieFlux avant = energie_flux_calculer(e[0], e[1], e[2], e[3]);
+        tout_egal = tout_egal && flux_egal(avant, energie_flux_calculer(e[0], e[1], e[2], e[3], nullptr, 0, true)) &&
+                    flux_egal(avant, energie_flux_calculer(e[0], e[1], e[2], e[3], zeros, 2, true)) &&
+                    flux_egal(avant, energie_flux_calculer(e[0], e[1], e[2], e[3], zeros, 2, false)) &&
+                    flux_egal(avant, energie_flux_calculer(e[0], e[1], e[2], e[3], v5k, 0, true));
+    }
+    expect(tout_egal, "voitures : aucune voiture (nul, zéro, 0 W, n = 0) = exactement le résultat d'avant");
+}
+
+static void test_voiture_lire() {
+    VoitureLue v;
+    expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95"), v) && v.presente && champ_est(v.nom, "Model Y") &&
+               proche(v.batterie, 78.0f) && proche(v.autonomie, 412.0f) && champ_est(v.unite_distance, "km") &&
+               v.etat == VoitureEtat::EN_CHARGE && proche(v.puissance, 7200.0f) && proche(v.energie, 12.4f) &&
+               proche(v.limite, 90.0f) && proche(v.minutes, 95.0f) && v.compteur_compte,
+           "voiture : tous les champs, le compteur compte les voitures par défaut");
+    expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95|0"), v) && !v.compteur_compte,
+           "voiture : « 0 » = le compteur de la maison ne compte pas les voitures");
+    expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95|1"), v) && v.compteur_compte &&
+               voiture_lire(ch("Model Y|78|||3|7200|||95|oui"), v) && v.compteur_compte &&
+               voiture_lire(ch("Model Y|78|||3|7200|||95|2"), v) && v.compteur_compte,
+           "voiture : « 1 », illisible ou hors bornes = il les compte");
+    expect(!voiture_lire(ch(""), v) && !v.presente, "voiture : vide = absente");
+    expect(!voiture_lire(ch("||||||||"), v) && !v.presente, "voiture : champs tous vides = absente");
+    expect(!voiture_lire(Champ{nullptr, 3}, v) && !v.presente, "voiture : pointeur nul");
+    // Un ancien payload (moins de champs) : les champs manquants se lisent « vides ».
+    expect(voiture_lire(ch("Model 3|55"), v) && v.presente && proche(v.batterie, 55.0f) && std::isnan(v.autonomie) &&
+               v.unite_distance.n == 0 && v.etat == VoitureEtat::INCONNUE && std::isnan(v.puissance) &&
+               std::isnan(v.energie) && std::isnan(v.limite) && std::isnan(v.minutes),
+           "voiture : payload court, le reste inconnu");
+    // Hors bornes, illisible, non fini : inconnu, jamais une valeur fausse.
+    expect(voiture_lire(ch("X|150|-5|mi|9|-1|-2|101|1e99"), v) && v.presente && std::isnan(v.batterie) &&
+               std::isnan(v.autonomie) && v.etat == VoitureEtat::INCONNUE && std::isnan(v.puissance) &&
+               std::isnan(v.energie) && std::isnan(v.limite) && std::isnan(v.minutes),
+           "voiture : hors bornes = inconnu");
+    expect(voiture_lire(ch("X|abc|nan|km|x|inf||unknown|"), v) && std::isnan(v.batterie) && std::isnan(v.autonomie) &&
+               v.etat == VoitureEtat::INCONNUE && std::isnan(v.puissance) && std::isnan(v.limite),
+           "voiture : illisible ou non fini = inconnu");
+    // Bornes incluses, états, champs de trop ignorés, nom vide mais le reste là.
+    expect(voiture_lire(ch("A|0|10000|km|1|0|0|100|10080|en|trop"), v) && proche(v.batterie, 0.0f) &&
+               proche(v.autonomie, 10000.0f) && v.etat == VoitureEtat::DEBRANCHEE && proche(v.puissance, 0.0f) &&
+               proche(v.limite, 100.0f) && proche(v.minutes, 10080.0f),
+           "voiture : bornes incluses, champs de trop ignorés");
+    expect(voiture_lire(ch("B|80|||2"), v) && v.etat == VoitureEtat::BRANCHEE && std::isnan(v.autonomie),
+           "voiture : branchée sans charge");
+    // Débranchée = 0 W, même si le capteur de puissance garde sa dernière valeur ; branchée : la valeur lue.
+    expect(voiture_lire(ch("D|60|||1|7200"), v) && v.etat == VoitureEtat::DEBRANCHEE && proche(v.puissance, 0.0f) &&
+               voiture_lire(ch("P|60|||2|7200"), v) && v.etat == VoitureEtat::BRANCHEE && proche(v.puissance, 7200.0f),
+           "voiture : débranchée = 0 W");
+    // Des espaces seulement (un gabarit qui rend du blanc) : pas de voiture.
+    expect(!voiture_lire(ch("   "), v) && !v.presente && !voiture_lire(ch(" | |\t|"), v) && !v.presente,
+           "voiture : des espaces seulement = absente");
+    expect(voiture_lire(ch("|80"), v) && v.presente && v.nom.n == 0 && proche(v.batterie, 80.0f),
+           "voiture : nom vide, le reste est montré");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -2090,6 +2246,8 @@ int main() {
     test_energie_bilan();
     test_energie_mois();
     test_energie_flux();
+    test_energie_flux_voitures();
+    test_voiture_lire();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

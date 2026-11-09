@@ -9,6 +9,16 @@
  *           maison, réseau, batterie en cercles (energie_flux_noeud.yaml) reliés par des
  *           traits dont l'épaisseur suit la puissance (partage : energie_flux_calculer,
  *           tab5_parse.h), anneau solaire / batterie / réseau autour de la maison. Statique.
+ *           Voitures (ADR-0076, tab5_maj_voiture, voiture_lire) : un cercle par voiture
+ *           reçue (batterie, nom, puissance de charge ou état), traits soleil → voiture et
+ *           réseau → voiture, anneau = part du soleil, de la batterie et du réseau dans sa
+ *           charge, deux lignes au coin de la page (énergie ajoutée, fin de charge). La charge
+ *           des voitures est retranchée de la maison (energie_flux_calculer). Les cercles sont
+ *           posés par une TABLE de dispositions (kDispositions, une par combinaison batterie /
+ *           nombre de voitures), jamais calculés : sans voiture, les deux dispositions
+ *           d'avant, au pixel près. Seulement sur une carte aussi haute que le Tab5
+ *           (kFluxVoitures : la 7B ne les dessine pas) ; avec la batterie et deux voitures,
+ *           un seul cercle « 2 voitures » (leur somme).
  *         - « Aujourd'hui » (tab5_maj_energie_soleil, energie_soleil_lire) : arc du soleil
  *           de son lever à son coucher, le soleil à sa place à l'heure locale ; les 24 heures
  *           (production réelle de la série des heures en barres pleines, prévision en barres
@@ -71,6 +81,12 @@ EnergieUI g_energie_ui;
 namespace {
 
 enum Carte : int { SOLAIRE = 0, MAISON = 1, RESEAU = 2, BATTERIE = 3, NB_CARTES = 4 };
+// Nœuds de la page Flux : les quatre cartes, puis une voiture ou deux (tab5_maj_voiture, ADR-0076).
+constexpr int VOITURE_1 = NB_CARTES;
+constexpr int VOITURE_2 = NB_CARTES + 1;
+constexpr int NB_NOEUDS = NB_CARTES + kVoituresMax;
+static_assert(kEnergieNoeuds == NB_NOEUDS, "un cercle par nœud (EnergieUI::flux_noeud)");
+static_assert(kVoituresMax == 2, "deux voitures : VOITURE_1, VOITURE_2");
 enum Vue : int { HEURES = 0, JOURS = 1, MOIS = 2, NB_VUES = 3 };
 constexpr const char* kVues[NB_VUES] = {"heures", "jours", "mois"};
 // Vues du Bilan poussées par un HA de l'ADR-0062 : les heures du jour, le mois civil (du 1er
@@ -136,12 +152,25 @@ constexpr float kTraitPlein = 6000.0f;      // W : le trait le plus épais
 struct Centre {
     int32_t x, y;
 };
-// Centres des cercles dans la page (1250 × 598), dans l'ordre des cartes : avec la batterie
-// (en bas), sans (les trois descendent pour remplir la page). Avec la batterie : 10 px
+// Centres des cercles dans la page (1250 × 598), dans l'ordre des nœuds (solaire, maison, réseau,
+// batterie, voiture 1, voiture 2), une liste par disposition (Disp, kDispositions plus bas).
+// « Sans » et « Batterie » sont celles d'avant les voitures, au pixel près : avec la batterie
+// (en bas), sans (les trois descendent pour remplir la page) ; avec la batterie : 10 px
 // au-dessus du solaire, 43 px sous la batterie (le bas du verre d'un cercle a la couleur
-// du bas de la carte : rien ne doit frôler le bord de la page).
-constexpr Centre kCentresBatterie[NB_CARTES] = {{625, 110}, {1035, 285}, {215, 285}, {625, 455}};
-constexpr Centre kCentresSans[NB_CARTES] = {{625, 150}, {1035, 410}, {215, 410}, {625, 493}};
+// du bas de la carte : rien ne doit frôler le bord de la page). Avec des voitures, le solaire
+// reste en haut au milieu, le réseau et la maison au milieu de la page, de part et d'autre, et la
+// rangée du bas est celle des voitures (et de la batterie : à droite des voitures) ; les cercles
+// de la maison et des voitures ont un anneau (rayon 115 : kFluxR + écart + épaisseur).
+// tests/test_energie.py contrôle, disposition par disposition, que rien ne touche un autre
+// cercle ni le bord de la page, et qu'un trait tracé ne traverse aucun cercle. Un nœud absent
+// d'une disposition garde {0, 0} (il est masqué).
+constexpr Centre kCentresSans[NB_NOEUDS] = {{625, 150}, {1035, 410}, {215, 410}, {625, 493}, {0, 0}, {0, 0}};
+constexpr Centre kCentresBatterie[NB_NOEUDS] = {{625, 110}, {1035, 285}, {215, 285}, {625, 455}, {0, 0}, {0, 0}};
+constexpr Centre kCentresSansV1[NB_NOEUDS] = {{625, 110}, {1035, 290}, {215, 290}, {0, 0}, {625, 455}, {0, 0}};
+constexpr Centre kCentresSansV2[NB_NOEUDS] = {{625, 110}, {1035, 290}, {215, 290}, {0, 0}, {475, 455}, {775, 455}};
+constexpr Centre kCentresBatterieV1[NB_NOEUDS] = {{625, 110}, {1035, 290}, {215, 290}, {775, 455}, {475, 455}, {0, 0}};
+// Batterie et deux voitures : mêmes centres, la voiture 1 est le cercle commun des deux.
+constexpr Centre kCentresBatterieV2[NB_NOEUDS] = {{625, 110}, {1035, 290}, {215, 290}, {775, 455}, {475, 455}, {0, 0}};
 // Ces centres sont ceux du Tab5. Sur une autre carte (lot 4 du portage), un centre est ramené
 // à sa page : x depuis le milieu de la carte (largeur_carte), y entre 110 (le haut, gardé) et
 // le bas de la page moins 143 (les 43 px sous la batterie et son rayon) ; les cercles gardent
@@ -160,14 +189,58 @@ enum Trait : int { T_SOL_MAISON,
                    T_SOL_BATT,
                    T_BATT_MAISON,
                    T_RESEAU_BATT,
+                   T_SOL_V1,
+                   T_SOL_V2,
+                   T_RESEAU_V1,
+                   T_RESEAU_V2,
                    NB_TRAITS };
-constexpr int kTraitBouts[NB_TRAITS][2] = {{SOLAIRE, MAISON}, {SOLAIRE, RESEAU}, {RESEAU, MAISON}, {SOLAIRE, BATTERIE}, {BATTERIE, MAISON}, {RESEAU, BATTERIE}};
-// Anneau de la maison : la piste, puis les parts solaire, batterie, réseau.
+constexpr int kTraitBouts[NB_TRAITS][2] = {{SOLAIRE, MAISON}, {SOLAIRE, RESEAU}, {RESEAU, MAISON}, {SOLAIRE, BATTERIE}, {BATTERIE, MAISON}, {RESEAU, BATTERIE}, {SOLAIRE, VOITURE_1}, {SOLAIRE, VOITURE_2}, {RESEAU, VOITURE_1}, {RESEAU, VOITURE_2}};
+// Anneau de la maison et des voitures : la piste, puis les parts solaire, batterie, réseau.
 enum Anneau : int { A_PISTE,
                     A_SOLAIRE,
                     A_BATTERIE,
                     A_RESEAU,
                     NB_ANNEAUX };
+
+// Dispositions du Flux : combien de nœuds, où, et quels traits ne sont jamais tracés (celui qui
+// traverserait un cercle : le réseau → voiture 2 passerait par la voiture 1, le réseau ↔ batterie
+// par la voiture 1). La part d'un trait caché vers une voiture se lit sur l'anneau de cette voiture ;
+// le réseau ↔ batterie, lui, n'a pas d'anneau (la batterie n'en porte pas) : avec une voiture, seul
+// le texte de la batterie le dit (ADR-0076, reste ouvert).
+enum Disp : int { D_SANS,
+                  D_BATTERIE,
+                  D_SANS_V1,
+                  D_SANS_V2,
+                  D_BATTERIE_V1,
+                  D_BATTERIE_V2,
+                  NB_DISPOS };
+constexpr uint32_t bit_trait(int t) { return 1u << t; }
+struct Disposition {
+    const Centre* centres;
+    uint32_t sans_trait;   // bit_trait(t) : le trait t n'est pas tracé dans cette disposition
+};
+constexpr Disposition kDispositions[NB_DISPOS] = {
+    {kCentresSans, 0},
+    {kCentresBatterie, 0},
+    {kCentresSansV1, 0},
+    {kCentresSansV2, bit_trait(T_RESEAU_V2)},
+    {kCentresBatterieV1, bit_trait(T_RESEAU_BATT)},
+    {kCentresBatterieV2, bit_trait(T_RESEAU_BATT)},
+};
+// Disposition d'une combinaison : [avec la batterie][nombre de voitures reçues].
+constexpr int kDispositionDe[2][kVoituresMax + 1] = {{D_SANS, D_SANS_V1, D_SANS_V2},
+                                                     {D_BATTERIE, D_BATTERIE_V1, D_BATTERIE_V2}};
+// Les voitures ne se dessinent que sur une page aussi haute que celle du Tab5 : la rangée du bas
+// n'a sa place ni sur la 7B (994 × 478 : cercles de 200 px qui se touchent, traits de moins de
+// 25 px), ni sur une carte plus basse. Ailleurs, la page est celle d'avant, la charge des
+// voitures n'est pas retranchée de la maison (rien ne la montrerait).
+constexpr bool kFluxVoitures = kCorpsH >= kCorpsHTab5;
+// Deux lignes au coin de la page, sous la rangée du bas, par voiture : à gauche la première,
+// à droite la seconde (« +12.4 kWh ajoutés », « Prête dans 1 h 35 »).
+constexpr int32_t kFluxLegendeL = 300;
+constexpr int32_t kFluxLegendeX = 36;
+constexpr int32_t kFluxLegendeY = 512;
+constexpr int32_t kFluxLegendePas = 32;
 
 // Page Aujourd'hui : zone de gauche (energie_soleil_zone, 810 × 570 sur le Tab5), heures sur
 // kSolL px. Sur une autre carte (lot 4 du portage) : colonnes ramenées au corps
@@ -315,7 +388,20 @@ struct Bilan {
     EnergieBilanLu lu;
 };
 
+// Une voiture électrique (tab5_maj_voiture, ADR-0076) : ce que voiture_lire a lu, le nom et
+// l'unité copiés (le payload ne vit pas plus loin).
+struct Voiture {
+    bool presente = false;
+    int rang = 0;   // 1 ou 2 : le nom par défaut « Voiture 1 » / « Voiture 2 » quand HA n'en envoie pas
+    char nom[48] = {};
+    char unite_distance[8] = {};
+    VoitureEtat etat = VoitureEtat::INCONNUE;
+    float batterie = NAN, autonomie = NAN, puissance = NAN, energie = NAN, limite = NAN, minutes = NAN;
+};
+
 Instant s_i;
+Voiture s_voitures[kVoituresMax];
+bool s_compteur_compte = true;   // le compteur de la maison compte la charge des voitures
 Serie s_series[NB_VUES];
 Bilan s_bilans[NB_VUES];
 EnergieSoleilLu s_soleil;
@@ -334,8 +420,10 @@ lv_obj_t* s_vide = nullptr;                 // « Aucun historique » au milieu 
 // Flux.
 struct Flux {
     lv_obj_t* trait[NB_TRAITS] = {};
-    lv_obj_t* anneau[NB_ANNEAUX] = {};
-    int disposition = -1;                   // 1 avec la batterie, 0 sans, -1 pas encore posé
+    lv_obj_t* anneau[NB_ANNEAUX] = {};                      // celui de la maison
+    lv_obj_t* anneau_voiture[kVoituresMax][NB_ANNEAUX] = {};  // un par cercle de voiture
+    lv_obj_t* legende[kVoituresMax][2] = {};  // au coin de la page : énergie ajoutée, fin de charge
+    int disposition = -1;                   // une valeur de Disp, -1 pas encore posé
 };
 Flux s_flux;
 lv_point_precise_t s_traits_pts[NB_TRAITS][2];
@@ -578,6 +666,8 @@ const char* glyphe_carte(int carte, int etat) {
             if (etat > 0) return "\U000F192D";                               // transmission-tower-import
             if (etat < 0) return "\U000F192C";                               // transmission-tower-export
             return "\U000F0D3E";                                             // transmission-tower
+        case VOITURE_1:
+        case VOITURE_2: return "\U000F0B6C";                                 // car-electric
         default:
             if (etat > 0) return "\U000F17E0";                               // battery-arrow-up
             if (etat < 0) return "\U000F17DE";                               // battery-arrow-down
@@ -708,6 +798,70 @@ Vu vu_batterie() {
     }
     r.couleur = r.etat > 0 ? UIColor.SUCCESS : r.etat < 0 ? UIColor.WARNING
                                                           : get_battery_color(i.batterie.v);
+    return r;
+}
+
+// Une voiture (ou « 2 voitures » : leur somme) pour la page Flux. valeur = son niveau de batterie
+// (sa puissance si c'est le cercle des deux), cercle = son nom, detail = la puissance de charge,
+// sinon son état ; bord = la couleur du bord et de l'icône, qui suit l'état (vert en charge, bleu
+// branchée, atténué sinon). Sans nom envoyé par HA, le cercle s'appelle « Voiture 1 » ou « Voiture 2 ».
+struct VuVoiture {
+    Vu vu;
+    uint32_t bord = 0;
+};
+
+// Puissance de charge, durée et énergie d'une voiture, pour ses textes.
+void duree(char* out, size_t n, float minutes) {
+    const long m = std::lround(minutes);
+    if (m >= 60) snprintf(out, n, "%ld h %02ld", m / 60, m % 60);
+    else snprintf(out, n, "%ld min", m);
+}
+
+void couleurs_voiture(VoitureEtat etat, uint32_t& bord) {
+    bord = etat == VoitureEtat::EN_CHARGE ? UIColor.SUCCESS : etat == VoitureEtat::BRANCHEE ? UIColor.INFO
+                                                                                            : UIColor.TEXT_DIM;
+}
+
+VuVoiture vu_voiture(const Voiture& v) {
+    VuVoiture r;
+    Vu& u = r.vu;
+    if (std::isfinite(v.batterie)) snprintf(u.valeur, sizeof(u.valeur), "%.0f %%", v.batterie);
+    u.couleur_valeur = std::isfinite(v.batterie) ? get_battery_color(v.batterie) : UIColor.TEXT_PRIMARY;
+    if (v.nom[0] != '\0') snprintf(u.cercle, sizeof(u.cercle), "%s", v.nom);
+    else snprintf(u.cercle, sizeof(u.cercle), tr("Voiture %d"), v.rang);
+    switch (v.etat) {
+        case VoitureEtat::EN_CHARGE:
+            if (std::isfinite(v.puissance)) puissance(u.detail, sizeof(u.detail), v.puissance);
+            else snprintf(u.detail, sizeof(u.detail), "%s", tr("En charge"));
+            break;
+        case VoitureEtat::BRANCHEE: snprintf(u.detail, sizeof(u.detail), "%s", tr("Branchée")); break;
+        case VoitureEtat::DEBRANCHEE: snprintf(u.detail, sizeof(u.detail), "%s", tr("Débranchée")); break;
+        default: break;
+    }
+    couleurs_voiture(v.etat, r.bord);
+    u.couleur = r.bord;
+    return r;
+}
+
+// Batterie et deux voitures : un seul cercle, leur somme (puissance de charge, les deux niveaux).
+VuVoiture vu_voitures(const Voiture* a, const Voiture* b) {
+    VuVoiture r;
+    Vu& u = r.vu;
+    float total = 0.0f;
+    bool charge = false, branchee = false;
+    for (const Voiture* v : {a, b}) {
+        if (std::isfinite(v->puissance) && v->puissance > 0.0f) total += v->puissance;
+        charge = charge || v->etat == VoitureEtat::EN_CHARGE;
+        branchee = branchee || v->etat == VoitureEtat::BRANCHEE;
+    }
+    puissance(u.valeur, sizeof(u.valeur), total);
+    u.couleur_valeur = UIColor.TEXT_PRIMARY;
+    snprintf(u.cercle, sizeof(u.cercle), tr("%d voitures"), 2);
+    if (std::isfinite(a->batterie) && std::isfinite(b->batterie))
+        snprintf(u.detail, sizeof(u.detail), "%.0f \xC2\xB7 %.0f %%", a->batterie, b->batterie);
+    r.bord = charge ? UIColor.SUCCESS : branchee ? UIColor.INFO
+                                                 : UIColor.TEXT_DIM;
+    u.couleur = r.bord;
     return r;
 }
 
@@ -876,19 +1030,19 @@ int32_t epaisseur(float w) {
 
 // Rayon occupé autour d'un centre : le cercle (et l'anneau de la maison), plus le jeu.
 float rayon_occupe(int c) {
-    return static_cast<float>(c == MAISON ? kFluxR + kAnneauEcart + kAnneauL + kTraitJeu : kFluxR + kTraitJeu);
+    const bool anneau = c == MAISON || c == VOITURE_1 || c == VOITURE_2;   // un anneau autour du cercle
+    return static_cast<float>(anneau ? kFluxR + kAnneauEcart + kAnneauL + kTraitJeu : kFluxR + kTraitJeu);
 }
 
-// Pose les cercles, les traits (d'un bord à l'autre) et l'anneau pour une disposition.
-void flux_disposer(bool batterie) {
+// Pose les cercles, les traits (d'un bord à l'autre) et les anneaux pour une disposition (Disp).
+void flux_disposer(int d) {
     const EnergieUI& u = g_energie_ui;
-    const int d = batterie ? 1 : 0;
     if (s_flux.disposition == d) return;
     s_flux.disposition = d;
-    const Centre* t = batterie ? kCentresBatterie : kCentresSans;
-    Centre c[NB_CARTES];
-    for (int n = 0; n < NB_CARTES; n++) c[n] = centre_carte(t[n]);
-    for (int n = 0; n < NB_CARTES; n++) {
+    const Centre* t = kDispositions[d].centres;
+    Centre c[NB_NOEUDS];
+    for (int n = 0; n < NB_NOEUDS; n++) c[n] = centre_carte(t[n]);
+    for (int n = 0; n < NB_NOEUDS; n++) {
         ui_x(u.flux_noeud[n], c[n].x - kFluxR);
         ui_y(u.flux_noeud[n], c[n].y - kFluxR);
     }
@@ -908,6 +1062,11 @@ void flux_disposer(bool batterie) {
         ui_x(a, c[MAISON].x - kAnneauD / 2);
         ui_y(a, c[MAISON].y - kAnneauD / 2);
     }
+    for (int v = 0; v < kVoituresMax; v++)
+        for (lv_obj_t* a : s_flux.anneau_voiture[v]) {
+            ui_x(a, c[VOITURE_1 + v].x - kAnneauD / 2);
+            ui_y(a, c[VOITURE_1 + v].y - kAnneauD / 2);
+        }
 }
 
 // Un cercle : bord à la couleur de sa source sur tout le tour (un thème à relief ne pose
@@ -952,14 +1111,79 @@ void peindre_part(lv_obj_t* a, int32_t debut, int32_t fin, uint32_t couleur) {
     ui_hidden(a, false);
 }
 
+// Anneau d'un cercle de voiture : la piste, puis les parts du soleil, de la batterie et du réseau
+// dans sa charge (comme l'anneau de la maison ; cachées sous kRepos au total).
+void peindre_anneau_voiture(lv_obj_t* const* arcs, bool montre, float solaire, float batterie, float reseau) {
+    ui_hidden(arcs[A_PISTE], !montre);
+    const float entre = solaire + batterie + reseau;
+    if (!montre || entre < kRepos) {
+        for (int a = A_SOLAIRE; a < NB_ANNEAUX; a++) ui_hidden(arcs[a], true);
+        if (montre) arc_couleur(arcs[A_PISTE], LV_PART_MAIN, UIColor.ARC_TRACK);
+        return;
+    }
+    arc_couleur(arcs[A_PISTE], LV_PART_MAIN, UIColor.ARC_TRACK);
+    const int32_t a1 = static_cast<int32_t>(std::lround(360.0f * solaire / entre));
+    const int32_t a2 = a1 + static_cast<int32_t>(std::lround(360.0f * batterie / entre));
+    peindre_part(arcs[A_SOLAIRE], 0, a1, UIColor.GOLD);
+    peindre_part(arcs[A_BATTERIE], a1, a2 > 360 ? 360 : a2, UIColor.ACCENT_ALT);
+    peindre_part(arcs[A_RESEAU], a2 > 360 ? 360 : a2, 360, UIColor.WARNING);
+}
+
+// Les deux lignes au coin de la page d'une voiture (v nul : cachées) : l'énergie ajoutée par la
+// charge en cours, ou la limite de charge ; la fin de la charge, ou « Pas en charge ».
+void peindre_legende(int j, const Voiture* v) {
+    char a[64] = "", b[64] = "", x[24];
+    if (v != nullptr) {
+        if (v->etat == VoitureEtat::EN_CHARGE && std::isfinite(v->energie)) {
+            energie_formater(x, sizeof(x), v->energie, "kWh");
+            snprintf(a, sizeof(a), tr("+%s ajoutés"), x);
+        } else if (std::isfinite(v->limite)) {
+            snprintf(a, sizeof(a), tr("Limite %d %%"), static_cast<int>(std::lround(v->limite)));
+        }
+        if (v->etat == VoitureEtat::EN_CHARGE && std::isfinite(v->minutes)) {
+            duree(x, sizeof(x), v->minutes);
+            snprintf(b, sizeof(b), tr("Prête dans %s"), x);
+        } else if (v->etat == VoitureEtat::BRANCHEE) {
+            snprintf(b, sizeof(b), "%s", tr("Pas en charge"));
+        }
+    }
+    texte_ha_coupe(s_flux.legende[j][0], a, kFluxLegendeL);
+    texte_ha_coupe(s_flux.legende[j][1], b, kFluxLegendeL);
+    ui_hidden(s_flux.legende[j][0], a[0] == '\0');
+    ui_hidden(s_flux.legende[j][1], b[0] == '\0');
+}
+
 void peindre_flux() {
     const EnergieUI& u = g_energie_ui;
     if (s_flux.trait[0] == nullptr) return;
     const Instant& i = s_i;
     const bool batterie = i.batterie.choisi || i.batterie_puissance.choisi;
     const bool reseau = i.reseau.choisi;
-    flux_disposer(batterie);
-    const EnergieFlux f = energie_flux_calculer(i.solaire.v, i.maison.v, i.reseau.v, i.batterie_puissance.v);
+    // Les voitures reçues, dans l'ordre des rangs (la voiture 2 seule prend le premier cercle) ;
+    // aucune là où la page ne les dessine pas (kFluxVoitures). Avec la batterie et deux voitures :
+    // un seul cercle, leur somme.
+    const Voiture* voiture[kVoituresMax] = {};
+    int nv = 0;
+    if (kFluxVoitures)
+        for (const Voiture& v : s_voitures)
+            if (v.presente) voiture[nv++] = &v;
+    const bool fusion = batterie && nv == kVoituresMax;
+    const int noeuds = fusion ? 1 : nv;
+    const int disp = kDispositionDe[batterie ? 1 : 0][nv];
+    flux_disposer(disp);
+    const uint32_t sans_trait = kDispositions[disp].sans_trait;
+    float charges[kVoituresMax] = {};
+    for (int j = 0; j < nv; j++) charges[j] = voiture[j]->puissance;
+    const EnergieFlux f = energie_flux_calculer(i.solaire.v, i.maison.v, i.reseau.v, i.batterie_puissance.v, charges, nv,
+                                                s_compteur_compte);
+    // Part du soleil, de la batterie et du réseau dans la charge de chaque cercle de voiture.
+    float sv[kVoituresMax] = {}, bv[kVoituresMax] = {}, rv[kVoituresMax] = {};
+    for (int j = 0; j < nv; j++) {
+        const int k = fusion ? 0 : j;
+        sv[k] += f.solaire_voiture[j];
+        bv[k] += f.batterie_voiture[j];
+        rv[k] += f.reseau_voiture[j];
+    }
 
     peindre_noeud(SOLAIRE, vu_solaire(), UIColor.GOLD);
     // Maison : sa consommation (mesurée, sinon ce qui y entre) et la part du solaire.
@@ -986,16 +1210,32 @@ void peindre_flux() {
     } else {
         ui_hidden(u.flux_noeud[BATTERIE], true);
     }
+    // Voitures : un cercle chacune (ou celui des deux), le reste masqué.
+    for (int j = 0; j < kVoituresMax; j++) {
+        if (j >= noeuds) {
+            ui_hidden(u.flux_noeud[VOITURE_1 + j], true);
+            continue;
+        }
+        const VuVoiture vv = fusion ? vu_voitures(voiture[0], voiture[1]) : vu_voiture(*voiture[j]);
+        peindre_noeud(VOITURE_1 + j, vv.vu, vv.bord);
+    }
 
     // Traits : la couleur de la source (solaire, achat ; vente ; batterie), l'épaisseur du flux.
+    // Un trait que la disposition ne trace pas (il traverserait un cercle) reste caché.
+    const auto trace = [sans_trait](int t, bool montre) { return montre && (sans_trait & bit_trait(t)) == 0; };
     peindre_trait(T_SOL_MAISON, true, f.solaire_maison, UIColor.GOLD);
     peindre_trait(T_SOL_RESEAU, reseau, f.solaire_reseau, UIColor.SUCCESS);
     peindre_trait(T_RESEAU_MAISON, reseau, f.reseau_maison, UIColor.WARNING);
     peindre_trait(T_SOL_BATT, batterie, f.solaire_batterie, UIColor.GOLD);
     peindre_trait(T_BATT_MAISON, batterie, f.batterie_maison, UIColor.ACCENT_ALT);
     const bool achat_batterie = f.reseau_batterie >= f.batterie_reseau;
-    peindre_trait(T_RESEAU_BATT, reseau && batterie, achat_batterie ? f.reseau_batterie : f.batterie_reseau,
+    peindre_trait(T_RESEAU_BATT, trace(T_RESEAU_BATT, reseau && batterie),
+                  achat_batterie ? f.reseau_batterie : f.batterie_reseau,
                   achat_batterie ? UIColor.WARNING : UIColor.SUCCESS);
+    for (int j = 0; j < kVoituresMax; j++) {
+        peindre_trait(T_SOL_V1 + j, trace(T_SOL_V1 + j, j < noeuds), sv[j], UIColor.GOLD);
+        peindre_trait(T_RESEAU_V1 + j, trace(T_RESEAU_V1 + j, j < noeuds && reseau), rv[j], UIColor.WARNING);
+    }
 
     // Anneau de la maison : parts solaire, batterie, réseau de ce qui y entre.
     ui_hidden(s_flux.anneau[A_PISTE], false);
@@ -1008,6 +1248,12 @@ void peindre_flux() {
         peindre_part(s_flux.anneau[A_RESEAU], a2 > 360 ? 360 : a2, 360, UIColor.WARNING);
     } else {
         for (int a = A_SOLAIRE; a < NB_ANNEAUX; a++) ui_hidden(s_flux.anneau[a], true);
+    }
+
+    // Anneaux des voitures, puis leurs deux lignes au coin de la page.
+    for (int j = 0; j < kVoituresMax; j++) {
+        peindre_anneau_voiture(s_flux.anneau_voiture[j], j < noeuds, sv[j], bv[j], rv[j]);
+        peindre_legende(j, j < nv && !fusion ? voiture[j] : nullptr);
     }
 }
 
@@ -1679,6 +1925,11 @@ PagesPopup s_pages{nullptr, nombre_pages, page_courante, afficher_page};
 // Couleurs de ce qui est créé ici et ne change qu'avec le thème (le reste suit les valeurs
 // à chaque peinture).
 void couleurs() {
+    // Flux : les deux lignes au coin de la page de chaque voiture (le reste suit les valeurs).
+    for (lv_obj_t* const* l : s_flux.legende) {
+        ui_text_color(l[0], UIColor.TEXT_PRIMARY);
+        ui_text_color(l[1], UIColor.TEXT_DIM);
+    }
     ui_style_couleur(s_repere, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
     ui_text_color(s_maximum, UIColor.TEXT_DIM);
     ui_text_color(s_vide, UIColor.TEXT_DIM);
@@ -1778,6 +2029,17 @@ void construire_flux() {
     if (z == nullptr) return;
     for (lv_obj_t*& t : s_flux.trait) t = ui_ligne(z, kTraitMin);
     for (int a = 0; a < NB_ANNEAUX; a++) s_flux.anneau[a] = arc_dessin(z, a == A_PISTE);
+    // Voitures (ADR-0076) : leurs anneaux, créés après ceux de la maison (rien ne bouge pour eux),
+    // puis leurs deux lignes au coin de la page, la première à gauche, la seconde à droite.
+    for (int v = 0; v < kVoituresMax; v++)
+        for (int a = 0; a < NB_ANNEAUX; a++) s_flux.anneau_voiture[v][a] = arc_dessin(z, a == A_PISTE);
+    for (int v = 0; v < kVoituresMax; v++)
+        for (int l = 0; l < 2; l++) {
+            lv_obj_t* o = libelle(z, g_energie_ui.police, kFluxLegendeL, v == 0 ? LV_TEXT_ALIGN_LEFT : LV_TEXT_ALIGN_RIGHT);
+            lv_obj_set_pos(o, v == 0 ? kFluxLegendeX : kCarteL - kFluxLegendeX - kFluxLegendeL,
+                           kFluxLegendeY + l * kFluxLegendePas);
+            s_flux.legende[v][l] = o;
+        }
 }
 
 // Aujourd'hui : bande, barres, contours, courbe, trait de l'heure, arc, soleil, libellés.
@@ -2003,6 +2265,35 @@ void energie_instantane(const std::string& payload) {
     texte_ha_copier(i.unite_temperature, sizeof(i.unite_temperature), unite.p, unite.n);
     i.jour = lire_mesure(champ_suivant(p, fin, '|'));
     s_i = i;
+    peindre();
+}
+
+// ADR-0076 : une voiture (lecture : voiture_lire, tab5_parse.h). Un payload vide, ou sans aucun
+// champ, retire la voiture (son cercle disparaît) ; un rang inconnu est refusé.
+void energie_voiture(const std::string& rang, const std::string& payload) {
+    if (payload_trop_long("tab5.energie", payload.size())) return;
+    const int k = rang == "1" ? 0 : (rang == "2" ? 1 : -1);
+    if (k < 0) {
+        payload_refuse("tab5.energie", "voiture : rang inconnu", rang.size());
+        return;
+    }
+    Voiture v;
+    VoitureLue lu;
+    if (voiture_lire(Champ{payload.data(), payload.size()}, lu)) {
+        v.presente = true;
+        v.rang = k + 1;
+        texte_ha_copier(v.nom, sizeof(v.nom), lu.nom.p, lu.nom.n);
+        texte_ha_copier(v.unite_distance, sizeof(v.unite_distance), lu.unite_distance.p, lu.unite_distance.n);
+        v.etat = lu.etat;
+        v.batterie = lu.batterie;
+        v.autonomie = lu.autonomie;
+        v.puissance = lu.puissance;
+        v.energie = lu.energie;
+        v.limite = lu.limite;
+        v.minutes = lu.minutes;
+        s_compteur_compte = lu.compteur_compte;
+    }
+    s_voitures[k] = v;
     peindre();
 }
 

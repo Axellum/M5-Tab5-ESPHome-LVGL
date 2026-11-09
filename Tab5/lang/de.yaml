@@ -1207,6 +1207,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Prévision : externe": "Prognose: extern"
 "Produit": "Erzeugt"
 "Consommé": "Verbraucht"
+# Voitures du Flux (lot B1, ADR-0076)
+"Branchée": "Angesteckt"
+"Débranchée": "Getrennt"
+"Pas en charge": "Lädt nicht"
+"%d voitures": "%d Autos"
+"+%s ajoutés": "+%s geladen"
+"Limite %d %%": "Limit %d %%"
+"Prête dans %s": "Fertig in %s"
+"Voiture %d": "Auto %d"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "NETZSPEICHER"
 "d'avance sur le réseau ce mois-ci": "Vorsprung aufs Netz diesen Monat"

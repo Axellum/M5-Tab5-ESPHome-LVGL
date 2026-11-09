@@ -1789,7 +1789,8 @@ EnergieBilanTotaux energie_bilan_totaux(const float* produit, int n, const Energ
     return t;
 }
 
-EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, float batterie) {
+EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, float batterie,
+                                  const float* voitures, int n_voitures, bool maison_compte_voitures) {
     EnergieFlux f;
     solaire = energie_w(solaire);
     maison = energie_w(maison);
@@ -1807,7 +1808,42 @@ EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, flo
     f.reseau_maison = std::max(achat - f.reseau_batterie, 0.0f);
     f.batterie_reseau = std::min(std::max(vente - f.solaire_reseau, 0.0f), decharge);
     f.batterie_maison = std::max(decharge - f.batterie_reseau, 0.0f);
-    if (std::isfinite(maison)) f.maison = maison;
+
+    // Les voitures (section 17) : rien de ce qui précède ne bouge sans voiture en charge
+    // (total == 0 → on ne touche à rien, mêmes valeurs qu'avant).
+    float total = 0.0f;   // W reçus par les voitures, tels que lus
+    float pris = 0.0f;    // ce que les flux entrants peuvent vraiment leur donner
+    if (voitures != nullptr) {
+        if (n_voitures > kVoituresMax) n_voitures = kVoituresMax;
+        for (int i = 0; i < n_voitures; i++) {
+            const float v = energie_w(voitures[i]);
+            f.charge_voiture[i] = std::isfinite(v) && v > 0.0f ? v : 0.0f;
+            total += f.charge_voiture[i];
+        }
+    }
+    if (total > 0.0f) {
+        const float entrant = f.solaire_maison + f.batterie_maison + f.reseau_maison;
+        pris = std::min(total, entrant);
+        if (pris > 0.0f) {
+            // La maison d'abord : solaire, puis batterie, puis réseau. Le reste va aux voitures.
+            const float reste = entrant - pris;
+            const float hs = std::min(f.solaire_maison, reste);
+            const float hb = std::min(f.batterie_maison, reste - hs);
+            const float hr = std::min(f.reseau_maison, reste - hs - hb);
+            const float cs = f.solaire_maison - hs, cb = f.batterie_maison - hb, cr = f.reseau_maison - hr;
+            for (int i = 0; i < n_voitures; i++) {
+                const float part = f.charge_voiture[i] / total;
+                f.solaire_voiture[i] = cs * part;
+                f.batterie_voiture[i] = cb * part;
+                f.reseau_voiture[i] = cr * part;
+            }
+            f.solaire_maison = hs;
+            f.batterie_maison = hb;
+            f.reseau_maison = hr;
+        }
+    }
+
+    if (std::isfinite(maison)) f.maison = maison_compte_voitures && total > 0.0f ? std::max(maison - total, 0.0f) : maison;
     else if (std::isfinite(solaire) || std::isfinite(reseau) || std::isfinite(batterie))
         f.maison = f.solaire_maison + f.reseau_maison + f.batterie_maison;
     return f;
@@ -1819,4 +1855,57 @@ EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, flo
 int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]) {
     if (valeur == nullptr || n == 0) return 0;
     return champs_decouper(valeur, n, '|', out, kPlaylistsMax);
+}
+
+// ─── 17. Voitures (page « Flux » du popup Énergie, tab5_maj_voiture) ───
+// Nouveau, écrit ici d'emblée. Le calcul du flux avec les voitures est energie_flux_calculer
+// (section 15), la lecture du payload ci-dessous.
+
+namespace {
+constexpr int kVoitureChamps = 10;   // nom, batterie, autonomie, unité, état, W, kWh, limite, minutes, compteur
+
+// Pourcentage d'un champ : NAN s'il est vide, illisible ou hors de 0 à 100.
+float voiture_pct(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && v >= 0.0f && v <= 100.0f ? v : NAN;
+}
+
+// Nombre d'un champ entre 0 et `haut` compris : NAN sinon.
+float voiture_borne(const Champ& c, float haut) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && v >= 0.0f && v <= haut ? v : NAN;
+}
+
+// Vrai si le champ est vide ou ne contient que des espaces (un payload « blanc » n'est pas une voiture).
+bool voiture_blanc(const Champ& c) {
+    for (size_t i = 0; i < c.n; i++)
+        if (c.p[i] != ' ' && c.p[i] != '\t' && c.p[i] != '\r' && c.p[i] != '\n') return false;
+    return true;
+}
+}  // namespace
+
+bool voiture_lire(const Champ& payload, VoitureLue& out) {
+    out = VoitureLue{};
+    if (payload.p == nullptr || payload.n == 0) return false;
+    Champ f[kVoitureChamps];
+    const int k = champs_decouper(payload.p, payload.n, '|', f, kVoitureChamps);
+    for (int i = k; i < kVoitureChamps; i++) f[i] = Champ{payload.p + payload.n, 0};
+    bool un_champ = false;
+    for (int i = 0; i < kVoitureChamps; i++) un_champ = un_champ || !voiture_blanc(f[i]);
+    if (!un_champ) return false;
+    out.presente = true;
+    out.nom = f[0];
+    out.batterie = voiture_pct(f[1]);
+    out.autonomie = voiture_borne(f[2], kVoitureAutonomieMax);
+    out.unite_distance = f[3];
+    out.etat = static_cast<VoitureEtat>(champ_entier(f[4], 3, 0));
+    out.puissance = voiture_borne(f[5], kEnergieWMax);
+    // Une voiture débranchée ne tire rien : la puissance restée dans un capteur qui garde sa dernière
+    // valeur ne doit être ni retranchée de la maison ni tracée sur la page Flux.
+    if (out.etat == VoitureEtat::DEBRANCHEE) out.puissance = 0.0f;
+    out.energie = energie_kwh(f[6]);
+    out.limite = voiture_pct(f[7]);
+    out.minutes = voiture_borne(f[8], kVoitureMinutesMax);
+    out.compteur_compte = champ_entier(f[9], 1, 1) != 0;   // « 0 » seul dit non
+    return true;
 }

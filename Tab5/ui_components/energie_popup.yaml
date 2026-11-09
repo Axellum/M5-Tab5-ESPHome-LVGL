@@ -94,6 +94,9 @@ obj:
                 - !include { file: energie_flux_noeud.yaml, vars: { n: "1" } }
                 - !include { file: energie_flux_noeud.yaml, vars: { n: "2" } }
                 - !include { file: energie_flux_noeud.yaml, vars: { n: "3" } }
+                # Voitures (ADR-0076) : montrées seulement si HA en a envoyé (tab5_maj_voiture).
+                - !include { file: energie_flux_noeud.yaml, vars: { n: "4" } }
+                - !include { file: energie_flux_noeud.yaml, vars: { n: "5" } }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE AUJOURD'HUI (tab5_maj_energie_soleil)

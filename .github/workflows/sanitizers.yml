@@ -13,7 +13,7 @@ name: Sanitizers (tablette virtuelle)
 # Une seconde tâche, `fuzz-parseurs` (lot F), fuzze avec libFuzzer (clang) la lecture des
 # payloads sortie de l'écran (Tab5/socle/tab5_parse.cpp), seule, sans la tablette : des
 # millions d'appels en quelques minutes là où la tablette virtuelle en fait 800 par service.
-# NON REQUIS pour merger (≈ 20 min) : un rouge ici se lit avant de merger un lot C++.
+# NON REQUIS pour merger (≈ 50 min, dont ≈ 40 pour les écrans) : un rouge ici se lit avant de merger un lot C++.
 
 on:
   workflow_dispatch:
@@ -58,7 +58,8 @@ env:
 jobs:
   sanitizers:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # ≈ 10 min avant les écrans + leur plafond (55 min, voir plus bas) + la marge de l'envoi des résultats.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
@@ -148,7 +149,13 @@ jobs:
           pid=$!
           sleep 10
           set +e
-          timeout 40m python tools/rendu/capturer.py --dossier "$ESPHOME_SNAPSHOT_DIR" > resultats/ecrans/capturer.log 2>&1
+          # Plafond : 55 min. Les écrans prennent ≈ 8 s chacun sous ASan/UBSan, plus ≈ 30 s de
+          # conversion en PNG à la fin : à 275 écrans (09/11/2026) la boucle durait 39 min 39 s,
+          # donc à 21 s des 40 min d'avant, et le lot des voitures (5 écrans de plus) a été
+          # interrompu par le plafond pendant la conversion en PNG, juste après la ligne
+          # « Bilan des captures », sans qu'aucun nouveau rapport ne soit en cause. Chaque écran
+          # ajouté coûte ≈ 9 s : garder de la marge ici.
+          timeout 55m python tools/rendu/capturer.py --dossier "$ESPHOME_SNAPSHOT_DIR" > resultats/ecrans/capturer.log 2>&1
           cap=$?
           if kill -0 "$pid" 2>/dev/null; then vivante=oui; kill "$pid"; else vivante=NON; fi
           python tools/sanitizers/rapports.py resultats/ecrans/tablette.log > resultats/ecrans/rapports.txt

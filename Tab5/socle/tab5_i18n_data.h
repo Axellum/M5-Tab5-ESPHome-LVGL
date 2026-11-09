@@ -8,9 +8,17 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1307;
+static const uint16_t kI18nKeyCount = 1315;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1346,6 +1354,7 @@ static const char* const kI18nKeys[] = {
     "%d min",
     "%d objet(s) en votre possession   -   %d emplacement(s)",
     "%d objet(s) trouvé(s) sur %d",
+    "%d voitures",
     "%d/%d débloqués",
     "%de au classement",
     "%dh%02d",
@@ -1385,6 +1394,7 @@ static const char* const kI18nKeys[] = {
     "%u âmes   -   page %d/%d",
     "%u équipes · tour %u",
     "+ Ajouter une équipe",
+    "+%s ajoutés",
     "+1 PV, pièges lents, longue invulnérabilité",
     "+1 point de vie",
     "+1 point de vie par niveau",
@@ -1579,6 +1589,7 @@ static const char* const kI18nKeys[] = {
     "Boss final",
     "Bourse tressée",
     "Boutons",
+    "Branchée",
     "Bravo ! Part « %s » gagnée — vous rejouez.",
     "Brise",
     "Brouillard",
@@ -1718,6 +1729,7 @@ static const char* const kI18nKeys[] = {
     "Durée max",
     "DÉFAITE",
     "Dé : %u — touchez une case surlignée",
+    "Débranchée",
     "Débutant",
     "Débutant : ne voit qu'un coup, se trompe",
     "Déc",
@@ -1945,6 +1957,7 @@ static const char* const kI18nKeys[] = {
     "Lettres A..T et chiffres autour du goban",
     "Lever",
     "Lever et coucher du soleil inconnus",
+    "Limite %d %%",
     "Limite de charge",
     "Lire",
     "Lode Runner 1983\nCreuse · grimpe · fuis",
@@ -2098,6 +2111,7 @@ static const char* const kI18nKeys[] = {
     "Pas de batterie détectée",
     "Pas de données",
     "Pas de velours",
+    "Pas en charge",
     "Passe",
     "Passe — fin de partie",
     "Passer",
@@ -2166,6 +2180,7 @@ static const char* const kI18nKeys[] = {
     "Prévu aujourd'hui",
     "Prévu demain",
     "Prêt",
+    "Prête dans %s",
     "Puissance",
     "Purement cosmétique",
     "Pyramide",
@@ -2467,6 +2482,7 @@ static const char* const kI18nKeys[] = {
     "Vive",
     "Voir le classement",
     "Voit les prises simples et les répond",
+    "Voiture %d",
     "Volet",
     "Volet arrêté.",
     "Volets",
@@ -2657,6 +2673,7 @@ static const char* const kI18n_en[] = {
     "%d min",  // "%d min"
     "%d item(s) owned   -   %d slot(s)",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d of %d items found",  // "%d objet(s) trouvé(s) sur %d"
+    "%d cars",  // "%d voitures"
     "%d/%d unlocked",  // "%d/%d débloqués"
     "Ranked #%d",  // "%de au classement"
     "%dh%02d",  // "%dh%02d"
@@ -2696,6 +2713,7 @@ static const char* const kI18n_en[] = {
     "%u souls   -   page %d/%d",  // "%u âmes   -   page %d/%d"
     "%u teams · round %u",  // "%u équipes · tour %u"
     "+ Add a team",  // "+ Ajouter une équipe"
+    "+%s added",  // "+%s ajoutés"
     "+1 HP, slow traps, long invulnerability",  // "+1 PV, pièges lents, longue invulnérabilité"
     "+1 HP",  // "+1 point de vie"
     "+1 HP per level",  // "+1 point de vie par niveau"
@@ -2890,6 +2908,7 @@ static const char* const kI18n_en[] = {
     "Final boss",  // "Boss final"
     "Woven Purse",  // "Bourse tressée"
     "Buttons",  // "Boutons"
+    "Plugged in",  // "Branchée"
     "Well done! “%s” wedge won — roll again.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Breeze",  // "Brise"
     "Fog",  // "Brouillard"
@@ -3029,6 +3048,7 @@ static const char* const kI18n_en[] = {
     "Max length",  // "Durée max"
     "DEFEAT",  // "DÉFAITE"
     "Die: %u — tap a highlighted space",  // "Dé : %u — touchez une case surlignée"
+    "Unplugged",  // "Débranchée"
     "Beginner",  // "Débutant"
     "Beginner: sees one move, makes mistakes",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
@@ -3256,6 +3276,7 @@ static const char* const kI18n_en[] = {
     "Letters A..T and numbers around the board",  // "Lettres A..T et chiffres autour du goban"
     "Sunrise",  // "Lever"
     "Sunrise and sunset unknown",  // "Lever et coucher du soleil inconnus"
+    "Limit %d %%",  // "Limite %d %%"
     "Charge limit",  // "Limite de charge"
     "Play",  // "Lire"
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
@@ -3409,6 +3430,7 @@ static const char* const kI18n_en[] = {
     "No battery detected",  // "Pas de batterie détectée"
     "No data",  // "Pas de données"
     "Velvet Step",  // "Pas de velours"
+    "Not charging",  // "Pas en charge"
     "Pass",  // "Passe"
     "Pass — game over",  // "Passe — fin de partie"
     "Pass",  // "Passer"
@@ -3477,6 +3499,7 @@ static const char* const kI18n_en[] = {
     "Forecast today",  // "Prévu aujourd'hui"
     "Forecast tomorrow",  // "Prévu demain"
     "Ready",  // "Prêt"
+    "Ready in %s",  // "Prête dans %s"
     "Power",  // "Puissance"
     "Purely cosmetic",  // "Purement cosmétique"
     "Pyramid",  // "Pyramide"
@@ -3778,6 +3801,7 @@ static const char* const kI18n_en[] = {
     "Brisk",  // "Vive"
     "View leaderboard",  // "Voir le classement"
     "Sees simple captures and answers them",  // "Voit les prises simples et les répond"
+    "Car %d",  // "Voiture %d"
     "Shutter",  // "Volet"
     "Shutter stopped.",  // "Volet arrêté."
     "Shutters",  // "Volets"
@@ -3968,6 +3992,7 @@ static const char* const kI18n_de[] = {
     "%d min",  // "%d min"
     "Gegenstände: %d   -   Plätze: %d",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d von %d Gegenständen gefunden",  // "%d objet(s) trouvé(s) sur %d"
+    "%d Autos",  // "%d voitures"
     "%d/%d frei",  // "%d/%d débloqués"
     "Platz %d",  // "%de au classement"
     "%dh%02d",  // "%dh%02d"
@@ -4007,6 +4032,7 @@ static const char* const kI18n_de[] = {
     "%u Seelen   -   Seite %d/%d",  // "%u âmes   -   page %d/%d"
     "%u Teams · Runde %u",  // "%u équipes · tour %u"
     "+ Team hinzufügen",  // "+ Ajouter une équipe"
+    "+%s geladen",  // "+%s ajoutés"
     "+1 LP, langsame Fallen, lange Unverwundbarkeit",  // "+1 PV, pièges lents, longue invulnérabilité"
     "+1 LP",  // "+1 point de vie"
     "+1 LP pro Stufe",  // "+1 point de vie par niveau"
@@ -4201,6 +4227,7 @@ static const char* const kI18n_de[] = {
     "Endboss",  // "Boss final"
     "Flechtbeutel",  // "Bourse tressée"
     "Tasten",  // "Boutons"
+    "Angesteckt",  // "Branchée"
     "Bravo! Ecke „%s“ gewonnen — nochmal würfeln.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Brise",  // "Brise"
     "Nebel",  // "Brouillard"
@@ -4340,6 +4367,7 @@ static const char* const kI18n_de[] = {
     "Max. Dauer",  // "Durée max"
     "VERLOREN",  // "DÉFAITE"
     "Wurf: %u — markiertes Feld antippen",  // "Dé : %u — touchez une case surlignée"
+    "Getrennt",  // "Débranchée"
     "Anfänger",  // "Débutant"
     "Anfänger: sieht einen Zug, macht Fehler",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dez",  // "Déc"
@@ -4567,6 +4595,7 @@ static const char* const kI18n_de[] = {
     "Buchstaben A..T und Zahlen am Brettrand",  // "Lettres A..T et chiffres autour du goban"
     "Aufgang",  // "Lever"
     "Sonnenauf- und -untergang unbekannt",  // "Lever et coucher du soleil inconnus"
+    "Limit %d %%",  // "Limite %d %%"
     "Ladegrenze",  // "Limite de charge"
     "Abspielen",  // "Lire"
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
@@ -4720,6 +4749,7 @@ static const char* const kI18n_de[] = {
     "Kein Akku erkannt",  // "Pas de batterie détectée"
     "Keine Daten",  // "Pas de données"
     "Samtschritt",  // "Pas de velours"
+    "Lädt nicht",  // "Pas en charge"
     "Passen",  // "Passe"
     "Passen — Spielende",  // "Passe — fin de partie"
     "Passen",  // "Passer"
@@ -4788,6 +4818,7 @@ static const char* const kI18n_de[] = {
     "Prognose heute",  // "Prévu aujourd'hui"
     "Prognose morgen",  // "Prévu demain"
     "Bereit",  // "Prêt"
+    "Fertig in %s",  // "Prête dans %s"
     "Leistung",  // "Puissance"
     "Rein kosmetisch",  // "Purement cosmétique"
     "Pyramide",  // "Pyramide"
@@ -5089,6 +5120,7 @@ static const char* const kI18n_de[] = {
     "Flott",  // "Vive"
     "Zur Bestenliste",  // "Voir le classement"
     "Sieht einfache Schläge und antwortet",  // "Voit les prises simples et les répond"
+    "Auto %d",  // "Voiture %d"
     "Rollladen",  // "Volet"
     "Rollladen gestoppt.",  // "Volet arrêté."
     "Rollläden",  // "Volets"
@@ -5279,6 +5311,7 @@ static const char* const kI18n_nl[] = {
     "%d min",  // "%d min"
     "%d voorwerp(en) in bezit   -   %d vak(ken)",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d van %d voorwerpen gevonden",  // "%d objet(s) trouvé(s) sur %d"
+    "%d auto's",  // "%d voitures"
     "%d/%d ontgrendeld",  // "%d/%d débloqués"
     "%de plaats",  // "%de au classement"
     "%dh%02d",  // "%dh%02d"
@@ -5318,6 +5351,7 @@ static const char* const kI18n_nl[] = {
     "%u zielen   -   pagina %d/%d",  // "%u âmes   -   page %d/%d"
     "%u teams · ronde %u",  // "%u équipes · tour %u"
     "+ Team toevoegen",  // "+ Ajouter une équipe"
+    "+%s toegevoegd",  // "+%s ajoutés"
     "+1 HP, trage vallen, lang onkwetsbaar",  // "+1 PV, pièges lents, longue invulnérabilité"
     "+1 HP",  // "+1 point de vie"
     "+1 HP per level",  // "+1 point de vie par niveau"
@@ -5512,6 +5546,7 @@ static const char* const kI18n_nl[] = {
     "Eindbaas",  // "Boss final"
     "Gevlochten buidel",  // "Bourse tressée"
     "Knoppen",  // "Boutons"
+    "Aangesloten",  // "Branchée"
     "Bravo! Partje “%s” gewonnen — gooi opnieuw.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Bries",  // "Brise"
     "Mist",  // "Brouillard"
@@ -5651,6 +5686,7 @@ static const char* const kI18n_nl[] = {
     "Max. duur",  // "Durée max"
     "VERLOREN",  // "DÉFAITE"
     "Worp: %u — tik op een gemarkeerd vak",  // "Dé : %u — touchez une case surlignée"
+    "Losgekoppeld",  // "Débranchée"
     "Beginner",  // "Débutant"
     "Beginner: ziet één zet, maakt fouten",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
@@ -5878,6 +5914,7 @@ static const char* const kI18n_nl[] = {
     "Letters A..T en cijfers rond de goban",  // "Lettres A..T et chiffres autour du goban"
     "Opkomst",  // "Lever"
     "Zonsopkomst en -ondergang onbekend",  // "Lever et coucher du soleil inconnus"
+    "Limiet %d %%",  // "Limite %d %%"
     "Laadlimiet",  // "Limite de charge"
     "Afspelen",  // "Lire"
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
@@ -6031,6 +6068,7 @@ static const char* const kI18n_nl[] = {
     "Geen batterij gevonden",  // "Pas de batterie détectée"
     "Geen gegevens",  // "Pas de données"
     "Fluwelen tred",  // "Pas de velours"
+    "Laadt niet",  // "Pas en charge"
     "Pas",  // "Passe"
     "Pas — einde partij",  // "Passe — fin de partie"
     "Passen",  // "Passer"
@@ -6099,6 +6137,7 @@ static const char* const kI18n_nl[] = {
     "Verwacht vandaag",  // "Prévu aujourd'hui"
     "Verwacht morgen",  // "Prévu demain"
     "Klaar",  // "Prêt"
+    "Klaar over %s",  // "Prête dans %s"
     "Vermogen",  // "Puissance"
     "Puur cosmetisch",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -6400,6 +6439,7 @@ static const char* const kI18n_nl[] = {
     "Vlot",  // "Vive"
     "Bekijk ranglijst",  // "Voir le classement"
     "Ziet simpele slagen en beantwoordt ze",  // "Voit les prises simples et les répond"
+    "Auto %d",  // "Voiture %d"
     "Rolluik",  // "Volet"
     "Rolluik gestopt.",  // "Volet arrêté."
     "Rolluiken",  // "Volets"
@@ -6590,6 +6630,7 @@ static const char* const kI18n_es[] = {
     "%d min",  // "%d min"
     "%d objeto(s) en tu poder   -   %d ranura(s)",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d de %d objetos encontrados",  // "%d objet(s) trouvé(s) sur %d"
+    "%d coches",  // "%d voitures"
     "%d/%d desbloqueados",  // "%d/%d débloqués"
     "Puesto %d",  // "%de au classement"
     "%dh%02d",  // "%dh%02d"
@@ -6629,6 +6670,7 @@ static const char* const kI18n_es[] = {
     "%u almas   -   página %d/%d",  // "%u âmes   -   page %d/%d"
     "%u equipos · ronda %u",  // "%u équipes · tour %u"
     "+ Añadir equipo",  // "+ Ajouter une équipe"
+    "+%s añadidos",  // "+%s ajoutés"
     "+1 PV, trampas lentas, invulnerabilidad larga",  // "+1 PV, pièges lents, longue invulnérabilité"
     "+1 PV",  // "+1 point de vie"
     "+1 PV por nivel",  // "+1 point de vie par niveau"
@@ -6823,6 +6865,7 @@ static const char* const kI18n_es[] = {
     "Jefe final",  // "Boss final"
     "Bolsa trenzada",  // "Bourse tressée"
     "Botones",  // "Boutons"
+    "Enchufado",  // "Branchée"
     "¡Bravo! Quesito «%s» ganado — vuelves a tirar.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Brisa",  // "Brise"
     "Niebla",  // "Brouillard"
@@ -6962,6 +7005,7 @@ static const char* const kI18n_es[] = {
     "Duración máx.",  // "Durée max"
     "DERROTA",  // "DÉFAITE"
     "Dado: %u — toca una casilla resaltada",  // "Dé : %u — touchez une case surlignée"
+    "Desenchufado",  // "Débranchée"
     "Novato",  // "Débutant"
     "Principiante: ve una jugada, se equivoca",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
@@ -7189,6 +7233,7 @@ static const char* const kI18n_es[] = {
     "Letras A..T y números alrededor del goban",  // "Lettres A..T et chiffres autour du goban"
     "Salida",  // "Lever"
     "Salida y puesta del sol desconocidas",  // "Lever et coucher du soleil inconnus"
+    "Límite %d %%",  // "Limite %d %%"
     "Límite de carga",  // "Limite de charge"
     "Reproducir",  // "Lire"
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
@@ -7342,6 +7387,7 @@ static const char* const kI18n_es[] = {
     "No se detecta batería",  // "Pas de batterie détectée"
     "Sin datos",  // "Pas de données"
     "Paso de seda",  // "Pas de velours"
+    "No está cargando",  // "Pas en charge"
     "Pasa",  // "Passe"
     "Pasa — fin de la partida",  // "Passe — fin de partie"
     "Pasar",  // "Passer"
@@ -7410,6 +7456,7 @@ static const char* const kI18n_es[] = {
     "Previsto hoy",  // "Prévu aujourd'hui"
     "Previsto mañana",  // "Prévu demain"
     "Listo",  // "Prêt"
+    "Listo en %s",  // "Prête dans %s"
     "Potencia",  // "Puissance"
     "Puramente estético",  // "Purement cosmétique"
     "Pirámide",  // "Pyramide"
@@ -7711,6 +7758,7 @@ static const char* const kI18n_es[] = {
     "Ágil",  // "Vive"
     "Ver clasificación",  // "Voir le classement"
     "Ve las capturas simples y las responde",  // "Voit les prises simples et les répond"
+    "Coche %d",  // "Voiture %d"
     "Persiana",  // "Volet"
     "Persiana detenida.",  // "Volet arrêté."
     "Persianas",  // "Volets"
@@ -7901,6 +7949,7 @@ static const char* const kI18n_it[] = {
     "%d min",  // "%d min"
     "Oggetti posseduti: %d   -   Slot: %d",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "Oggetti trovati: %d su %d",  // "%d objet(s) trouvé(s) sur %d"
+    "%d auto",  // "%d voitures"
     "%d/%d sbloccati",  // "%d/%d débloqués"
     "%d° in classifica",  // "%de au classement"
     "%dh%02d",  // "%dh%02d"
@@ -7940,6 +7989,7 @@ static const char* const kI18n_it[] = {
     "%u anime   -   pagina %d/%d",  // "%u âmes   -   page %d/%d"
     "%u squadre · turno %u",  // "%u équipes · tour %u"
     "+ Aggiungi squadra",  // "+ Ajouter une équipe"
+    "+%s aggiunti",  // "+%s ajoutés"
     "+1 PV, trappole lente, lunga invulnerabilità",  // "+1 PV, pièges lents, longue invulnérabilité"
     "+1 PV",  // "+1 point de vie"
     "+1 PV per livello",  // "+1 point de vie par niveau"
@@ -8134,6 +8184,7 @@ static const char* const kI18n_it[] = {
     "Boss finale",  // "Boss final"
     "Borsa intrecciata",  // "Bourse tressée"
     "Pulsanti",  // "Boutons"
+    "Collegata",  // "Branchée"
     "Bravo! Spicchio «%s» vinto — tira ancora.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Brezza",  // "Brise"
     "Nebbia",  // "Brouillard"
@@ -8273,6 +8324,7 @@ static const char* const kI18n_it[] = {
     "Durata max",  // "Durée max"
     "SCONFITTA",  // "DÉFAITE"
     "Dado: %u — tocca una casella evidenziata",  // "Dé : %u — touchez une case surlignée"
+    "Scollegata",  // "Débranchée"
     "Principiante",  // "Débutant"
     "Principiante: vede una sola mossa, sbaglia",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
@@ -8500,6 +8552,7 @@ static const char* const kI18n_it[] = {
     "Lettere A..T e numeri attorno al goban",  // "Lettres A..T et chiffres autour du goban"
     "Alba",  // "Lever"
     "Alba e tramonto sconosciuti",  // "Lever et coucher du soleil inconnus"
+    "Limite %d %%",  // "Limite %d %%"
     "Limite di carica",  // "Limite de charge"
     "Riproduci",  // "Lire"
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
@@ -8653,6 +8706,7 @@ static const char* const kI18n_it[] = {
     "Nessuna batteria rilevata",  // "Pas de batterie détectée"
     "Nessun dato",  // "Pas de données"
     "Passo di velluto",  // "Pas de velours"
+    "Non in carica",  // "Pas en charge"
     "Passo",  // "Passe"
     "Passo — fine partita",  // "Passe — fin de partie"
     "Passa",  // "Passer"
@@ -8721,6 +8775,7 @@ static const char* const kI18n_it[] = {
     "Previsto oggi",  // "Prévu aujourd'hui"
     "Previsto domani",  // "Prévu demain"
     "Pronto",  // "Prêt"
+    "Pronta in %s",  // "Prête dans %s"
     "Potenza",  // "Puissance"
     "Puramente estetico",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -9022,6 +9077,7 @@ static const char* const kI18n_it[] = {
     "Svelta",  // "Vive"
     "Vedi la classifica",  // "Voir le classement"
     "Vede le prese semplici e risponde",  // "Voit les prises simples et les répond"
+    "Auto %d",  // "Voiture %d"
     "Tapparella",  // "Volet"
     "Tapparella fermata.",  // "Volet arrêté."
     "Tapparelle",  // "Volets"
@@ -9212,6 +9268,7 @@ static const char* const kI18n_tr[] = {
     "%d dk",  // "%d min"
     "%d eşya sende   -   %d yuva",  // "%d objet(s) en votre possession   -   %d emplacement(s)"
     "%d / %d eşya bulundu",  // "%d objet(s) trouvé(s) sur %d"
+    "%d araç",  // "%d voitures"
     "%d/%d açıldı",  // "%d/%d débloqués"
     "Sıralamada %d.",  // "%de au classement"
     "%d:%02d",  // "%dh%02d"
@@ -9251,6 +9308,7 @@ static const char* const kI18n_tr[] = {
     "%u ruh   -   sayfa %d/%d",  // "%u âmes   -   page %d/%d"
     "%u takım · tur %u",  // "%u équipes · tour %u"
     "+ Takım ekle",  // "+ Ajouter une équipe"
+    "+%s eklendi",  // "+%s ajoutés"
     "+1 can, yavaş tuzaklar, uzun dokunulmazlık",  // "+1 PV, pièges lents, longue invulnérabilité"
     "+1 can",  // "+1 point de vie"
     "Seviye başına +1 can",  // "+1 point de vie par niveau"
@@ -9445,6 +9503,7 @@ static const char* const kI18n_tr[] = {
     "Son boss",  // "Boss final"
     "Örme Kese",  // "Bourse tressée"
     "Düğmeler",  // "Boutons"
+    "Bağlı",  // "Branchée"
     "Bravo! “%s” dilimi kazanıldı — tekrar atıyorsun.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Esinti",  // "Brise"
     "Sis",  // "Brouillard"
@@ -9584,6 +9643,7 @@ static const char* const kI18n_tr[] = {
     "Maks. süre",  // "Durée max"
     "YENİLGİ",  // "DÉFAITE"
     "Zar: %u — vurgulu bir kareye dokun",  // "Dé : %u — touchez une case surlignée"
+    "Bağlı değil",  // "Débranchée"
     "Başlangıç",  // "Débutant"
     "Başlangıç: tek hamle görür, hata yapar",  // "Débutant : ne voit qu'un coup, se trompe"
     "Ara",  // "Déc"
@@ -9811,6 +9871,7 @@ static const char* const kI18n_tr[] = {
     "Tahtanın çevresinde A..T harfleri ve rakamlar",  // "Lettres A..T et chiffres autour du goban"
     "Gün doğumu",  // "Lever"
     "Gün doğumu ve batımı bilinmiyor",  // "Lever et coucher du soleil inconnus"
+    "Sınır %d %%",  // "Limite %d %%"
     "Şarj sınırı",  // "Limite de charge"
     "Çal",  // "Lire"
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
@@ -9964,6 +10025,7 @@ static const char* const kI18n_tr[] = {
     "Pil algılanmadı",  // "Pas de batterie détectée"
     "Veri yok",  // "Pas de données"
     "Kadife Adım",  // "Pas de velours"
+    "Şarj olmuyor",  // "Pas en charge"
     "Pas",  // "Passe"
     "Pas — oyun bitti",  // "Passe — fin de partie"
     "Pas",  // "Passer"
@@ -10032,6 +10094,7 @@ static const char* const kI18n_tr[] = {
     "Bugün beklenen",  // "Prévu aujourd'hui"
     "Yarın beklenen",  // "Prévu demain"
     "Hazır",  // "Prêt"
+    "%s içinde hazır",  // "Prête dans %s"
     "Güç",  // "Puissance"
     "Tamamen kozmetik",  // "Purement cosmétique"
     "Piramit",  // "Pyramide"
@@ -10333,6 +10396,7 @@ static const char* const kI18n_tr[] = {
     "Canlı",  // "Vive"
     "Sıralamayı gör",  // "Voir le classement"
     "Basit almaları görür, karşılık verir",  // "Voit les prises simples et les répond"
+    "Araç %d",  // "Voiture %d"
     "Panjur",  // "Volet"
     "Panjur durdu.",  // "Volet arrêté."
     "Panjurlar",  // "Volets"

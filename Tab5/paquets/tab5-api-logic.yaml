@@ -628,6 +628,20 @@ api:
       then:
         - lambda: 'energie_instantane(payload);'
 
+    - service: tab5_maj_voiture
+      description: "Popup Énergie, page Flux : une voiture électrique (ADR-0076), poussée tant que le popup est ouvert."
+      variables:
+        rang:
+          type: string
+          description: "1 ou 2 : la voiture (le blueprint en a deux au plus)"
+          example: "1"
+        payload:
+          type: string
+          description: "nom|batterie_pct|autonomie|unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|minutes_restantes|compteur_compte — vide = voiture absente (son cercle disparaît) ; champ vide = inconnu. etat : 0 inconnue ou endormie, 1 débranchée, 2 branchée sans charge, 3 en charge ; puissance en W reçus par la voiture, énergie en kWh, minutes jusqu'à la fin de la charge ; compteur_compte : 0 = le compteur de la maison ne compte pas les voitures, 1 ou vide = il les compte (leur charge est retranchée de la maison). Toujours ajouter à la fin."
+          example: "Model Y|78|412|km|3|7200|12.4|90|95|1"
+      then:
+        - lambda: 'energie_voiture(rang, payload);'
+
     - service: tab5_maj_energie_historique
       description: "Popup Énergie : la production d'une vue en barres (heures du jour, 30 derniers jours, 12 derniers mois)."
       variables:

@@ -476,7 +476,8 @@ def test_entrees_des_pieces_et_sections():
 def test_editeur_lisible():
     """Relecture du 07/10/2026 : toutes les sections repliées sauf « Pièces » (ADR-0066) et
     la pièce 1, une phrase
-    d'aide (français puis anglais) sur chaque entrée, l'Énergie en trois sections. Les
+    d'aide (français puis anglais) sur chaque entrée, l'Énergie en trois sections, puis une
+    quatrième pour les voitures (ADR-0076). Les
     sections ne changent pas où HA range les valeurs (à plat sous use_blueprint.input,
     Blueprint.inputs de homeassistant/components/blueprint/models.py)."""
     sections = _blueprint()["blueprint"]["input"]
@@ -485,7 +486,7 @@ def test_editeur_lisible():
     for nom, e in _entrees(_blueprint()).items():
         assert "\n\n" in e.get("description", ""), f"entrée {nom} : description FR puis EN"
     energie = [n for n in sections if n.startswith("energie")]
-    assert energie == ["energie", "energie_reseau_maison", "energie_stockage"]
+    assert energie == ["energie", "energie_reseau_maison", "energie_stockage", "energie_voitures"]
     assert list(sections["energie"]["input"]) == ["energie_solaire", "energie_solaire_autres", "energie_crete",
                                                   "energie_production", "energie_production_autres",
                                                   "energie_prevision_jour", "energie_prevision_demain"]
@@ -497,6 +498,15 @@ def test_editeur_lisible():
                                                                "energie_devise"]
     assert list(sections["energie_stockage"]["input"]) == ["energie_batterie", "energie_batterie_puissance",
                                                            "energie_batterie_inverse", "energie_batterie_temperature"]
+    # Voitures (ADR-0076) : l'option du compteur, puis neuf entrées par voiture, dans l'ordre
+    # des champs du payload de tab5_maj_voiture ; toutes facultatives (test ci-dessous).
+    par_voiture = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "fin"]
+    assert list(sections["energie_voitures"]["input"]) == (
+        ["energie_voitures_compteur_separe"]
+        + [f"voiture_{v}_{c}" for v in (1, 2) for c in par_voiture])
+    # Case décochée par défaut (garde-fou de tests/test_emplacements.py) : le compteur de la maison
+    # compte les voitures tant qu'on ne dit pas le contraire.
+    assert sections["energie_voitures"]["input"]["energie_voitures_compteur_separe"]["default"] is False
 
 
 def test_entrees_toutes_facultatives_et_noms_3x_conserves():

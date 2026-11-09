@@ -316,6 +316,7 @@ font:
       - "\U000F1903"  # home-lightning-bolt (popup Énergie, maison)
       - "\U000F192C"  # transmission-tower-export (popup Énergie, vente)
       - "\U000F192D"  # transmission-tower-import (popup Énergie, achat)
+      - "\U000F0B6C"  # car-electric (popup Énergie, voiture du Flux, ADR-0076)
       - "\U000F0D38"  # speaker-multiple (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
       - "\U000F0387"  # music-note (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
       - "\U000F0025"  # album (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)

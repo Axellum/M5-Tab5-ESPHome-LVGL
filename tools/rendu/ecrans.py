@@ -25,12 +25,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-from scenarios import (JOURS_FR, NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,  # noqa: E402
-                       PIECES, PIECES_HUIT, PIECES_HUIT_NOMBRE, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, HeureForecast, JourForecast, Piece,
-                       Tuile, build_alerte_payload, build_climat_pieces, build_energie_bilan, build_etats_tuiles,
+from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_BATTERIE, JOURS_FR, NABU,  # noqa: E402
+                       NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,
+                       PIECES, PIECES_HUIT, PIECES_HUIT_NOMBRE, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, VOITURES,
+                       HeureForecast, JourForecast, Piece,
+                       Tuile, build_alerte_payload, build_climat_pieces, build_energie_bilan, build_energie_payload,
+                       build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
-                       build_zones_absentes, code_pluie)
+                       build_voiture_payload, build_zones_absentes, code_pluie)
 
 
 @dataclass(frozen=True)
@@ -636,6 +639,23 @@ BILAN_AVEC_PRIX = Service("tab5_maj_energie_bilan", tuple(
     build_energie_bilan("mois_civil", MOMENT_DES_CAPTURES.date(), prix=True).items()))
 BILAN_SANS_PRIX = Service("tab5_maj_energie_bilan", tuple(
     build_energie_bilan("mois_civil", MOMENT_DES_CAPTURES.date()).items()))
+# Page Flux avec des voitures (ADR-0076) : l'instantané d'une journée où une voiture tire 7,2 kW
+# (sans batterie, ou avec celle de la démo qui se vide de 500 W), puis une voiture ou les deux ;
+# tout est remis comme la scène l'a poussé (instantané de la démo, voitures retirées) à la fin de
+# l'écran. Sans voiture poussée, la page est celle d'avant (le firmware n'en garde aucune).
+def _voiture(rang: int, voiture: dict | None) -> Service:
+    return Service("tab5_maj_voiture", (("rang", str(rang)), ("payload", build_voiture_payload(voiture))), apres=0.3)
+
+
+def _instantane(valeurs: dict | None = None) -> Service:
+    return Service("tab5_maj_energie", (("payload", build_energie_payload(valeurs)),), apres=0.3)
+
+
+FLUX_SANS_BATTERIE = _instantane(ENERGIE_INSTANTANE_VOITURES)
+FLUX_AVEC_BATTERIE = _instantane(ENERGIE_INSTANTANE_VOITURES_BATTERIE)
+FLUX_DE_LA_DEMO = _instantane()
+VOITURE_1, VOITURE_2 = _voiture(1, VOITURES[0]), _voiture(2, VOITURES[1])
+FLUX_SANS_VOITURE = (_voiture(1, None), _voiture(2, None), FLUX_DE_LA_DEMO)
 # Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
 # la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
 # droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
@@ -1470,6 +1490,20 @@ ECRANS: tuple[Ecran, ...] = (
     # prévision du jour, la production (les vues Heures, Jours et Mois d'avant, dans cet
     # ordre : elles partagent la vue choisie), puis le bilan sur la vue des heures.
     Ecran("energie-flux", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    # Voitures sur le Flux (ADR-0076) : la même journée sans voiture (le repère), une voiture en
+    # charge, deux voitures (l'une en charge, l'autre branchée), puis avec la batterie de la démo :
+    # une voiture, deux voitures (leur cercle commun).
+    Ecran("energie-flux-sans-voiture", (FLUX_SANS_BATTERIE, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)),
+          (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
+    Ecran("energie-flux-1-voiture", (FLUX_SANS_BATTERIE, VOITURE_1, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)),
+          (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
+    Ecran("energie-flux-2-voitures", (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)),
+          (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
+    Ecran("energie-flux-1-voiture-batterie", (FLUX_AVEC_BATTERIE, VOITURE_1, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)),
+          (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
+    Ecran("energie-flux-2-voitures-batterie",
+          (FLUX_AVEC_BATTERIE, VOITURE_1, VOITURE_2, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)),
+          (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
     Ecran("energie-aujourdhui", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_AUJOURDHUI,
           ENERGIE_RETOUR_AUJOURDHUI + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
     Ecran("energie-bilan", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_BILAN,
