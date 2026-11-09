@@ -162,6 +162,27 @@ Nothing is pushed while the popup is closed. Without this package, the popup wai
 
 ---
 
+### `packages/tab5_voitures.yaml` — analysis of the cars' charges (optional, not pushed to the tablet yet)
+The calculations for **one or two electric cars** in the Energy popup ([ADR-0074](../docs/decisions/0074-car-charges-analysis.md)). Home Assistant's Tesla integrations (Tesla Fleet, Teslemetry) give the battery, the charger power and the energy added to the current charge — not the list of charges, the share of the sun in a charge, the kWh per hour or the month: this package computes them from the **recorder's statistics**, like the Energy popup. One script, `tab5_voitures_analyse` (`mode: queued`), that **reads and answers**: it pushes nothing to the tablet (a later lot does), calls nothing of the car's integration and so never wakes the car. No entity is created.
+
+Fields: `capteurs` (a dictionary, as for `tab5_energie`: `solaires` the solar power sensors, `maison` the home power sensor, `maison_inclut_voitures` true by default — your home sensor counts the cars' charge, for instance because the charger is on the house meter —, `voitures` one or two cars: `rang` « 1 » / « 2 », `nom`, `puissance_charge`, `odometre` optional, `energie_ajoutee` optional and not used) and `jour` (`YYYY-MM-DD`, today by default). To try it by hand: *Developer tools → Actions → `script.tab5_voitures_analyse`*, which shows the response. The charger power may be in W or kW (the script asks the recorder for W).
+
+The response, strings in the formats the tablet's services will take: `charges`, `charges_1`, `charges_2` (up to 6 lines `rank|day|time|minutes|kWh|sun %` separated by `;`, newest first: both cars together, then each), `jour_debut` and `jour_1`, `jour_2` (24 kWh, one per local hour of the day, empty = no row for the car that hour), `bilan_debut` and `bilan` (the month: per car kWh, sun %, km, kWh/100 km, kWh taken from the grid; then the cars' part of the home), `precision`.
+
+**How it counts.** A car *charges* in a slot when its mean power is above **100 W**; slots at most **30 minutes** apart are one charge (a data hole or a pause under a cloud does not cut it). The sun available to the cars in a slot is the solar power minus the home power without the cars (never below 0), shared between the cars charging together; a charge's share is the sun's energy over its energy. No solar sensor chosen: empty; no home sensor or no row for it during the charge: `nan` (« -- » on the tablet). kWh/100 km is the energy charged over the kilometres of the month (odometer, only above 20 km): an **approximation**, not the car's consumption.
+
+**Precision, by the statistics Home Assistant still has** (`precision` in the response):
+
+| Statistics found | Start and end of a charge | Duration | kWh | Share of the sun |
+|---|---|---|---|---|
+| 5-minute rows (the last `purge_keep_days` days, 10 by default) | to 5 minutes | to 5 minutes | exact | slot by slot |
+| hourly rows only (older charges, or a short `purge_keep_days`) | rounded down to the hour | whole hours touched, up to 2 h too long | exact | from hourly means: a short cloud disappears, the share tends to be higher |
+| both (a charge across the limit) | each part as above | | exact | |
+
+Limits: the charger power is not what the grid supplies (charging losses); a home battery is not counted as sun; a charge away from home that the car reports is listed, with a meaningless sun share; the calculation walks thousands of rows (0.3 s for 10 000 on a PC, not measured on a Raspberry Pi): call it when the popup opens, then at most every 5 minutes. The car's sensors need statistics (`state_class` `measurement` for the power, `total_increasing` for the odometer); the odometer and the tyre pressures are **disabled by default** in the Tesla integrations, and a sleeping car can leave its sensors unavailable (no row: a hole). **Not verified on a real Home Assistant nor with a real car.**
+
+---
+
 ### `packages/tab5_historique.yaml` — the Temperature popup
 Backend of the firmware's **Temperature popup** ([ADR-0032](../docs/decisions/0032-temperature-history-popup.md)), opened by a long press on one of the two home-screen temperatures. One script, `tab5_historique` (`mode: parallel`), started by the blueprint with the sensor of that slot; it pushes `tab5_maj_historique` **once** per request:
 - the curve of the view shown: mean, minimum and maximum of each hour (24 h), of each 3 hours (7 days) or of each day (30 days), read from the **recorder's long-term statistics** (`recorder.get_statistics`; no helper, no extra database write). The sensor needs a `state_class` (thermometers have `measurement`); without one, the popup says « Aucun historique »;
@@ -499,6 +520,27 @@ Ce qui alimente le **popup Énergie** du firmware ([ADR-0028](../docs/decisions/
 - l'instantané (`tab5_maj_energie`) : solaire, maison, réseau, batterie et production du jour, de nouveau à chaque changement d'un capteur choisi (5 s au plus souvent), tant que l'« Écran courant » de la tablette vaut « Énergie » (15 minutes au plus).
 
 Rien n'est poussé quand le popup est fermé. Sans ce package, le popup attend (« En attente de Home Assistant »). Avec deux tablettes qui l'ouvrent en même temps, la dernière demande l'emporte.
+
+---
+
+### `packages/tab5_voitures.yaml` — analyse des charges des voitures (facultatif, pas encore poussé à la tablette)
+Les calculs pour **une ou deux voitures électriques** du popup Énergie ([ADR-0074](../docs/decisions/0074-car-charges-analysis.md)). Les intégrations Tesla de Home Assistant (Tesla Fleet, Teslemetry) donnent la batterie, la puissance de charge et l'énergie ajoutée à la charge en cours — pas la liste des charges, la part du soleil dans une charge, les kWh par heure ni le bilan du mois : ce package les calcule à partir des **statistiques du recorder**, comme le popup Énergie. Un script, `tab5_voitures_analyse` (`mode: queued`), qui **lit et répond** : il ne pousse rien à la tablette (un lot suivant le fait), n'appelle rien de l'intégration de la voiture et ne la réveille donc jamais. Aucune entité n'est créée.
+
+Champs : `capteurs` (un dictionnaire, comme pour `tab5_energie` : `solaires` les capteurs de puissance solaire, `maison` le capteur de puissance de la maison, `maison_inclut_voitures` vrai par défaut — votre capteur de maison compte la charge des voitures, par exemple parce que la borne est sur le compteur de la maison —, `voitures` une ou deux voitures : `rang` « 1 » / « 2 », `nom`, `puissance_charge`, `odometre` facultatif, `energie_ajoutee` facultatif et non utilisé) et `jour` (`AAAA-MM-JJ`, aujourd'hui par défaut). Pour l'essayer à la main : *Outils de développement → Actions → `script.tab5_voitures_analyse`*, qui affiche la réponse. La puissance de charge peut être en W ou en kW (le script la demande en W au recorder).
+
+La réponse, des chaînes dans les formats que prendront les services de la tablette : `charges`, `charges_1`, `charges_2` (jusqu'à 6 lignes `rang|jour|heure|minutes|kWh|% soleil` séparées par `;`, la plus récente d'abord : les deux voitures ensemble, puis chacune), `jour_debut` et `jour_1`, `jour_2` (24 kWh, un par heure locale du jour, vide = aucune ligne pour la voiture cette heure), `bilan_debut` et `bilan` (le mois : par voiture kWh, % soleil, km, kWh/100 km, kWh pris au réseau ; puis la part des voitures dans la maison), `precision`.
+
+**Comment ça compte.** Une voiture *charge* dans un créneau quand sa puissance moyenne dépasse **100 W** ; des créneaux espacés de **30 minutes** au plus font une seule charge (un trou de données ou une pause sous un nuage ne la coupe pas). Le soleil disponible pour les voitures dans un créneau est la puissance solaire moins celle de la maison hors voitures (jamais sous 0), partagé entre les voitures qui chargent ensemble ; la part d'une charge est l'énergie du soleil sur son énergie. Aucun capteur solaire choisi : vide ; pas de capteur de maison ou aucune ligne pour lui pendant la charge : `nan` (« -- » sur la tablette). Les kWh/100 km sont l'énergie chargée sur les kilomètres du mois (odomètre, au-delà de 20 km seulement) : une **approximation**, pas la consommation de la voiture.
+
+**Précision, selon les statistiques que Home Assistant garde encore** (`precision` dans la réponse) :
+
+| Statistiques trouvées | Début et fin d'une charge | Durée | kWh | Part du soleil |
+|---|---|---|---|---|
+| lignes de 5 minutes (les `purge_keep_days` derniers jours, 10 par défaut) | à 5 minutes | à 5 minutes | exacts | créneau par créneau |
+| lignes horaires seules (charges plus anciennes, ou `purge_keep_days` court) | arrondi à l'heure | heures entières touchées, jusqu'à 2 h de trop | exacts | à partir de moyennes horaires : un nuage court disparaît, la part tend à être plus haute |
+| les deux (charge à cheval sur la limite) | chaque morceau comme ci-dessus | | exacts | |
+
+Limites : la puissance de charge n'est pas ce que fournit le réseau (pertes de charge) ; une batterie de maison ne compte pas comme du soleil ; une charge hors de chez soi que rapporte la voiture est listée, avec une part du soleil sans valeur ; le calcul parcourt des milliers de lignes (0,3 s pour 10 000 sur un PC, non mesuré sur un Raspberry Pi) : à lancer à l'ouverture du popup, puis au plus toutes les 5 minutes. Les capteurs de la voiture doivent avoir des statistiques (`state_class` `measurement` pour la puissance, `total_increasing` pour l'odomètre) ; l'odomètre et la pression des pneus sont **désactivés par défaut** dans les intégrations Tesla, et une voiture endormie peut laisser ses capteurs indisponibles (pas de ligne : un trou). **Non vérifié sur un vrai Home Assistant ni avec une vraie voiture.**
 
 ---
 
