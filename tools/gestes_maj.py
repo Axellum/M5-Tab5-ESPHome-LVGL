@@ -22,7 +22,10 @@ Règles (une seule liste, `besoins()`) :
   changé ;
 - le tableau de bord n'est jamais requis : facultatif si la macro `tab5_dashboard.jinja` a
   changé, ou si des entités ont été ajoutées aux packages (lignes `unique_id:` ajoutées ou
-  package nouveau : indice, pas preuve) ; inutile sinon ;
+  package nouveau : indice, pas preuve) ; inutile sinon. Avec l'intégration il coûte 3 gestes
+  (étape 7), ou 1 (une confirmation dans Corrections) quand la révision d'arrivée porte la
+  réparation `custom_components/tab5/tableau.py` (ADR-0075) — et 3 encore une dernière fois si la
+  révision de départ ne l'avait pas : un tableau collé jusque-là n'a pas son marqueur de version ;
 - l'intégration recharge le YAML seule et enchaîne le firmware quand la case « Mettre ensuite
   la tablette à jour » est cochée (ADR-0035) : installer sa mise à jour (= « Installer » +
   redémarrer HA) donne donc les fichiers HA, le rechargement et le firmware ; `tab5_hacs.zip`
@@ -62,6 +65,12 @@ BLUEPRINT = RACINE_HA + "blueprints/"
 HORS_FIRMWARE = ("Tab5/rendu/", "Tab5/fonts/icone_meteo/", "Tab5/user_entities.example.yaml")
 # Les traductions sont du firmware, mais le nombre de fichiers affiché ne les compte pas.
 LANGUES = "Tab5/lang/"
+# La réparation « tableau de bord en un clic » de l'intégration (ADR-0075) : présente dans une
+# révision si ce fichier y est. Absente de la révision d'arrivée : le tableau reste à refaire à la
+# main. Présente à l'arrivée seulement : le tableau collé jusque-là n'a pas son marqueur de
+# version, il faut le refaire à la main une dernière fois. Présente aux deux : une confirmation.
+REPARATION_TABLEAU = "custom_components/tab5/tableau.py"
+MANUEL, PREMIERE_FOIS, UN_CLIC = "manuel", "premiere_fois", "un_clic"
 # Entité ajoutée à un package : indice seulement (une entité de template a un `unique_id`).
 UNIQUE_ID_AJOUTE = re.compile(r"^\+\s*unique_id\s*:", re.M)
 
@@ -74,6 +83,7 @@ G_COPIER = 2           # zip : télécharger, copier dans config/
 G_RECHARGER = 2        # zip : Toute la configuration YAML + reload_custom_templates
 G_BLUEPRINT_URL = 1    # blueprint importé par son adresse : le réimporter
 G_TABLEAU = 3          # étape 7 : modèle, copie, collage dans l'éditeur brut
+G_TABLEAU_CLIC = 1     # intégration : la confirmation de la réparation
 
 
 @dataclass
@@ -84,6 +94,7 @@ class Changements:
     blueprint: bool = False
     entites_ajoutees: int = 0        # indice : lignes `unique_id:` ajoutées + packages nouveaux
     integration: list[str] = field(default_factory=list)
+    tableau_integration: str = MANUEL   # MANUEL | PREMIERE_FOIS | UN_CLIC (voir REPARATION_TABLEAU)
 
 
 @dataclass
@@ -144,11 +155,14 @@ def besoins(c: Changements, ordre: str) -> list[Geste]:
     # Profil « intégration » : Paramètres → Mises à jour → Tab5. Le code de l'intégration
     # (custom_components/) n'est dans aucune archive à la main.
     fichiers_hacs = c.ha + c.integration
+    cle_tableau, gestes_tableau = {UN_CLIC: ("tableau_clic", G_TABLEAU_CLIC),
+                                   PREMIERE_FOIS: ("tableau_premiere", G_TABLEAU)
+                                   }.get(c.tableau_integration, ("tableau", G_TABLEAU))
     g = [
         Geste("integration", "installer", sur(fichiers_hacs), G_INSTALLER if fichiers_hacs else 0, list(fichiers_hacs)),
         Geste("integration", "recharger", INCLUS if fichiers_hacs else INUTILE, 0),
         Geste("integration", "firmware", sur_fw, nb_fw, list(c.firmware)),
-        Geste("integration", "tableau", tableau, nb_tableau),
+        Geste("integration", cle_tableau, tableau, gestes_tableau if tableau == FACULTATIF else 0),
     ]
 
     # Profil « à la main » : tab5_home_assistant.zip. Le rechargement suit la copie.
@@ -198,6 +212,8 @@ TEXTES = {
         "copier": "Télécharger `tab5_home_assistant.zip` et copier ses dossiers dans `config/`",
         "blueprint_url": "Blueprint importé depuis son adresse : l'importer de nouveau",
         "tableau": "Tableau de bord (étape 7 du guide)",
+        "tableau_clic": "Tableau de bord : « Tab5 : le tableau de bord … peut être mis à jour » dans Paramètres → Système → Corrections, une confirmation",
+        "tableau_premiere": "Tableau de bord (étape 7 du guide, une dernière fois : il portera ensuite le marqueur qui permet la mise à jour en un clic)",
         "apporte": "apporte", "fichiers_n": "{n} fichier(s) de firmware", "et_langues": " et les traductions",
         "langues_seules": "traductions seulement", "apres_copie": "requis si vous copiez les fichiers",
         "rien_i": "Aucun fichier Home Assistant ne change dans cette version.",
@@ -219,6 +235,8 @@ TEXTES = {
         "copier": "Download `tab5_home_assistant.zip` and copy its folders into `config/`",
         "blueprint_url": "Blueprint imported from its address: import it again",
         "tableau": "Dashboard (step 7 of the guide)",
+        "tableau_clic": "Dashboard: “Tab5: the … dashboard can be updated” in Settings → System → Repairs, one confirmation",
+        "tableau_premiere": "Dashboard (step 7 of the guide, one last time: it will then carry the marker that allows the one-click update)",
         "apporte": "brings", "fichiers_n": "{n} firmware file(s)", "et_langues": " and the translations",
         "langues_seules": "translations only", "apres_copie": "required if you copy the files",
         "rien_i": "No Home Assistant file changes in this version.",
@@ -299,6 +317,18 @@ def unique_id_ajoutes(depuis: str, courant: str) -> int:
     return len(UNIQUE_ID_AJOUTE.findall(diff))
 
 
+def _existe(revision: str, chemin: str) -> bool:
+    r = subprocess.run(["git", "cat-file", "-e", f"{revision}:{chemin}"], cwd=REPO, capture_output=True)
+    return r.returncode == 0
+
+
+def reparation_tableau(depuis: str, courant: str) -> str:
+    """MANUEL | PREMIERE_FOIS | UN_CLIC : le tableau de bord de l'intégration entre les deux révisions."""
+    if not _existe(courant, REPARATION_TABLEAU):
+        return MANUEL
+    return UN_CLIC if _existe(depuis, REPARATION_TABLEAU) else PREMIERE_FOIS
+
+
 def reviser(depuis: str, courant: str | None) -> tuple[str, str]:
     """Les deux révisions : `depuis courant`, `depuis..courant` (forme de git) ou `depuis` seul
     (contre HEAD). Les deux écritures à la fois : refusé, pour ne pas en ignorer une."""
@@ -324,6 +354,7 @@ def main(argv=None) -> int:
     import contrat_api  # même dossier que ce script
     depuis, courant = reviser(args.depuis, args.courant)
     c = classer(statuts_du_diff(depuis, courant), unique_id_ajoutes(depuis, courant))
+    c.tableau_integration = reparation_tableau(depuis, courant)
     ordre = contrat_api.matrice(depuis, courant).ordre
     if args.json:
         print(json.dumps({"depuis": depuis, "courant": courant, "ordre": ordre,
