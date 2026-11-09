@@ -22,6 +22,15 @@
 #       change pas avec plusieurs sources : solaire et jour sont des sommes.
 #       tab5_maj_energie_historique : vue, debut (AAAA-MM-JJ local), valeurs en kWh
 #       séparées par « ; » (vide = pas de donnée : heure à venir, recorder sans ligne).
+#       tab5_maj_voiture (ADR-0076, 09/11/2026) : rang « 1 » ou « 2 », payload « nom|batterie_%|
+#       autonomie|unite|etat|puissance_W|energie_ajoutee_kWh|limite_%|minutes_restantes|
+#       compteur » ; etat 0 inconnu, 1 débranchée, 2 branchée, 3 en charge ; compteur « 1 » =
+#       le compteur de la maison compte les voitures (case du blueprint), « 0 » sinon. Champ
+#       vide = capteur non choisi ou sans valeur. Puissance en W entiers (W, kW, MW lus sur
+#       l'unité du capteur), énergie en kWh (Wh, kWh, MWh), fin de charge en minutes (nombre
+#       avec son unité h, min, s, d, ou horodatage). Poussé à chaque tour avec l'instantané, au
+#       moins une voiture choisie (sa batterie) ; le rang sans voiture part avec un payload
+#       vide (la tablette retire son cercle). Un blueprint plus ancien ne les envoie pas.
 # @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
 #       depuis minuit (heure locale), plus le partiel depuis la dernière ligne (état
 #       actuel − dernier « state », converti en kWh). Heures : les mêmes lignes, par heure
@@ -137,7 +146,9 @@ script:
           consommation de la maison, ADR-0062), prix_achat et
           prix_revente (nombres, par kWh), prix_achat_entite et prix_revente_entite
           (entité qui l'emporte), devise (texte), prevision_jour et prevision_demain
-          (capteurs de prévision externe, kWh).
+          (capteurs de prévision externe, kWh). Voitures (ADR-0076) : voitures (liste de
+          deux mappings nom, batterie, autonomie, etat, cable, puissance, energie, limite,
+          fin ; texte vide = non choisi) et voitures_compteur_compte (booléen).
     variables:
       c: "{{ capteurs if capteurs is mapping else {} }}"
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
@@ -170,10 +181,30 @@ script:
           {%- set ns.l = ns.l + [p] -%}
         {%- endfor -%}
         {{ ns.l }}
+      # Voitures de la page Flux (ADR-0076) : jusqu'à deux entrées (clé absente d'un blueprint
+      # plus ancien : aucune), chacune un mapping de capteurs (texte vide = non choisi).
+      # voitures_actives = celles qui ont leur batterie : sans aucune, rien n'est poussé.
+      voitures_c: >-
+        {%- set l = c.get('voitures', []) -%}
+        {{ l[:2] if l is sequence and l is not string and l is not mapping else [] }}
+      voitures_entites: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- for v in voitures_c if v is mapping -%}
+          {%- for cle in ['batterie', 'autonomie', 'etat', 'cable', 'puissance', 'energie', 'limite', 'fin'] -%}
+            {%- set e = v.get(cle, '') -%}
+            {%- if e is string and e -%}{%- set ns.l = ns.l + [e] -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endfor -%}
+        {{ ns.l }}
+      voitures_actives: >-
+        {%- set ns = namespace(n=0) -%}
+        {%- for v in voitures_c if v is mapping and v.get('batterie') -%}{%- set ns.n = ns.n + 1 -%}{%- endfor -%}
+        {{ ns.n }}
       # Capteurs dont un changement relance l'instantané.
       suivis: >-
         {{ (solaires + [c.get('reseau'), c.get('reseau_export'), c.get('maison')] + productions_choisies
-            + [c.get('batterie'), c.get('batterie_puissance'), c.get('batterie_temperature')])
+            + [c.get('batterie'), c.get('batterie_puissance'), c.get('batterie_temperature')]
+            + voitures_entites)
            | select('string') | reject('eq', '') | unique | list }}
       # Bilan (ADR-0058, ADR-0062) : compteurs d'achat, de vente et de la consommation de
       # la maison qui existent (clés absentes d'un blueprint plus ancien : aucun), leur
@@ -441,6 +472,87 @@ script:
               data:
                 payload: "{{ instantane }}"
               continue_on_error: true
+            # Voitures (ADR-0076, action tab5_maj_voiture : rang, payload « nom|batterie|
+            # autonomie|unite|etat|puissance_w|energie_kwh|limite|minutes|compteur »). Rien
+            # n'est poussé sans voiture choisie (un firmware d'avant n'a pas l'action) ; avec
+            # une seule, le rang de l'autre part VIDE : la tablette retire un cercle qu'un
+            # réglage ancien aurait laissé. Champ vide = capteur non choisi ou sans valeur.
+            # TOUJOURS continue_on_error, comme les autres poussées facultatives.
+            - if: "{{ voitures_actives | int(0) > 0 }}"
+              then:
+                - repeat:
+                    for_each: ["1", "2"]
+                    sequence:
+                      - variables:
+                          voiture_payload: >-
+                            {%- set v = voitures_c[repeat.index - 1] if voitures_c | count >= repeat.index else {} -%}
+                            {%- if not (v is mapping and v.get('batterie')) -%}
+                            {%- else -%}
+                              {#- États lus en clair (en minuscules) : Tesla (charging, starting,
+                                  complete, stopped, disconnected, no_power), « on » d'un capteur
+                                  vrai/faux = en charge, quelques mots français. Un état inconnu
+                                  ou « unavailable » : on déduit du câble puis de la puissance. -#}
+                              {%- set mots_charge = ['charging', 'on', 'true', 'en_charge', 'charge_en_cours', 'in_progress'] -%}
+                              {%- set mots_debranche = ['disconnected', 'unplugged', 'not_connected', 'not_plugged', 'nocable', 'débranché', 'débranchée', 'debranche', 'debranchee'] -%}
+                              {%- set mots_branche = ['plugged_in', 'plugged', 'connected', 'stopped', 'complete', 'completed', 'fully_charged', 'full', 'no_power', 'nopower', 'starting', 'pending', 'scheduled', 'paused', 'idle', 'waiting', 'branché', 'branchée', 'branche', 'branchee'] -%}
+                              {%- set eb = v.get('batterie') -%}
+                              {%- set bat = (states(eb) | float(none)) if states[eb] is not none else none -%}
+                              {%- set ea = v.get('autonomie') -%}
+                              {%- set auto = (states(ea) | float(none)) if ea and states[ea] is not none else none -%}
+                              {%- set unite = ((state_attr(ea, 'unit_of_measurement') or '') | string | replace('|', '') | replace(';', ''))[:6] if ea else '' -%}
+                              {%- set ep = v.get('puissance') -%}
+                              {%- set p_brut = (states(ep) | float(none)) if ep and states[ep] is not none else none -%}
+                              {%- set p = (([p_brut * {'W': 1, 'kW': 1000, 'MW': 1000000}.get((state_attr(ep, 'unit_of_measurement') or 'W') | string, 1), 0] | max) | round(0) | int) if p_brut is not none else none -%}
+                              {%- set ee = v.get('energie') -%}
+                              {%- set e_brut = (states(ee) | float(none)) if ee and states[ee] is not none else none -%}
+                              {%- set e = ((e_brut * {'Wh': 0.001, 'kWh': 1, 'MWh': 1000}.get((state_attr(ee, 'unit_of_measurement') or 'kWh') | string, 1)) | round(2)) if e_brut is not none else none -%}
+                              {%- set el = v.get('limite') -%}
+                              {%- set lim = (states(el) | float(none)) if el and states[el] is not none else none -%}
+                              {#- Fin de charge : un nombre avec son unité (h, min, s, d) ou un
+                                  horodatage (Tesla : « Time to full charge », device_class
+                                  timestamp, un instant et non une durée). Un nombre d'abord :
+                                  as_datetime lirait « 1.5 » comme un instant Unix. Unité
+                                  inconnue : rien. Poussée seulement pendant la charge (code 3,
+                                  plus bas) : vide hors charge. -#}
+                              {%- set ef = v.get('fin') -%}
+                              {%- set sf = states(ef) if ef and states[ef] is not none else '' -%}
+                              {%- set nf = sf | float(none) -%}
+                              {%- set minutes = none -%}
+                              {%- if nf is not none -%}
+                                {%- set facteur = {'min': 1, 'mn': 1, 'h': 60, 'hr': 60, 's': 1 / 60, 'd': 1440}.get((state_attr(ef, 'unit_of_measurement') or '') | string | lower) -%}
+                                {%- set minutes = ((nf * facteur) | round(0) | int) if facteur is not none else none -%}
+                              {%- elif sf not in ['', 'unknown', 'unavailable'] -%}
+                                {%- set dt = as_datetime(sf, none) -%}
+                                {%- set minutes = (((dt - now()).total_seconds() / 60) | round(0) | int) if dt is not none and dt.tzinfo is not none else none -%}
+                              {%- endif -%}
+                              {%- set minutes = minutes if minutes is not none and minutes >= 0 else none -%}
+                              {%- set es = v.get('etat') -%}
+                              {%- set s = (states(es) | lower | replace(' ', '_')) if es and states[es] is not none else '' -%}
+                              {%- set ec = v.get('cable') -%}
+                              {%- set sc = (states(ec) | lower) if ec and states[ec] is not none else '' -%}
+                              {%- set cable = 'oui' if sc in ['on', 'connected', 'plugged', 'plugged_in', 'true'] else ('non' if sc in ['off', 'disconnected', 'unplugged', 'false'] else '') -%}
+                              {%- set code = 3 if s in mots_charge else (1 if s in mots_debranche else (2 if s in mots_branche else 0)) -%}
+                              {%- if code == 0 -%}
+                                {%- set code = 3 if (p is not none and p >= 10) else (2 if cable == 'oui' else (1 if cable == 'non' else 0)) -%}
+                              {%- elif code == 2 and p is not none and p >= 10 -%}
+                                {%- set code = 3 -%}
+                              {%- endif -%}
+                              {%- set nom = (v.get('nom', '') | string | replace('|', '') | replace(';', '') | trim)[:24] -%}
+                              {{ [nom,
+                                  (bat | round(0) | int | string) if bat is not none else '',
+                                  (auto | round(0) | int | string) if auto is not none else '',
+                                  unite, code | string,
+                                  (p | string) if p is not none else '',
+                                  (e | string) if e is not none else '',
+                                  (lim | round(0) | int | string) if lim is not none else '',
+                                  (minutes | string) if minutes is not none and code == 3 else '',
+                                  '1' if c.get('voitures_compteur_compte', true) else '0'] | join('|') }}
+                            {%- endif -%}
+                      - action: "esphome.{{ tablette }}_tab5_maj_voiture"
+                        data:
+                          rang: "{{ repeat.item }}"
+                          payload: "{{ voiture_payload }}"
+                        continue_on_error: true
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
             # suivante (bouton de vue, réouverture). Au premier passage d'une autre vue que

@@ -2613,6 +2613,294 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: temperature
+    # Voitures électriques (ADR-0076, 09/11/2026) : deux voitures au plus, sur la page Flux
+    # du popup Énergie. Rien n'est choisi : la page reste telle qu'elle était. Les entrées
+    # ne portent aucun domaine d'intégration : une Tesla (Fleet, Teslemetry, Tessie), une
+    # Renault ou une Kia n'ont pas les mêmes noms d'entités, seulement les mêmes grandeurs.
+    energie_voitures:
+      name: "Énergie : voitures · Energy: cars"
+      icon: mdi:car-electric
+      collapsed: true
+      description: >-
+        Facultatif : jusqu'à deux voitures électriques, sur la page « Flux » de la fenêtre
+        Énergie (la Tab5, pas la 7B). Chaque voiture devient un cercle avec sa batterie,
+        sa puissance de charge et son état, relié au solaire et au réseau. Il suffit de la
+        batterie pour qu'elle apparaisse ; le reste précise ce qu'elle fait. À remplir en
+        plus des sections « Énergie » précédentes (la fenêtre Énergie en a besoin). Une
+        voiture sans nom s'appelle « Voiture 1 » ou « Voiture 2 ».
+
+
+        Optional: up to two electric cars, on the « Flux » page of the Energy window (the
+        Tab5, not the 7B). Each car becomes a circle with its battery, charging power and
+        state, linked to the solar and the grid. The battery alone is enough to make it
+        appear; the rest says what it is doing. To fill in on top of the previous « Énergie
+        · Energy » sections (the Energy window needs them). A car without a name is called
+        « Car 1 » or « Car 2 ».
+      input:
+        energie_voitures_compteur_separe:
+          name: Le compteur de la maison est séparé des voitures · The home meter is separate from the cars
+          description: >-
+            Décochée (cas courant : la borne est derrière le compteur de la maison), la
+            puissance des voitures est retranchée de la maison pour que la maison ne la
+            compte pas deux fois. À cocher si le capteur de la maison ne compte pas les
+            voitures (un compteur à part pour la borne) : la maison est alors affichée telle
+            quelle.
+
+
+            Unticked (the usual case: the charger sits behind the home meter), the cars'
+            power is subtracted from the home so that it is not counted twice. Tick it if
+            the home sensor does not count the cars (its own meter for the charger): the
+            home is then shown as it is.
+          default: false
+          selector:
+            boolean: {}
+        voiture_1_nom:
+          name: Voiture 1, son nom · Car 1, its name
+          description: >-
+            Le nom écrit sur son cercle, court (« Model Y »). Vide : « Voiture 1 ».
+
+
+            The name written on its circle, short (« Model Y »). Empty: « Car 1 ».
+          default: ""
+          selector:
+            text: {}
+        voiture_1_batterie:
+          name: Voiture 1, niveau de la batterie · Car 1, battery level
+          description: >-
+            Sa charge, en %. C'est ce capteur qui fait apparaître la voiture.
+
+
+            Its charge, in %. This sensor is what makes the car appear.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+        voiture_1_autonomie:
+          name: Voiture 1, autonomie · Car 1, range
+          description: >-
+            Les kilomètres (ou miles) restants ; l'unité du capteur est reprise telle quelle.
+            Chez Tesla (Teslemetry), ce capteur est désactivé par défaut : à activer dans
+            l'intégration (page de l'appareil, entités désactivées).
+
+
+            The remaining kilometres (or miles); the sensor's unit is used as it is. With
+            Tesla (Teslemetry) this sensor is disabled by default: enable it in the
+            integration (the device page, disabled entities).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+        voiture_1_etat:
+          name: Voiture 1, état de la charge · Car 1, charging state
+          description: >-
+            Son état, en clair : en charge, branchée, débranchée. Les mots de Tesla
+            (charging, starting, complete, stopped, disconnected, no_power), d'autres
+            marques (« Charging », « Plugged in ») et un capteur vrai ou faux (allumé = en
+            charge) sont compris. Vide ou mot inconnu : l'état est déduit du câble et de la
+            puissance.
+
+
+            Its state in words: charging, plugged in, unplugged. Tesla's words (charging,
+            starting, complete, stopped, disconnected, no_power), other brands'
+            (« Charging », « Plugged in ») and a true or false sensor (on = charging) are
+            understood. Empty or unknown word: the state is deduced from the cable and the
+            power.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                - domain: binary_sensor
+        voiture_1_cable:
+          name: Voiture 1, câble branché · Car 1, cable plugged in
+          description: >-
+            Allumé quand le câble est branché. Sert à distinguer « branchée » de
+            « débranchée » quand l'état ci-dessus ne le dit pas.
+
+
+            On when the cable is plugged in. Tells « plugged in » from « unplugged » when
+            the state above does not.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: binary_sensor
+                - domain: sensor
+        voiture_1_puissance:
+          name: Voiture 1, puissance de charge · Car 1, charging power
+          description: >-
+            La puissance qu'elle prend, en W, kW ou MW (convertie). Sans elle, le Flux ne
+            sait pas d'où vient l'énergie de la voiture.
+
+
+            The power it draws, in W, kW or MW (converted). Without it the Flux cannot show
+            where the car's energy comes from.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: power
+        voiture_1_energie:
+          name: Voiture 1, énergie ajoutée · Car 1, energy added
+          description: >-
+            L'énergie ajoutée pendant cette charge, en Wh, kWh ou MWh (convertie).
+
+
+            The energy added during this charge, in Wh, kWh or MWh (converted).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+        voiture_1_limite:
+          name: Voiture 1, limite de charge · Car 1, charge limit
+          description: >-
+            La limite de charge réglée, en %.
+
+
+            The charge limit that is set, in %.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                - domain: number
+                - domain: input_number
+        voiture_1_fin:
+          name: Voiture 1, fin de charge · Car 1, charge end
+          description: >-
+            Facultatif : l'heure de fin de charge (capteur d'horodatage) ou le temps
+            restant en minutes ou en heures. La tablette écrit « Prête dans 1 h 25 ».
+
+
+            Optional: the time the charge ends (a timestamp sensor) or the time left in
+            minutes or hours. The tablet writes « Ready in 1 h 25 ».
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+        voiture_2_nom:
+          name: Voiture 2, son nom · Car 2, its name
+          description: >-
+            Le nom écrit sur son cercle, court. Vide : « Voiture 2 ».
+
+
+            The name written on its circle, short. Empty: « Car 2 ».
+          default: ""
+          selector:
+            text: {}
+        voiture_2_batterie:
+          name: Voiture 2, niveau de la batterie · Car 2, battery level
+          description: >-
+            Sa charge, en %. C'est ce capteur qui fait apparaître la voiture.
+
+
+            Its charge, in %. This sensor is what makes the car appear.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+        voiture_2_autonomie:
+          name: Voiture 2, autonomie · Car 2, range
+          description: >-
+            Les kilomètres (ou miles) restants ; l'unité du capteur est reprise telle quelle.
+            Chez Tesla (Teslemetry), ce capteur est désactivé par défaut : à activer dans
+            l'intégration (page de l'appareil, entités désactivées).
+
+
+            The remaining kilometres (or miles); the sensor's unit is used as it is. With
+            Tesla (Teslemetry) this sensor is disabled by default: enable it in the
+            integration (the device page, disabled entities).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+        voiture_2_etat:
+          name: Voiture 2, état de la charge · Car 2, charging state
+          description: >-
+            Son état, en clair (voir la voiture 1). Vide : déduit du câble et de la
+            puissance.
+
+
+            Its state in words (see car 1). Empty: deduced from the cable and the power.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                - domain: binary_sensor
+        voiture_2_cable:
+          name: Voiture 2, câble branché · Car 2, cable plugged in
+          description: >-
+            Allumé quand le câble est branché.
+
+
+            On when the cable is plugged in.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: binary_sensor
+                - domain: sensor
+        voiture_2_puissance:
+          name: Voiture 2, puissance de charge · Car 2, charging power
+          description: >-
+            La puissance qu'elle prend, en W, kW ou MW (convertie).
+
+
+            The power it draws, in W, kW or MW (converted).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: power
+        voiture_2_energie:
+          name: Voiture 2, énergie ajoutée · Car 2, energy added
+          description: >-
+            L'énergie ajoutée pendant cette charge, en Wh, kWh ou MWh (convertie).
+
+
+            The energy added during this charge, in Wh, kWh or MWh (converted).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+        voiture_2_limite:
+          name: Voiture 2, limite de charge · Car 2, charge limit
+          description: >-
+            La limite de charge réglée, en %.
+
+
+            The charge limit that is set, in %.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                - domain: number
+                - domain: input_number
+        voiture_2_fin:
+          name: Voiture 2, fin de charge · Car 2, charge end
+          description: >-
+            Facultatif : l'heure de fin de charge (capteur d'horodatage) ou le temps
+            restant en minutes ou en heures.
+
+
+            Optional: the time the charge ends (a timestamp sensor) or the time left in
+            minutes or hours.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
     # Caméras (ADR-0049, 09/10/2026, discussion #278) : le popup Caméras de la tablette,
     # une image fixe par caméra, rafraîchie tant qu'il est ouvert. Vide : le popup le dit.
     cameras:
@@ -3846,6 +4134,41 @@ variables:
   energie_prix_achat: !input energie_prix_achat
   energie_prix_revente: !input energie_prix_revente
   energie_devise: !input energie_devise
+  # Voitures de la page Flux (ADR-0076) : jusqu'à deux, chacune avec ses capteurs (texte
+  # vide = non choisi). Envoyées au script dans `capteurs.voitures` (liste de deux
+  # entrées, dans l'ordre), avec l'option « le compteur de la maison compte les voitures ».
+  # Hors de `energie` : une voiture ne rend pas de tuile « e ». Un package plus ancien
+  # ignore ces clés.
+  voitures_choix:
+    - nom: !input voiture_1_nom
+      batterie: !input voiture_1_batterie
+      autonomie: !input voiture_1_autonomie
+      etat: !input voiture_1_etat
+      cable: !input voiture_1_cable
+      puissance: !input voiture_1_puissance
+      energie: !input voiture_1_energie
+      limite: !input voiture_1_limite
+      fin: !input voiture_1_fin
+    - nom: !input voiture_2_nom
+      batterie: !input voiture_2_batterie
+      autonomie: !input voiture_2_autonomie
+      etat: !input voiture_2_etat
+      cable: !input voiture_2_cable
+      puissance: !input voiture_2_puissance
+      energie: !input voiture_2_energie
+      limite: !input voiture_2_limite
+      fin: !input voiture_2_fin
+  voitures_compteur_separe: !input energie_voitures_compteur_separe
+  voitures: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- for v in voitures_choix -%}
+      {%- set un = namespace(d={}) -%}
+      {%- for cle, x in v.items() -%}
+        {%- set un.d = dict(un.d, **{cle: (x if x is string else (x | first if x else ''))}) -%}
+      {%- endfor -%}
+      {%- set ns.l = ns.l + [un.d] -%}
+    {%- endfor -%}
+    {{ ns.l }}
   # Icône solaire du bandeau d'état (clé solaire de tab5_maj_emplacements) : puissance
   # des panneaux en % de leur crête (energie_crete, kWc), arrondie et bornée 0-100 (un
   # onduleur qui lit -3 W la nuit donne 0). Plusieurs sources : la somme de celles qui
@@ -4992,6 +5315,8 @@ actions:
                                   batterie_inverse=energie_batterie_inverse | bool(false),
                                   prix_achat=energie_prix_achat | float(0),
                                   prix_revente=energie_prix_revente | float(0),
+                                  voitures=voitures,
+                                  voitures_compteur_compte=not (voitures_compteur_separe | bool(false)),
                                   devise=energie_devise | string, **energie_plus) }}
 
       # Popup Caméras (ADR-0049) : la tablette demande ses caméras à l'ouverture, puis toutes

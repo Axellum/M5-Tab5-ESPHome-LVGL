@@ -216,8 +216,18 @@ def _env(etats, appareils=None):
         def __getitem__(self, e):
             return d.get(e)
 
-    def as_datetime(v):
-        return v if isinstance(v, dt.datetime) else dt.datetime.fromisoformat(str(v))
+    _SANS = object()
+
+    def as_datetime(v, defaut=_SANS):
+        """Comme HA : `as_datetime(valeur, défaut)` rend le défaut si la valeur n'est pas une date."""
+        if isinstance(v, dt.datetime):
+            return v
+        try:
+            return dt.datetime.fromisoformat(str(v))
+        except ValueError:
+            if defaut is _SANS:
+                raise
+            return defaut
 
     def as_local(v):
         return v.astimezone(PARIS)
@@ -1934,7 +1944,8 @@ def test_bilan_avec_compteurs_et_maison_mesures():
 # ─── Blueprint : les entrées de l'ADR-0058 ───────────────────────────────────
 
 NOUVELLES_CLES = {"compteur_achat", "compteur_vente", "consommation", "prix_achat", "prix_achat_entite",
-                  "prix_revente", "prix_revente_entite", "devise", "prevision_jour", "prevision_demain"}
+                  "prix_revente", "prix_revente_entite", "devise", "prevision_jour", "prevision_demain",
+                  "voitures", "voitures_compteur_compte"}   # ADR-0076 : les voitures de la page Flux
 
 
 def _blueprint_etendu():
@@ -2103,8 +2114,9 @@ def test_mise_en_page_ramenee_au_corps(carte):
     cpp = _lire(ENERGIE_CPP)
 
     def centres(nom):
-        brut = re.search(rf"kCentres{nom}\[NB_CARTES\] = \{{(.*?)\}};", cpp).group(1)
-        return [(int(x), int(y)) for x, y in re.findall(r"\{(\d+), (\d+)\}", brut)]
+        # Les quatre cartes d'avant les voitures (les deux derniers centres sont ceux des voitures).
+        brut = re.search(rf"kCentres{nom}\[NB_NOEUDS\] = \{{(.*?)\}};", cpp).group(1)
+        return [(int(x), int(y)) for x, y in re.findall(r"\{(\d+), (\d+)\}", brut)][:4]
 
     def ramener(x, y):
         milieu = (k["kCorpsWTab5"] + 2 * k["kCorpsX"]) // 2
@@ -2129,3 +2141,349 @@ def test_mise_en_page_ramenee_au_corps(carte):
         assert (k["kSolZoneL"], k["kInfosL"], droite_x, k["kLegendePas"], k["kInfosLigne"], k["kCadreY"]) == (810, 304, 886, 200, 96, 300)
         assert (k["kArcHaut"], k["kHorizonY"], k["kLeverY"], k["kSolMaxY"], k["kSolHaut"], k["kSolBas"], k["kSolAxeY"],
                 k["kLegendeY"], k["kSourceY"]) == (48, 190, 198, 232, 262, 496, 502, 540, 540)
+
+
+# ─── Flux : les voitures (ADR-0076, lot B1) ──────────────────────────────────
+
+NOEUDS_FLUX = {"SOLAIRE": 0, "MAISON": 1, "RESEAU": 2, "BATTERIE": 3, "VOITURE_1": 4, "VOITURE_2": 5}
+
+
+def _dispositions_flux(cpp):
+    """Les dispositions du Flux lues dans tab5_energie.cpp : [(nom, centres, traits sans tracé)] dans
+    l'ordre de l'enum Disp, les paires de nœuds de chaque trait (kTraitBouts) et kDispositionDe."""
+    centres = {nom: [(int(x), int(y)) for x, y in re.findall(r"\{(\d+), (\d+)\}", brut)]
+               for nom, brut in re.findall(r"kCentres(\w+)\[NB_NOEUDS\] = \{(.*?)\};", cpp)}
+    noms_traits = [t.strip() for t in re.search(r"enum Trait : int \{(.*?)\};", cpp, re.S).group(1).split(",")]
+    noms_traits = [t for t in noms_traits if t and t != "NB_TRAITS"]
+    bouts = re.search(r"kTraitBouts\[NB_TRAITS\]\[2\] = \{(.*?)\};", cpp, re.S).group(1)
+    paires = [(NOEUDS_FLUX[a], NOEUDS_FLUX[b]) for a, b in re.findall(r"\{(\w+), (\w+)\}", bouts)]
+    assert len(paires) == len(noms_traits)
+    noms_disp = [d.strip() for d in re.search(r"enum Disp : int \{(.*?)\};", cpp, re.S).group(1).split(",")]
+    noms_disp = [d for d in noms_disp if d and d != "NB_DISPOS"]
+    corps = re.search(r"kDispositions\[NB_DISPOS\] = \{(.*?)\n\};", cpp, re.S).group(1)
+    lignes = re.findall(r"\{kCentres(\w+), (.+?)\},?\n", corps + "\n")
+    assert len(lignes) == len(noms_disp)
+    dispositions = []
+    for nom, masque in lignes:
+        bits = 0
+        for t in (m.strip() for m in masque.split("|")):
+            if t != "0":
+                bits |= 1 << noms_traits.index(re.fullmatch(r"bit_trait\((\w+)\)", t).group(1))
+        dispositions.append((nom, centres[nom], bits))
+    de = re.search(r"kDispositionDe\[2\]\[kVoituresMax \+ 1\] = \{\{(.*?)\},\s*\{(.*?)\}\};", cpp, re.S)
+    table = [[noms_disp.index(d.strip()) for d in ligne.split(",")] for ligne in de.groups()]
+    return dispositions, paires, table
+
+
+def _rayon_flux(k, noeud):
+    """Rayon qu'un nœud occupe : son cercle, plus l'anneau de la maison et des voitures."""
+    anneau = k["kFluxR"] + k["kAnneauEcart"] + k["kAnneauL"]
+    return anneau if noeud in (NOEUDS_FLUX["MAISON"], NOEUDS_FLUX["VOITURE_1"], NOEUDS_FLUX["VOITURE_2"]) else k["kFluxR"]
+
+
+def _distance_segment(p, a, b):
+    (ax, ay), (bx, by), (px, py) = a, b, p
+    dx, dy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.dist(p, (ax + t * dx, ay + t * dy))
+
+
+def _distance_rectangle(p, x0, y0, x1, y1):
+    return math.dist(p, (max(x0, min(p[0], x1)), max(y0, min(p[1], y1))))
+
+
+def _noeuds_montres(d, nom, centres):
+    """Les nœuds dessinés par une disposition : sans voiture, les trois cartes (quatre avec la batterie) ;
+    avec des voitures, ceux dont le centre est posé ({0, 0} = masqué)."""
+    if nom == "Sans":
+        return [0, 1, 2]
+    if nom == "Batterie":
+        return [0, 1, 2, 3]
+    return [i for i, c in enumerate(centres) if c != (0, 0)]
+
+
+def _traits_qui_traversent(k, centres, paires, montres):
+    """Les traits entre deux nœuds dessinés dont le segment (de centre à centre) coupe un troisième cercle."""
+    coupes = set()
+    for t, (a, b) in enumerate(paires):
+        if a not in montres or b not in montres:
+            continue
+        for n in montres:
+            if n not in (a, b) and _distance_segment(centres[n], centres[a], centres[b]) <= _rayon_flux(k, n):
+                coupes.add(t)
+    return coupes
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_flux_dispositions_voitures(carte):
+    """Disposition par disposition : les nœuds dessinés tiennent dans la page et ne se touchent pas, les
+    deux lignes de légende des voitures ne touchent aucun cercle, et la liste des traits « sans tracé »
+    est EXACTEMENT celle des traits qui traverseraient un cercle (un masque inutile ou un trait qui
+    traverse se voient). La 7B ne dessine aucune voiture : seules les deux dispositions d'avant y comptent."""
+    cpp = _lire(ENERGIE_CPP)
+    k = constantes_cpp(cpp, carte)
+    dispositions, paires, table = _dispositions_flux(cpp)
+    corps_h = int(jetons_resolus(carte)["corps_h"])
+    voitures_dessinees = k["kCorpsH"] >= k["kCorpsHTab5"]
+    assert voitures_dessinees == (carte == "tab5")
+    assert [nom for nom, _, _ in dispositions] == ["Sans", "Batterie", "SansV1", "SansV2", "BatterieV1", "BatterieV2"]
+    # Sans voiture : une disposition par avec / sans batterie ; une voiture : la sienne ; deux : celle
+    # des deux voitures, ou, avec la batterie, le cercle commun (même centres que pour une voiture).
+    assert table == [[0, 2, 3], [1, 4, 5]]
+    for nom, centres_tab5, sans_trait in dispositions:
+        if not voitures_dessinees and nom not in ("Sans", "Batterie"):
+            continue
+        montres = _noeuds_montres(None, nom, centres_tab5)
+        milieu = (k["kCorpsWTab5"] + 2 * k["kCorpsX"]) // 2
+        plage = k["kCorpsH"] - k["kFluxBasMarge"] - k["kFluxHautY"]
+        centres = [(k["kCarteL"] // 2 + (abs(x - milieu) * k["kCorpsW"] // k["kCorpsWTab5"]) * (1 if x >= milieu else -1),
+                    k["kFluxHautY"] + (y - k["kFluxHautY"]) * plage // (k["kCorpsHTab5"] - k["kFluxBasMarge"] - k["kFluxHautY"]))
+                   for x, y in centres_tab5]
+        for i in montres:
+            r = _rayon_flux(k, i)
+            x, y = centres[i]
+            assert r <= x <= k["kCarteL"] - r and r <= y <= corps_h - r, (nom, i, centres[i])
+            for j in montres:
+                if j > i:
+                    assert math.dist(centres[i], centres[j]) > r + _rayon_flux(k, j), (nom, i, j)
+        coupes = _traits_qui_traversent(k, centres, paires, montres)
+        masques = {t for t in range(len(paires)) if sans_trait >> t & 1}
+        assert masques == coupes, (nom, "traits sans tracé", masques, "traits qui traversent", coupes)
+        # Légendes (+ énergie ajoutée, fin de charge) : à gauche pour la première voiture, à droite pour la seconde.
+        voitures = [i for i in montres if i >= NOEUDS_FLUX["VOITURE_1"]]
+        deux = nom == "SansV2"
+        pas = k["kFluxLegendePas"]
+        zones = []
+        if voitures:
+            zones.append((k["kFluxLegendeX"], k["kFluxLegendeY"], k["kFluxLegendeX"] + k["kFluxLegendeL"], k["kFluxLegendeY"] + 2 * pas))
+        if deux or nom == "BatterieV2":
+            x1 = k["kCarteL"] - k["kFluxLegendeX"]
+            zones.append((x1 - k["kFluxLegendeL"], k["kFluxLegendeY"], x1, k["kFluxLegendeY"] + 2 * pas))
+        for z in zones:
+            assert z[3] <= corps_h and z[0] >= 0 and z[2] <= k["kCarteL"], (nom, z)
+            for i in montres:
+                assert _distance_rectangle(centres[i], *z) > _rayon_flux(k, i), (nom, "légende sur le nœud", i, z)
+
+
+# ─── Package et blueprint : tab5_maj_voiture (ADR-0076) ──────────────────────
+
+CHAMPS_VOITURE = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "fin"]
+MODEL_Y = {"nom": "Model Y", "batterie": "sensor.model_y_batterie", "autonomie": "sensor.model_y_autonomie",
+           "etat": "sensor.model_y_charge", "cable": "binary_sensor.model_y_cable",
+           "puissance": "sensor.model_y_puissance", "energie": "sensor.model_y_energie",
+           "limite": "number.model_y_limite", "fin": "sensor.model_y_fin"}
+SANS_VOITURE = dict.fromkeys(CHAMPS_VOITURE, "")
+
+
+def _etats_model_y(**surcharges):
+    """La voiture 1 en charge (7,2 kW, 78 %, 412 km, limite 90 %, 1,5 h restantes) ; une surcharge
+    {entité: EtatHA | None} change ou retire un capteur."""
+    etats = {
+        "sensor.model_y_batterie": EtatHA("sensor.model_y_batterie", "78", unit_of_measurement="%"),
+        "sensor.model_y_autonomie": EtatHA("sensor.model_y_autonomie", "412", unit_of_measurement="km"),
+        "sensor.model_y_charge": EtatHA("sensor.model_y_charge", "charging"),
+        "binary_sensor.model_y_cable": EtatHA("binary_sensor.model_y_cable", "on"),
+        "sensor.model_y_puissance": EtatHA("sensor.model_y_puissance", "7.2", unit_of_measurement="kW"),
+        "sensor.model_y_energie": EtatHA("sensor.model_y_energie", "12.4", unit_of_measurement="kWh"),
+        "number.model_y_limite": EtatHA("number.model_y_limite", "90", unit_of_measurement="%"),
+        "sensor.model_y_fin": EtatHA("sensor.model_y_fin", "1.5", unit_of_measurement="h"),
+    }
+    etats.update(surcharges)
+    return etats
+
+
+def _etape_voitures():
+    """L'étape de la boucle qui pousse les voitures : (condition, variables de l'itération, action)."""
+    bloc = _chercher(_script()["sequence"], lambda d: "voitures_actives" in str(d.get("if", "")))
+    assert bloc, "étape des voitures introuvable dans la boucle de script.tab5_energie"
+    boucle = bloc["then"][0]["repeat"]
+    return bloc["if"], boucle, boucle["sequence"][0]["variables"], boucle["sequence"][1]
+
+
+def _passe_voitures(voitures, etats=None, compteur=True):
+    capteurs = dict(CAPTEURS, voitures=voitures, voitures_compteur_compte=compteur)
+    surcharges = {k: v for k, v in (_etats_model_y() if etats is None else etats).items()}
+    return Passe(capteurs, _maison(**surcharges), cinq=_reponse(_lignes_5min()))
+
+
+def _payload_voiture(rang, voitures, etats=None, compteur=True):
+    """Le payload que le script pousse pour le rang `rang` (1 ou 2), rendu comme HA le ferait."""
+    p = _passe_voitures(voitures, etats, compteur)
+    _, _, variables, _ = _etape_voitures()
+    p.ctx["repeat"] = {"item": str(rang), "index": rang}
+    return str(_rendre(p.env, variables["voiture_payload"], p.ctx))
+
+
+def test_voiture_l_action_et_ses_variables():
+    """Le script pousse tab5_maj_voiture avec exactement les variables du service du firmware, toujours
+    avec continue_on_error (un firmware d'avant n'a pas l'action) ; rien sans voiture choisie."""
+    condition, boucle, _, action = _etape_voitures()
+    assert condition == "{{ voitures_actives | int(0) > 0 }}"
+    assert boucle["for_each"] == ["1", "2"]
+    assert action["action"] == "esphome.{{ tablette }}_tab5_maj_voiture" and action["continue_on_error"] is True
+    assert set(action["data"]) == set(demo_pusher.lire_contrat()[demo_pusher.SERVICE_VOITURE]) == {"rang", "payload"}
+    assert action["data"]["rang"] == "{{ repeat.item }}"
+    for cles in (None, [], [SANS_VOITURE, SANS_VOITURE]):
+        capteurs = dict(CAPTEURS) if cles is None else dict(CAPTEURS, voitures=cles)
+        p = Passe(capteurs, _maison(), cinq=_reponse(_lignes_5min()))
+        assert p["voitures_actives"] == 0, cles
+        assert p["voitures_entites"] == []
+    # Un blueprint d'avant (pas de clé `voitures`) : les capteurs suivis sont ceux d'avant.
+    avant = Passe(CAPTEURS, _maison(), cinq=_reponse(_lignes_5min()))
+    avec = _passe_voitures([MODEL_Y, SANS_VOITURE])
+    assert avec["voitures_actives"] == 1
+    assert avec["suivis"] == avant["suivis"] + [v for v in MODEL_Y.values() if v.startswith(("sensor.", "binary_sensor.", "number."))]
+
+
+def test_voiture_payload_complet():
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE]) == "Model Y|78|412|km|3|7200|12.4|90|90|1"
+    # Dix champs, dans l'ordre que lit voiture_lire (tab5_parse.cpp) et que pousse la démo.
+    assert len(_payload_voiture(1, [MODEL_Y, SANS_VOITURE]).split("|")) == len(scenarios.VOITURE_CHAMPS) == 10
+
+
+def test_voiture_le_rang_sans_voiture_part_vide():
+    """Une seule voiture choisie : l'autre rang part avec un payload VIDE (la tablette retire son cercle)."""
+    assert _payload_voiture(2, [MODEL_Y, SANS_VOITURE]) == ""
+    assert _payload_voiture(1, [SANS_VOITURE, MODEL_Y]) == ""
+    assert _payload_voiture(2, [SANS_VOITURE, MODEL_Y]) == "Model Y|78|412|km|3|7200|12.4|90|90|1"
+    assert _payload_voiture(2, [MODEL_Y]) == "", "liste plus courte que deux voitures"
+
+
+@pytest.mark.parametrize("etat, cable, puissance, code", [
+    ("charging", "on", ("7.2", "kW"), 3),
+    ("Charging", "on", ("7200", "W"), 3),                  # la casse n'y change rien
+    ("starting", "on", ("0", "kW"), 2),
+    ("complete", "on", ("0", "kW"), 2),
+    ("stopped", "on", ("0", "kW"), 2),
+    ("no_power", "on", ("0", "kW"), 2),
+    ("disconnected", "off", ("0", "kW"), 1),
+    ("unavailable", "on", ("0", "kW"), 2),                 # état illisible : le câble
+    ("unavailable", "off", ("0", "kW"), 1),
+    ("unavailable", "unavailable", ("7.2", "kW"), 3),      # ni état ni câble : la puissance
+    ("unknown", "unavailable", ("0", "kW"), 0),            # rien ne le dit : inconnu
+    ("stopped", "on", ("3", "kW"), 3),                     # elle tire 3 kW : en charge malgré le mot
+    ("off", "off", ("0", "kW"), 1),                        # capteur vrai/faux éteint : le câble
+    ("on", "off", ("0", "kW"), 3),                         # capteur vrai/faux allumé : en charge
+])
+def test_voiture_etat(etat, cable, puissance, code):
+    etats = _etats_model_y(**{
+        "sensor.model_y_charge": EtatHA("sensor.model_y_charge", etat),
+        "binary_sensor.model_y_cable": EtatHA("binary_sensor.model_y_cable", cable),
+        "sensor.model_y_puissance": EtatHA("sensor.model_y_puissance", puissance[0], unit_of_measurement=puissance[1])})
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats).split("|")[4] == str(code)
+
+
+def test_voiture_etat_sans_capteur_d_etat_ni_de_cable():
+    """Seule la puissance : en charge dès 10 W, sinon inconnu (rien ne dit si elle est branchée)."""
+    voiture = dict(MODEL_Y, etat="", cable="")
+    assert _payload_voiture(1, [voiture, SANS_VOITURE]).split("|")[4] == "3"
+    etats = _etats_model_y(**{"sensor.model_y_puissance": EtatHA("sensor.model_y_puissance", "0", unit_of_measurement="kW")})
+    assert _payload_voiture(1, [voiture, SANS_VOITURE], etats).split("|")[4] == "0"
+    # Le câble seul dit branchée ou non.
+    assert _payload_voiture(1, [dict(voiture, cable="binary_sensor.model_y_cable"), SANS_VOITURE], etats).split("|")[4] == "2"
+
+
+@pytest.mark.parametrize("valeur, unite, attendu", [
+    ("7.2", "kW", "7200"), ("7200", "W", "7200"), ("0.0072", "MW", "7200"), ("7200", None, "7200"),
+    ("-50", "W", "0"),                                     # jamais négative
+    ("unavailable", "kW", ""), ("unknown", "W", ""),
+])
+def test_voiture_puissance_en_watts(valeur, unite, attendu):
+    attrs = {"unit_of_measurement": unite} if unite else {}
+    etats = _etats_model_y(**{"sensor.model_y_puissance": EtatHA("sensor.model_y_puissance", valeur, **attrs)})
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats).split("|")[5] == attendu
+
+
+@pytest.mark.parametrize("valeur, unite, attendu", [
+    ("12.4", "kWh", "12.4"), ("12400", "Wh", "12.4"), ("0.0124", "MWh", "12.4"), ("3.456", "kWh", "3.46"),
+    ("unavailable", "kWh", ""),
+])
+def test_voiture_energie_en_kwh(valeur, unite, attendu):
+    etats = _etats_model_y(**{"sensor.model_y_energie": EtatHA("sensor.model_y_energie", valeur, unit_of_measurement=unite)})
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats).split("|")[6] == attendu
+
+
+def _fin(valeur, unite=None):
+    attrs = {"unit_of_measurement": unite} if unite else {}
+    etats = _etats_model_y(**{"sensor.model_y_fin": EtatHA("sensor.model_y_fin", valeur, **attrs)})
+    return _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats).split("|")[8]
+
+
+def test_voiture_fin_de_charge_en_minutes():
+    assert _fin("1.5", "h") == "90" and _fin("45", "min") == "45" and _fin("5400", "s") == "90"
+    assert _fin("0.5", "d") == "720"
+    # Un horodatage : l'écart avec « maintenant » (14:37:20 le 16/06/2026 à Paris = 12:37:20 UTC),
+    # quel que soit le fuseau écrit (16:12:20+02:00 = 14:12:20 UTC) ; passé (12:12:20 UTC) : rien.
+    assert _fin("2026-06-16T16:12:20+02:00") == "95" and _fin("2026-06-16T14:12:20+00:00") == "95"
+    assert _fin("2026-06-16T14:00:00+02:00") == "" and _fin("2026-06-16T12:12:20+00:00") == ""
+    # Pas d'unité connue pour un nombre, ou pas de valeur : rien (jamais un nombre deviné).
+    assert _fin("90") == "" and _fin("90", "kg") == "" and _fin("unavailable") == "" and _fin("unknown", "h") == ""
+
+
+@pytest.mark.parametrize("etat", ["complete", "stopped", "disconnected", "no_power", "unavailable"])
+def test_voiture_pas_de_fin_de_charge_hors_charge(etat):
+    """Tesla : « Time to full charge » est un horodatage ; hors charge la fin n'est pas poussée, même si
+    le capteur donne un instant à venir. Le câble débranché ne fait pas non plus une charge."""
+    etats = _etats_model_y(**{
+        "sensor.model_y_charge": EtatHA("sensor.model_y_charge", etat),
+        "binary_sensor.model_y_cable": EtatHA("binary_sensor.model_y_cable", "off"),
+        "sensor.model_y_puissance": EtatHA("sensor.model_y_puissance", "0", unit_of_measurement="kW"),
+        "sensor.model_y_fin": EtatHA("sensor.model_y_fin", "2026-06-16T16:12:20+02:00")})
+    champs = _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats).split("|")
+    assert champs[4] != "3" and champs[8] == ""
+
+
+def test_voiture_endormie_champs_vides_et_etat_inconnu():
+    """Une voiture endormie répond « unavailable » / « unknown » : chaque champ reste vide (la tablette
+    écrit « -- »), l'état vaut 0, rien ne plante ; le nom et le réglage du compteur partent quand même."""
+    inconnus = {e: EtatHA(e, "unavailable" if i % 2 else "unknown")
+                for i, e in enumerate(v for k, v in MODEL_Y.items() if k != "nom")}
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], inconnus) == "Model Y||||0|||||1"
+
+
+def test_voiture_champs_sans_valeur_restent_vides():
+    """Un capteur indisponible ou non choisi laisse son champ vide ; la voiture reste (sa batterie, son nom)."""
+    etats = _etats_model_y(**{"sensor.model_y_batterie": EtatHA("sensor.model_y_batterie", "unavailable"),
+                              "sensor.model_y_autonomie": None, "number.model_y_limite": EtatHA("number.model_y_limite", "unknown")})
+    p = _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats)
+    assert p == "Model Y||||3|7200|12.4||90|1", p
+    mince = {**SANS_VOITURE, "batterie": "sensor.model_y_batterie"}
+    # Seule sa batterie est choisie : sans nom (la tablette dit « Voiture 1 »), état inconnu (0).
+    assert _payload_voiture(1, [mince, SANS_VOITURE]) == "|78|||0|||||1"
+
+
+def test_voiture_nom_nettoye_et_borne():
+    assert _payload_voiture(1, [dict(MODEL_Y, nom=" Mo|del;Y "), SANS_VOITURE]).split("|")[0] == "ModelY"
+    assert _payload_voiture(1, [dict(MODEL_Y, nom="x" * 40), SANS_VOITURE]).split("|")[0] == "x" * 24
+    assert _payload_voiture(1, [dict(MODEL_Y, nom=""), SANS_VOITURE]).split("|")[0] == ""   # la tablette dit « Voiture 1 »
+
+
+def test_voiture_le_compteur_de_la_maison():
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], compteur=True).split("|")[9] == "1"
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], compteur=False).split("|")[9] == "0"
+
+
+def test_blueprint_envoie_les_voitures():
+    """Le blueprint range les capteurs de chaque voiture (texte vide = non choisi) dans `capteurs.voitures`,
+    dans l'ordre des deux voitures, avec l'option du compteur."""
+    entrees = dict(REMPLIE, voiture_1_nom="Model Y", voiture_1_batterie="sensor.model_y_batterie",
+                   voiture_1_puissance=["sensor.model_y_puissance"], voiture_2_batterie=["sensor.autre_batterie"],
+                   energie_voitures_compteur_separe=True)
+    p = Passage(entrees, _maison_bp(), _evenement("energie", vue="heures", device_id="tablette_1"))
+    p.etats.d["script.tab5_energie"] = Etat("script.tab5_energie", "off")
+    capteurs = _capteurs_envoyes(p)
+    assert capteurs["voitures"] == [dict(SANS_VOITURE, nom="Model Y", batterie="sensor.model_y_batterie",
+                                         puissance="sensor.model_y_puissance"),
+                                    dict(SANS_VOITURE, batterie="sensor.autre_batterie")]
+    assert capteurs["voitures_compteur_compte"] is False
+    assert set(capteurs["voitures"][0]) == set(CHAMPS_VOITURE)
+    # Une voiture ne compte pas comme « énergie choisie » : ni tuile e, ni popup rempli.
+    assert sorted(p["energie_capteurs"]) == sorted(["sensor.solaire_puissance", PROD])
+
+
+def test_blueprint_voitures_vides_par_defaut():
+    p = Passage(REMPLIE, _maison_bp(), _evenement("energie", vue="heures", device_id="tablette_1"))
+    p.etats.d["script.tab5_energie"] = Etat("script.tab5_energie", "off")
+    capteurs = _capteurs_envoyes(p)
+    assert capteurs["voitures"] == [SANS_VOITURE, SANS_VOITURE]
+    assert capteurs["voitures_compteur_compte"] is True, "par défaut le compteur de la maison compte les voitures"
