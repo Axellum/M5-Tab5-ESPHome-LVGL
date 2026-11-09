@@ -2594,6 +2594,35 @@ def test_charges_la_reponse_de_l_analyse_est_poussee_telle_quelle():
     assert _rendre(p.env, pousse["if"], p.ctx) is False
 
 
+def test_jour_trois_rangs_poussent_la_consommation_du_jour():
+    """ADR-0078 : la même réponse de l'analyse alimente la page « Aujourd'hui » : un appel par rang
+    (« 0 » la maison sans les voitures, « 1 » et « 2 » les voitures), avec exactement les variables du service
+    du firmware, en continue_on_error (un firmware d'avant n'a pas l'action) ; les chaînes sont poussées telles
+    quelles, une série absente de la réponse devient vide (la tablette retire la voiture ou la maison)."""
+    pousse = _etape_charges()["then"][2]
+    boucle = pousse["then"][1]["repeat"]
+    assert boucle["for_each"] == ["0", "1", "2"]
+    action = boucle["sequence"][0]
+    assert action["action"] == "esphome.{{ tablette }}_tab5_maj_voiture_jour" and action["continue_on_error"] is True
+    assert set(action["data"]) == set(demo_pusher.lire_contrat()[demo_pusher.SERVICE_VOITURE_JOUR]) == {
+        "rang", "debut", "valeurs"}
+    p = _passe_charges([MODEL_Y, SANS_VOITURE])
+    reponse = {"jour_debut": "2026-06-16", "jour_maison": "0.4;0.5;;1.2", "jour_1": "0;0;7.2;3.1", "jour_2": ""}
+    p.ctx["analyse_voitures"] = reponse
+    envoyes = {}
+    for rang in boucle["for_each"]:
+        ctx = dict(p.ctx, repeat={"item": rang})
+        donnees = {cle: _rendre(p.env, valeur, ctx) for cle, valeur in action["data"].items()}
+        assert str(donnees["rang"]) == rang
+        assert donnees["debut"] == "2026-06-16"
+        envoyes[rang] = donnees["valeurs"]
+    assert envoyes == {"0": "0.4;0.5;;1.2", "1": "0;0;7.2;3.1", "2": ""}
+    # Une analyse d'avant (sans `jour_maison`) : la maison est vide, la tablette n'empile rien.
+    ancienne = {"charges": "", "jour_debut": "2026-06-16", "jour_1": "0;1"}
+    ctx = dict(p.ctx, analyse_voitures=ancienne, repeat={"item": "0"})
+    assert _rendre(p.env, action["data"]["valeurs"], ctx) == ""
+
+
 LIGNE_CHARGE = re.compile(r"^[12]\|\d{4}-\d{2}-\d{2}\|\d{2}:\d{2}\|\d+\|\d+(\.\d+)?\|(\d+|nan)?$")
 
 

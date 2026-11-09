@@ -24,7 +24,8 @@ from tests.commun import BaseChargeur, HA, lire
 from tests.test_voitures_charges import MAINTENANT, PARIS, SCENARIOS, T1, capteurs
 
 PACKAGE = HA / "packages" / "tab5_voitures.yaml"
-CLES = ["charges", "charges_1", "charges_2", "jour_debut", "jour_1", "jour_2", "bilan_debut", "bilan", "precision"]
+CLES = ["charges", "charges_1", "charges_2", "jour_debut", "jour_1", "jour_2", "jour_maison", "bilan_debut", "bilan",
+        "precision"]
 
 
 # ─── Imitation de ce que les modèles appellent dans HA ───────────────────────
@@ -248,7 +249,7 @@ def test_formats_des_charges(nom):
 
 def test_formats_des_heures_et_du_bilan():
     rep = executer("bilan").reponse
-    for cle in ("jour_1", "jour_2"):
+    for cle in ("jour_1", "jour_2", "jour_maison"):
         assert len(rep[cle].split(";")) == 24 and all(re.fullmatch(r"\d+\.\d+|", x) for x in rep[cle].split(";"))
     assert rep["jour_debut"] == "2026-06-16" and rep["bilan_debut"] == "2026-06-01"
     champs = rep["bilan"].split("|")
