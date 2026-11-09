@@ -422,6 +422,9 @@ void charges(const std::string& p) {
     const int n = charges_lire(Champ{p.data(), p.size()}, c);
     const ChargesTotal t = charges_total(c, n);
     (void) t;
+    // La charge en cours : à un « maintenant » tiré de la taille du payload (négatif = horloge non réglée).
+    const int32_t maintenant = static_cast<int32_t>(p.size() % 3 == 0 ? -1 : 29000000 + 1440 * static_cast<int32_t>(p.size()));
+    for (int i = 0; i < n; i++) (void) charge_en_cours(c[i], maintenant);
 }
 
 void info(const std::string& p) {

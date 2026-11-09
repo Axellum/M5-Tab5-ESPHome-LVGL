@@ -1992,3 +1992,13 @@ ChargesTotal charges_total(const ChargeLue* charges, int n) {
     if (kwh_connu > 0.0f) t.soleil = 100.0f * soleil / kwh_connu;
     return t;
 }
+
+bool charge_en_cours(const ChargeLue& charge, int32_t maintenant) {
+    constexpr int32_t kEnRetardMax = 30;   // minutes : la fin de la charge est avant maintenant
+    constexpr int32_t kEnAvanceMax = 10;   // minutes : ou un peu après (créneau de 5 minutes arrondi)
+    if (maintenant < 0 || charge.annee <= 0 || charge.heure < 0 || !std::isfinite(charge.duree)) return false;
+    const int32_t fin = jour_civil(charge.annee, charge.mois, charge.jour) * 1440 + charge.heure * 60 + charge.minute +
+                        static_cast<int32_t>(std::lround(charge.duree));
+    const int32_t retard = maintenant - fin;
+    return retard >= -kEnAvanceMax && retard <= kEnRetardMax;
+}

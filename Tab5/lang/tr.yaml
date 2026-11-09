@@ -1247,7 +1247,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # Page « Charges » du popup Énergie (lot B3)
 # Onglet « Şarjlar » (7 car.). Légende « Şebeke » en casse normale (la clé "energie|RÉSEAU" est en majuscules).
 "Charges": "Şarjlar"
-"Dernières charges": "Son şarjlar"
+# Titre écrit en capitales : texte_majuscules() ne monte que le Latin-1 (pas « ş »).
+"Dernières charges": "SON ŞARJLAR"
 "en cours": "sürüyor"
 "Soleil": "Güneş"
 "energie|Réseau": "Şebeke"

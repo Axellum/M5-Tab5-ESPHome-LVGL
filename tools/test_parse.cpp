@@ -2215,6 +2215,26 @@ static void test_charges_lire() {
     expect(n == 1 && std::isnan(t.kwh) && std::isnan(t.soleil), "charges : aucune énergie lisible = total inconnu");
     t = charges_total(nullptr, 3);
     expect(std::isnan(t.kwh) && std::isnan(t.soleil) && std::isnan(charges_total(c, 0).kwh), "charges : total sans charge");
+    // La charge en cours : sa fin tombe de 30 minutes avant à 10 minutes après maintenant (07:45 le 16/06/2026).
+    const int32_t ce_matin = jour_civil(2026, 6, 16) * 1440 + 7 * 60 + 45;
+    n = charges_lire(ch("1|2026-06-16|06:02|103|12.4|76"), c);   // 06:02 + 1 h 43 = 07:45
+    expect(n == 1 && charge_en_cours(c[0], ce_matin) && charge_en_cours(c[0], ce_matin + 30) &&
+               charge_en_cours(c[0], ce_matin - 10) && !charge_en_cours(c[0], ce_matin + 31) &&
+               !charge_en_cours(c[0], ce_matin - 11),
+           "charge en cours : la fin de 10 minutes après à 30 minutes avant maintenant");
+    n = charges_lire(ch("1|2026-06-15|06:02|103|12.4|76"), c);   // la même, la veille
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : la charge d'hier ne l'est pas");
+    n = charges_lire(ch("1|2026-06-15|23:00|480|40.0|50"), c);   // finie à 07:00 aujourd'hui, 45 minutes avant
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin) && charge_en_cours(c[0], ce_matin - 30),
+           "charge en cours : une charge de la nuit se compte d'un jour à l'autre");
+    n = charges_lire(ch("1|2026-06-16|06:02|103|12.4|76"), c);
+    expect(!charge_en_cours(c[0], -1) && !charge_en_cours(c[0], 0), "charge en cours : sans horloge réglée, non");
+    n = charges_lire(ch("1|2026-06-16|06:02||12.4|76"), c);   // durée inconnue
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : sans durée lisible, non");
+    n = charges_lire(ch("1|2026-06-16||103|12.4|76"), c);   // heure inconnue
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : sans heure lisible, non");
+    n = charges_lire(ch("1||06:02|103|12.4|76"), c);   // jour inconnu
+    expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : sans jour lisible, non");
 }
 
 static void test_voiture_lire() {

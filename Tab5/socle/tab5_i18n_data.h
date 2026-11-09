@@ -9687,7 +9687,7 @@ static const char* const kI18n_tr[] = {
     "Son hamle: İŞARETLİ",  // "Dernier coup : MARQUÉ"
     "Son hamle: İŞARETSİZ",  // "Dernier coup : NON MARQUÉ"
     "Son olay: %s",  // "Dernier incident : %s"
-    "Son şarjlar",  // "Dernières charges"
+    "SON ŞARJLAR",  // "Dernières charges"
     "İki pas: ölü grupları işaretle",  // "Deux passes : marquez les groupes morts"
     "Zor",  // "Difficile"
     "Zorluk: %s",  // "Difficulté : %s"

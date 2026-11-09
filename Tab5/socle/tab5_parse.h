@@ -1305,3 +1305,10 @@ struct ChargesTotal {
     float soleil = NAN;
 };
 ChargesTotal charges_total(const ChargeLue* charges, int n);
+// Cette ligne est-elle la charge qui se fait là, maintenant ? `maintenant` : minutes depuis le
+// 01/01/1970 en heure locale (jour_civil() × 1440 + l'heure du jour), négatif si l'horloge n'est pas
+// réglée. Vrai quand le début (jour et heure) et la durée sont lisibles et que la fin tombe de 30
+// minutes avant à 10 minutes après maintenant : l'analyse de HA ne repart que toutes les 5 minutes
+// et compte par créneaux de 5 minutes, donc une charge qui vient de commencer n'y est pas encore et
+// la ligne la plus récente peut être celle d'hier (qui ne doit pas passer pour la charge en cours).
+bool charge_en_cours(const ChargeLue& charge, int32_t maintenant);

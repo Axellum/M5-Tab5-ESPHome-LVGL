@@ -31,8 +31,8 @@
  *           première charge reçue) : les six dernières charges des voitures, une ligne chacune
  *           (icône de la voiture, nom, jour et heure, durée, énergie, barre soleil / réseau et
  *           part du soleil), la plus récente d'abord ; la charge en cours (une voiture dont
- *           tab5_maj_voiture dit qu'elle charge, sa ligne la plus récente) a l'éclair et une
- *           ligne teintée ; le total sous la liste. Tout est posé une fois (construire_charges),
+ *           tab5_maj_voiture dit qu'elle charge, sa ligne la plus récente SI elle finit maintenant,
+ *           charge_en_cours()) a l'éclair et une ligne teintée ; le total sous la liste. Tout est posé une fois (construire_charges),
  *           six lignes toujours présentes, montrées selon ce qui est reçu. Sans barre sur une
  *           carte étroite (kChBarre : la 7B).
  *         - « Bilan » (tab5_maj_energie_bilan, energie_bilan_lire ; en kWh, ADR-0062) : à
@@ -300,9 +300,10 @@ constexpr int32_t kSourceY = kSolZoneH - 30;       // 540
 // ligne est un rectangle (teinté pour la charge en cours) dont les textes se centrent en hauteur ;
 // ses colonnes se comptent depuis la droite (part du soleil, barre, énergie, durée), le nom et le
 // jour depuis la gauche. Mesures en Roboto 700 le 09/11/2026 (fonttools) : « Tesla 2025 » 161 px
-// en 32 (colonne de 190), « 158.5 kWh » 154 px (170), « 10 h 05 » 110 px (130), « 100 % » 90 px (96),
-// jour et heure en 22 : 205 px au plus (« Aujourd'hui · 09:02 », « Mercredi 12 » n'est pas écrit :
-// le jour de la semaine est abrégé). Sur la 7B, sans barre, le jour garde 196 px.
+// en 32 (colonne de 190), « 158.5 kWh » 154 px (170), « 10 h 05 » 107 px (130), « 100 % » 87 px (96),
+// jour et heure en 22 (roboto_22 est le Roboto 700) : 186 px au plus (« Aujourd'hui · 09:02 », puis
+// 174 px « Yesterday · 23:55 » ; le jour de la semaine est abrégé : « Mer 12 · 11:15 » 144 px).
+// Sur la 7B, sans barre, le jour garde 196 px.
 constexpr int32_t kChL = kCorpsW - 4;
 constexpr int32_t kChH = kCorpsH - 4;
 constexpr int32_t kChBord = 32;             // marge du titre, de la légende, du total
@@ -1359,7 +1360,12 @@ void charge_jour(const ChargeLue& c, char* out, size_t n) {
 void peindre_charges() {
     ChargesUI& o = s_ch;
     if (o.titre == nullptr) return;
-    // La charge en cours : la plus récente de chaque voiture, si tab5_maj_voiture dit qu'elle charge.
+    // La charge en cours : la plus récente de chaque voiture, si tab5_maj_voiture dit qu'elle charge ET
+    // que cette ligne finit maintenant (charge_en_cours) : l'analyse de HA a jusqu'à 5 minutes de
+    // retard, la charge qui commence n'y est pas encore et la ligne d'hier ne doit pas passer pour elle.
+    const int32_t auj = local_day_number_today();
+    const int32_t mn = minutes_maintenant();
+    const int32_t maintenant = auj >= 0 && mn >= 0 ? auj * 1440 + mn : -1;
     bool vue[kVoituresMax] = {};
     bool une_en_cours = false, un_soleil = false;
     char t[96], x[32];
@@ -1373,7 +1379,7 @@ void peindre_charges() {
         const ChargeLue& c = s_charges[i];
         const int k = c.rang == 2 ? 1 : 0;
         const Voiture& v = s_voitures[k];
-        const bool en_cours = !vue[k] && v.presente && v.etat == VoitureEtat::EN_CHARGE;
+        const bool en_cours = !vue[k] && v.presente && v.etat == VoitureEtat::EN_CHARGE && charge_en_cours(c, maintenant);
         vue[k] = true;
         une_en_cours = une_en_cours || en_cours;
         const bool soleil = std::isfinite(c.soleil);
