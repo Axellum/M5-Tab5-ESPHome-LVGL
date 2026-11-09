@@ -292,6 +292,23 @@
           }
         }
       }
+    },
+    "tableau_a_mettre_a_jour": {
+      "title": "Tab5: “{tableau}” panosu güncellenebilir",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5 panosunu güncelle",
+            "description": "“{tableau}” panosu Tab5 {avant} dosyalarıyla yazılmıştı; etkin dosyalar {version}. Onaylamak, panoyu güncel şablonla, aynı çağrı ayarlarıyla (adres, dil, tablet) ve bugünkü evinizin varlıklarıyla yeniden yazar.\n\nPanoya elle eklediğiniz veya değiştirdiğiniz her şey değiştirilir: eski pano `tab5_sauvegardes/tableaux/` içinde saklanır (panonun ham yapılandırma düzenleyicisine olduğu gibi yapıştırılabilecek metin).\n\nPanoyu güncellemek için onaylayın."
+          }
+        },
+        "error": {
+          "api": "Home Assistant bu entegrasyonun beklediği gibi yanıt vermiyor (panolara erişim değişmiş). Hiçbir şey değiştirilmedi: panoyu elle güncelleyin, pano kılavuzunun 2. ve 3. adımları.",
+          "introuvable": "Bu pano artık yok veya artık Tab5 işaretine sahip değil. Hiçbir şey değiştirilmedi.",
+          "rendu": "Şablon kullanılabilir bir şey vermedi (tablet Home Assistant'a bağlı mı?). Hiçbir şey değiştirilmedi; ayrıntılar günlükte (Ayarlar → Sistem → Günlükler, “tab5”).",
+          "version": "Bu sürümün Tab5 dosyaları henüz etkin değil: başka bir onarım istiyorsa Home Assistant'ı yeniden başlatın. Hiçbir şey değiştirilmedi."
+        }
+      }
     }
   }
 }

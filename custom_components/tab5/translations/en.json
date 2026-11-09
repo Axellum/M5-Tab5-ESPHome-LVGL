@@ -292,6 +292,23 @@
           }
         }
       }
+    },
+    "tableau_a_mettre_a_jour": {
+      "title": "Tab5: the “{tableau}” dashboard can be updated",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Update the Tab5 dashboard",
+            "description": "The “{tableau}” dashboard was written with the Tab5 files {avant}; the active files are {version}. Submit to write it again with the up-to-date template, with the same call settings (address, language, tablet) and the entities of your home today.\n\nAnything you added or changed in it by hand is replaced: the old dashboard is kept in `tab5_sauvegardes/tableaux/` (text to paste back as is in the dashboard's raw configuration editor).\n\nSubmit to update the dashboard."
+          }
+        },
+        "error": {
+          "api": "Home Assistant does not answer the way this integration expects (access to dashboards has changed). Nothing was changed: update the dashboard by hand, items 2 and 3 of the dashboard guide.",
+          "introuvable": "This dashboard no longer exists or no longer has the Tab5 marker. Nothing was changed.",
+          "rendu": "The template gave nothing usable (is the tablet connected to Home Assistant?). Nothing was changed; the details are in the log (Settings → System → Logs, « tab5 »).",
+          "version": "The Tab5 files of this version are not active yet: restart Home Assistant if another repair asks for it. Nothing was changed."
+        }
+      }
     }
   }
 }

@@ -41,7 +41,7 @@ A problem shows in *Settings → System → Repairs*: missing `packages:` line, 
 
 The files of an archive know their version: when the tablet runs a newer major or minor release (X.Y; a patch release alone does not count), Home Assistant says so (notification « Tab5 : fichiers Home Assistant à mettre à jour », sensor « Tab5 · HA files out of date »). Files copied from the repository have no version and are never compared.
 
-Using the [dashboard](dashboard.md)? After an update that adds entities, do its items 2 and 3 again.
+Using the [dashboard](dashboard.md)? The HACS integration offers « Tab5: the … dashboard can be updated » in *Settings → System → Repairs* when the files are newer than it: one confirmation, the old dashboard kept in `config/tab5_sauvegardes/tableaux/` ([what it replaces](dashboard.md#good-to-know)). By hand, or for a dashboard pasted before it carried its version marker, do its items 2 and 3 again after an update that adds entities.
 
 ### Putting older files back by hand
 
@@ -138,7 +138,7 @@ Un problème s'affiche dans *Paramètres → Système → Corrections* : ligne `
 
 Les fichiers d'une archive connaissent leur version : quand la tablette tourne une release majeure ou mineure plus récente (X.Y ; une version corrective seule ne compte pas), Home Assistant le dit (notification « Tab5 : fichiers Home Assistant à mettre à jour », capteur « Tab5 · HA files out of date »). Des fichiers copiés depuis le dépôt n'ont pas de version et ne sont jamais comparés.
 
-Vous utilisez le [tableau de bord](dashboard.md#version-française) ? Après une mise à jour qui ajoute des entités, refaites ses points 2 et 3.
+Vous utilisez le [tableau de bord](dashboard.md#version-française) ? L'intégration de HACS propose « Tab5 : le tableau de bord … peut être mis à jour » dans *Paramètres → Système → Corrections* quand les fichiers sont plus récents que lui : une confirmation, l'ancien tableau gardé dans `config/tab5_sauvegardes/tableaux/` ([ce qu'elle remplace](dashboard.md#bon-à-savoir)). À la main, ou pour un tableau collé avant qu'il porte son marqueur de version, refaites ses points 2 et 3 après une mise à jour qui ajoute des entités.
 
 ### Remettre à la main des fichiers plus anciens
 

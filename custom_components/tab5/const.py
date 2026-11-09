@@ -46,6 +46,12 @@ ISSUE_ASSISTANT = "configurer_pieces"
 # La tablette donne déjà des noms anglais et le registre garde des entrées aux noms d'avant :
 # « Migrer les entités Tab5 », un clic (renommage.py).
 ISSUE_MIGRATION = "migrer_entites"
+# Un tableau de bord Tab5 (mode stockage) porte le marqueur d'une version plus ancienne que celle
+# des fichiers actifs : « Mettre à jour le tableau de bord », un clic (tableau.py, tableau_ha.py,
+# ADR-0075). Une réparation PAR tableau : identifiant = ISSUE_TABLEAU + SEPARATEUR_TABLEAU +
+# adresse du tableau, traduction = ISSUE_TABLEAU.
+ISSUE_TABLEAU = "tableau_a_mettre_a_jour"
+SEPARATEUR_TABLEAU = "__"
 
 # Paramètre {signaler} de « configuration_invalide » : hassfest refuse une URL écrite
 # dans les traductions.

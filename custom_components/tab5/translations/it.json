@@ -292,6 +292,23 @@
           }
         }
       }
+    },
+    "tableau_a_mettre_a_jour": {
+      "title": "Tab5: la dashboard «{tableau}» può essere aggiornata",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Aggiorna la dashboard di Tab5",
+            "description": "La dashboard «{tableau}» è stata scritta con i file di Tab5 {avant}; i file attivi sono i {version}. Confermare la riscrive con il modello aggiornato, con le stesse impostazioni di chiamata (indirizzo, lingua, tablet) e le entità della tua casa di oggi.\n\nTutto ciò che hai aggiunto o modificato a mano viene sostituito: la vecchia dashboard resta in `tab5_sauvegardes/tableaux/` (testo da incollare così com'è nell'editor di configurazione grezza della dashboard).\n\nConferma per aggiornare la dashboard."
+          }
+        },
+        "error": {
+          "api": "Home Assistant non risponde come si aspetta questa integrazione (l'accesso alle dashboard è cambiato). Non è stato modificato nulla: aggiorna la dashboard a mano, passi 2 e 3 della guida della dashboard.",
+          "introuvable": "Questa dashboard non esiste più o non ha più il marcatore di Tab5. Non è stato modificato nulla.",
+          "rendu": "Il modello non ha dato nulla di utilizzabile (il tablet è collegato a Home Assistant?). Non è stato modificato nulla; i dettagli sono nel registro (Impostazioni → Sistema → Registri, «tab5»).",
+          "version": "I file di Tab5 di questa versione non sono ancora attivi: riavvia Home Assistant se un'altra riparazione lo chiede. Non è stato modificato nulla."
+        }
+      }
     }
   }
 }

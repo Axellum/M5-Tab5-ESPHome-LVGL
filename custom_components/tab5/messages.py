@@ -41,7 +41,7 @@ TEXTES: dict[str, dict[str, str]] = {
         "inst_fw_auto": "La tablette se mettra à jour toute seule dès que son entité « Firmware » "
                         "proposera la {version}.",
         "inst_fw_manuel": "Mettez ensuite la tablette à jour : Paramètres → Mises à jour, entité « Firmware ».",
-        "inst_tableau": "Tableau de bord « Tab5 » : si cette version ajoute des entités, refaites ses étapes 2 et 3.",
+        "inst_tableau": "Tableau de bord « Tab5 » : une correction (Paramètres → Corrections) le met à jour en un clic ; si elle n'apparaît pas, refaites ses étapes 2 et 3.",
         "act_creer": "Valider crée l'automatisation « Tab5 — emplacements de l'écran » (pièces et maison) dans "
                      "`automations.yaml` (sauvegardé avant dans `tab5_sauvegardes/automatisations/`), "
                      "puis recharge les automatisations. Tout reste modifiable ensuite dans l'automatisation.",
@@ -88,7 +88,7 @@ TEXTES: dict[str, dict[str, str]] = {
         "inst_redemarrer": "Restart Home Assistant to finish: see Settings → Repairs.",
         "inst_fw_auto": "The tablet will update by itself as soon as its « Firmware » entity offers {version}.",
         "inst_fw_manuel": "Then update the tablet: Settings → Updates, « Firmware » entity.",
-        "inst_tableau": "« Tab5 » dashboard: if this version adds entities, do its items 2 and 3 again.",
+        "inst_tableau": "« Tab5 » dashboard: a repair (Settings → Repairs) updates it in one click; if none appears, do its items 2 and 3 again.",
         "act_creer": "Submitting creates the automation « Tab5 — screen slots » (rooms and home) in "
                      "`automations.yaml` (saved first in `tab5_sauvegardes/automatisations/`), then reloads the "
                      "automations. Everything stays editable in the automation afterwards.",
@@ -135,8 +135,7 @@ TEXTES: dict[str, dict[str, str]] = {
         "inst_fw_auto": "Das Tablet aktualisiert sich von selbst, sobald seine Entität „Firmware“ "
                         "die {version} anbietet.",
         "inst_fw_manuel": "Aktualisieren Sie danach das Tablet: Einstellungen → Aktualisierungen, Entität „Firmware“.",
-        "inst_tableau": "Dashboard „Tab5“: Wenn diese Version Entitäten hinzufügt, führen Sie seine Schritte 2 "
-                        "und 3 erneut aus.",
+        "inst_tableau": "Dashboard „Tab5“: Eine Reparatur (Einstellungen → Reparaturen) aktualisiert es mit einem Klick; erscheint keine, führen Sie seine Schritte 2 und 3 erneut aus.",
         "act_creer": "Bestätigen erstellt die Automation „Tab5 — Bildschirmplätze“ (Räume und Zuhause) in "
                      "`automations.yaml` (vorher in `tab5_sauvegardes/automatisations/` gesichert) und lädt dann "
                      "die Automationen neu. Danach bleibt alles in der Automation änderbar.",
@@ -182,7 +181,7 @@ TEXTES: dict[str, dict[str, str]] = {
         "inst_redemarrer": "Herstart Home Assistant om af te ronden: zie Instellingen → Reparaties.",
         "inst_fw_auto": "De tablet werkt zichzelf bij zodra zijn entiteit “Firmware” {version} aanbiedt.",
         "inst_fw_manuel": "Werk daarna de tablet bij: Instellingen → Updates, entiteit “Firmware”.",
-        "inst_tableau": "Dashboard “Tab5”: als deze versie entiteiten toevoegt, doe dan stap 2 en 3 opnieuw.",
+        "inst_tableau": "Dashboard “Tab5”: een reparatie (Instellingen → Reparaties) werkt het met één klik bij; verschijnt er geen, doe dan stap 2 en 3 opnieuw.",
         "act_creer": "Bevestigen maakt de automatisering “Tab5 — schermplaatsen” (kamers en huis) in "
                      "`automations.yaml` (eerst bewaard in `tab5_sauvegardes/automatisations/`) en herlaadt daarna "
                      "de automatiseringen. Alles blijft daarna aanpasbaar in de automatisering.",
@@ -228,7 +227,7 @@ TEXTES: dict[str, dict[str, str]] = {
         "inst_redemarrer": "Reinicie Home Assistant para terminar: vea Ajustes → Reparaciones.",
         "inst_fw_auto": "La tableta se actualizará sola en cuanto su entidad «Firmware» ofrezca la {version}.",
         "inst_fw_manuel": "Después, actualice la tableta: Ajustes → Actualizaciones, entidad «Firmware».",
-        "inst_tableau": "Panel «Tab5»: si esta versión añade entidades, repita sus pasos 2 y 3.",
+        "inst_tableau": "Panel «Tab5»: una reparación (Ajustes → Reparaciones) lo actualiza con un clic; si no aparece, repita sus pasos 2 y 3.",
         "act_creer": "Confirmar crea la automatización «Tab5 — posiciones de la pantalla» (habitaciones y casa) en "
                      "`automations.yaml` (guardado antes en `tab5_sauvegardes/automatisations/`) y luego recarga "
                      "las automatizaciones. Después todo sigue siendo editable en la automatización.",
@@ -274,7 +273,7 @@ TEXTES: dict[str, dict[str, str]] = {
         "inst_redemarrer": "Riavvia Home Assistant per finire: vedi Impostazioni → Riparazioni.",
         "inst_fw_auto": "Il tablet si aggiornerà da solo appena la sua entità «Firmware» proporrà la {version}.",
         "inst_fw_manuel": "Poi aggiorna il tablet: Impostazioni → Aggiornamenti, entità «Firmware».",
-        "inst_tableau": "Dashboard «Tab5»: se questa versione aggiunge entità, ripeti i suoi passi 2 e 3.",
+        "inst_tableau": "Dashboard «Tab5»: una riparazione (Impostazioni → Riparazioni) lo aggiorna con un clic; se non compare, ripeti i suoi passi 2 e 3.",
         "act_creer": "Confermare crea l'automazione «Tab5 — posizioni dello schermo» (stanze e casa) in "
                      "`automations.yaml` (salvato prima in `tab5_sauvegardes/automatisations/`), poi ricarica le "
                      "automazioni. Tutto resta poi modificabile nell'automazione.",
@@ -320,7 +319,7 @@ TEXTES: dict[str, dict[str, str]] = {
         "inst_redemarrer": "Bitirmek için Home Assistant'ı yeniden başlatın: Ayarlar → Onarımlar bölümüne bakın.",
         "inst_fw_auto": "Tablet, “Firmware” varlığı {version} sürümünü sunduğu anda kendini güncelleyecek.",
         "inst_fw_manuel": "Ardından tableti güncelleyin: Ayarlar → Güncellemeler, “Firmware” varlığı.",
-        "inst_tableau": "“Tab5” panosu: bu sürüm varlık ekliyorsa 2. ve 3. adımlarını yeniden yapın.",
+        "inst_tableau": "“Tab5” panosu: bir onarım (Ayarlar → Onarımlar) onu tek tıkla günceller; görünmezse 2. ve 3. adımlarını yeniden yapın.",
         "act_creer": "Onaylamak, `automations.yaml` içinde “Tab5 — ekran yerleşimi” otomasyonunu (odalar ve ev) "
                      "oluşturur (önce `tab5_sauvegardes/automatisations/` içine yedeklenir), ardından otomasyonları "
                      "yeniden yükler. Sonrasında her şey otomasyonda düzenlenebilir kalır.",

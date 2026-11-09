@@ -133,6 +133,7 @@ def test_traductions_completes():
                   const.ISSUE_REMPLACES: {"fichiers", "sauvegarde"},
                   const.ISSUE_FIRMWARE: {"version", "essais"},
                   const.ISSUE_MIGRATION: {"nombre"},
+                  const.ISSUE_TABLEAU: {"tableau", "avant", "version"},
                   # Les étapes de l'assistant (assistant_flux.py, description_placeholders).
                   const.ISSUE_ASSISTANT: {"nombre", "max", "numero", "total", "zone", "resume", "action"}}
     for langue in (en, fr, *autres):
@@ -157,7 +158,7 @@ def test_constantes_lues_dans_les_packages():
 
 
 def test_modules_purs_sans_home_assistant():
-    for nom in ("installation", "messages", "const", "firmware", "assistant", "renommage"):
+    for nom in ("installation", "messages", "const", "firmware", "assistant", "renommage", "tableau"):
         texte = (INTEGRATION / f"{nom}.py").read_text(encoding="utf-8")
         assert not re.search(r"^\s*(from|import)\s+(homeassistant|\.)", texte, re.M), nom
 

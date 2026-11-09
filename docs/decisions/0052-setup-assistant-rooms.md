@@ -33,7 +33,7 @@ What was checked before choosing (Home Assistant 2026.8.3 code, read on 2026-10-
 
 ## Consequences
 
-- The author's Home Assistant is not affected: it does not install the integration (Samba deployment), and its automation of the blueprint exists, so neither the repair nor a write would happen.
+- The author's Home Assistant is not affected: its automation of the blueprint exists, and its files come from the repository by Samba (its version sensor reads « dépôt »), so neither the repair nor a write would happen. *Amended 2026-11-09: this line also said it does not install the integration; it has been installed there since 2026-10-25 ([ADR-0035](0035-hacs-integration-ha-files.md)).*
 - `manifest.json` declares `after_dependencies: [automation]` (the integration imports `automations_with_blueprint`).
 - A new tile domain in the blueprint must be added to `assistant.DOMAINES_TUILES` (the test compares).
 - Tested in CI (`tools/installation_ha/verifier_integration.py`, step 1 bis, fresh Home Assistant 2026.9.4 and 2026.8.3): two areas with template entities, a generic thermostat and a hidden light; the repair followed like the interface, pre-filled values accepted → the automation written, loaded, the repair gone; run again from the options without the box → `automations.yaml` unchanged byte for byte; with the box and a new name → only the rooms changed, backup made. Not tested: the forms as rendered by the frontend, a real home.

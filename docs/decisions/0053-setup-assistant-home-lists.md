@@ -36,6 +36,6 @@
 
 ## Consequences
 
-- The author's Home Assistant is still not affected (it does not install the integration).
+- The author's Home Assistant is still not affected (its automation of the blueprint exists). *Amended 2026-11-09: this line said it does not install the integration; it has been installed there since 2026-10-25 ([ADR-0035](0035-hacs-integration-ha-files.md)).*
 - A new home input of the blueprint to propose = one line in `CHAMPS_MAISON` and a rule in `proposer_maison` (the test compares natures and selectors with the blueprint); a new list = one line in `LISTES` (the test checks the select exists in the package and whether the package guesses it).
 - Tested in CI (`tools/installation_ha/verifier_integration.py`, step 1 bis): an outdoor temperature without an area and a local calendar « Travail CI » added; the *Home* page proposes exactly room 1's sensors, the outdoor temperature (box ticked), the only climate and the only weather; the *Calendars* page proposes the calendar for the work list and leaves the rest on « Aucun »; after submitting, the automation has rooms and home inputs and `select.tab5_agenda_de_travail` reads the calendar; run again, the choice is kept; on update, the *Home* page shows the existing values and an unticked box is written `false`. Not tested: the forms as rendered by the frontend, a real home with phones, TVs or several calendars.

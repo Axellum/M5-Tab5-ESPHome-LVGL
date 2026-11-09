@@ -25,9 +25,20 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
            choix de la liste gardé ; puis en la cochant, un nom changé et « dehors » décoché
            → seules les pièces et la maison changent, une sauvegarde dans
            tab5_sauvegardes/automatisations/ ;
+        1 ter. les tableaux de bord (ADR-0075) : trois tableaux écrits par la macro des fichiers
+           9.9.1 (appel rendu par /api/template, enregistré par le websocket comme l'éditeur de
+           configuration brute), dont un avec le marqueur d'une version plus ancienne, et un
+           tableau de l'utilisateur sans marqueur → HA relit chacun à l'identique, marqueur
+           compris ; aucune réparation pour les tableaux à jour, une tout de suite (sans
+           redémarrage) pour le plus ancien ;
         2. mise à jour 9.9.2 comme HACS (dossier remplacé, redémarrage), avec un package
            modifié à la main et un package que la release ne livre plus → capteur 9.9.2,
            sauvegarde des deux, le retiré absent, la notification nomme le modifié ;
+        2 bis. une réparation « tableau_a_mettre_a_jour » par tableau Tab5 plus ancien (aucune
+           pour celui de l'utilisateur), validée comme l'interface (formulaire de confirmation,
+           rien d'écrit avant) → HA relit le tableau identique à ce que rend le modèle 9.9.2,
+           l'ancien gardé à l'identique dans tab5_sauvegardes/tableaux/, réparation retirée,
+           tableau de l'utilisateur intact ;
         3. mise à jour 9.9.3 dont un package casse la configuration → fichiers 9.9.2
            remis à l'octet près, capteur toujours 9.9.2, réparation
            « configuration_invalide » ; redémarrage avec la même 9.9.3 → pas de nouvel
@@ -38,6 +49,11 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
            redémarrage → capteur 9.9.2, réparation retirée ;
       et le journal de HA : aucune erreur de l'intégration hors celle, attendue, de l'étape 3.
       Le firmware n'est pas testé (pas de tablette ici) : seulement rapporté.
+      Les tableaux de bord (1 ter, 2 bis) : ce HA n'a pas de tablette, donc chaque zip porte, à la fin
+      de custom_templates/tab5_dashboard.jinja, une macro tab5_dashboard() de REMPLACEMENT
+      (SURCHARGE_TABLEAU : la vraie tab5_marqueur() écrit le marqueur, la vraie
+      tab5_dashboard_ecrans() l'appelle) ; le rendu complet de la vraie macro est éprouvé
+      ailleurs (tests/test_tableau_de_bord.py, job « HA neuf » de verifier_installation.py).
 @contraintes Les fichiers de config/ écrits par HA appartiennent à root : toute écriture
       dessus passe par le conteneur (docker exec python3). Le mot de passe est tiré au
       hasard et jamais affiché.
@@ -217,20 +233,72 @@ ESSAIS_CASSES = {
     "domaine pas un dictionnaire": "input_boolean: 42\n",
     "YAML illisible": "input_boolean: [pas fermé\n",
 }
+# Le tableau de bord à jour en un clic (étapes 1 ter et 2, ADR-0075). Ce HA n'a pas de tablette :
+# la vraie macro tab5_dashboard() ne dessinerait que des cartes vides (les rendus complets sont
+# ceux de tests/test_tableau_de_bord.py et du job « HA neuf » de verifier_installation.py).
+# Chaque zip reçoit donc, À LA FIN de custom_templates/tab5_dashboard.jinja, une macro
+# tab5_dashboard() de remplacement : Jinja garde la dernière définition d'un nom, et la vraie
+# tab5_dashboard_ecrans() l'appelle. Ce qui est éprouvé ici est donc tout le reste de la chaîne,
+# avec la vraie tab5_marqueur() (le marqueur) : appel par /api/template, enregistrement par le
+# websocket, lecture du marqueur par l'intégration, réparation, rendu par Template(), sauvegarde,
+# enregistrement par LovelaceStorage. Le texte de la carte dit la version des fichiers livrés
+# (@version@) : un tableau réécrit en 9.9.2 ne peut pas passer pour un tableau de la 9.9.1.
+SURCHARGE_TABLEAU = """
+{%- macro tab5_dashboard(adresse='dashboard-tab5', langue='', appareil='', chemin='tab5', titre='', vues_seules=false, origine='tab5_dashboard') -%}
+{%- if not vues_seules -%}
+{{ tab5_marqueur(origine, adresse, langue, appareil, chemin, titre) }}
+views:
+{% endif %}  - title: "{{ titre or 'Tab5' }}"
+    path: {{ chemin }}
+    cards:
+      - type: markdown
+        content: "modele de test @version@ ; capteur {{ states('sensor.tab5_version_des_fichiers_ha') }} ; langue {{ langue or 'fr' }} ; adresse {{ adresse }}"
+{%- endmacro -%}
+"""
+TABLEAUX = {  # adresse (url_path) → appel rendu par /api/template, comme le fait l'utilisateur
+    "dashboard-tab5": "{% from 'tab5_dashboard.jinja' import tab5_dashboard %}{{ tab5_dashboard('dashboard-tab5') }}",
+    "dashboard-ecrans": ("{% from 'tab5_dashboard.jinja' import tab5_dashboard_ecrans %}"
+                         "{{ tab5_dashboard_ecrans('dashboard-ecrans', 'English') }}"),
+    "dashboard-ancien": ("{% from 'tab5_dashboard.jinja' import tab5_dashboard %}"
+                         "{{ tab5_dashboard('dashboard-ancien', langue='Deutsch') }}"),
+}
+# Celui-ci est enregistré avec le marqueur d'une version d'AVANT la 9.9.1 (collé il y a longtemps) :
+# la réparation doit apparaître tout de suite (événement « lovelace_updated »), sans redémarrage.
+ANCIEN = "dashboard-ancien"
+VERSION_ANCIENNE = "9.9.0"
+# Un tableau de bord de l'utilisateur, sans marqueur : jamais proposé, jamais touché.
+PERSO = "dashboard-perso"
+TABLEAU_PERSO = {"title": "Perso", "views": [{"title": "Perso", "path": "perso",
+                                              "cards": [{"type": "markdown", "content": "à moi"}]}]}
+REPARATION_TABLEAU = "tableau_a_mettre_a_jour__"
+
+
+def surcharge_tableau(version: str) -> str:
+    """Le texte ajouté à tab5_dashboard.jinja de la `version` (voir SURCHARGE_TABLEAU)."""
+    return SURCHARGE_TABLEAU.replace("@version@", version)
 
 
 # ─── Archives et conteneur ───────────────────────────────────────────────────
 
+def poser_modele_de_test(arbre: Path, version: str) -> None:
+    fichier = arbre / "custom_templates" / "tab5_dashboard.jinja"
+    fichier.write_bytes(fichier.read_bytes() + surcharge_tableau(version).encode("utf-8"))
+
+
 def archives(travail: Path) -> dict[str, Path]:
     """Les trois zips du scénario (comme ceux d'une release, archive_hacs.py)."""
+    v1 = travail / "ha-9.9.1"
+    shutil.copytree(archive_ha.HA_DIR, v1)
     v2 = travail / "ha-9.9.2"
-    shutil.copytree(archive_ha.HA_DIR, v2)
+    shutil.copytree(v1, v2)
     (v2 / RETIRE).unlink()
     v3 = travail / "ha-9.9.3"
     shutil.copytree(v2, v3)
     (v3 / CASSE).write_text(CONTENU_CASSE, encoding="utf-8")
+    for version, arbre in (("9.9.1", v1), ("9.9.2", v2), ("9.9.3", v3)):
+        poser_modele_de_test(arbre, version)
     return {
-        "9.9.1": archive_hacs.construire("9.9.1", travail / "9.9.1"),
+        "9.9.1": archive_hacs.construire("9.9.1", travail / "9.9.1", base=v1),
         "9.9.2": archive_hacs.construire("9.9.2", travail / "9.9.2", base=v2),
         "9.9.3": archive_hacs.construire("9.9.3", travail / "9.9.3", base=v3),
     }
@@ -547,6 +615,116 @@ def comparer(rapport: Rapport, dossier: Path, fichiers: dict[str, bytes], quoi: 
                      f"différents ou absents : {differents[:5]}")
 
 
+# ─── Le tableau de bord à jour en un clic (ADR-0075) ─────────────────────────
+
+def titre_du_tableau(adresse: str) -> str:
+    return f"Tab5 {adresse.removeprefix('dashboard-')}"
+
+
+async def rendre_tableau(ha: HA, adresse: str) -> dict:
+    """Ce que rend l'appel de `adresse` (TABLEAUX) dans HA, comme Outils de développement → Modèle."""
+    import yaml
+    rendu = await ha.post("/api/template", {"template": TABLEAUX[adresse]})
+    config = yaml.safe_load(rendu) if isinstance(rendu, str) else None
+    if not isinstance(config, dict):
+        raise Echec(f"le modèle de {adresse} n'a pas rendu du YAML : {str(rendu)[:300]!r}")
+    return config
+
+
+async def enregistrer_tableau(ha: HA, adresse: str, titre: str, config: dict) -> dict:
+    """Un tableau de bord en mode stockage, créé comme l'interface (Paramètres → Tableaux de bord),
+    rempli comme son éditeur de configuration brute ; renvoie ce que HA en relit."""
+    await ha.ws.commande("lovelace/dashboards/create", url_path=adresse, title=titre, icon="mdi:tablet-dashboard",
+                         mode="storage", show_in_sidebar=True, require_admin=False)
+    await ha.ws.commande("lovelace/config/save", url_path=adresse, config=config)
+    return await relire_tableau(ha, adresse)
+
+
+async def relire_tableau(ha: HA, adresse: str) -> dict:
+    return await ha.ws.commande("lovelace/config", url_path=adresse, force=True)
+
+
+async def tableaux_de_bord(ha: HA, rapport: Rapport) -> dict[str, dict]:
+    """Étape 1 ter : quatre tableaux de bord enregistrés (trois écrits par la macro des fichiers 9.9.1,
+    dont un avec le marqueur d'une version plus ancienne, et un à l'utilisateur, sans marqueur).
+    Vérifie que HA garde le marqueur, qu'un tableau à jour n'a pas de réparation, et que celui d'une
+    version plus ancienne en a une tout de suite (l'événement « lovelace_updated », sans redémarrage)."""
+    enregistres: dict[str, dict] = {}
+    for adresse in TABLEAUX:
+        config = await rendre_tableau(ha, adresse)
+        marqueur = config.get("tab5_dashboard") or {}
+        rapport.verifier(marqueur.get("version") == "9.9.1" and marqueur.get("adresse") == adresse
+                         and bool(config.get("views")),
+                         f"1 ter. {adresse} : le modèle écrit son marqueur (fichiers 9.9.1) et ses vues", str(config)[:300])
+        if adresse == ANCIEN:
+            config["tab5_dashboard"]["version"] = VERSION_ANCIENNE
+        relu = await enregistrer_tableau(ha, adresse, titre_du_tableau(adresse), config)
+        rapport.verifier(relu == config, f"1 ter. {adresse} : enregistré dans HA et relu à l'identique, marqueur compris",
+                         f"envoyé {str(config)[:200]} ; relu {str(relu)[:200]}")
+        enregistres[adresse] = relu
+    relu = await enregistrer_tableau(ha, PERSO, "Perso", TABLEAU_PERSO)
+    rapport.verifier(relu == TABLEAU_PERSO, f"1 ter. {PERSO} (le tableau de l'utilisateur, sans marqueur) enregistré", str(relu)[:200])
+    enregistres[PERSO] = relu
+    attendu = REPARATION_TABLEAU + ANCIEN
+    autres = {REPARATION_TABLEAU + a for a in (*TABLEAUX, PERSO)} - {attendu}
+    presentes = await attendre_reparations(ha, {attendu}, autres, 30)
+    rapport.verifier(attendu in presentes,
+                     f"1 ter. le tableau enregistré avec le marqueur {VERSION_ANCIENNE} (fichiers actifs : 9.9.1) a sa "
+                     "réparation tout de suite, sans redémarrage", str(sorted(presentes)))
+    await asyncio.sleep(3)  # le temps que l'intégration ait pu se tromper pour les autres
+    presentes = await reparations(ha)
+    rapport.verifier(not (autres & presentes),
+                     "1 ter. pas de réparation pour les tableaux à jour (9.9.1) ni pour celui de l'utilisateur",
+                     str(sorted(presentes & autres)))
+    return enregistres
+
+
+async def mettre_a_jour_les_tableaux(ha: HA, dossier: Path, rapport: Rapport, avant: dict[str, dict]) -> None:
+    """Étape 2 bis, fichiers 9.9.2 actifs : une réparation par tableau Tab5 plus ancien (jamais pour celui
+    de l'utilisateur) ; chaque réparation validée comme l'interface réécrit le tableau avec le modèle des
+    9.9.2, l'ancien gardé dans tab5_sauvegardes/tableaux/ ; ce que HA relit est ce que rend le modèle."""
+    ids = {a: REPARATION_TABLEAU + a for a in TABLEAUX}
+    perso = REPARATION_TABLEAU + PERSO
+    presentes = await attendre_reparations(ha, set(ids.values()), {perso}, 90)
+    rapport.verifier(set(ids.values()) <= presentes and perso not in presentes,
+                     "2 bis. après le redémarrage en 9.9.2 : une réparation par tableau Tab5 plus ancien, aucune pour "
+                     "le tableau de l'utilisateur", str(sorted(i for i in presentes if i.startswith(REPARATION_TABLEAU))))
+    sauvegardes = dossier / "tab5_sauvegardes" / "tableaux"
+    rapport.verifier(not sauvegardes.exists(), "2 bis. aucune sauvegarde de tableau avant un clic")
+    for adresse, ident in ids.items():
+        marqueur_avant = avant[adresse]["tab5_dashboard"]["version"]
+        etape = await ha.post("/api/repairs/issues/fix", {"handler": "tab5", "issue_id": ident})
+        champs = etape.get("description_placeholders") or {}
+        rapport.verifier(etape.get("type") == "form" and etape.get("step_id") == "confirm"
+                         and champs.get("tableau") == titre_du_tableau(adresse)
+                         and champs.get("avant") == marqueur_avant and champs.get("version") == "9.9.2",
+                         f"2 bis. {adresse} : la réparation demande confirmation et dit le tableau et les deux versions "
+                         f"({marqueur_avant} → 9.9.2)", str(etape)[:400])
+        rapport.verifier(await relire_tableau(ha, adresse) == avant[adresse],
+                         f"2 bis. {adresse} : rien n'est écrit avant la confirmation")
+        if not etape.get("flow_id"):
+            continue
+        fin = await ha.post(f"/api/repairs/issues/fix/{etape['flow_id']}", {})
+        rapport.verifier(fin.get("type") == "create_entry", f"2 bis. {adresse} : réparation validée", str(fin)[:400])
+        apres = await relire_tableau(ha, adresse)
+        attendu = await rendre_tableau(ha, adresse)
+        rapport.verifier(apres == attendu and apres["tab5_dashboard"]["version"] == "9.9.2" and apres != avant[adresse],
+                         f"2 bis. {adresse} : HA relit le tableau réécrit, identique à ce que rend le modèle 9.9.2 "
+                         "(marqueur 9.9.2)", f"relu {str(apres)[:300]} ; rendu {str(attendu)[:300]}")
+        copies = sorted(sauvegardes.glob(f"*_{adresse}_{marqueur_avant}.json")) if sauvegardes.is_dir() else []
+        rapport.verifier(len(copies) == 1 and json.loads(copies[0].read_text(encoding="utf-8")) == avant[adresse],
+                         f"2 bis. {adresse} : l'ancien tableau gardé dans tab5_sauvegardes/tableaux/, à l'identique",
+                         str([p.name for p in copies]))
+        restes = await attendre_reparations(ha, set(), {ident}, 30)
+        rapport.verifier(ident not in restes, f"2 bis. {adresse} : réparation retirée une fois le tableau à jour",
+                         str(sorted(restes)))
+    rapport.verifier(await relire_tableau(ha, PERSO) == avant[PERSO],
+                     f"2 bis. {PERSO} (sans marqueur) : jamais touché")
+    rapport.verifier(len(list(sauvegardes.glob("*.json"))) == len(ids),
+                     "2 bis. une sauvegarde par tableau réécrit, pas une de plus",
+                     str([p.name for p in sauvegardes.glob("*")]))
+
+
 # ─── Le scénario ─────────────────────────────────────────────────────────────
 
 async def scenario(args, rapport: Rapport) -> None:
@@ -620,6 +798,9 @@ async def scenario(args, rapport: Rapport) -> None:
             # ── 1 bis. Assistant de configuration ──
             await assistant(ha, dossier, entree, rapport)
 
+            # ── 1 ter. Tableaux de bord enregistrés (ADR-0075) ──
+            tableaux = await tableaux_de_bord(ha, rapport)
+
             # ── 2. Mise à jour 9.9.2 comme HACS ──
             dans_conteneur(f"open('/config/{MODIFIE}', 'a').write('\\n# ajout perso\\n')")
             remplacer_integration(dossier, zips["9.9.2"])
@@ -639,6 +820,9 @@ async def scenario(args, rapport: Rapport) -> None:
                 rapport.verifier((s / RETIRE).read_bytes() == v1[RETIRE], f"2. {RETIRE} gardé dans la sauvegarde")
             rapport.verifier("tab5_tv.yaml" in texte, "2. la notification nomme le fichier modifié à la main",
                              texte[:300])
+
+            # ── 2 bis. Les tableaux de bord, un clic par tableau (ADR-0075) ──
+            await mettre_a_jour_les_tableaux(ha, dossier, rapport, tableaux)
 
             # ── 3. Mise à jour 9.9.3 qui casse la configuration ──
             # Contre-épreuve : « Vérifier la configuration » (la même fonction que
@@ -712,6 +896,11 @@ async def scenario(args, rapport: Rapport) -> None:
             restes = await attendre_reparations(ha, set(), {"packages_absents"})
             rapport.verifier("packages_absents" not in restes, "4. réparation « packages_absents » retirée",
                              str(restes))
+            # Les tableaux sont à jour (9.9.2) : après deux redémarrages de plus, aucune réparation de tableau.
+            restes = await reparations(ha)
+            rapport.verifier(not {r for r in restes if r.startswith(REPARATION_TABLEAU)},
+                             "4. tableaux de bord à jour : aucune réparation de tableau après les redémarrages",
+                             str(sorted(restes)))
             rapport.info("firmware : pas de tablette dans ce HA, la mise à jour enchaînée n'est pas exercée")
 
 
