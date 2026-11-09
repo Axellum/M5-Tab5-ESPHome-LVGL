@@ -516,8 +516,11 @@ void pages_brancher(PagesPopup* p);
 // deux pages (aucun sinon), collés à la croix, `noms[i]` coupé avec « … », celui de
 // `courante` en accent ; les autres masqués. `max` : onglets posés par le YAML.
 // `suffixes[i]` (facultatif) reste entier après le nom coupé (« Salon 2/3 », ADR-0066).
+// `titre_court` : le titre du popup laisse de la place (Énergie) ; à cinq pages ou plus, sur une
+// carte plus étroite que celle du Tab5, la bande commence à x 196 au lieu de 318 (sinon les noms
+// y sont coupés, vu sur la 7B). Sur le Tab5 et jusqu'à quatre pages : sans effet.
 void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante,
-                   const char* const* suffixes = nullptr);
+                   const char* const* suffixes = nullptr, bool titre_court = false);
 // Largeur d'un onglet pour `n` pages (200 px au plus, 158 à cinq).
 int32_t pages_onglet_largeur(int n);
 // Une rangée de boutons à choix : celui d'index `actif` en accent (bordure et texte, premier

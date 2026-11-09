@@ -2076,7 +2076,8 @@ void peindre() {
         noms[i] = tr(kNomsPages[liste[i]]);
         if (liste[i] == s_page) rang = i;
     }
-    pages_onglets(u.onglet, kEnergiePages, noms, n, rang);
+    // Titre court : à cinq pages, la bande des onglets s'étend jusque sous le titre sur la 7B.
+    pages_onglets(u.onglet, kEnergiePages, noms, n, rang, nullptr, true);
     for (int p = 0; p < NB_PAGES; p++) ui_hidden(u.page[p], p != s_page);
     switch (s_page) {
         case P_FLUX:

@@ -8,7 +8,8 @@ On vérifie :
   d'un arc ou d'un rouleau, sans effet sous deux pages, lever du doigt muet, page voisine en boucle ;
   branché sans doublon (le rappel retiré avant d'être ajouté) ;
 - la géométrie des onglets : quatre pages tombent sur les noms des Réglages, cinq tiennent
-  entre le titre et la croix ;
+  entre le titre et la croix ; à cinq pages, un popup à titre court (Énergie) étend la bande
+  jusque sous le titre sur une carte étroite (7B : les noms n'y sont plus coupés) ;
 - un seul geste de page dans le firmware hors carrousel des clims (à brancher plus tard) :
   plus aucune copie dans les Réglages."""
 import re
@@ -73,10 +74,12 @@ def _echelle(v: int, g: dict) -> int:
     return (v * zone + g["kOngletsZoneTab5"] // 2) // g["kOngletsZoneTab5"]
 
 
-def _x_onglets(n: int, carte: str = "tab5") -> tuple[list[int], int]:
+def _x_onglets(n: int, carte: str = "tab5", titre_court: bool = False) -> tuple[list[int], int]:
     """Places et largeur des onglets de n pages (pages_onglets), sur la carte."""
     g = geometrie_cpp(carte)
-    debut, fin = _constante("kOngletsDebut"), g["kOngletsFinTab5"]
+    fin = g["kOngletsFinTab5"]
+    etroite = g["kOngletsFin"] - g["kOngletsDebutTab5"] < g["kOngletsZoneTab5"]  # kCarteEtroite
+    debut = g["kOngletsDebutTab5"] if titre_court and etroite else _constante("kOngletsDebut")
     ecart, largeur = _constante("kOngletEcart"), _constante("kOngletL")
     w5 = min(largeur, (fin - debut - (n - 1) * ecart) // n)
     xs5 = [fin - (n - i) * w5 - (n - 1 - i) * ecart for i in range(n)]
@@ -97,6 +100,53 @@ def test_onglets_a_la_place_des_noms_des_reglages():
     xs, w = _x_onglets(5)
     assert xs[0] >= _constante("kOngletsDebut") and xs[-1] + w == geometrie_cpp("tab5")["kOngletsFin"]
     assert w >= 150, "cinq noms de pièce lisibles"
+
+
+# Le plus large des cinq noms du popup Énergie dans les sept langues : « Produzione » et
+# « Producción » (roboto_700 à 22 px, somme des avances : 113 px ; le rendu de la 7B mesure
+# « Aujourd'hui » à 110 px de texte pour 112 de métrique).
+NOM_ENERGIE_LE_PLUS_LARGE = 113
+
+
+def test_onglets_titre_court_cinq_pages():
+    """Page Charges (ADR-0077), 7B : cinq onglets à partir de x 318 ne laissaient que 100 px
+    de nom (« Aujourd'… », « Producti… » au rendu du 09/11/2026). Un popup à titre court
+    (Énergie) étend la bande jusqu'à x 196, comme le Réveil : le plus large nom y tient.
+    Sur le Tab5, et à quatre pages ou moins, rien ne bouge."""
+    cpp = _cpp()
+    assert "constexpr bool kCarteEtroite = onglet_echelle(kOngletsZoneTab5) < kOngletsZoneTab5;" in cpp
+    corps = _corps(cpp, "void pages_onglets(")
+    assert "titre_court && kCarteEtroite ? kOngletsDebutTab5 : kOngletsDebut;" in corps
+    marge = _constante("kOngletMarge")
+    for carte in CARTES:
+        g = geometrie_cpp(carte)
+        for n in (2, 3, 4):
+            assert _x_onglets(n, carte, True) == _x_onglets(n, carte), (carte, n)
+        xs, w = _x_onglets(5, carte, True)
+        if carte == "tab5":
+            assert (xs, w) == _x_onglets(5, carte), "le Tab5 garde ses 158 px"
+            assert w == 158
+            continue
+        assert w - 2 * marge >= NOM_ENERGIE_LE_PLUS_LARGE, (carte, w)
+        # Avant : le même nom était coupé (c'est ce que la correction répare).
+        assert _x_onglets(5, carte)[1] - 2 * marge < NOM_ENERGIE_LE_PLUS_LARGE, carte
+        # Toujours dans la carte : après le début de la bande du Réveil, jusqu'à la croix.
+        debut = g["kOngletsFin"] - _echelle(g["kOngletsFinTab5"] - g["kOngletsDebutTab5"], g)
+        assert xs[0] >= debut and xs[-1] + w == g["kOngletsFin"], carte
+        assert all(xs[i] + w <= xs[i + 1] for i in range(4)), "onglets sans recouvrement"
+
+
+def test_titre_court_reserve_a_l_energie():
+    """Seul le popup Énergie passe `titre_court` : les noms de pièces, de télécommandes et de
+    groupes sont à l'utilisateur, leur bande garde sa place (aucun écran existant ne bouge)."""
+    avec = []
+    for f in (TAB5 / "ecran").glob("*.cpp"):
+        if f.name == "tab5_pages.cpp":  # la définition de la brique
+            continue
+        for appel in re.findall(r"\bpages_onglets\([^;]*;", lire(f).replace("\r\n", "\n")):
+            if "titre_court" in appel or appel.rstrip().endswith("true);"):
+                avec.append(f.name)
+    assert avec == ["tab5_energie.cpp"], avec
 
 
 @pytest.mark.parametrize("carte", CARTES)
