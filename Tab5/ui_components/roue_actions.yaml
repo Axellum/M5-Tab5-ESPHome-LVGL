@@ -9,13 +9,15 @@
 #       ronds : le premier porte les commandes, les familles de réglages (un point) et deux
 #       liens aux bouts, « Maison » et « Détails » (le popup complet) ; toucher une
 #       famille déplie ses choix sur le second. Toucher un choix envoie sa commande et
-#       ferme la roue ; toucher le voile ou le moyeu replie le second anneau, puis ferme.
+#       ferme la roue ; toucher hors des boutons ou le moyeu replie le second anneau, puis ferme.
 #       La même roue sert à la navigation (ADR-0042, 09/10/2026) : l'appui long de la carte
 #       centrale l'ouvre sur les écrans de la tablette, chaque bouton avec son mot.
 # @architecture_constraint Ce n'est pas un popup modal : ni en-tête ni carte (ADR-0009
 #       vise les fenêtres modales), comme la liste de la tuile − / + (reglables_liste.yaml),
-#       mais le voile partagé des popups (modal_scrim.yaml) à 60 % : les tuiles restent
-#       visibles dessous. Le conteneur plein écran `roue_actions` porte tout ; il est
+#       et SANS fond : la roue se pose sur la page telle qu'elle est (Axel, 09/11/2026 :
+#       le voile à 60 % mettait trop de temps à s'afficher). Il reste un bouton plein
+#       écran de modal_scrim.yaml à 0 % : invisible, il ne sert qu'à recevoir le toucher
+#       hors des boutons. Le conteneur plein écran `roue_actions` porte tout ; il est
 #       enregistré en SUBWINDOW
 #       (tab5_modal_registry_init) : refermé avec les popups, et par l'intervalle
 #       d'inactivité (tab5-scripts.yaml). Inclus APRÈS les cartes du tableau de bord et
@@ -27,7 +29,7 @@
 #       anneau et ses mots, premier anneau et ses mots (liens ; tous en navigation), jauge,
 #       moyeu, nom. Les
 #       arcs ne prennent pas le toucher (roue_brancher leur retire CLICKABLE et le bouton) :
-#       un toucher sur une bande arrive au voile. Un bouton de plus = kRoueBoutons ou
+#       un toucher sur une bande arrive au bouton plein écran. Un bouton de plus = kRoueBoutons ou
 #       kRoueChoix (tab5_custom.h), une ligne ici et ses pointeurs dans tab5-roue.yaml.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -40,9 +42,9 @@ obj:
   styles: style_invisible
   scrollable: false
   widgets:
-    # Voile : un toucher hors des boutons (bandes comprises) replie le second anneau, ou
-    # ferme la roue.
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "60", close_lambda: "roue_replier_ou_fermer();" } }
+    # Capteur de toucher, sans fond (0 %) : un toucher hors des boutons (bandes comprises)
+    # replie le second anneau, ou ferme la roue.
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "0", close_lambda: "roue_replier_ou_fermer();" } }
     # Bandes de verre sous les anneaux (couleurs et angles posés en C++) : l'arc entier
     # (value = max) et son cœur plus clair (l'indicateur, en retrait).
     - arc:
