@@ -1226,6 +1226,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Hier": "Gestern"
 "Total : %s, dont %d %% par le soleil": "Gesamt: %s, davon %d %% Sonne"
 "Total : %s": "Gesamt: %s"
+# Page « Aujourd'hui » avec la consommation des voitures (ADR-0078) : « 62 % » en gras, puis cette phrase
+# à droite, dans un cadre de 172 px (trois lignes au plus, 22 px la ligne)
+"de la charge par le soleil": "der Ladung durch die Sonne"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "NETZSPEICHER"
 "d'avance sur le réseau ce mois-ci": "Vorsprung aufs Netz diesen Monat"

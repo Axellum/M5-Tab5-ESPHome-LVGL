@@ -1260,6 +1260,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Hier": "Ieri"
 "Total : %s, dont %d %% par le soleil": "Totale: %s, di cui %d %% dal sole"
 "Total : %s": "Totale: %s"
+# Page « Aujourd'hui » avec la consommation des voitures (ADR-0078) : « 62 % » en gras, puis cette phrase
+# à droite, dans un cadre de 172 px (trois lignes au plus, 22 px la ligne)
+"de la charge par le soleil": "della ricarica dal sole"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "BATTERIA DI RETE"
 "d'avance sur le réseau ce mois-ci": "di vantaggio sulla rete questo mese"

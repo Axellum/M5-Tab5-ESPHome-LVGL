@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1323;
+static const uint16_t kI18nKeyCount = 1324;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -2530,6 +2531,7 @@ static const char* const kI18nKeys[] = {
     "cumul du jour",
     "cumul du mois",
     "d'avance sur le réseau ce mois-ci",
+    "de la charge par le soleil",
     "de retard sur le réseau ce mois-ci",
     "de ta conso couverte par le soleil",
     "dimanche",
@@ -3857,6 +3859,7 @@ static const char* const kI18n_en[] = {
     "today's total",  // "cumul du jour"
     "month's total",  // "cumul du mois"
     "ahead of the grid this month",  // "d'avance sur le réseau ce mois-ci"
+    "of charging from the sun",  // "de la charge par le soleil"
     "behind the grid this month",  // "de retard sur le réseau ce mois-ci"
     "of your use covered by the sun",  // "de ta conso couverte par le soleil"
     "Sunday",  // "dimanche"
@@ -5184,6 +5187,7 @@ static const char* const kI18n_de[] = {
     "Tagessumme",  // "cumul du jour"
     "Monatssumme",  // "cumul du mois"
     "Vorsprung aufs Netz diesen Monat",  // "d'avance sur le réseau ce mois-ci"
+    "der Ladung durch die Sonne",  // "de la charge par le soleil"
     "Rückstand zum Netz diesen Monat",  // "de retard sur le réseau ce mois-ci"
     "deines Verbrauchs von der Sonne gedeckt",  // "de ta conso couverte par le soleil"
     "Sonntag",  // "dimanche"
@@ -6511,6 +6515,7 @@ static const char* const kI18n_nl[] = {
     "dagtotaal",  // "cumul du jour"
     "maandtotaal",  // "cumul du mois"
     "voorsprong op het net deze maand",  // "d'avance sur le réseau ce mois-ci"
+    "van het laden door de zon",  // "de la charge par le soleil"
     "achterstand op het net deze maand",  // "de retard sur le réseau ce mois-ci"
     "van je verbruik gedekt door de zon",  // "de ta conso couverte par le soleil"
     "zondag",  // "dimanche"
@@ -7838,6 +7843,7 @@ static const char* const kI18n_es[] = {
     "acumulado día",  // "cumul du jour"
     "acumulado mes",  // "cumul du mois"
     "de ventaja sobre la red este mes",  // "d'avance sur le réseau ce mois-ci"
+    "de la carga por el sol",  // "de la charge par le soleil"
     "de retraso con la red este mes",  // "de retard sur le réseau ce mois-ci"
     "de tu consumo cubierto por el sol",  // "de ta conso couverte par le soleil"
     "domingo",  // "dimanche"
@@ -9165,6 +9171,7 @@ static const char* const kI18n_it[] = {
     "cumulato giorno",  // "cumul du jour"
     "cumulato mese",  // "cumul du mois"
     "di vantaggio sulla rete questo mese",  // "d'avance sur le réseau ce mois-ci"
+    "della ricarica dal sole",  // "de la charge par le soleil"
     "di ritardo sulla rete questo mese",  // "de retard sur le réseau ce mois-ci"
     "dei tuoi consumi coperti dal sole",  // "de ta conso couverte par le soleil"
     "domenica",  // "dimanche"
@@ -10492,6 +10499,7 @@ static const char* const kI18n_tr[] = {
     "günlük toplam",  // "cumul du jour"
     "aylık toplam",  // "cumul du mois"
     "bu ay şebekeye karşı fazla",  // "d'avance sur le réseau ce mois-ci"
+    "şarj güneşten geldi",  // "de la charge par le soleil"
     "bu ay şebekeye karşı eksik",  // "de retard sur le réseau ce mois-ci"
     "tüketiminin güneşten karşılanan kısmı",  // "de ta conso couverte par le soleil"
     "Pazar",  // "dimanche"

@@ -1255,6 +1255,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Hier": "Dün"
 "Total : %s, dont %d %% par le soleil": "Toplam: %s, bunun %d %% güneşten"
 "Total : %s": "Toplam: %s"
+# Page « Aujourd'hui » avec la consommation des voitures (ADR-0078) : « 62 % » en gras, puis cette phrase
+# à droite, dans un cadre de 172 px (trois lignes au plus, 22 px la ligne)
+"de la charge par le soleil": "şarj güneşten geldi"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "ŞEBEKE BATARYASI"
 "d'avance sur le réseau ce mois-ci": "bu ay şebekeye karşı fazla"

@@ -24,6 +24,14 @@
  *           (production réelle de la série des heures en barres pleines, prévision en barres
  *           contour, courbe « ciel clair », bande du meilleur créneau) ; à droite produit,
  *           prévu, demain, meilleur créneau, source de la prévision.
+ *           Consommation du jour (ADR-0078, tab5_maj_voiture_jour, conso_jour_lire ; seulement
+ *           quand une voiture a une heure connue, conso_jour_voitures) : à côté de la barre de
+ *           production de chaque heure, une pile maison + voiture 1 + voiture 2 (kWh de l'heure,
+ *           l'échelle compte la pile) ; la production et la prévision s'amincissent alors à
+ *           kConsoBarre du pas pour lui laisser la place ; une légende (nom, kWh du jour) dans le
+ *           coin haut gauche et, sous le meilleur créneau, « x % de la charge par le soleil ».
+ *           Sans voiture reçue, la page est celle d'avant au pixel près ; sur la 7B (kJourVoitures :
+ *           corps moins haut que celui du Tab5) rien de tout cela n'est créé.
  *         - « Production » (ADR-0028, inchangée) : quatre cartes (solaire, maison, réseau,
  *           batterie ; une carte sans capteur disparaît) et l'historique de la production
  *           en barres (tab5_maj_energie_historique : 24 heures, 30 jours, 12 mois).
@@ -294,6 +302,30 @@ constexpr int32_t kCadreY = hauteur_carte(300);
 constexpr int32_t kCadreH = hauteur_carte(112);
 constexpr int32_t kSourceY = kSolZoneH - 30;       // 540
 
+// Consommation du jour empilée (ADR-0078), seulement avec une voiture qui a des heures connues
+// (conso_jour_voitures) : à côté de la barre de production de chaque heure, une pile maison + voiture 1
+// + voiture 2 ; la production et la prévision s'amincissent alors à kConsoBarre du pas des heures (11 px
+// sur le Tab5, 8 sur la 7B) pour laisser place à la pile, côte à côte à kConsoEcart px l'une de l'autre.
+// Une légende dans le coin haut gauche de la zone (sous le soleil, que son arc ne touche pas à cet
+// endroit : lever et coucher y sont bas) : une marque, le nom, les kWh du jour ; la ligne de bilan « x % de la
+// charge par le soleil » dans un cadre doré sous celui du meilleur créneau (le même cadre). Seulement sur une
+// page aussi haute que celle du Tab5 : sur la 7B (994 × 478) la légende et le cadre n'ont pas leur place
+// (le dessous du cadre du meilleur créneau n'y laisse que 72 px), comme les voitures de la page Flux.
+constexpr bool kJourVoitures = kCorpsH >= kCorpsHTab5;
+constexpr float kConsoBarre = 0.34f;        // largeur d'une barre de la paire, en part du pas des heures
+constexpr int32_t kConsoEcart = 2;          // entre la barre de production et la pile
+constexpr int32_t kConsoLegendeY = 6;
+constexpr int32_t kConsoLegendePas = 30;
+constexpr int32_t kConsoNomX = kSolBord + kLegendeMarque + 8;
+constexpr int32_t kConsoNomL = 136;         // « Tesla 2025 » : 110 px en roboto_22, « Renault Zoé » : ~125 ; coupé par « … » au-delà
+constexpr int32_t kConsoValeurX = kConsoNomX + kConsoNomL + 4;
+constexpr int32_t kConsoValeurL = 100;      // « 158.5 kWh » : 106 px, jamais atteint en une journée
+constexpr int32_t kConsoPartY = kCadreY + kCadreH + 12;   // sous le cadre du meilleur créneau (424)
+constexpr int32_t kConsoPartH = 100;       // trois lignes de roboto_22 (26-27 px) y tiennent ; la source est à 540
+constexpr int32_t kConsoPartPctL = 104;     // « 100 % » en roboto_32_b : 87 px
+constexpr int32_t kConsoPartTexteX = 16 + kConsoPartPctL;
+constexpr int32_t kConsoPartTexteL = kInfosL - kConsoPartTexteX - 12;   // 172 px : deux à trois lignes de 22 px
+
 // Page Charges (ADR-0077). La zone (energie_charges_zone) est l'intérieur de la carte de verre
 // pleine largeur : le corps moins les 2 px de bord de chaque côté (1198 × 594 sur le Tab5,
 // 942 × 474 sur la 7B). Titre et légende en haut, six lignes de kChPas px, le total dessous. Une
@@ -461,6 +493,8 @@ Serie s_series[NB_VUES];
 Bilan s_bilans[NB_VUES];
 EnergieSoleilLu s_soleil;
 bool s_soleil_montre = false;
+ConsoJour s_conso;                  // tab5_maj_voiture_jour (ADR-0078) : la consommation de chaque heure du jour
+char s_conso_debut[11] = {};        // son jour (AAAA-MM-JJ) : un autre jour repart de zéro
 int s_vue = HEURES;
 int s_page = P_PRODUCTION;
 bool s_page_choisie = false;  // la page a été choisie au doigt depuis l'ouverture
@@ -511,6 +545,15 @@ struct Soleil {
     lv_obj_t* cadre_titre = nullptr;
     lv_obj_t* cadre_valeur = nullptr;
     lv_obj_t* source = nullptr;
+    // Consommation du jour (ADR-0078) : la pile de chaque heure (maison, voiture 1, voiture 2), la légende
+    // et le cadre de la part du soleil ; créés seulement où kJourVoitures.
+    lv_obj_t* conso[kEnergieHeures][kConsoLignes] = {};
+    lv_obj_t* conso_marque[kConsoLignes] = {};
+    lv_obj_t* conso_nom[kConsoLignes] = {};
+    lv_obj_t* conso_valeur[kConsoLignes] = {};
+    lv_obj_t* part_cadre = nullptr;
+    lv_obj_t* part_pct = nullptr;
+    lv_obj_t* part_texte = nullptr;
 };
 Soleil s_sol;
 lv_point_precise_t s_courbe_pts[(kEnergieHeures - 1) * kLisse + 1];
@@ -1507,6 +1550,20 @@ void peindre_arc(const EnergieSoleilLu& s, int maintenant) {
     }
 }
 
+// La pile de consommation se dessine-t-elle ? Sur une page assez haute, avec au moins une voiture qui a une
+// heure connue (un 0 est une donnée), et pour le jour des heures de la production : passé minuit popup ouvert,
+// ou après une analyse en échec, les heures d'hier ne s'affichent pas à côté de celles d'aujourd'hui (leur
+// part du soleil serait fausse). Sans série d'heures reçue, ou avec la date de repli 2000-01-01 (illisible),
+// il n'y a pas de jour à comparer.
+bool conso_visible() {
+    if (!kJourVoitures || !conso_jour_voitures(s_conso)) return false;
+    const Serie& h = s_series[HEURES];
+    if (!h.recue || (h.annee == 2000 && h.mois == 1 && h.jour == 1)) return true;
+    char jour[sizeof(s_conso_debut)];
+    snprintf(jour, sizeof(jour), "%04d-%02d-%02d", h.annee, h.mois, h.jour);
+    return std::strcmp(jour, s_conso_debut) == 0;
+}
+
 void peindre_heures_soleil(const EnergieSoleilLu& s, int maintenant) {
     Soleil& o = s_sol;
     const Serie& h = s_series[HEURES];
@@ -1520,6 +1577,14 @@ void peindre_heures_soleil(const EnergieSoleilLu& s, int maintenant) {
     for (int k = 0; k < h.n && k < kEnergieHeures; k++) prendre(h.v[k]);
     for (int k = 0; k < s.n_prevu; k++) prendre(s.prevu[k]);
     for (int k = 0; k < s.n_clair; k++) prendre(s.clair[k]);
+    // Consommation du jour (ADR-0078) : la pile de chaque heure compte dans l'échelle. Sans voiture
+    // qui ait une heure connue, aucune pile : tout ce qui suit est ce qu'il était.
+    const bool couche = conso_visible();
+    float pile[kEnergieHeures];
+    for (int k = 0; k < kEnergieHeures; k++) {
+        pile[k] = couche ? conso_jour_pile(s_conso, k) : static_cast<float>(NAN);
+        prendre(pile[k]);
+    }
     if (maximum < 0.01f) maximum = 0.01f;
     const int32_t pleine = kSolBas - kSolHaut;
     ui_hidden(o.vide, donnees);
@@ -1544,20 +1609,43 @@ void peindre_heures_soleil(const EnergieSoleilLu& s, int maintenant) {
         ui_poser(o.bande, x0, kSolHaut - 6, x1 - x0, pleine + 6);
     }
     const float pas = static_cast<float>(kSolL) / kEnergieHeures;
-    const int32_t l = static_cast<int32_t>(pas * 0.62f);
+    // Avec la consommation, la barre de production (et celle de la prévision) s'amincit et se pose à
+    // gauche du centre de l'heure, la pile à droite ; sans, la barre est celle d'avant, centrée.
+    const int32_t l = static_cast<int32_t>(pas * (couche ? kConsoBarre : 0.62f));
     for (int k = 0; k < kEnergieHeures; k++) {
         const int32_t cx = sol_x(k * 60.0f + 30.0f);
+        const int32_t xp = couche ? cx - l - kConsoEcart / 2 : cx - l / 2;
         const float p = (h.recue && k < h.n) ? h.v[k] : NAN;
         ui_hidden(o.barre[k], !std::isfinite(p));
         if (std::isfinite(p)) {
             const int32_t hp = hauteur_de(p, maximum, pleine);
-            ui_poser(o.barre[k], cx - l / 2, kSolBas - hp, l, hp);
+            ui_poser(o.barre[k], xp, kSolBas - hp, l, hp);
         }
         const float q = k < s.n_prevu ? s.prevu[k] : NAN;
         ui_hidden(o.prevu[k], !std::isfinite(q));
         if (std::isfinite(q)) {
             const int32_t hq = hauteur_de(q, maximum, pleine);
-            ui_poser(o.prevu[k], cx - l / 2, kSolBas - hq, l, hq);
+            ui_poser(o.prevu[k], xp, kSolBas - hq, l, hq);
+        }
+        // La pile de l'heure : la maison, puis chaque voiture au-dessus ; un segment qui ne fait pas un
+        // pixel n'est pas dessiné (les suivants partent de la hauteur cumulée, pas de la dernière dessinée).
+        if (kJourVoitures) {
+            float cumul = 0.0f;
+            int32_t bas = kSolBas;
+            for (int r = 0; r < kConsoLignes; r++) {
+                lv_obj_t* seg = o.conso[k][r];
+                const float v = couche && s_conso.recue[r] ? s_conso.kwh[r][k] : static_cast<float>(NAN);
+                int32_t haut = bas;
+                if (std::isfinite(v)) {
+                    cumul += v;
+                    haut = kSolBas - static_cast<int32_t>(std::lround(cumul / maximum * pleine));
+                }
+                ui_hidden(seg, !(std::isfinite(v) && haut < bas));
+                if (std::isfinite(v) && haut < bas) {
+                    ui_poser(seg, cx + kConsoEcart / 2, haut, l, bas - haut);
+                    bas = haut;
+                }
+            }
         }
     }
     // Courbe du ciel clair : recalculée seulement si ses valeurs ou l'échelle ont changé.
@@ -1629,11 +1717,56 @@ void peindre_infos_soleil(const EnergieSoleilLu& s) {
     texte_ha_coupe(o.source, source, kInfosL);
 }
 
+// Légende de la consommation du jour et ligne de bilan (ADR-0078) : une ligne par série reçue (la maison
+// sans les voitures, puis chaque voiture) avec ses kWh du jour, et « x % de la charge par le soleil » dans
+// le cadre doré. La part est celle des heures : chaque heure, ce que les voitures ont pris au-delà de ce
+// que la maison laissait de la production (conso_jour_totaux) ; celle de la page Charges vient du recorder,
+// par charge, et peut différer de quelques points. Sans voiture qui ait une heure connue, rien n'est
+// montré : la page est celle d'avant.
+void peindre_conso_soleil() {
+    if (!kJourVoitures) return;
+    Soleil& o = s_sol;
+    const bool couche = conso_visible();
+    const Serie& h = s_series[HEURES];
+    const ConsoJourTotaux t = couche ? conso_jour_totaux(s_conso, h.recue ? h.v : nullptr, h.recue ? h.n : 0)
+                                     : ConsoJourTotaux{};
+    const float totaux[kConsoLignes] = {t.maison, t.voiture[0], t.voiture[1]};
+    char buf[48];
+    int rang = 0;
+    for (int r = 0; r < kConsoLignes; r++) {
+        const bool montre = couche && std::isfinite(totaux[r]);
+        ui_hidden(o.conso_marque[r], !montre);
+        ui_hidden(o.conso_nom[r], !montre);
+        ui_hidden(o.conso_valeur[r], !montre);
+        if (!montre) continue;
+        const int32_t y = kConsoLegendeY + rang * kConsoLegendePas;
+        ui_y(o.conso_marque[r], y + 4);
+        ui_y(o.conso_nom[r], y);
+        ui_y(o.conso_valeur[r], y);
+        if (r == 0) snprintf(buf, sizeof(buf), "%s", tr("Maison"));
+        else if (s_voitures[r - 1].presente && s_voitures[r - 1].nom[0] != '\0')
+            snprintf(buf, sizeof(buf), "%s", s_voitures[r - 1].nom);
+        else snprintf(buf, sizeof(buf), tr("Voiture %d"), r);
+        texte_ha_coupe(o.conso_nom[r], buf, kConsoNomL);
+        kwh(buf, sizeof(buf), totaux[r]);
+        ui_text(o.conso_valeur[r], buf);
+        rang++;
+    }
+    const bool part = couche && std::isfinite(t.part);
+    ui_hidden(o.part_cadre, !part);
+    if (part) {
+        snprintf(buf, sizeof(buf), "%ld %%", std::lround(t.part));
+        ui_text(o.part_pct, buf);
+        ui_text(o.part_texte, tr("de la charge par le soleil"));
+    }
+}
+
 void peindre_soleil() {
     if (s_sol.courbe == nullptr) return;
     const int maintenant = minutes_maintenant();
     peindre_arc(s_soleil, maintenant);
     peindre_heures_soleil(s_soleil, maintenant);
+    peindre_conso_soleil();
     peindre_infos_soleil(s_soleil);
 }
 
@@ -2151,6 +2284,21 @@ void couleurs() {
     ui_style_couleur(o.marque[3], LV_STYLE_BG_COLOR, UIColor.GOLD);
     ui_style_couleur(o.cadre, LV_STYLE_BG_COLOR, UIColor.GOLD);
     contour(o.cadre, UIColor.GOLD, 2, LV_OPA_COVER);
+    // Consommation du jour (ADR-0078) : la maison en texte secondaire, les voitures dans les couleurs de leur
+    // ligne de la page Charges (accent, accent secondaire) ; la part du soleil dans le cadre doré.
+    if (kJourVoitures) {
+        const uint32_t serie[kConsoLignes] = {UIColor.TEXT_DIM, UIColor.ACCENT, UIColor.ACCENT_ALT};
+        for (int r = 0; r < kConsoLignes; r++) {
+            for (auto& heure : o.conso) ui_style_couleur(heure[r], LV_STYLE_BG_COLOR, serie[r]);
+            ui_style_couleur(o.conso_marque[r], LV_STYLE_BG_COLOR, serie[r]);
+            ui_text_color(o.conso_nom[r], UIColor.TEXT_SOFT);
+            ui_text_color(o.conso_valeur[r], UIColor.TEXT_PRIMARY);
+        }
+        ui_style_couleur(o.part_cadre, LV_STYLE_BG_COLOR, UIColor.GOLD);
+        contour(o.part_cadre, UIColor.GOLD, 2, LV_OPA_COVER);
+        ui_text_color(o.part_pct, UIColor.GOLD);
+        ui_text_color(o.part_texte, UIColor.TEXT_SOFT);
+    }
     // Charges : ce qui ne change qu'avec le thème (la couleur de l'icône, de la durée, de la
     // part du soleil et de la piste de la barre suit la ligne à chaque peinture).
     ChargesUI& ch = s_ch;
@@ -2261,6 +2409,22 @@ void construire_soleil() {
     o.repere = ui_rectangle(z, LV_OPA_40, 0);
     for (lv_obj_t*& b : o.barre) b = ui_rectangle(z, LV_OPA_COVER, 4);
     for (lv_obj_t*& b : o.prevu) b = ui_rectangle(z, LV_OPA_10, 4);
+    // Consommation du jour (ADR-0078) : 72 segments (24 heures × maison, voiture 1, voiture 2) masqués, la
+    // légende (une marque, le nom, les kWh) et le cadre de la part du soleil. Seulement où la page est
+    // assez haute : ailleurs ils n'existent pas, la page est celle d'avant.
+    if (kJourVoitures) {
+        for (auto& heure : o.conso)
+            for (lv_obj_t*& b : heure) b = ui_rectangle(z, LV_OPA_COVER, 2);
+        for (int r = 0; r < kConsoLignes; r++) {
+            o.conso_marque[r] = ui_rectangle(z, LV_OPA_COVER, 4);
+            lv_obj_set_pos(o.conso_marque[r], kSolBord, kConsoLegendeY + 4);
+            lv_obj_set_size(o.conso_marque[r], kLegendeMarque, kLegendeMarque);
+            o.conso_nom[r] = libelle(z, u.police, kConsoNomL);
+            lv_obj_set_pos(o.conso_nom[r], kConsoNomX, kConsoLegendeY);
+            o.conso_valeur[r] = libelle(z, u.police, kConsoValeurL);
+            lv_obj_set_pos(o.conso_valeur[r], kConsoValeurX, kConsoLegendeY);
+        }
+    }
     o.courbe = ui_ligne(z, 3);
     o.maintenant = ui_rectangle(z, LV_OPA_60, 0);
     for (lv_obj_t*& p : o.point) p = ui_rectangle(z, LV_OPA_70, LV_RADIUS_CIRCLE);
@@ -2316,6 +2480,20 @@ void construire_soleil() {
     o.source = libelle(d, u.police, 0);
     lv_obj_set_pos(o.source, 0, kSourceY);
     ui_hidden(o.source, false);
+    // Part des voitures venue du soleil (ADR-0078) : le même cadre que le meilleur créneau, dessous. Masqué
+    // tant qu'aucune consommation n'est reçue ; ses deux textes sont montrés avec lui.
+    if (kJourVoitures) {
+        o.part_cadre = ui_rectangle(d, LV_OPA_10, 14);
+        lv_obj_set_pos(o.part_cadre, 0, kConsoPartY);
+        lv_obj_set_size(o.part_cadre, kInfosL, kConsoPartH);
+        o.part_pct = libelle(o.part_cadre, u.police_grasse, kConsoPartPctL);
+        lv_obj_align(o.part_pct, LV_ALIGN_LEFT_MID, 16, 0);
+        lv_obj_remove_flag(o.part_pct, LV_OBJ_FLAG_HIDDEN);
+        o.part_texte = libelle(o.part_cadre, u.police, kConsoPartTexteL);
+        lv_label_set_long_mode(o.part_texte, LV_LABEL_LONG_MODE_WRAP);   // jusqu'à trois lignes selon la langue
+        lv_obj_align(o.part_texte, LV_ALIGN_LEFT_MID, kConsoPartTexteX, 0);
+        lv_obj_remove_flag(o.part_texte, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 // Charges : titre, légende, six lignes (un fond, ses textes, sa barre, son filet), total. Les textes
@@ -2605,6 +2783,29 @@ void energie_historique(const std::string& vue, const std::string& debut, const 
     s_series[v] = s;
     // La série des heures sert aussi à la page Aujourd'hui ; celle de la vue, au Bilan.
     if (v == s_vue || v == HEURES) peindre();
+}
+
+// ADR-0078 : la consommation d'une série du jour, 24 kWh par heure (lecture : conso_jour_lire,
+// tab5_parse.h). Rang 0 : la maison sans les voitures ; 1 et 2 : les voitures. Un autre jour (début)
+// repart de zéro : les heures d'hier ne se mêlent pas à celles d'aujourd'hui. Une série sans aucune
+// heure lisible (valeurs vides) retire la sienne ; un rang inconnu est refusé.
+void energie_voiture_jour(const std::string& rang, const std::string& debut, const std::string& valeurs) {
+    if (payload_trop_long("tab5.energie", valeurs.size())) return;
+    ConsoJour lu;
+    if (!conso_jour_lire(Champ{rang.data(), rang.size()}, Champ{valeurs.data(), valeurs.size()}, lu)) {
+        payload_refuse("tab5.energie", "voiture_jour : rang inconnu", rang.size());
+        return;
+    }
+    const int r = rang[0] - '0';
+    char jour[sizeof(s_conso_debut)] = {};
+    std::snprintf(jour, sizeof(jour), "%.*s", static_cast<int>(sizeof(jour) - 1), debut.c_str());
+    if (std::strcmp(jour, s_conso_debut) != 0) {
+        s_conso = ConsoJour{};
+        std::memcpy(s_conso_debut, jour, sizeof(s_conso_debut));
+    }
+    s_conso.recue[r] = lu.recue[r];
+    std::memcpy(s_conso.kwh[r], lu.kwh[r], sizeof(s_conso.kwh[r]));
+    peindre();
 }
 
 // ADR-0058 : page « Aujourd'hui » (lecture : energie_soleil_lire, tab5_parse.h).
