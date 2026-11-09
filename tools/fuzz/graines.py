@@ -42,6 +42,7 @@ FAMILLES = [
     ("A", "tab5_maj_energie_bilan", ("vue", "debut", "payload")),
     ("B", "tab5_maj_musique_pieces", ("pieces", "contexte")),
     ("C", "tab5_maj_musique_liste", ("contexte", "elements")),
+    ("D", "tab5_maj_voiture", ("rang", "payload")),
 ]
 
 
@@ -92,6 +93,12 @@ LIMITES = [
     ("C", "musique_liste_bornes", "det|T|-3|1|1\nA||t|library://a b|;B||a|Library://x|;C||s|1234|;"
      + "D||o|library://podcast_episode/1|http://x/a|b;E||r|library://" + "a" * 200 + "|;"
      + ";".join(f"E{i}||t|library://track/{i}|" for i in range(12))),
+    # Voitures (ADR-0076) : pourcentages, autonomie, état, puissances et durée hors bornes,
+    # non finis ou illisibles ; champs de trop ; payload vide ; rang absurde.
+    ("D", "voiture_bornes", "9\nX|150|-5|mi|9|-1|-2|101|1e99|7|trop"),
+    ("D", "voiture_illisible", "1\nX|abc|nan|km|x|inf||unknown|"),
+    ("D", "voiture_vide", "2\n||||||||"),
+    ("D", "voiture_sans_rang", "|||"),
     # Serveur IA (ADR-0059) : nombres négatifs, non finis, hors bornes, champs de trop, un
     # second serveur ignoré.
     ("?", "serveur_ia_bornes", ";A|x||-1|-1|1e99|-2|inf|101|nan|9|-5|1e9|en trop;B|1|m|1|1|1|1|1|1|1|1|1|1"),

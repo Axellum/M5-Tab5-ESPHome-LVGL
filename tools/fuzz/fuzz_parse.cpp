@@ -374,6 +374,25 @@ void energie_bilan(const std::string& p) {
     (void) devise;
 }
 
+// Voitures du Flux (tab5_maj_voiture) : rang, payload séparés par un saut de ligne. La
+// puissance lue passe aussi par le partage des flux (deux voitures, l'une tirée du rang,
+// l'autre du payload), comme tab5_energie.cpp.
+void voiture(const std::string& p) {
+    const size_t saut = p.find('\n');
+    const std::string rang = p.substr(0, saut);
+    const std::string payload = saut == std::string::npos ? std::string() : p.substr(saut + 1);
+    VoitureLue v;
+    voiture_lire(Champ{payload.data(), payload.size()}, v);
+    const std::string nom(v.nom.p != nullptr ? v.nom.p : "", v.nom.n);  // ce que texte_ha_copier recevrait
+    const std::string unite(v.unite_distance.p != nullptr ? v.unite_distance.p : "", v.unite_distance.n);
+    (void) nom;
+    (void) unite;
+    float charges[kVoituresMax] = {std::isfinite(v.puissance) ? v.puissance : 0.0f,
+                                   rang.empty() ? 0.0f : static_cast<float>(rang.size()) * 1000.0f};
+    energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, charges, kVoituresMax, !rang.empty() && rang[0] == '1');
+    energie_flux_calculer(NAN, NAN, -static_cast<float>(payload.size()), -charges[0], charges, kVoituresMax, true);
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -403,6 +422,7 @@ constexpr Parseur kParseurs[] = {
     energie_bilan,    // 'A' tab5_maj_energie_bilan
     musique_pieces,   // 'B' tab5_maj_musique_pieces
     musique_liste,    // 'C' tab5_maj_musique_liste
+    voiture,          // 'D' tab5_maj_voiture
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

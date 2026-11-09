@@ -1171,13 +1171,32 @@ EnergieBilanTotaux energie_bilan_totaux(const float* produit, int n, const Energ
 // charge que le solaire ne couvre pas vient du réseau ; la décharge va d'abord à la vente
 // que le solaire ne couvre pas, le reste à la maison. maison = la mesure, sinon la somme de
 // ce qui y entre (NAN si rien n'est connu).
+//
+// Voitures (section 17) : ce qui entrait « dans la maison » (solaire, batterie, réseau)
+// entre en réalité dans la maison ET les voitures. Les voitures prennent leur charge
+// (somme des `voitures`, W ≥ 0, plafonnée à ce qui entre) ; la maison est servie d'abord,
+// par le solaire, puis la batterie, puis le réseau : ce qu'il reste va aux voitures, dans
+// la même proportion que leurs puissances. `solaire_maison`, `batterie_maison` et
+// `reseau_maison` ne gardent alors que la part de la maison, `solaire_voiture[i]`,
+// `batterie_voiture[i]` et `reseau_voiture[i]` celle de la voiture i. `maison` affichée :
+// avec `maison_compte_voitures` (le compteur de la maison compte la prise ou la borne), la
+// mesure moins la charge des voitures (0 au moins) ; sans, la mesure telle quelle. Sans
+// voiture (`voitures` nul, n = 0, ou charge nulle), le résultat est celui d'avant : mêmes
+// valeurs, mêmes opérations.
+constexpr int kVoituresMax = 2;
 struct EnergieFlux {
     float solaire_maison = 0.0f, solaire_reseau = 0.0f, solaire_batterie = 0.0f;
     float reseau_maison = 0.0f, reseau_batterie = 0.0f;
     float batterie_maison = 0.0f, batterie_reseau = 0.0f;
     float maison = NAN;
+    float charge_voiture[kVoituresMax] = {};     // W lus de chaque voiture (0 sans charge), non plafonnés
+    float solaire_voiture[kVoituresMax] = {};
+    float batterie_voiture[kVoituresMax] = {};
+    float reseau_voiture[kVoituresMax] = {};
 };
-EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, float batterie);
+EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, float batterie,
+                                  const float* voitures = nullptr, int n_voitures = 0,
+                                  bool maison_compte_voitures = true);
 
 // ─── 16. Playlists favorites (clé « playlists » de tab5_maj_emplacements, ADR-0068) ───
 // « playlists|nom|nom|… » : les NOMS des playlists écrites dans le blueprint (entrée
@@ -1194,3 +1213,47 @@ constexpr size_t kPlaylistNomMax = 48;  // octets, zéro final non compris ; l'�
 // Renvoie le nombre de playlists lues (0 à kPlaylistsMax) ; out[i] pointe dans `valeur`
 // (copié par l'écran, texte_ha_copier). Au-delà de kPlaylistsMax, la fin est ignorée.
 int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]);
+
+// ─── 17. Voitures (page « Flux » du popup Énergie, tab5_maj_voiture) ───
+// « nom|batterie_pct|autonomie|unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|
+// minutes_restantes|compteur_compte » : une voiture électrique, rang 1 ou 2 (variable `rang`
+// du service). Les codes et l'ordre des champs sont un contrat avec packages/tab5_energie.yaml,
+// la démo et le rendu : ajouter à la FIN seulement (un ancien payload reste lisible : un champ
+// de moins se lit « vide », un champ de trop est ignoré).
+//   nom                texte tel quel (HA remplace | et ; ; l'écran le copie et le coupe) ;
+//   batterie_pct       0..100, sinon inconnue ;
+//   autonomie          ≥ 0 (kVoitureAutonomieMax au plus), dans `unite_distance` (« km »,
+//                      « mi ») ; pas montrée par le Flux, lue pour le popup Voitures ;
+//   etat               0 inconnue ou endormie, 1 débranchée, 2 branchée sans charge, 3 en
+//                      charge ; tout autre code, ou illisible : 0 ;
+//   puissance_w        W reçus par la voiture, ≥ 0 (kEnergieWMax au plus), sinon inconnue ;
+//   energie_ajoutee    kWh ajoutés par la charge en cours (energie_kwh), sinon inconnue ;
+//   limite_pct         0..100, sinon inconnue ;
+//   minutes_restantes  jusqu'à la fin de la charge, 0..kVoitureMinutesMax, sinon inconnue ;
+//   compteur_compte    « 0 » : le compteur de la maison ne compte pas les voitures (la
+//                      consommation montrée est la mesure telle quelle) ; « 1 », vide ou
+//                      illisible : il les compte (la charge des voitures en est retranchée).
+//                      Réglage global du blueprint, répété dans le payload de chaque voiture.
+// Vide, ou tous les champs vides : voiture absente (son nœud disparaît).
+constexpr float kVoitureAutonomieMax = 10000.0f;
+constexpr float kVoitureMinutesMax = 7.0f * 24.0f * 60.0f;   // une semaine
+enum class VoitureEtat : uint8_t { INCONNUE = 0,
+                                   DEBRANCHEE = 1,
+                                   BRANCHEE = 2,
+                                   EN_CHARGE = 3 };
+struct VoitureLue {
+    bool presente = false;
+    Champ nom = {nullptr, 0};             // pointe dans le payload (copié par l'écran)
+    float batterie = NAN;
+    float autonomie = NAN;
+    Champ unite_distance = {nullptr, 0};  // idem
+    VoitureEtat etat = VoitureEtat::INCONNUE;
+    float puissance = NAN;
+    float energie = NAN;
+    float limite = NAN;
+    float minutes = NAN;
+    bool compteur_compte = true;
+};
+// Lit un payload ; vrai si une voiture est présente (out.presente). Aucune écriture dans
+// le payload ; out ne le survit pas (nom et unité y pointent).
+bool voiture_lire(const Champ& payload, VoitureLue& out);
