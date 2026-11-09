@@ -1711,6 +1711,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("serveur-ia-confirmer", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("AI server"),
                                                        SERVEUR_IA_REDEMARRER),
           (SERVEUR_IA_REMISE,)),
+    # Popup Voitures (ADR-0079, page Aperçu) : deux voitures côte à côte (l'une en charge, l'autre
+    # branchée), une seule en pleine largeur, puis aucune (le message et où les choisir). Les
+    # voitures sont retirées à la fin de l'écran, comme pour le Flux : la scène suivante repart de
+    # zéro (le firmware n'en garde aucune sans poussée).
+    Ecran("voitures-2", (VOITURE_1, VOITURE_2, Aller("Cars")), FLUX_SANS_VOITURE),
+    Ecran("voitures-1", (VOITURE_1, Aller("Cars")), FLUX_SANS_VOITURE),
+    Ecran("voitures-aucune", (Aller("Cars"),)),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée

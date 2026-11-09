@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Carte d'une voiture du popup « Voitures » (ADR-0079), réutilisée 2 fois par
+# voitures_popup.yaml (n = 0 ou 1) : une carte de verre qui porte le nom, la silhouette (grand
+# glyphe MDI), l'anneau de la batterie (ses arcs sont créés en C++), l'autonomie, l'état et son
+# détail. Ne rien assigner ici : tab5_voitures.cpp pose et dimensionne tout (la carte est
+# pleine largeur avec une seule voiture, la moitié avec deux), écrit les textes et les
+# couleurs (rôles de la palette) ; seules les polices et les rôles de base sont ici.
+# vars : n (0-1, suffixe des ids lus par tab5_voitures.cpp via g_voitures_ui).
+# @geometry Corps de la carte modale (x 24, y ${modal_body_y}, ${corps_w} × ${corps_h}) ; la place
+#       d'avant la première peinture n'est qu'indicative.
+# @ai_instruction Un widget de plus = son id ici, son champ dans VoituresUI (tab5_voitures.h) et sa
+#       ligne dans le script tab5_voitures_lier (tab5-voitures.yaml). Un glyphe MDI affiché ici ou
+#       par tab5_voitures.cpp doit être dans la police de son label (règle 9) : la silhouette en
+#       mdi_font_voiture, l'icône d'état en mdi_font_45 (MDI_CODE_TARGETS : glyphe_etat).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "voitures_carte_${n}"
+  align: TOP_LEFT
+  x: 24
+  y: ${modal_body_y}
+  width: ${ (corps_w | int - 16) // 2 }
+  height: ${corps_h}
+  hidden: true
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { id: "voitures_nom_${n}", text: "", align: TOP_LEFT, text_font: roboto_32_b, styles: style_text_accent }
+    - label: { id: "voitures_silhouette_${n}", text: "\U000F07AB", align: TOP_LEFT, text_font: mdi_font_voiture, text_align: CENTER, styles: style_text_dim }
+    - obj:
+        id: "voitures_anneau_${n}"
+        align: TOP_LEFT
+        width: 150
+        height: 150
+        styles: style_transparent
+        scrollable: false
+        widgets:
+          - label: { id: "voitures_pct_${n}", text: "--", align: TOP_LEFT, text_font: roboto_32_b, text_align: CENTER }
+    - label: { id: "voitures_autonomie_${n}", text: "--", align: TOP_LEFT, text_font: roboto_55_b }
+    - label: { id: "voitures_unite_${n}", text: "", align: TOP_LEFT, text_font: roboto_32_b, styles: style_text_soft }
+    - label: { id: "voitures_sous_${n}", text: "", align: TOP_LEFT, text_font: roboto_22, styles: style_text_dim }
+    - label: { id: "voitures_etat_icone_${n}", text: "", align: TOP_LEFT, text_font: mdi_font_45, styles: style_text_dim }
+    - label: { id: "voitures_etat_${n}", text: "", align: TOP_LEFT, text_font: roboto_32_b }
+    - label: { id: "voitures_detail_${n}", text: "", align: TOP_LEFT, text_font: roboto_22, styles: style_text_dim }
+    - label: { id: "voitures_limite_${n}", text: "", align: TOP_LEFT, text_font: roboto_22, styles: style_text_dim }

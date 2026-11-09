@@ -640,7 +640,8 @@ api:
           description: "nom|batterie_pct|autonomie|unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|minutes_restantes|compteur_compte — vide = voiture absente (son cercle disparaît) ; champ vide = inconnu. etat : 0 inconnue ou endormie, 1 débranchée, 2 branchée sans charge, 3 en charge ; puissance en W reçus par la voiture, énergie en kWh, minutes jusqu'à la fin de la charge ; compteur_compte : 0 = le compteur de la maison ne compte pas les voitures, 1 ou vide = il les compte (leur charge est retranchée de la maison). Toujours ajouter à la fin."
           example: "Model Y|78|412|km|3|7200|12.4|90|95|1"
       then:
-        - lambda: 'energie_voiture(rang, payload);'
+        # Le popup Voitures (ADR-0079) lit le même payload : sa propre copie des voitures.
+        - lambda: 'energie_voiture(rang, payload); voitures_recu(rang, payload);'
 
     - service: tab5_maj_voiture_charges
       description: "Popup Énergie, page Charges : les dernières charges des voitures (ADR-0077), poussées avec l'instantané."

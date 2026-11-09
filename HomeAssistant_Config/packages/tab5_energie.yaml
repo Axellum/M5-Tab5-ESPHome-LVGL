@@ -173,7 +173,9 @@ script:
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
       # « Écran courant » de LA tablette qui a demandé : fin de la boucle quand il quitte
       # « Energy » (« Énergie » pour un firmware d'avant le 24/10/2026 : états en anglais,
-      # ADR-0070 ; les deux sont acceptés). Sans lui (entité désactivée), un seul passage.
+      # ADR-0070 ; les deux sont acceptés) ou « Cars » (le popup Voitures, ouvert depuis un cercle
+      # de voiture de la page Flux, ADR-0079 : il lit les mêmes voitures). Sans lui (entité
+      # désactivée), un seul passage.
       ecran: >-
         {{ (device_entities(appareil) | select('match', 'sensor[.].*_(ecran_courant|current_screen)(_[0-9]+)?$') | first | default(''))
            if appareil is string and appareil else '' }}
@@ -1183,8 +1185,8 @@ script:
                   {%- set ns.vu = true -%}
                 {%- endfor -%}
                 {{ ns.vu or not ecran
-                   or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie']) }}
+                   or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie', 'Cars']) }}
               timeout: 60
           until: >-
             {{ not ecran or now().timestamp() - debut > duree_max
-               or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie']) }}
+               or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie', 'Cars']) }}

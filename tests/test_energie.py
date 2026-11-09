@@ -2027,7 +2027,8 @@ def test_popup_au_registre_et_au_select():
                      r'\s+\[\] \{ id\(tab5_energie_ouvrir\)\.execute\(\); \}\);', navigation)
     assert '- "Energy"' in navigation
     # Le package attend exactement ce nom d'écran.
-    assert "states(ecran) not in ['Energy', 'Énergie']" in _lire(PACKAGE)
+    # Et celui du popup Voitures (« Cars », ADR-0079) : HA pousse tant que l'un des deux est ouvert.
+    assert "states(ecran) not in ['Energy', 'Énergie', 'Cars']" in _lire(PACKAGE)
 
 # ─── Mise en page sur une autre carte (lot 4 du portage 1024×600, ADR-0061) ─────
 

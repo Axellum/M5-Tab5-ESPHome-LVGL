@@ -294,6 +294,7 @@ font:
       - "\U000F049E"  # shuffle-disabled (popup Musique : dans l'ordre)
       - "\U000F04AD"  # skip-next (popup Musique : suivant)
       - "\U000F04AE"  # skip-previous (popup Musique : précédent)
+      - "\U000F04B2"  # sleep (popup Voitures : voiture hors ligne, ADR-0079)
       - "\U000F04B9"  # sofa
       - "\U000F04DB"  # stop
       - "\U000F054C"  # undo
@@ -471,6 +472,7 @@ font:
       - "\U000F0290"  # fridge (titre du popup Froid, ADR-0055)
       - "\U000F048B"  # server (titre du popup Serveur IA, ADR-0059)
       - "\U000F075A"  # music (titre du popup Musique, ADR-0050)
+      - "\U000F0B6C"  # car-electric (titre du popup Voitures, ADR-0079)
       - "\U000F0CB8"  # playlist-music (popup Musique : boutons des playlists, ADR-0068)
       - "\U000F12A1"  # battery-low
       - "\U000F12A2"  # battery-medium
@@ -618,6 +620,16 @@ font:
     glyphs:
       - "\U000F036C"  # microphone
       - "\U000F075A"  # music (popup Musique : pochette absente)
+
+  # 240 px — silhouette d'une voiture du popup Voitures (ADR-0079, décision D5 du plan : un grand
+  # glyphe MDI, aucune image en flash). Un seul glyphe en 1 bit : quelques ko, taille de la carte
+  # comme mdi_font_70 / mdi_font_alert. Mesuré par tab5_voitures.cpp (mesurer_silhouette).
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_font_voiture
+    size: ${ (240 * (carte_police_echelle | float)) | round | int }
+    bpp: 1
+    glyphs:
+      - "\U000F07AB"  # car-side (silhouette d'une voiture, popup Voitures)
 
   # 26 px — barre d'état (réveil, Wi-Fi, PC, production solaire, batterie de la
   # tablette, ou une prise sans batterie), pluie des cartes horaires, et mini icônes des

@@ -1607,3 +1607,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Bonbon": "Şeker"
 "Sorbet": "Sorbe"
 "Ultraviolet": "Morötesi"
+# --- Popup Voitures (tab5_voitures.cpp, ADR-0079) -------------------------------
+"Voitures": "Araçlar"
+"d'autonomie": "menzil"
+"Aucune voiture reçue": "Hiç araç alınmadı"
+"Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Bunları blueprint'te “Énergie : voitures · Energy: cars” bölümünden seçin."

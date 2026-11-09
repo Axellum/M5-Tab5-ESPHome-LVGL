@@ -340,6 +340,14 @@ Pushed by `packages/tab5_serveur_ia.yaml` (`tab5_maj_serveur_ia`: the sensors pi
 
 ---
 
+## Cars popup — your electric cars at a glance
+
+Opened by a short tap on a car circle of the Flux page (`ui_components/energie_flux_noeud.yaml`, nodes 4 and 5, `ui_appui_glisse()` keeps the end of a swipe out of it) or « Go to screen → Cars » ([ADR-0079](decisions/0079-cars-popup-overview-page.md), `tab5_voitures.cpp`, `ui_components/voitures_popup.yaml`, `voitures_carte.yaml`, `paquets/tab5-voitures.yaml`). Shared chrome (ADR-0009), icon `car-electric`, title « Voitures », one page (no tabs). It reads the same action as the Flux page, `tab5_maj_voiture` ([ADR-0076](decisions/0076-cars-on-the-flux-page.md)), into its own copy of the cars; nothing is painted while it is closed, it is repainted on opening, on each push while shown and on a theme change. Home Assistant keeps pushing while the tablet's « Écran courant » is « Cars » (`packages/tab5_energie.yaml`).
+
+A card (`voitures_carte.yaml`, ×2) stacks, centred: the name, the **silhouette** (the `car-side` glyph of `mdi_font_voiture`, 240 px, 1 bit, one glyph — no image in flash), the battery **ring** (two arcs, the track and the share, coloured by `get_battery_color()`) with its percentage inside and the range beside it, a **state line** (icon + text) and the **detail** (energy added and time left, « Pas en charge », the limit). The lock, the sentinel, the cable and the « Aujourd'hui » band of the plan's sketch are **not drawn**: no field carries them yet. A car with state 0 shows its last known values marked « Hors ligne » (the tablet never wakes a car). Two cars: two half cards; one: a full-width card whose content keeps the column of a half card; none: « Aucune voiture reçue » and where to choose them. At each opening the tablet asks Home Assistant for a push (it pushes only while the screen is « Energy » or « Cars »).
+
+---
+
 ## Color coding for readability
 
 **Temperatures:** mapped to a continuous scale via `get_temperature_color()` — blue (cold) → green (comfortable) → orange (warm) → red (hot). Applied identically to indoor sensors and forecast temperatures.
@@ -737,6 +745,14 @@ Ouvert par « Agenda ▸ Serveur IA » de la roue de navigation (une fois qu'Hom
 Poussé par `packages/tab5_serveur_ia.yaml` (`tab5_maj_serveur_ia` : les capteurs choisis dans les dix listes « Tab5 · AI server, … », unités converties et arrondies par Home Assistant, seuils du GPU 80 et 90 °C à un seul endroit) à chaque changement, deux secondes au moins entre deux poussées, et tout de suite quand une liste change, à la connexion, à « MAJ Écran » et au démarrage de HA. Rien n'est peint tant que le popup est fermé ; repeint à l'ouverture, à chaque poussée s'il est affiché et au changement de thème.
 
 **Boutons d'action** ([ADR-0060](decisions/0060-ai-server-actions.md), `ui_components/serveur_ia_action.yaml`) : jusqu'à trois dans le bandeau, à droite du modèle — « Décharger » (éjecter), « Réveiller » (marche), « Redémarrer » — chacun montré seulement quand Home Assistant l'offre (14e champ du payload, venu de `packages/tab5_llm.yaml`), grisé quand il n'a pas de sens maintenant (aucun modèle chargé, serveur déjà en ligne). Décharger et redémarrer demandent un second tap : le bouton passe en orange, « Confirmer ? », pendant 4 s. Réveiller part au premier tap. Une action envoyée affiche « Envoyé » en vert pendant 5 s, sans autre envoi pendant ce temps. La tablette n'émet que `esphome.tab5_serveur_ia_action` avec le code ; Home Assistant fait le reste.
+
+---
+
+## Popup Voitures — vos voitures électriques d'un coup d'œil
+
+Ouvert par un appui court sur un cercle de voiture de la page Flux (`ui_components/energie_flux_noeud.yaml`, nœuds 4 et 5, `ui_appui_glisse()` écarte la fin d'un balayage) ou « Go to screen → Cars » ([ADR-0079](decisions/0079-cars-popup-overview-page.md), `tab5_voitures.cpp`, `ui_components/voitures_popup.yaml`, `voitures_carte.yaml`, `paquets/tab5-voitures.yaml`). Chrome partagé (ADR-0009), icône `car-electric`, titre « Voitures », une seule page (pas d'onglets). Il lit la même action que la page Flux, `tab5_maj_voiture` ([ADR-0076](decisions/0076-cars-on-the-flux-page.md)), dans sa propre copie des voitures ; rien n'est peint tant qu'il est fermé, il est repeint à l'ouverture, à chaque poussée tant qu'il est affiché et à un changement de thème. Home Assistant continue de pousser tant que l'« Écran courant » de la tablette vaut « Cars » (`packages/tab5_energie.yaml`).
+
+Une carte (`voitures_carte.yaml`, ×2) empile, centrés : le nom, la **silhouette** (le glyphe `car-side` de `mdi_font_voiture`, 240 px, 1 bit, un seul glyphe — aucune image en flash), l'**anneau** de la batterie (deux arcs, la piste et la part, colorés par `get_battery_color()`) avec son pourcentage dedans et l'autonomie à côté, une **ligne d'état** (icône + texte) et le **détail** (énergie ajoutée et temps restant, « Pas en charge », la limite). Le verrou, la sentinelle, le câble et la bande « Aujourd'hui » de l'esquisse du plan ne sont **pas dessinés** : aucun champ ne les porte encore. Une voiture à l'état 0 montre ses dernières valeurs marquées « Hors ligne » (la tablette ne réveille jamais une voiture). Deux voitures : deux demi-cartes ; une : une carte pleine largeur dont le contenu garde la colonne d'une demi-carte ; aucune : « Aucune voiture reçue » et où les choisir. À chaque ouverture, la tablette demande une poussée à Home Assistant (il ne pousse que tant que l'écran est « Energy » ou « Cars »).
 
 ---
 
