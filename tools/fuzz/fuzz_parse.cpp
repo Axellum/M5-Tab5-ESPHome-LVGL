@@ -18,6 +18,7 @@
  * le rejoue sur tools/fuzz/temoin.txt et exige un rapport, sinon « 0 rapport » ne prouve rien.
  */
 #include "tab5_core.h"
+#include "tab5_flux_mjpeg.h"
 #include "tab5_parse.h"
 
 #include <cstddef>
@@ -236,10 +237,30 @@ void musique_liste(const std::string& p) {
     musique_vue_lire(Champ{p.data(), p.size()});
 }
 
+// Flux MJPEG de Home Assistant (ADR-0073, Tab5/socle/tab5_flux_mjpeg.h) : des octets du RÉSEAU,
+// analysés comme le chargeur le fait (extraire, retirer ce qui est consommé, recommencer).
+// Aucune fonction de tab5_parse.h : appelée depuis cameras() pour garder la table des parseurs.
+void flux_mjpeg(const std::string& p) {
+    const uint8_t* d = reinterpret_cast<const uint8_t*>(p.data());
+    size_t n = p.size();
+    for (int tour = 0; tour < 64 && n > 0; tour++) {
+        flux::Image img;
+        size_t consomme = 0;
+        const flux::Etat e = flux::extraire(d, n, 4096, &img, &consomme);
+        if (consomme > n) __builtin_trap();
+        if (e == flux::Etat::IMAGE && (img.debut > n || img.n > n - img.debut)) __builtin_trap();
+        if (e == flux::Etat::IMAGE && consomme != img.debut + img.n) __builtin_trap();
+        if (consomme == 0) break;   // rien à retirer : le chargeur attendrait des octets de plus
+        d += consomme;
+        n -= consomme;
+    }
+}
+
 // Popup Caméras : les deux variables du service (adresse, cameras) séparées par un saut de
 // ligne, comme temperature(). L'URL de chaque caméra est construite avec l'adresse donnée,
 // puis avec la base tirée du payload pris comme adresse de client (on_client_connected).
 void cameras(const std::string& p) {
+    flux_mjpeg(p);
     const size_t saut = p.find('\n');
     const std::string adresse = p.substr(0, saut);
     const std::string liste = saut == std::string::npos ? std::string() : p.substr(saut + 1);
@@ -256,6 +277,8 @@ void cameras(const std::string& p) {
         if (c[i].piece_i < 0 || c[i].piece_i >= pieces) __builtin_trap();
         camera_url(c[i].image, adresse.c_str(), 960, 540, url, sizeof(url));
         camera_url(c[i].image, base, 480, 270, url, sizeof(url));
+        camera_flux_url(c[i].image, adresse.c_str(), url, sizeof(url));
+        camera_flux_url(c[i].image, base, url, sizeof(url));
         const std::string copie(c[i].nom.p, c[i].nom.n);  // ce que texte_ha_copier recevrait
         const std::string piece(c[i].piece.p, c[i].piece.n);
         (void) copie;
