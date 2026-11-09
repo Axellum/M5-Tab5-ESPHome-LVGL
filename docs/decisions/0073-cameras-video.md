@@ -1,6 +1,6 @@
 # ADR-0073: Cameras in video — the enlarged camera plays Home Assistant's own MJPEG stream, no add-on, off by default
 
-**Status:** Proposed (2026-11-09; draft PR, **not tried on a tablet nor with a live camera when written**: every figure below marked « not measured » is an estimate or a reading of the sources).
+**Status:** Proposed (2026-11-09; draft PR, **not tried on a tablet nor with a live camera when written**: every figure below marked « not measured » is an estimate or a reading of the sources). **Update the same day:** tried on the author's Tab5 with one ESPHome camera; the first measurements, and what limited the rate, are in « Update » at the end. The sections above are left as written.
 **Date:** 2026-11-09
 
 ## Context
@@ -37,3 +37,16 @@ What Home Assistant 2026.11.0 does (source read, tag `2026.11.0`):
 - **Memory**: two decoded buffers (1.04 MB each at 960 × 544, 0.47 MB at 640 × 368) as with still images, plus the receive buffer (128 KiB, grown by doubling to 2 MiB + 8 KiB for an image kept and one arriving), all given back at closing.
 - **Per-image log line** every 30 decoded images (`tab5.cameras`, `flux : N images en … ms (… par seconde), … jetées, lecture … ms et décodage … ms par image`): the first measurement to read after a try.
 - **Not measured** (no tablet, no live camera): real frame rate and delay, worst main-loop time (217 ms with still images; 80 to 150 ms expected at 5 to 10 images/s), Wi-Fi throughput over the P4-C6 link, behaviour behind a reverse proxy that buffers a response (https), CPU cost of the task's 5 ms read polling while it waits for an image.
+
+## Update (2026-11-09, same day): first measurements — the camera sets the rate
+
+Tried on the author's Tab5 (ST7121 revision) with the enlarged camera set to video, one camera: an M5Stack AtomS3R-CAM (ESP32-S3, GC0308 sensor, 640 × 480, ESPHome 2026.9.0), which has no hardware JPEG encoder. The author saw the picture and found it correct. What was measured, and with what:
+
+- **On the tablet** (log line `flux :` read for 70 s, before any change to the camera): 1.7 then 1.5 images per second, 0 images dropped, **3 to 4 ms of decoding per image**, 514 to 591 ms of reading per image, « pile libre 9816 » in the log. The hardware decoder and the stack are not the limit; the rate follows the source.
+- **Where the time goes** (read-only): Home Assistant's stream read from a PC gave 1.51 images per second (median gap 576 ms), the camera read directly through its native API about 1.45 on its first 8 images, the tablet 1.5 to 1.7: the same rate along the whole chain. On the camera, the JPEG is made in software in the main loop (`esp32_camera`), one frame buffer, and the next image only starts once the previous one has been fully sent; its loop time was 315 ms of a cycle of about 660 ms.
+- **Changes tried on the camera** (same picture, 30 s per measure, PC → Home Assistant's stream; the camera is also used by an automation of the author's, so each trial was backed up and could be reversed): a TCP send buffer of 32 768 bytes (`CONFIG_LWIP_TCP_SND_BUF_DEFAULT`, 5 760 by default) **and** two frame buffers (`frame_buffer_count: 2`): **2.79 images per second, then 2.55 and 2.57 when put back** (against 1.51 and 1.43 before); median gap 356 ms, JPEG about 46 KB. The loop time is then almost the whole cycle, so what is left is the software JPEG encoding. With `compiler_optimization: PERF` in addition: 2.76, no gain, flash 51.2 → 55.8 %: dropped. With `jpeg_quality: 30` in addition: 2.95 (+6 %), JPEG about 35 KB, a softer picture: dropped. Free internal memory unchanged (205 KB), free PSRAM 7.77 → 7.15 MB (the second buffer), internal temperature 56 → 59 °C during the trials.
+- **Smaller pictures** (the two settings above kept, `resolution` changed, 30 s per measure, two measures each): `CIF` (400 × 296, JPEG about 24 KB) **6.0 and 6.3 images per second**; `QVGA` (320 × 240, JPEG about 18 KB) **9.3 and 8.9** (the camera's own cap is `max_framerate: 10 fps`), with a loop time of 118 ms in one reading. The camera was put back at 640 × 480 after the trials (sharper picture, 2.5 to 2.8 images per second); sharpness against rate is a matter of taste and is not settled here. No picture from the trials is published.
+
+**Not measured, still**: the tablet again after the change on the camera (the Tab5 was no longer running this firmware when the camera was changed); the delay between the scene and the screen; the worst main-loop time while playing; the fallback when the camera drops; the https reverse proxy; the cost of LVGL scaling a 640 × 480 picture; the effect on the author's automation that also uses the camera (the camera was unavailable in Home Assistant for about 45 s at each sending). Figures come from one camera on one network; they say what limited this camera, not what will limit another.
+
+The user-facing version, with the two settings and the table, is in [the Cameras page](../notice/cameras.md).
