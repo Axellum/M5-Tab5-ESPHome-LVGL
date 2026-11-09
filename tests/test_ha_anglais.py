@@ -82,7 +82,7 @@ def test_ha_accepte_l_ancien_et_le_nouveau_texte():
     push = (HA / "packages" / "tab5_push.yaml").read_text(encoding="utf-8")
     assert "select('is_state', ['Alerts', 'Alertes'])" in push
     energie = (HA / "packages" / "tab5_energie.yaml").read_text(encoding="utf-8")
-    assert energie.count("states(ecran) not in ['Energy', 'Énergie']") == 2
+    assert energie.count("states(ecran) not in ['Energy', 'Énergie', 'Cars']") == 2
     assert "!= 'Énergie'" not in energie
     # Le test de consommation choisit une option par son index, lue sur la tablette.
     conso = (HA / "packages" / "tab5_mesure_conso.yaml").read_text(encoding="utf-8")

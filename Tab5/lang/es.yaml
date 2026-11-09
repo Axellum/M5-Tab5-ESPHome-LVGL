@@ -1636,3 +1636,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Bonbon": "Caramelo"
 "Sorbet": "Sorbete"
 "Ultraviolet": "Ultravioleta"
+# --- Popup Voitures (tab5_voitures.cpp, ADR-0079) -------------------------------
+"Voitures": "Coches"
+"d'autonomie": "de autonomía"
+"Aucune voiture reçue": "Ningún coche recibido"
+"Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Elígelos en el blueprint, sección «Énergie : voitures · Energy: cars»."

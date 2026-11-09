@@ -220,6 +220,11 @@ NON_MONTREES = {
                                 "mire du rendu à la place des images",
     "cameras-mosaique-page-2": "seconde page de la mosaïque des caméras, décrite dans cameras.md ; mire du rendu",
     "cameras-plein-ecran": "une caméra en grand après un tap sur sa vignette, décrit dans cameras.md ; mire du rendu",
+    # Popup Voitures (ADR-0079, 09/11/2026), page Aperçu : la page de notice viendra avec les pages
+    # suivantes du popup (Charge, Trajets, État) ; décrit dans screens.md en attendant.
+    "voitures-2": "popup Voitures, deux voitures, décrit dans screens.md ; notice avec les pages suivantes",
+    "voitures-1": "voitures-2 montre la même fenêtre ; une seule voiture en pleine largeur, décrit dans screens.md",
+    "voitures-aucune": "voitures-2 montre la même fenêtre ; sans voiture, le message est décrit dans screens.md",
 }
 
 

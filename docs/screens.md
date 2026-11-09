@@ -296,6 +296,12 @@ The dashboard of a local LLM server (Ollama, llama.cpp, LM Studio, vLLM…): a b
 
 ---
 
+## Cars popup — your electric cars at a glance
+
+One large card per electric car (two at most), side by side; with a single car, one card across the whole width. Each card shows the car's name, a silhouette tinted by its state (green while charging, blue when plugged in, dim otherwise), the **battery in a ring** with its percentage, the **range**, a line with the state (« En charge · 7.20 kW », « Branchée », « Débranchée », or « Hors ligne » for a car that sleeps: its last known values stay on screen) and, under it, the energy added and the time left while charging, or the charge limit. With no car chosen, a short message says where to choose them. Opened by a short tap on a car circle of the Flux page of the Energy popup, or by « Go to screen → Cars ». **Internals:** [details](screens_internals.md#cars-popup--your-electric-cars-at-a-glance)
+
+---
+
 ## Color coding for readability
 
 Color is used consistently as a primary information channel — to let you read state at a glance without reading labels.
@@ -667,6 +673,12 @@ Le tableau de bord d'un serveur de LLM local (Ollama, llama.cpp, LM Studio, vLLM
 ![Écran mural Home Assistant (ESP32-P4) : la fenêtre du serveur IA : en ligne, modèle chargé, jetons par seconde, mémoire et carte graphique](images/notice/serveur-ia-fr.webp)
 
 **Notice :** [Serveur IA](notice/ai-server.md#version-française) · **Détails techniques :** [le détail](screens_internals.md#popup-serveur-ia--un-serveur-de-llm-local)
+
+---
+
+## Popup Voitures — vos voitures électriques d'un coup d'œil
+
+Une grande carte par voiture électrique (deux au plus), côte à côte ; avec une seule voiture, une carte sur toute la largeur. Chaque carte montre le nom de la voiture, une silhouette teintée par son état (verte en charge, bleue branchée, pâle sinon), la **batterie dans un anneau** avec son pourcentage, l'**autonomie**, une ligne d'état (« En charge · 7.20 kW », « Branchée », « Débranchée », ou « Hors ligne » pour une voiture endormie : ses dernières valeurs restent affichées) et, dessous, l'énergie ajoutée et le temps restant en charge, ou la limite de charge. Sans voiture choisie, un message court dit où les choisir. Ouvert par un appui court sur un cercle de voiture de la page Flux du popup Énergie, ou par « Go to screen → Cars ». **Détails :** [détails](screens_internals.md#popup-voitures--vos-voitures-électriques-dun-coup-dœil)
 
 ---
 

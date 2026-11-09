@@ -1,0 +1,63 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-voitures.yaml
+# @role Popup « Voitures » (ADR-0079, 09/11/2026) : pose les widgets que tab5_voitures.cpp peint
+#       (g_voitures_ui).
+#         - tab5_voitures_lier : widgets dans g_voitures_ui, une fois, appelé par
+#           tab5_voitures_ouvrir seulement (l'action tab5_maj_voiture, côté popup
+#           voitures_recu(), garde les voitures sans lui : popup fermé elle ne peint rien) ;
+#         - tab5_voitures_ouvrir : peint le popup (dernier état reçu) et l'ouvre (appui sur un
+#           cercle de voiture de la page Flux, « Aller à l'écran → Cars »). À chaque ouverture il
+#           demande à Home Assistant de pousser (événement esphome.tab5_energie, vue « heures »,
+#           par le script tab5_energie_demande) : HA continue tant que « Écran courant » vaut
+#           « Cars ».
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne nomme
+#       aucune entité et n'appelle aucune action ; HA pousse (packages/tab5_energie.yaml). Chargé
+#       APRÈS tab5_lvgl et tab5_energie : il référence des widgets et le script d'événement.
+#       Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans VoituresUI (tab5_voitures.h), son id dans
+#       voitures_carte.yaml et sa ligne ici.
+# ============================================================================
+
+script:
+  - id: tab5_voitures_lier
+    then:
+      - lambda: |-
+          VoituresUI& u = g_voitures_ui;
+          if (u.popup != nullptr) return;
+          u.message = id(voitures_message);
+          u.conseil = id(voitures_conseil);
+          u.carte[0] = id(voitures_carte_0);
+          u.carte[1] = id(voitures_carte_1);
+          u.nom[0] = id(voitures_nom_0);
+          u.nom[1] = id(voitures_nom_1);
+          u.silhouette[0] = id(voitures_silhouette_0);
+          u.silhouette[1] = id(voitures_silhouette_1);
+          u.anneau[0] = id(voitures_anneau_0);
+          u.anneau[1] = id(voitures_anneau_1);
+          u.pct[0] = id(voitures_pct_0);
+          u.pct[1] = id(voitures_pct_1);
+          u.autonomie[0] = id(voitures_autonomie_0);
+          u.autonomie[1] = id(voitures_autonomie_1);
+          u.unite[0] = id(voitures_unite_0);
+          u.unite[1] = id(voitures_unite_1);
+          u.sous[0] = id(voitures_sous_0);
+          u.sous[1] = id(voitures_sous_1);
+          u.etat_icone[0] = id(voitures_etat_icone_0);
+          u.etat_icone[1] = id(voitures_etat_icone_1);
+          u.etat[0] = id(voitures_etat_0);
+          u.etat[1] = id(voitures_etat_1);
+          u.detail[0] = id(voitures_detail_0);
+          u.detail[1] = id(voitures_detail_1);
+          u.limite[0] = id(voitures_limite_0);
+          u.limite[1] = id(voitures_limite_1);
+          u.demander = []() { id(tab5_energie_demande).execute(std::string("heures")); };
+          // En dernier : peindre() ne fait rien tant que popup est nul.
+          u.popup = id(voitures_popup);
+
+  - id: tab5_voitures_ouvrir
+    then:
+      - script.execute: tab5_voitures_lier
+      - lambda: |-
+          voitures_ouvrir();
+          animate_popup_open(id(voitures_popup));
