@@ -4,7 +4,7 @@
 
 ---
 
-**In this order: the Home Assistant files first, then the firmware.** Each release says what changes in its notes ([releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)).
+**In this order: the Home Assistant files first, then the firmware**, unless the notes say the contract is « compatible both ways »: then neither needs the other. Each release says what it asks of you, by way of installing, in its notes ([releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases); [what a release asks of you](#what-a-release-asks-of-you)).
 
 ## The firmware, from Home Assistant
 
@@ -13,6 +13,19 @@ A tablet installed from the [install page](flash.md) gets its updates from Home 
 The tablet follows the channel it was installed from (Stable or Beta); to switch, install again from the [install page](flash.md#3-pick-the-channel), without erasing. A firmware you compile yourself has no « Firmware » entity: see [build your own firmware](build.md#updates-over-wi-fi).
 
 ## Home Assistant files
+
+### What a release asks of you
+
+The « To do » block of each release's notes lists what that release changed and what you must do about it, by way of installing. It is written by `python tools/gestes_maj.py <previous tag> <tag>`, which reads the files the release changed and the HA ↔ firmware contract (`tools/contrat_api.py`). Three words: **required** (it breaks without it), **recommended** (it brings the fixes), **optional** (only for a case the notes name). When the notes say « compatible both ways », no Home Assistant file is required: the order does not matter.
+
+| How you installed | Per update | Only if the notes ask for it |
+|---|---|---|
+| **HACS integration** ([installed this way](home-assistant-files.md#with-hacs)) | *Settings → Updates → Tab5 → Install*, then restart Home Assistant: **2 gestures**. The integration puts the files, reloads the YAML and, if « Then update the tablet » is ticked, installs the firmware. | the [dashboard](dashboard.md): 3 gestures |
+| **By hand** (`tab5_home_assistant.zip`) | the files (download, copy: 2), the reload (2), the firmware (1): **5 gestures** | the [dashboard](dashboard.md): 3 gestures |
+
+`tab5_hacs.zip`, on the release page, is the file HACS reads: never download it by hand. Going from the zip to the integration saves 3 gestures per update ([install it with HACS](home-assistant-files.md#with-hacs)).
+
+Home Assistant 2026.11 includes HACS under the name « Marketplace » (*Settings → Marketplace*; [its release notes](https://www.home-assistant.io/blog/2026/11/04/release-202611/)). According to them, what HACS had installed stays installed, custom repositories included, a first installation needs no restart, and « updates still need a restart for now », on every installation type. Not tried for this project: a first installation of Tab5 through the Marketplace.
 
 **With the HACS integration** ([installed this way](home-assistant-files.md#with-hacs)): each release shows up in *Settings → Updates* as « Tab5 — fichiers HA · HA files ». *Install*, then restart Home Assistant. **The integration must also be added** in *Settings → Devices & services* (it is listed there as « Tab5 — fichiers HA · HA files », apart from the tablet under ESPHome): an update downloaded by HACS for an integration that was never added does nothing ([troubleshooting](../troubleshooting.md#tab5-integration-hacs-downloaded-but-nothing-happens)). At start, the integration:
 
@@ -88,7 +101,7 @@ Then `secrets.yaml` can go (keep the old key only if you may flash 2.x again), a
 
 ---
 
-**Dans cet ordre : les fichiers Home Assistant d'abord, puis le firmware.** Chaque release dit ce qui change dans ses notes ([releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)).
+**Dans cet ordre : les fichiers Home Assistant d'abord, puis le firmware**, sauf si les notes disent que le contrat est « compatible dans les deux sens » : l'un n'a alors pas besoin de l'autre. Chaque release dit ce qu'elle vous demande, selon votre façon d'installer, dans ses notes ([releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) ; [ce qu'une release vous demande](#ce-quune-release-vous-demande)).
 
 ## Le firmware, depuis Home Assistant
 
@@ -97,6 +110,19 @@ Une tablette installée depuis la [page d'installation](flash.md#version-frança
 La tablette suit le canal depuis lequel elle a été installée (Stable ou Bêta) ; pour en changer, réinstallez depuis la [page d'installation](flash.md#3-choisir-le-canal), sans effacer. Un firmware compilé soi-même n'a pas d'entité « Firmware » : voir [compiler son propre firmware](build.md#mises-à-jour-par-le-wi-fi).
 
 ## Fichiers Home Assistant
+
+### Ce qu'une release vous demande
+
+Le bloc « À faire » des notes de chaque release dit ce que cette release a changé et ce que vous avez à faire, selon votre façon d'installer. Il est écrit par `python tools/gestes_maj.py <tag précédent> <tag>`, qui lit les fichiers que la release a changés et le contrat HA ↔ firmware (`tools/contrat_api.py`). Trois mots : **requis** (ça casse sans), **recommandé** (il apporte les corrections), **facultatif** (seulement pour un cas que les notes nomment). Quand les notes disent « compatible dans les deux sens », aucun fichier Home Assistant n'est requis : l'ordre n'a pas d'importance.
+
+| Comment vous avez installé | À chaque mise à jour | Seulement si les notes le demandent |
+|---|---|---|
+| **Intégration de HACS** ([installée ainsi](home-assistant-files.md#avec-hacs)) | *Paramètres → Mises à jour → Tab5 → Installer*, puis redémarrer Home Assistant : **2 gestes**. L'intégration pose les fichiers, recharge le YAML et, si « Mettre ensuite la tablette à jour » est coché, installe le firmware. | le [tableau de bord](dashboard.md#version-française) : 3 gestes |
+| **À la main** (`tab5_home_assistant.zip`) | les fichiers (télécharger, copier : 2), le rechargement (2), le firmware (1) : **5 gestes** | le [tableau de bord](dashboard.md#version-française) : 3 gestes |
+
+`tab5_hacs.zip`, sur la page de la release, est le fichier que lit HACS : ne le téléchargez jamais à la main. Passer du zip à l'intégration économise 3 gestes à chaque mise à jour ([l'installer avec HACS](home-assistant-files.md#avec-hacs)).
+
+Home Assistant 2026.11 intègre HACS sous le nom « Marketplace » (*Paramètres → Marketplace* ; [ses notes de version](https://www.home-assistant.io/blog/2026/11/04/release-202611/)). D'après elles, ce que HACS avait installé reste installé, dépôts personnalisés compris, une première installation ne demande pas de redémarrage, et « updates still need a restart for now » (les mises à jour demandent encore un redémarrage), sur tous les types d'installation. Pas essayé pour ce projet : une première installation de Tab5 par le Marketplace.
 
 **Avec l'intégration de HACS** ([installée ainsi](home-assistant-files.md#avec-hacs)) : chaque release apparaît dans *Paramètres → Mises à jour*, « Tab5 — fichiers HA · HA files ». *Installer*, puis redémarrez Home Assistant. **L'intégration doit aussi être ajoutée** dans *Paramètres → Appareils et services* (elle y apparaît sous « Tab5 — fichiers HA · HA files », à part de la tablette rangée sous ESPHome) : une mise à jour téléchargée par HACS pour une intégration jamais ajoutée ne fait rien ([incidents connus](../troubleshooting.md#intégration-tab5-hacs--téléchargée-mais-rien-ne-se-passe)). Au démarrage, l'intégration :
 
