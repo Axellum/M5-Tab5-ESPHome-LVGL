@@ -91,6 +91,10 @@ NON_MONTREES = {
     "energie-charges-1-voiture": "page Charges avec une voiture ; à décrire dans energy.md, image à tirer du rendu",
     "energie-charges-2-voitures": "page Charges avec deux voitures ; à décrire dans energy.md, image à tirer du rendu",
     "energie-charges-absente": "sans charge, le popup garde ses quatre onglets : la page d'avant, déjà décrite",
+    # Page « Aujourd'hui » avec la consommation des voitures (ADR-0078, lot 4 des voitures) : pas encore
+    # décrite dans energy.md, comme les pages ci-dessus ; à faire avec les images du rendu validé par Axel.
+    "energie-aujourdhui-1-voiture": "page Aujourd'hui avec une voiture ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-aujourdhui-2-voitures": "page Aujourd'hui avec deux voitures ; à décrire dans energy.md, image à tirer du rendu",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
