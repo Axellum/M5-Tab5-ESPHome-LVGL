@@ -115,6 +115,37 @@ def test_texte_dans_les_deux_langues():
     assert set(gm.TEXTES["fr"]) == set(gm.TEXTES["en"])
 
 
+def test_rechargement_a_la_main_est_requis_des_qu_on_copie():
+    # Audit §3.3 : « à la main : oui, après la copie ». Facultatif tant que la copie l'est.
+    c = gm.classer({FIRMWARE: "M", PACKAGE: "M"})
+    libre = gm.rendre(c, "indifferent", "v3.9.0", "fr")
+    ligne = next(x for x in libre.splitlines() if "reload_custom_templates" in x)
+    assert ligne.endswith("— requis si vous copiez les fichiers.")
+    assert "required if you copy the files" in gm.rendre(c, "indifferent", "v3.9.0", "en")
+    impose = gm.rendre(c, "ha", "v3.9.0", "fr")
+    assert next(x for x in impose.splitlines() if "reload_custom_templates" in x).endswith("— requis.")
+
+
+def test_les_traductions_ne_comptent_pas_dans_le_nombre_de_fichiers():
+    c = gm.classer({FIRMWARE: "M", "Tab5/ecran/tab5_zones.cpp": "M", "Tab5/lang/de.yaml": "M", "Tab5/lang/nl.yaml": "M"})
+    assert "(2 fichier(s) de firmware et les traductions)" in gm.rendre(c, "indifferent", "v3.9.0", "fr")
+    assert "(2 firmware file(s) and the translations)" in gm.rendre(c, "indifferent", "v3.9.0", "en")
+    seules = gm.classer({"Tab5/lang/de.yaml": "M"})
+    assert seules.firmware == ["Tab5/lang/de.yaml"]                    # c'est bien du firmware
+    assert "(traductions seulement)" in gm.rendre(seules, "indifferent", "v3.9.0", "fr")
+    assert "fichier(s) de firmware" not in gm.rendre(seules, "indifferent", "v3.9.0", "fr")
+
+
+def test_les_deux_formes_de_revisions():
+    assert gm.reviser("v3.9.0", None) == ("v3.9.0", "HEAD")
+    assert gm.reviser("v3.9.0", "v3.9.1") == ("v3.9.0", "v3.9.1")
+    assert gm.reviser("v3.9.0..v3.9.1", None) == ("v3.9.0", "v3.9.1")
+    assert gm.reviser("v3.9.0..0123abc", None) == ("v3.9.0", "0123abc")
+    for mauvais in (("v3.9.0..v3.9.1", "v3.9.2"), ("v3.9.0..", None), ("..v3.9.1", None), ("a..b..c", None)):
+        with pytest.raises(SystemExit):
+            gm.reviser(*mauvais)
+
+
 # ─── Le cas réel qui a motivé l'outil ────────────────────────────────────────
 
 def _tag(tag):
@@ -149,3 +180,7 @@ def test_v3_9_0_vers_v3_9_1(capsys):
     assert "Gestes : 0 pour le requis, 1 avec le recommandé, 5 avec tout" in texte    # intégration
     assert "Gestes : 0 pour le requis, 1 avec le recommandé, 8 avec tout" in texte    # à la main
     assert "`tab5_hacs.zip` n'est pas à télécharger" in texte
+    assert "(15 fichier(s) de firmware et les traductions)" in texte
+    # La forme de git donne le même texte.
+    assert gm.main([f"{depuis}..{courant}"]) == 0
+    assert capsys.readouterr().out == texte

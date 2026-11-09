@@ -29,6 +29,7 @@ Règles (une seule liste, `besoins()`) :
   n'est jamais à télécharger à la main (c'est le fichier que lit HACS).
 
     python tools/gestes_maj.py v3.9.0 v3.9.1          # bloc « À faire », en français
+    python tools/gestes_maj.py v3.9.0..v3.9.1         # même chose, à la manière de git
     python tools/gestes_maj.py v3.9.0 v3.9.1 --en     # le même, pour le corps de la release
     python tools/gestes_maj.py v3.9.0                 # contre la révision courante (HEAD)
     python tools/gestes_maj.py v3.9.0 v3.9.1 --json   # les faits bruts
@@ -59,6 +60,8 @@ BLUEPRINT = RACINE_HA + "blueprints/"
 # Hors firmware : tablette virtuelle de la CI, sources des icônes (la police compilée, elle,
 # compte), modèle de configuration utilisateur.
 HORS_FIRMWARE = ("Tab5/rendu/", "Tab5/fonts/icone_meteo/", "Tab5/user_entities.example.yaml")
+# Les traductions sont du firmware, mais le nombre de fichiers affiché ne les compte pas.
+LANGUES = "Tab5/lang/"
 # Entité ajoutée à un package : indice seulement (une entité de template a un `unique_id`).
 UNIQUE_ID_AJOUTE = re.compile(r"^\+\s*unique_id\s*:", re.M)
 
@@ -195,7 +198,8 @@ TEXTES = {
         "copier": "Télécharger `tab5_home_assistant.zip` et copier ses dossiers dans `config/`",
         "blueprint_url": "Blueprint importé depuis son adresse : l'importer de nouveau",
         "tableau": "Tableau de bord (étape 7 du guide)",
-        "apporte": "apporte", "fichiers_n": "{n} fichier(s) de firmware",
+        "apporte": "apporte", "fichiers_n": "{n} fichier(s) de firmware", "et_langues": " et les traductions",
+        "langues_seules": "traductions seulement", "apres_copie": "requis si vous copiez les fichiers",
         "rien_i": "Aucun fichier Home Assistant ne change dans cette version.",
         "total": "Gestes : {m} pour le requis, {r} avec le recommandé, {t} avec tout (facultatif compris).",
         "note_hacs": "`tab5_hacs.zip` n'est pas à télécharger : c'est le fichier que lit HACS.",
@@ -215,7 +219,8 @@ TEXTES = {
         "copier": "Download `tab5_home_assistant.zip` and copy its folders into `config/`",
         "blueprint_url": "Blueprint imported from its address: import it again",
         "tableau": "Dashboard (step 7 of the guide)",
-        "apporte": "brings", "fichiers_n": "{n} firmware file(s)",
+        "apporte": "brings", "fichiers_n": "{n} firmware file(s)", "et_langues": " and the translations",
+        "langues_seules": "translations only", "apres_copie": "required if you copy the files",
         "rien_i": "No Home Assistant file changes in this version.",
         "total": "Gestures: {m} for what is required, {r} with what is recommended, {t} for everything (optional included).",
         "note_hacs": "`tab5_hacs.zip` is not for you to download: it is the file HACS reads.",
@@ -234,14 +239,22 @@ def _ligne(t: dict, x: Geste) -> str | None:
         texte = t["firmware_i"] if x.profil == "integration" else t["firmware_z"]
     else:
         texte = t[x.cle]
+    statut = t[x.statut]
+    if x.profil == "zip" and x.cle == "recharger" and x.statut == FACULTATIF:
+        statut = t["apres_copie"]       # facultatif parce que la copie l'est, requis dès qu'on copie
     detail = ""
     if x.cle == "firmware":
-        detail = f" ({t['fichiers_n'].format(n=len(x.fichiers))})"
+        # Les traductions (Tab5/lang/) comptent comme firmware mais pas dans le nombre de fichiers.
+        code = [f for f in x.fichiers if not f.startswith(LANGUES)]
+        if not code:
+            detail = f" ({t['langues_seules']})"
+        else:
+            detail = f" ({t['fichiers_n'].format(n=len(code))}{t['et_langues'] if len(code) < len(x.fichiers) else ''})"
     elif x.fichiers:
         noms = ", ".join(f"`{f.removeprefix(RACINE_HA)}`" for f in x.fichiers[:6])
         reste = f" +{len(x.fichiers) - 6}" if len(x.fichiers) > 6 else ""
         detail = f" ({t['apporte']} {noms}{reste})"
-    return f"- {texte}{detail} — {t[x.statut]}."
+    return f"- {texte}{detail} — {statut}."
 
 
 def rendre(c: Changements, ordre: str, depuis: str, langue: str = "fr") -> str:
@@ -286,10 +299,22 @@ def unique_id_ajoutes(depuis: str, courant: str) -> int:
     return len(UNIQUE_ID_AJOUTE.findall(diff))
 
 
+def reviser(depuis: str, courant: str | None) -> tuple[str, str]:
+    """Les deux révisions : `depuis courant`, `depuis..courant` (forme de git) ou `depuis` seul
+    (contre HEAD). Les deux écritures à la fois : refusé, pour ne pas en ignorer une."""
+    if ".." in depuis:
+        if courant is not None:
+            raise SystemExit("une seule forme : « depuis..courant » ou « depuis courant »")
+        depuis, _, courant = depuis.partition("..")
+        if not depuis or not courant or ".." in courant:
+            raise SystemExit("forme attendue : depuis..courant (ex. v3.9.0..v3.9.1)")
+    return depuis, courant or "HEAD"
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
-    p.add_argument("depuis", help="révision de départ (tag publié, ex. v3.9.0)")
-    p.add_argument("courant", nargs="?", default="HEAD", help="révision d'arrivée (défaut : HEAD)")
+    p.add_argument("depuis", help="révision de départ (tag publié, ex. v3.9.0), ou « depuis..courant »")
+    p.add_argument("courant", nargs="?", default=None, help="révision d'arrivée (défaut : HEAD)")
     p.add_argument("--en", action="store_true", help="en anglais (corps de la release GitHub)")
     p.add_argument("--json", action="store_true", help="les faits bruts, en JSON")
     args = p.parse_args(argv)
@@ -297,14 +322,15 @@ def main(argv=None) -> int:
     if reconfigurer:
         reconfigurer(encoding="utf-8")
     import contrat_api  # même dossier que ce script
-    c = classer(statuts_du_diff(args.depuis, args.courant), unique_id_ajoutes(args.depuis, args.courant))
-    ordre = contrat_api.matrice(args.depuis, args.courant).ordre
+    depuis, courant = reviser(args.depuis, args.courant)
+    c = classer(statuts_du_diff(depuis, courant), unique_id_ajoutes(depuis, courant))
+    ordre = contrat_api.matrice(depuis, courant).ordre
     if args.json:
-        print(json.dumps({"depuis": args.depuis, "courant": args.courant, "ordre": ordre,
+        print(json.dumps({"depuis": depuis, "courant": courant, "ordre": ordre,
                           "changements": asdict(c), "gestes": [asdict(x) for x in besoins(c, ordre)]},
                          ensure_ascii=False, indent=2))
         return 0
-    print(rendre(c, ordre, args.depuis, "en" if args.en else "fr"), end="")
+    print(rendre(c, ordre, depuis, "en" if args.en else "fr"), end="")
     return 0
 
 
