@@ -31,6 +31,18 @@
 #       avec son unité h, min, s, d, ou horodatage). Poussé à chaque tour avec l'instantané, au
 #       moins une voiture choisie (sa batterie) ; le rang sans voiture part avec un payload
 #       vide (la tablette retire son cercle). Un blueprint plus ancien ne les envoie pas.
+#       tab5_maj_voiture_charges (ADR-0077, 09/11/2026) : payload « rang|jour|heure|duree_min|kwh|
+#       part_soleil_pct » séparées par « ; », six au plus, la plus récente d'abord : la chaîne
+#       `charges` de la réponse de script.tab5_voitures_analyse (packages/tab5_voitures.yaml,
+#       ADR-0074), poussée TELLE QUELLE (page « Charges » de la tablette). Calculée à l'ouverture
+#       du popup puis au plus toutes les 5 minutes tant qu'il reste ouvert (jamais à chaque tour :
+#       l'analyse parcourt des milliers de lignes du recorder), et non rejouée quand on change de
+#       vue. Seulement avec une voiture qui a un capteur de puissance de charge (sans, rien n'est
+#       poussé : la page n'existe pas) et si script.tab5_voitures_analyse existe ; une analyse en
+#       échec ne pousse rien (la tablette garde ses dernières charges). Les capteurs lus sont ceux
+#       de la section « Énergie : voitures » du blueprint (puissance de la voiture, renommée
+#       puissance_charge pour l'analyse), plus les solaires, la maison et la case « compteur
+#       séparé » de l'instantané.
 # @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
 #       depuis minuit (heure locale), plus le partiel depuis la dernière ligne (état
 #       actuel − dernier « state », converti en kWh). Heures : les mêmes lignes, par heure
@@ -200,6 +212,19 @@ script:
         {%- set ns = namespace(n=0) -%}
         {%- for v in voitures_c if v is mapping and v.get('batterie') -%}{%- set ns.n = ns.n + 1 -%}{%- endfor -%}
         {{ ns.n }}
+      # Voitures de la page Charges (ADR-0077) : celles qui ont un capteur de puissance de charge,
+      # sous la forme qu'attend script.tab5_voitures_analyse (rang « 1 » / « 2 », nom,
+      # puissance_charge) ; aucune : rien n'est calculé ni poussé.
+      voitures_analyse: >-
+        {%- set ns = namespace(l=[], r=0) -%}
+        {%- for v in voitures_c -%}
+          {%- set ns.r = ns.r + 1 -%}
+          {%- if v is mapping and v.get('puissance') -%}
+            {%- set ns.l = ns.l + [{'rang': ns.r | string, 'nom': v.get('nom', '') | string,
+                                    'puissance_charge': v.get('puissance')}] -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.l }}
       # Capteurs dont un changement relance l'instantané.
       suivis: >-
         {{ (solaires + [c.get('reseau'), c.get('reseau_export'), c.get('maison')] + productions_choisies
@@ -253,6 +278,10 @@ script:
       # niveau du script, qui reste donc lisible d'un tour à l'autre.
       stats_t: 0
       stats_minuit: ""
+      # Dernière analyse des charges des voitures (ADR-0077) : 0 à l'ouverture (vue des heures),
+      # donc calculée au premier tour ; un changement de vue relance le script sans rouvrir le
+      # popup : la tablette garde ses charges, la prochaine analyse est dans 5 minutes.
+      charges_t: "{{ 0 if vue_demandee == 'heures' else now().timestamp() }}"
     sequence:
       - repeat:
           sequence:
@@ -553,6 +582,34 @@ script:
                           rang: "{{ repeat.item }}"
                           payload: "{{ voiture_payload }}"
                         continue_on_error: true
+            # Charges des voitures (ADR-0077, action tab5_maj_voiture_charges : payload « rang|jour|
+            # heure|duree_min|kwh|part_soleil_pct » séparées par « ; »). L'analyse (script de
+            # packages/tab5_voitures.yaml) lit des milliers de lignes du recorder : au premier tour
+            # (ouverture du popup), puis au plus toutes les 5 minutes (charges_t), jamais à chaque
+            # tour. Rien sans voiture qui ait un capteur de puissance, ni sans le script d'analyse ;
+            # une analyse en échec (continue_on_error) ne pousse rien, la tablette garde ce qu'elle a.
+            # Sa réponse est poussée telle quelle : `charges`, toutes voitures, la plus récente d'abord.
+            - if: >-
+                {{ voitures_analyse | count > 0 and states['script.tab5_voitures_analyse'] is not none
+                   and now().timestamp() - (charges_t | float(0)) >= 300 }}
+              then:
+                - variables:
+                    charges_t: "{{ now().timestamp() }}"
+                - action: script.tab5_voitures_analyse
+                  data:
+                    capteurs:
+                      solaires: "{{ solaires }}"
+                      maison: "{{ c.get('maison', '') }}"
+                      maison_inclut_voitures: "{{ c.get('voitures_compteur_compte', true) }}"
+                      voitures: "{{ voitures_analyse }}"
+                  response_variable: analyse_voitures
+                  continue_on_error: true
+                - if: "{{ analyse_voitures is defined and analyse_voitures is mapping }}"
+                  then:
+                    - action: "esphome.{{ tablette }}_tab5_maj_voiture_charges"
+                      data:
+                        payload: "{{ analyse_voitures.get('charges', '') | string }}"
+                      continue_on_error: true
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
             # suivante (bouton de vue, réouverture). Au premier passage d'une autre vue que

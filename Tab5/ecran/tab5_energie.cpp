@@ -2,7 +2,7 @@
  * [AI-CONTEXT]
  * @file tab5_energie.cpp
  * @role Popup « Énergie » (ADR-0028, 04/10/2026, discussion #278 ; pages : ADR-0058,
- *       10/10/2026) : une installation solaire en quatre pages, celles qui ont des données
+ *       10/10/2026) : une installation solaire en cinq pages, celles qui ont des données
  *       seulement (brique commune des popups à pages, tab5_pages.cpp, ADR-0046), ouvert sur
  *       la première qui en a :
  *         - « Flux » (instantané, tab5_maj_energie, avec un capteur solaire) : solaire,
@@ -27,6 +27,14 @@
  *         - « Production » (ADR-0028, inchangée) : quatre cartes (solaire, maison, réseau,
  *           batterie ; une carte sans capteur disparaît) et l'historique de la production
  *           en barres (tab5_maj_energie_historique : 24 heures, 30 jours, 12 mois).
+ *         - « Charges » (ADR-0077, tab5_maj_voiture_charges, charges_lire ; seulement depuis la
+ *           première charge reçue) : les six dernières charges des voitures, une ligne chacune
+ *           (icône de la voiture, nom, jour et heure, durée, énergie, barre soleil / réseau et
+ *           part du soleil), la plus récente d'abord ; la charge en cours (une voiture dont
+ *           tab5_maj_voiture dit qu'elle charge, sa ligne la plus récente) a l'éclair et une
+ *           ligne teintée ; le total sous la liste. Tout est posé une fois (construire_charges),
+ *           six lignes toujours présentes, montrées selon ce qui est reçu. Sans barre sur une
+ *           carte étroite (kChBarre : la 7B).
  *         - « Bilan » (tab5_maj_energie_bilan, energie_bilan_lire ; en kWh, ADR-0062) : à
  *           gauche la « batterie réseau » du mois civil (net = produit − consommé depuis
  *           le 1er, jauge centrée sur 0, fin du mois au rythme des 7 derniers jours,
@@ -64,7 +72,10 @@
  *       du Bilan (cumul, mois, échelles) sont dans tab5_parse.*, testés sur PC
  *       (tools/test_parse.cpp). Une page de plus : sa valeur dans Page, son conteneur
  *       dans energie_popup.yaml (et EnergieUI::page), son nom dans kNomsPages, sa
- *       condition dans page_a_donnees() et son cas dans peindre().
+ *       condition dans page_a_donnees() et son cas dans peindre(). Une page qui s'ajoute
+ *       sans donnée ne change rien aux autres : tant que page_a_donnees() est faux, ni
+ *       son onglet ni son conteneur ne se montrent (les captures des écrans d'avant, 200 px
+ *       par onglet jusqu'à quatre pages, restent les mêmes à l'octet).
  */
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
@@ -107,11 +118,12 @@ static_assert(static_cast<int>(EnergieVue::JOURS) == JOURS && static_cast<int>(E
 enum Page : int { P_FLUX = 0,
                   P_SOLEIL = 1,
                   P_PRODUCTION = 2,
-                  P_BILAN = 3,
-                  NB_PAGES = 4 };
+                  P_CHARGES = 3,
+                  P_BILAN = 4,
+                  NB_PAGES = 5 };
 static_assert(NB_PAGES == kEnergiePages, "un conteneur par page (EnergieUI::page)");
 constexpr const char* kNomsPages[NB_PAGES] = {tr_noop("Flux"), tr_noop("Aujourd'hui"), tr_noop("Production"),
-                                              tr_noop("Bilan")};
+                                              tr_noop("Charges"), tr_noop("Bilan")};
 constexpr const char* kPeriodes[NB_VUES] = {tr_noop("Aujourd'hui"), tr_noop("30 derniers jours"),
                                             tr_noop("12 derniers mois")};
 
@@ -282,6 +294,46 @@ constexpr int32_t kCadreY = hauteur_carte(300);
 constexpr int32_t kCadreH = hauteur_carte(112);
 constexpr int32_t kSourceY = kSolZoneH - 30;       // 540
 
+// Page Charges (ADR-0077). La zone (energie_charges_zone) est l'intérieur de la carte de verre
+// pleine largeur : le corps moins les 2 px de bord de chaque côté (1198 × 594 sur le Tab5,
+// 942 × 474 sur la 7B). Titre et légende en haut, six lignes de kChPas px, le total dessous. Une
+// ligne est un rectangle (teinté pour la charge en cours) dont les textes se centrent en hauteur ;
+// ses colonnes se comptent depuis la droite (part du soleil, barre, énergie, durée), le nom et le
+// jour depuis la gauche. Mesures en Roboto 700 le 09/11/2026 (fonttools) : « Tesla 2025 » 161 px
+// en 32 (colonne de 190), « 158.5 kWh » 154 px (170), « 10 h 05 » 110 px (130), « 100 % » 90 px (96),
+// jour et heure en 22 : 205 px au plus (« Aujourd'hui · 09:02 », « Mercredi 12 » n'est pas écrit :
+// le jour de la semaine est abrégé). Sur la 7B, sans barre, le jour garde 196 px.
+constexpr int32_t kChL = kCorpsW - 4;
+constexpr int32_t kChH = kCorpsH - 4;
+constexpr int32_t kChBord = 32;             // marge du titre, de la légende, du total
+constexpr int32_t kChTitreY = 22;
+constexpr int32_t kChFiletY = 62;           // sous le titre
+constexpr int32_t kChHaut = 70;             // haut de la première ligne
+constexpr int32_t kChPied = 72;             // sous les six lignes : le filet et le total
+constexpr int32_t kChPas = (kChH - kChHaut - kChPied) / kChargesMax;   // 75 sur le Tab5, 55 sur la 7B
+constexpr int32_t kChLigneX = 16;
+constexpr int32_t kChLigneL = kChL - 2 * kChLigneX;
+constexpr int32_t kChPad = 16;              // dans la ligne
+constexpr int32_t kChIconeL = 52;
+constexpr int32_t kChNomX = 72;
+constexpr int32_t kChNomL = 190;
+constexpr int32_t kChJourX = kChNomX + kChNomL + 8;
+constexpr int32_t kChPctL = 96;
+constexpr int32_t kChPctX = kChLigneL - kChPad - kChPctL;
+constexpr bool kChBarre = kChL >= 1100;     // la barre soleil / réseau : pas sur la 7B
+constexpr int32_t kChBarreL = 190;
+constexpr int32_t kChBarreH = 16;
+constexpr int32_t kChBarreX = kChPctX - 16 - kChBarreL;
+constexpr int32_t kChKwhL = 170;
+constexpr int32_t kChKwhX = (kChBarre ? kChBarreX : kChPctX) - 14 - kChKwhL;
+constexpr int32_t kChDureeL = 130;
+constexpr int32_t kChDureeX = kChKwhX - 10 - kChDureeL;
+constexpr int32_t kChJourL = kChDureeX - 8 - kChJourX;
+static_assert(kChJourL >= 190, "le jour et l'heure tiennent entre le nom et la durée");
+constexpr int kChLegendes = 3;              // en cours, soleil, réseau
+constexpr int32_t kChLegendeL = 150;        // une légende : sa marque, puis son texte
+constexpr int32_t kChTitreL = kChL - 2 * kChBord - kChLegendes * kChLegendeL;
+
 // Page Bilan (ADR-0062). Carte de gauche (energie_bilan_heros, 416 × 594 dans son bord) :
 // texte de kHerosX à kHerosX + kHerosW ; mesures en Roboto 700 le 13/10/2026 (fonttools) :
 // « +888.8 » 172 px en 55, « kWh » 63 px et « 8888 kWh » 144 px en 32 ; titre du graphique :
@@ -401,6 +453,8 @@ struct Voiture {
 
 Instant s_i;
 Voiture s_voitures[kVoituresMax];
+ChargeLue s_charges[kChargesMax];   // tab5_maj_voiture_charges (ADR-0077) : la plus récente d'abord
+int s_charges_n = 0;                // 0 : aucune reçue, la page Charges n'existe pas
 bool s_compteur_compte = true;   // le compteur de la maison compte la charge des voitures
 Serie s_series[NB_VUES];
 Bilan s_bilans[NB_VUES];
@@ -468,6 +522,30 @@ struct CourbeCle {
     int points = 0;                   // nombre de points de s_courbe_pts
 };
 CourbeCle s_courbe_cle;
+
+// Charges (ADR-0077) : le titre, la légende, six lignes (toutes créées, montrées selon ce qui est
+// reçu) et le total.
+struct ChargesUI {
+    struct Ligne {
+        lv_obj_t* fond = nullptr;     // la ligne : teintée pour la charge en cours
+        lv_obj_t* icone = nullptr;    // la voiture, ou l'éclair de la charge en cours
+        lv_obj_t* nom = nullptr;
+        lv_obj_t* jour = nullptr;     // « Aujourd'hui · 09:02 »
+        lv_obj_t* duree = nullptr;
+        lv_obj_t* kwh = nullptr;
+        lv_obj_t* piste = nullptr;    // la barre : la part du réseau en fond…
+        lv_obj_t* soleil = nullptr;   // … et celle du soleil devant
+        lv_obj_t* pct = nullptr;
+        lv_obj_t* filet = nullptr;    // sous la ligne
+    };
+    lv_obj_t* titre = nullptr;
+    lv_obj_t* filet_titre = nullptr;
+    lv_obj_t* marque[kChLegendes] = {};
+    lv_obj_t* legende[kChLegendes] = {};
+    Ligne ligne[kChargesMax];
+    lv_obj_t* pied = nullptr;         // « Total : 95.1 kWh, dont 62 % par le soleil »
+};
+ChargesUI s_ch;
 
 // Bilan (ADR-0062) : la carte « Batterie réseau » et le graphique du net.
 struct BilanUI {
@@ -549,6 +627,7 @@ bool page_a_donnees(int p) {
     switch (p) {
         case P_FLUX: return s_i.recu && s_i.solaire.choisi;
         case P_SOLEIL: return s_soleil_montre;
+        case P_CHARGES: return s_charges_n > 0;
         case P_BILAN:
             for (const Bilan& b : s_bilans)
                 if (b.recu && b.montre) return true;
@@ -657,9 +736,11 @@ int32_t hauteur_de(float v, float maximum, int32_t pleine) {
 }
 
 // Icône d'une carte (mdi_font_45). etat : réseau 1 achat, -1 vente, 0 rien ; batterie
-// 1 charge, -1 décharge, 0 repos.
+// 1 charge, -1 décharge, 0 repos. ICONE_ECLAIR : l'éclair de la charge en cours (page Charges).
+constexpr int ICONE_ECLAIR = NB_NOEUDS;
 const char* glyphe_carte(int carte, int etat) {
     switch (carte) {
+        case ICONE_ECLAIR: return "\U000F0241";                              // flash
         case SOLAIRE: return "\U000F0A72";                                   // solar-power
         case MAISON: return "\U000F1903";                                    // home-lightning-bolt
         case RESEAU:
@@ -1254,6 +1335,105 @@ void peindre_flux() {
     for (int j = 0; j < kVoituresMax; j++) {
         peindre_anneau_voiture(s_flux.anneau_voiture[j], j < noeuds, sv[j], bv[j], rv[j]);
         peindre_legende(j, j < nv && !fusion ? voiture[j] : nullptr);
+    }
+}
+
+// --- Page Charges (ADR-0077) -------------------------------------------------------------
+
+// Le jour d'une charge avec son heure : « Aujourd'hui · 09:02 », « Hier · 23:55 », « Dim 8 · 11:15 »
+// (le jour de la semaine abrégé, puis le quantième) ; sans horloge réglée, pas de « Aujourd'hui »
+// ni de « Hier » ; sans heure lisible, le jour seul ; rien de lisible : vide.
+void charge_jour(const ChargeLue& c, char* out, size_t n) {
+    char jour[32] = "";
+    if (c.annee > 0) {
+        const int32_t d = jour_civil(c.annee, c.mois, c.jour);
+        const int32_t auj = local_day_number_today();
+        if (auj >= 0 && d == auj) snprintf(jour, sizeof(jour), "%s", tr("Aujourd'hui"));
+        else if (auj >= 0 && d == auj - 1) snprintf(jour, sizeof(jour), "%s", tr("Hier"));
+        else snprintf(jour, sizeof(jour), "%s %d", day_short_utf8(static_cast<int>(((d + 4) % 7 + 7) % 7)), c.jour);
+    }
+    if (c.heure >= 0) snprintf(out, n, "%s%s%02d:%02d", jour, jour[0] != '\0' ? " \xC2\xB7 " : "", c.heure, c.minute);
+    else snprintf(out, n, "%s", jour);
+}
+
+void peindre_charges() {
+    ChargesUI& o = s_ch;
+    if (o.titre == nullptr) return;
+    // La charge en cours : la plus récente de chaque voiture, si tab5_maj_voiture dit qu'elle charge.
+    bool vue[kVoituresMax] = {};
+    bool une_en_cours = false, un_soleil = false;
+    char t[96], x[32];
+    for (int i = 0; i < kChargesMax; i++) {
+        ChargesUI::Ligne& l = o.ligne[i];
+        if (i >= s_charges_n) {
+            ui_hidden(l.fond, true);
+            ui_hidden(l.filet, true);
+            continue;
+        }
+        const ChargeLue& c = s_charges[i];
+        const int k = c.rang == 2 ? 1 : 0;
+        const Voiture& v = s_voitures[k];
+        const bool en_cours = !vue[k] && v.presente && v.etat == VoitureEtat::EN_CHARGE;
+        vue[k] = true;
+        une_en_cours = une_en_cours || en_cours;
+        const bool soleil = std::isfinite(c.soleil);
+        un_soleil = un_soleil || soleil;
+        const int pct = soleil ? static_cast<int>(std::lround(c.soleil)) : 0;
+
+        ui_poser(l.fond, kChLigneX, kChHaut + i * kChPas + 3, kChLigneL, kChPas - 7);
+        ui_style_num(l.fond, LV_STYLE_BG_OPA, en_cours ? LV_OPA_20 : LV_OPA_TRANSP);
+        ui_poser(l.filet, kChBord, kChHaut + (i + 1) * kChPas - 1, kChL - 2 * kChBord, 1);
+        // Icône : l'éclair en charge, sinon la voiture, à la couleur de son rang.
+        ui_text(l.icone, glyphe_carte(en_cours ? ICONE_ECLAIR : VOITURE_1, 0));
+        ui_text_color(l.icone, en_cours ? UIColor.SUCCESS : (k == 0 ? UIColor.ACCENT : UIColor.ACCENT_ALT));
+        if (v.presente && v.nom[0] != '\0') snprintf(t, sizeof(t), "%s", v.nom);
+        else snprintf(t, sizeof(t), tr("Voiture %d"), k + 1);
+        texte_ha_coupe(l.nom, t, kChNomL);
+        charge_jour(c, t, sizeof(t));
+        ui_text(l.jour, t);
+        if (std::isfinite(c.duree)) duree(x, sizeof(x), c.duree);
+        else snprintf(x, sizeof(x), "--");
+        ui_text(l.duree, x);
+        ui_text_color(l.duree, en_cours ? UIColor.SUCCESS : UIColor.TEXT_PRIMARY);
+        kwh(x, sizeof(x), c.kwh);
+        ui_text(l.kwh, x);
+        if (soleil) snprintf(x, sizeof(x), "%d %%", pct);
+        else snprintf(x, sizeof(x), "--");
+        ui_text(l.pct, x);
+        ui_text_color(l.pct, soleil && pct > 0 ? UIColor.TEXT_PRIMARY : UIColor.TEXT_DIM);
+        if (kChBarre) {
+            // Le réseau en fond, le soleil devant ; sans part connue, une piste vide.
+            ui_style_couleur(l.piste, LV_STYLE_BG_COLOR, soleil ? UIColor.WARNING : UIColor.ARC_TRACK);
+            const int32_t w = soleil ? static_cast<int32_t>(std::lround(kChBarreL * c.soleil / 100.0f)) : 0;
+            ui_hidden(l.soleil, w < 1);
+            if (w >= 1 && lv_obj_get_style_width(l.soleil, LV_PART_MAIN) != w) lv_obj_set_width(l.soleil, w);
+        }
+    }
+
+    // Titre, légende (l'éclair seulement s'il y a une charge en cours, le soleil et le réseau
+    // seulement avec une barre et une part connue), total sous la dernière ligne.
+    snprintf(t, sizeof(t), "%s", tr("Dernières charges"));
+    texte_majuscules(t);
+    texte_ha_coupe(o.titre, t, kChTitreL);
+    ui_hidden(o.titre, false);
+    const bool montre[kChLegendes] = {une_en_cours, kChBarre && un_soleil, kChBarre && un_soleil};
+    const char* const noms[kChLegendes] = {tr("en cours"), tr("Soleil"), tr_ctx("energie", "Réseau")};
+    for (int j = 0; j < kChLegendes; j++) {
+        ui_hidden(o.marque[j], !montre[j]);
+        ui_text(o.legende[j], noms[j]);
+        ui_hidden(o.legende[j], !montre[j]);
+    }
+    const ChargesTotal tot = charges_total(s_charges, s_charges_n);
+    if (std::isfinite(tot.kwh)) {
+        kwh(x, sizeof(x), tot.kwh);
+        if (std::isfinite(tot.soleil))
+            snprintf(t, sizeof(t), tr("Total : %s, dont %d %% par le soleil"), x, static_cast<int>(std::lround(tot.soleil)));
+        else snprintf(t, sizeof(t), tr("Total : %s"), x);
+        texte_ha_coupe(o.pied, t, kChL - 2 * kChBord);
+        ui_y(o.pied, kChHaut + s_charges_n * kChPas + 14);
+        ui_hidden(o.pied, false);
+    } else {
+        ui_hidden(o.pied, true);
     }
 }
 
@@ -1899,6 +2079,9 @@ void peindre() {
         case P_SOLEIL:
             peindre_soleil();
             break;
+        case P_CHARGES:
+            peindre_charges();
+            break;
         case P_BILAN:
             peindre_bilan();
             break;
@@ -1962,6 +2145,25 @@ void couleurs() {
     ui_style_couleur(o.marque[3], LV_STYLE_BG_COLOR, UIColor.GOLD);
     ui_style_couleur(o.cadre, LV_STYLE_BG_COLOR, UIColor.GOLD);
     contour(o.cadre, UIColor.GOLD, 2, LV_OPA_COVER);
+    // Charges : ce qui ne change qu'avec le thème (la couleur de l'icône, de la durée, de la
+    // part du soleil et de la piste de la barre suit la ligne à chaque peinture).
+    ChargesUI& ch = s_ch;
+    ui_text_color(ch.titre, UIColor.ACCENT);
+    ui_style_couleur(ch.filet_titre, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
+    const uint32_t marques[kChLegendes] = {UIColor.SUCCESS, UIColor.GOLD, UIColor.WARNING};
+    for (int j = 0; j < kChLegendes; j++) {
+        ui_style_couleur(ch.marque[j], LV_STYLE_BG_COLOR, marques[j]);
+        ui_text_color(ch.legende[j], UIColor.TEXT_SOFT);
+    }
+    for (ChargesUI::Ligne& l : ch.ligne) {
+        ui_style_couleur(l.fond, LV_STYLE_BG_COLOR, UIColor.SUCCESS);
+        ui_style_couleur(l.filet, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
+        ui_text_color(l.nom, UIColor.TEXT_PRIMARY);
+        ui_text_color(l.jour, UIColor.TEXT_DIM);
+        ui_text_color(l.kwh, UIColor.TEXT_PRIMARY);
+        ui_style_couleur(l.soleil, LV_STYLE_BG_COLOR, UIColor.GOLD);
+    }
+    ui_text_color(ch.pied, UIColor.TEXT_PRIMARY);
     // Bilan : carte de gauche (le net, la jauge et les valeurs suivent leur signe à chaque
     // peinture), puis le graphique (barres : leur signe ; libellés de l'axe : le courant).
     BilanUI& b = s_bil;
@@ -2110,6 +2312,59 @@ void construire_soleil() {
     ui_hidden(o.source, false);
 }
 
+// Charges : titre, légende, six lignes (un fond, ses textes, sa barre, son filet), total. Les textes
+// d'une ligne sont des enfants de son fond, centrés en hauteur : x depuis le bord gauche de la
+// ligne (colonnes de tab5_energie.cpp, kCh*), jamais recalculés.
+void construire_charges() {
+    const EnergieUI& u = g_energie_ui;
+    lv_obj_t* z = u.charges_zone;
+    if (z == nullptr) return;
+    ChargesUI& o = s_ch;
+    const esphome::font::Font* icone = u.police_icone != nullptr ? u.police_icone : u.police_grasse;
+    o.titre = libelle(z, u.police, kChTitreL);
+    lv_obj_set_pos(o.titre, kChBord, kChTitreY);
+    o.filet_titre = ui_rectangle(z, LV_OPA_40, 0);
+    ui_poser(o.filet_titre, kChBord, kChFiletY, kChL - 2 * kChBord, 1);
+    // Légende à droite du titre : trois créneaux égaux, la marque puis le texte.
+    for (int j = 0; j < kChLegendes; j++) {
+        const int32_t x = kChL - kChBord - (kChLegendes - j) * kChLegendeL;
+        o.marque[j] = ui_rectangle(z, LV_OPA_COVER, LV_RADIUS_CIRCLE);
+        lv_obj_set_pos(o.marque[j], x, kChTitreY + 4);
+        lv_obj_set_size(o.marque[j], kLegendeMarque, kLegendeMarque);
+        o.legende[j] = libelle(z, u.police, kChLegendeL - kLegendeMarque - 14);
+        lv_obj_set_pos(o.legende[j], x + kLegendeMarque + 8, kChTitreY);
+    }
+    // Un texte de ligne : enfant du fond, ancré à gauche et centré en hauteur, montré avec la ligne.
+    const auto texte = [](lv_obj_t* fond, const esphome::font::Font* police, int32_t x, int32_t largeur,
+                          lv_text_align_t align) {
+        lv_obj_t* l = libelle(fond, police, largeur, align);
+        lv_obj_align(l, LV_ALIGN_LEFT_MID, x, 0);
+        lv_obj_remove_flag(l, LV_OBJ_FLAG_HIDDEN);
+        return l;
+    };
+    for (ChargesUI::Ligne& l : o.ligne) {
+        l.fond = ui_rectangle(z, LV_OPA_TRANSP, 16);
+        l.icone = texte(l.fond, icone, kChPad, kChIconeL, LV_TEXT_ALIGN_LEFT);
+        l.nom = texte(l.fond, u.police_grasse, kChNomX, kChNomL, LV_TEXT_ALIGN_LEFT);
+        l.jour = texte(l.fond, u.police, kChJourX, kChJourL, LV_TEXT_ALIGN_LEFT);
+        l.duree = texte(l.fond, u.police_grasse, kChDureeX, kChDureeL, LV_TEXT_ALIGN_RIGHT);
+        l.kwh = texte(l.fond, u.police_grasse, kChKwhX, kChKwhL, LV_TEXT_ALIGN_RIGHT);
+        l.pct = texte(l.fond, u.police_grasse, kChPctX, kChPctL, LV_TEXT_ALIGN_RIGHT);
+        if (kChBarre) {
+            l.piste = ui_rectangle(l.fond, LV_OPA_COVER, kChBarreH / 2);
+            lv_obj_set_size(l.piste, kChBarreL, kChBarreH);
+            lv_obj_align(l.piste, LV_ALIGN_LEFT_MID, kChBarreX, 0);
+            lv_obj_remove_flag(l.piste, LV_OBJ_FLAG_HIDDEN);
+            l.soleil = ui_rectangle(l.fond, LV_OPA_COVER, kChBarreH / 2);
+            lv_obj_set_size(l.soleil, kChBarreL, kChBarreH);
+            lv_obj_align(l.soleil, LV_ALIGN_LEFT_MID, kChBarreX, 0);
+        }
+        l.filet = ui_rectangle(z, LV_OPA_40, 0);
+    }
+    o.pied = libelle(z, u.police_grasse, kChL - 2 * kChBord);
+    lv_obj_set_x(o.pied, kChBord);
+}
+
 // Bilan : la carte de gauche (textes, jauge, lignes, anneau), puis le graphique (graduations,
 // zéro, barres, courbe, projection, point, bulle, axe, légende, note), dans l'ordre de dessin.
 void construire_bilan() {
@@ -2213,6 +2468,7 @@ void construire() {
     construire_production();
     construire_flux();
     construire_soleil();
+    construire_charges();
     construire_bilan();
     couleurs();
     s_pages.popup = u.popup;
@@ -2294,6 +2550,17 @@ void energie_voiture(const std::string& rang, const std::string& payload) {
         s_compteur_compte = lu.compteur_compte;
     }
     s_voitures[k] = v;
+    peindre();
+}
+
+// ADR-0077 : les dernières charges des voitures (lecture : charges_lire, tab5_parse.h). Un payload
+// vide, ou sans aucune ligne lisible, retire la page (rien à montrer, l'onglet disparaît).
+void energie_voiture_charges(const std::string& payload) {
+    if (payload_trop_long("tab5.energie", payload.size())) return;
+    ChargeLue lues[kChargesMax];
+    const int n = charges_lire(Champ{payload.data(), payload.size()}, lues);
+    for (int i = 0; i < n; i++) s_charges[i] = lues[i];
+    s_charges_n = n;
     peindre();
 }
 

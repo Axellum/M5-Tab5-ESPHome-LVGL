@@ -27,13 +27,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
 from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_BATTERIE, JOURS_FR, NABU,  # noqa: E402
                        NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,
-                       PIECES, PIECES_HUIT, PIECES_HUIT_NOMBRE, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, VOITURES,
+                       CHARGES, PIECES, PIECES_HUIT, PIECES_HUIT_NOMBRE, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES,
+                       VOITURES,
                        HeureForecast, JourForecast, Piece,
                        Tuile, build_alerte_payload, build_climat_pieces, build_energie_bilan, build_energie_payload,
                        build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
-                       build_voiture_payload, build_zones_absentes, code_pluie)
+                       build_charges_payload, build_voiture_payload, build_zones_absentes, code_pluie)
 
 
 @dataclass(frozen=True)
@@ -601,6 +602,10 @@ ENERGIE_VERS_BILAN = (ENERGIE_PAGE_PRECEDENTE,)   # Flux → Bilan : la page d'a
 ENERGIE_RETOUR_AUJOURDHUI = (ENERGIE_PAGE_PRECEDENTE,)
 ENERGIE_RETOUR_PRODUCTION = (ENERGIE_PAGE_PRECEDENTE,) * 2
 ENERGIE_RETOUR_BILAN = (ENERGIE_PAGE_SUIVANTE,)
+# Page Charges (ADR-0077) : elle s'insère entre Production et Bilan, seulement après une charge
+# poussée ; de Flux, trois pages vers la droite (Aujourd'hui, Production, Charges).
+ENERGIE_VERS_CHARGES = (ENERGIE_PAGE_SUIVANTE,) * 3
+ENERGIE_RETOUR_CHARGES = (ENERGIE_PAGE_PRECEDENTE,) * 3
 # Page Bilan (ADR-0062) : carte du graphique de 768 × 598 à x 458 de la carte modale (posée à
 # 15 px des bords), y 87-685 à l'écran ; mêmes boutons de vue que la page Production (150 × 48
 # à 18, 178 et 338 px de son bord droit, x 1241), 10 px sous son haut.
@@ -656,6 +661,19 @@ FLUX_AVEC_BATTERIE = _instantane(ENERGIE_INSTANTANE_VOITURES_BATTERIE)
 FLUX_DE_LA_DEMO = _instantane()
 VOITURE_1, VOITURE_2 = _voiture(1, VOITURES[0]), _voiture(2, VOITURES[1])
 FLUX_SANS_VOITURE = (_voiture(1, None), _voiture(2, None), FLUX_DE_LA_DEMO)
+
+
+# Les dernières charges des voitures (ADR-0077), datées du jour figé des captures : les six de la
+# démo (les deux voitures), celles de la voiture 1 seule, aucune (payload vide : la page disparaît).
+# La tablette garde ce qu'elle a reçu : chaque écran qui en pousse finit par CHARGES_AUCUNE.
+def _charges(charges: tuple = CHARGES) -> Service:
+    return Service("tab5_maj_voiture_charges",
+                   (("payload", build_charges_payload(MOMENT_DES_CAPTURES.date(), charges)),), apres=0.3)
+
+
+CHARGES_DEUX_VOITURES = _charges()
+CHARGES_UNE_VOITURE = _charges(tuple(c for c in CHARGES if c[0] == 1))
+CHARGES_AUCUNE = _charges(())
 # Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
 # la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
 # droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
@@ -1503,6 +1521,21 @@ ECRANS: tuple[Ecran, ...] = (
           (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
     Ecran("energie-flux-2-voitures-batterie",
           (FLUX_AVEC_BATTERIE, VOITURE_1, VOITURE_2, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)),
+          (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
+    # Page Charges (ADR-0077, lot B3), la cinquième : une voiture (trois charges), deux voitures (six
+    # charges, la plus récente en cours), puis une liste vidée en route (payload vide) : la page
+    # disparaît, le popup reste à quatre onglets.
+    Ecran("energie-charges-1-voiture",
+          (FLUX_SANS_BATTERIE, VOITURE_1, CHARGES_UNE_VOITURE, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_CHARGES,
+          ENERGIE_RETOUR_CHARGES + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE + (CHARGES_AUCUNE,)),
+    Ecran("energie-charges-2-voitures",
+          (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2, CHARGES_DEUX_VOITURES, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_CHARGES,
+          ENERGIE_RETOUR_CHARGES + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE + (CHARGES_AUCUNE,)),
+    Ecran("energie-charges-absente",
+          (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2, CHARGES_DEUX_VOITURES, CHARGES_AUCUNE, VERS_LA_DROITE,
+           Toucher(*TUILE_SOLAIRE)),
           (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
     Ecran("energie-aujourdhui", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_AUJOURDHUI,
           ENERGIE_RETOUR_AUJOURDHUI + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),

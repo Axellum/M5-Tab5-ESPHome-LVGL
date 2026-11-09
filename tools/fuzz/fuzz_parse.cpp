@@ -416,6 +416,14 @@ void voiture(const std::string& p) {
     energie_flux_calculer(NAN, NAN, -static_cast<float>(payload.size()), -charges[0], charges, kVoituresMax, true);
 }
 
+// Charges des voitures (tab5_maj_voiture_charges) : la liste lue, puis son total, comme tab5_energie.cpp.
+void charges(const std::string& p) {
+    ChargeLue c[kChargesMax];
+    const int n = charges_lire(Champ{p.data(), p.size()}, c);
+    const ChargesTotal t = charges_total(c, n);
+    (void) t;
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -446,6 +454,7 @@ constexpr Parseur kParseurs[] = {
     musique_pieces,   // 'B' tab5_maj_musique_pieces
     musique_liste,    // 'C' tab5_maj_musique_liste
     voiture,          // 'D' tab5_maj_voiture
+    charges,          // 'E' tab5_maj_voiture_charges
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

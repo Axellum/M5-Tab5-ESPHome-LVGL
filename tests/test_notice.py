@@ -86,6 +86,11 @@ NON_MONTREES = {
                                        "image à tirer du rendu",
     "energie-flux-2-voitures-batterie": "page Flux avec la batterie et deux voitures (un seul cercle) ; à décrire "
                                         "dans energy.md, image à tirer du rendu",
+    # Page Charges du popup Énergie (ADR-0077, lot 3 des voitures) : pas encore décrite dans energy.md,
+    # comme la page Flux avec voitures ci-dessus ; à faire avec les images du rendu validé par Axel.
+    "energie-charges-1-voiture": "page Charges avec une voiture ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-charges-2-voitures": "page Charges avec deux voitures ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-charges-absente": "sans charge, le popup garde ses quatre onglets : la page d'avant, déjà décrite",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",

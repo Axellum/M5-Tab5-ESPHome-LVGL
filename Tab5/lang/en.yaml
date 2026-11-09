@@ -1194,6 +1194,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Limite %d %%": "Limit %d %%"
 "Prête dans %s": "Ready in %s"
 "Voiture %d": "Car %d"
+# Page « Charges » du popup Énergie (lot B3)
+"Charges": "Charges"
+"Dernières charges": "Latest charges"
+"en cours": "ongoing"
+"Soleil": "Sun"
+"energie|Réseau": "Grid"
+"Hier": "Yesterday"
+"Total : %s, dont %d %% par le soleil": "Total: %s, of which %d %% solar"
+"Total : %s": "Total: %s"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "GRID BATTERY"
 "d'avance sur le réseau ce mois-ci": "ahead of the grid this month"

@@ -1280,6 +1280,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Limite %d %%": "Límite %d %%"
 "Prête dans %s": "Listo en %s"
 "Voiture %d": "Coche %d"
+# Page « Charges » du popup Énergie (lot B3)
+"Charges": "Cargas"
+"Dernières charges": "Últimas cargas"
+"en cours": "en curso"
+"Soleil": "Sol"
+"energie|Réseau": "Red"
+"Hier": "Ayer"
+"Total : %s, dont %d %% par le soleil": "Total: %s, de ello %d %% del sol"
+"Total : %s": "Total: %s"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "BATERÍA DE RED"
 "d'avance sur le réseau ce mois-ci": "de ventaja sobre la red este mes"

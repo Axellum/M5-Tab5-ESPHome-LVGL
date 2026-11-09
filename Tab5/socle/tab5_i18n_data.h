@@ -8,9 +8,16 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1315;
+static const uint16_t kI18nKeyCount = 1323;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1304,6 +1311,7 @@ static const char* const kI18nCtx[] = {
     "echecs",
     "echecs",
     "energie",
+    "energie",
     "lecteur",
     "nudge",
     "nudge",
@@ -1636,6 +1644,7 @@ static const char* const kI18nKeys[] = {
     "Charge CPU",
     "Chargement image...",
     "Chargement...",
+    "Charges",
     "Chaud",
     "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA ».",
     "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».",
@@ -1716,6 +1725,7 @@ static const char* const kI18nKeys[] = {
     "Dernier coup : MARQUÉ",
     "Dernier coup : NON MARQUÉ",
     "Dernier incident : %s",
+    "Dernières charges",
     "Deux passes : marquez les groupes morts",
     "Difficile",
     "Difficulté : %s",
@@ -1834,6 +1844,7 @@ static const char* const kI18nKeys[] = {
     "Heure fixe",
     "Heure non synchronisée",
     "Heures",
+    "Hier",
     "Histoire",
     "Home Assistant hors ligne",
     "Home Assistant ne répond pas",
@@ -2333,6 +2344,7 @@ static const char* const kI18nKeys[] = {
     "Signal",
     "Signalisation",
     "Silence",
+    "Soleil",
     "Sombre",
     "Son",
     "Son de la tablette",
@@ -2394,6 +2406,8 @@ static const char* const kI18nKeys[] = {
     "Top 10 local",
     "Top 10 local (NVS)",
     "Top 10 local - conservé en NVS, survit aux reboots et aux OTA.",
+    "Total : %s",
+    "Total : %s, dont %d %% par le soleil",
     "Toucher : sa lecture · Appui long : plus de choix",
     "Toucher le bandeau du haut pendant la partie ouvre le menu de pause.",
     "Toucher pour changer",
@@ -2524,6 +2538,7 @@ static const char* const kI18nKeys[] = {
     "déficit du jour",
     "déficit du mois",
     "en attente du calendrier",
+    "en cours",
     "entre deux sonneries",
     "fulgur.",
     "février",
@@ -2622,6 +2637,7 @@ static const char* const kI18nKeys[] = {
     "Roi",
     "Tour",
     "RÉSEAU",
+    "Réseau",
     "Lecture",
     "Douce",
     "Normale",
@@ -2955,6 +2971,7 @@ static const char* const kI18n_en[] = {
     "CPU load",  // "Charge CPU"
     "Loading image...",  // "Chargement image..."
     "Loading...",  // "Chargement..."
+    "Charges",  // "Charges"
     "Warm",  // "Chaud"
     "Choose its sensors in Home Assistant: lists “Tab5 · serveur IA · AI server”.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Choose your sensors in Home Assistant: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
@@ -3035,6 +3052,7 @@ static const char* const kI18n_en[] = {
     "Last move: MARKED",  // "Dernier coup : MARQUÉ"
     "Last move: NOT MARKED",  // "Dernier coup : NON MARQUÉ"
     "Last incident: %s",  // "Dernier incident : %s"
+    "Latest charges",  // "Dernières charges"
     "Two passes: mark the dead groups",  // "Deux passes : marquez les groupes morts"
     "Hard",  // "Difficile"
     "Difficulty: %s",  // "Difficulté : %s"
@@ -3153,6 +3171,7 @@ static const char* const kI18n_en[] = {
     "Fixed time",  // "Heure fixe"
     "Time not synced",  // "Heure non synchronisée"
     "Hours",  // "Heures"
+    "Yesterday",  // "Hier"
     "History",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Home Assistant is not responding",  // "Home Assistant ne répond pas"
@@ -3652,6 +3671,7 @@ static const char* const kI18n_en[] = {
     "Signal",  // "Signal"
     "Signage",  // "Signalisation"
     "Quiet",  // "Silence"
+    "Sun",  // "Soleil"
     "Dark",  // "Sombre"
     "Sound",  // "Son"
     "Tablet volume",  // "Son de la tablette"
@@ -3713,6 +3733,8 @@ static const char* const kI18n_en[] = {
     "Local top 10",  // "Top 10 local"
     "Local top 10 (NVS)",  // "Top 10 local (NVS)"
     "Local top 10 - kept in NVS, survives reboots and OTA updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Total: %s",  // "Total : %s"
+    "Total: %s, of which %d %% solar",  // "Total : %s, dont %d %% par le soleil"
     "Tap: see what's playing · Long press: more",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tap the top bar during a game to open the pause menu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tap to change",  // "Toucher pour changer"
@@ -3843,6 +3865,7 @@ static const char* const kI18n_en[] = {
     "daily deficit",  // "déficit du jour"
     "monthly deficit",  // "déficit du mois"
     "waiting for the calendar",  // "en attente du calendrier"
+    "ongoing",  // "en cours"
     "between two rings",  // "entre deux sonneries"
     "blazing",  // "fulgur."
     "February",  // "février"
@@ -3941,6 +3964,7 @@ static const char* const kI18n_en[] = {
     "King",  // "echecs|Roi"
     "Rook",  // "echecs|Tour"
     "GRID",  // "energie|RÉSEAU"
+    "Grid",  // "energie|Réseau"
     "Now playing",  // "lecteur|Lecture"
     "Low",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
@@ -4274,6 +4298,7 @@ static const char* const kI18n_de[] = {
     "CPU-Last",  // "Charge CPU"
     "Lade Bild...",  // "Chargement image..."
     "Lädt...",  // "Chargement..."
+    "Laden",  // "Charges"
     "Warm",  // "Chaud"
     "Wähle seine Sensoren in Home Assistant: Listen „Tab5 · serveur IA · AI server“.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Wähle deine Sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors“.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
@@ -4354,6 +4379,7 @@ static const char* const kI18n_de[] = {
     "Letzter Zug: MARKIERT",  // "Dernier coup : MARQUÉ"
     "Letzter Zug: UNMARKIERT",  // "Dernier coup : NON MARQUÉ"
     "Letzter Vorfall: %s",  // "Dernier incident : %s"
+    "Letzte Ladevorgänge",  // "Dernières charges"
     "Zweimal gepasst: tote Gruppen markieren",  // "Deux passes : marquez les groupes morts"
     "Schwer",  // "Difficile"
     "Schwierigkeit: %s",  // "Difficulté : %s"
@@ -4472,6 +4498,7 @@ static const char* const kI18n_de[] = {
     "Feste Zeit",  // "Heure fixe"
     "Zeit nicht synchronisiert",  // "Heure non synchronisée"
     "Stunden",  // "Heures"
+    "Gestern",  // "Hier"
     "Geschichte",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Home Assistant antwortet nicht",  // "Home Assistant ne répond pas"
@@ -4971,6 +4998,7 @@ static const char* const kI18n_de[] = {
     "Signal",  // "Signal"
     "Beschilderung",  // "Signalisation"
     "Leise",  // "Silence"
+    "Sonne",  // "Soleil"
     "Dunkel",  // "Sombre"
     "Ton",  // "Son"
     "Tablet-Lautstärke",  // "Son de la tablette"
@@ -5032,6 +5060,8 @@ static const char* const kI18n_de[] = {
     "Lokale Top 10",  // "Top 10 local"
     "Lokale Top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale Top 10 - in NVS gespeichert, übersteht Neustarts und OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Gesamt: %s",  // "Total : %s"
+    "Gesamt: %s, davon %d %% Sonne",  // "Total : %s, dont %d %% par le soleil"
     "Tippen: Wiedergabe · Lang drücken: mehr",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Obere Leiste im Spiel antippen öffnet das Pausenmenü.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Antippen zum Ändern",  // "Toucher pour changer"
@@ -5162,6 +5192,7 @@ static const char* const kI18n_de[] = {
     "Defizit/Tag",  // "déficit du jour"
     "Defizit/Monat",  // "déficit du mois"
     "warte auf Kalender",  // "en attente du calendrier"
+    "läuft",  // "en cours"
     "zwischen zwei Weckrufen",  // "entre deux sonneries"
     "blitz",  // "fulgur."
     "Februar",  // "février"
@@ -5260,6 +5291,7 @@ static const char* const kI18n_de[] = {
     "König",  // "echecs|Roi"
     "Turm",  // "echecs|Tour"
     "NETZ",  // "energie|RÉSEAU"
+    "Netz",  // "energie|Réseau"
     "Wiedergabe",  // "lecteur|Lecture"
     "Gering",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
@@ -5593,6 +5625,7 @@ static const char* const kI18n_nl[] = {
     "CPU-belasting",  // "Charge CPU"
     "Afbeelding laden...",  // "Chargement image..."
     "Laden...",  // "Chargement..."
+    "Laden",  // "Charges"
     "Warm",  // "Chaud"
     "Kies de sensoren in Home Assistant: lijsten „Tab5 · serveur IA · AI server”.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Kies je sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
@@ -5673,6 +5706,7 @@ static const char* const kI18n_nl[] = {
     "Laatste zet: GEMARKEERD",  // "Dernier coup : MARQUÉ"
     "Laatste zet: NIET GEMARKEERD",  // "Dernier coup : NON MARQUÉ"
     "Laatste incident: %s",  // "Dernier incident : %s"
+    "Laatste laadsessies",  // "Dernières charges"
     "Twee passen: markeer de dode groepen",  // "Deux passes : marquez les groupes morts"
     "Moeilijk",  // "Difficile"
     "Moeilijkheid: %s",  // "Difficulté : %s"
@@ -5791,6 +5825,7 @@ static const char* const kI18n_nl[] = {
     "Vaste tijd",  // "Heure fixe"
     "Tijd niet gesynchroniseerd",  // "Heure non synchronisée"
     "Uren",  // "Heures"
+    "Gisteren",  // "Hier"
     "Historie",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Home Assistant reageert niet",  // "Home Assistant ne répond pas"
@@ -6290,6 +6325,7 @@ static const char* const kI18n_nl[] = {
     "Signaal",  // "Signal"
     "Bewegwijzering",  // "Signalisation"
     "Stil",  // "Silence"
+    "Zon",  // "Soleil"
     "Donker",  // "Sombre"
     "Geluid aan",  // "Son"
     "Tabletvolume",  // "Son de la tablette"
@@ -6351,6 +6387,8 @@ static const char* const kI18n_nl[] = {
     "Lokale top 10",  // "Top 10 local"
     "Lokale top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale top 10 - bewaard in NVS, overleeft herstarts en OTA-updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Totaal: %s",  // "Total : %s"
+    "Totaal: %s, waarvan %d %% zon",  // "Total : %s, dont %d %% par le soleil"
     "Tik: weergave bekijken · Lang drukken: meer",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tik tijdens de partij op de bovenbalk voor het pauzemenu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tik om te wijzigen",  // "Toucher pour changer"
@@ -6481,6 +6519,7 @@ static const char* const kI18n_nl[] = {
     "tekort/dag",  // "déficit du jour"
     "tekort/maand",  // "déficit du mois"
     "wacht op de agenda",  // "en attente du calendrier"
+    "bezig",  // "en cours"
     "tussen twee keer afgaan",  // "entre deux sonneries"
     "bliksem",  // "fulgur."
     "februari",  // "février"
@@ -6579,6 +6618,7 @@ static const char* const kI18n_nl[] = {
     "Koning",  // "echecs|Roi"
     "Toren",  // "echecs|Tour"
     "NET",  // "energie|RÉSEAU"
+    "Net",  // "energie|Réseau"
     "Nu speelt",  // "lecteur|Lecture"
     "Laag",  // "nudge|Douce"
     "Normaal",  // "nudge|Normale"
@@ -6912,6 +6952,7 @@ static const char* const kI18n_es[] = {
     "Carga CPU",  // "Charge CPU"
     "Cargando imagen...",  // "Chargement image..."
     "Cargando...",  // "Chargement..."
+    "Cargas",  // "Charges"
     "Cálido",  // "Chaud"
     "Elige sus sensores en Home Assistant: listas «Tab5 · serveur IA · AI server».",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Elige tus sensores en Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
@@ -6992,6 +7033,7 @@ static const char* const kI18n_es[] = {
     "Última jugada: MARCADA",  // "Dernier coup : MARQUÉ"
     "Última jugada: SIN MARCAR",  // "Dernier coup : NON MARQUÉ"
     "Último incidente: %s",  // "Dernier incident : %s"
+    "Últimas cargas",  // "Dernières charges"
     "Dos pases: marca los grupos muertos",  // "Deux passes : marquez les groupes morts"
     "Difícil",  // "Difficile"
     "Dificultad: %s",  // "Difficulté : %s"
@@ -7110,6 +7152,7 @@ static const char* const kI18n_es[] = {
     "Hora fija",  // "Heure fixe"
     "Hora no sincronizada",  // "Heure non synchronisée"
     "Horas",  // "Heures"
+    "Ayer",  // "Hier"
     "Historia",  // "Histoire"
     "Home Assistant sin conexión",  // "Home Assistant hors ligne"
     "Home Assistant no responde",  // "Home Assistant ne répond pas"
@@ -7609,6 +7652,7 @@ static const char* const kI18n_es[] = {
     "Señal",  // "Signal"
     "Señalización",  // "Signalisation"
     "Silencio",  // "Silence"
+    "Sol",  // "Soleil"
     "Oscuro",  // "Sombre"
     "Sonido",  // "Son"
     "Sonido de la tableta",  // "Son de la tablette"
@@ -7670,6 +7714,8 @@ static const char* const kI18n_es[] = {
     "Top 10 local",  // "Top 10 local"
     "Top 10 local (NVS)",  // "Top 10 local (NVS)"
     "Top 10 local - guardado en NVS, sobrevive a reinicios y OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Total: %s",  // "Total : %s"
+    "Total: %s, de ello %d %% del sol",  // "Total : %s, dont %d %% par le soleil"
     "Tocar: ver reproducción · Pulsación larga: más",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tocar la barra superior durante la partida abre el menú de pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Toca para cambiar",  // "Toucher pour changer"
@@ -7800,6 +7846,7 @@ static const char* const kI18n_es[] = {
     "déficit día",  // "déficit du jour"
     "déficit mes",  // "déficit du mois"
     "esperando el calendario",  // "en attente du calendrier"
+    "en curso",  // "en cours"
     "entre dos timbres",  // "entre deux sonneries"
     "fulgur.",  // "fulgur."
     "febrero",  // "février"
@@ -7898,6 +7945,7 @@ static const char* const kI18n_es[] = {
     "Rey",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
     "RED",  // "energie|RÉSEAU"
+    "Red",  // "energie|Réseau"
     "Reproducción",  // "lecteur|Lecture"
     "Baja",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
@@ -8231,6 +8279,7 @@ static const char* const kI18n_it[] = {
     "Carico CPU",  // "Charge CPU"
     "Carico l'immagine...",  // "Chargement image..."
     "Caricamento...",  // "Chargement..."
+    "Ricariche",  // "Charges"
     "Caldo",  // "Chaud"
     "Scegli i suoi sensori in Home Assistant: liste «Tab5 · serveur IA · AI server».",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Scegli i tuoi sensori in Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
@@ -8311,6 +8360,7 @@ static const char* const kI18n_it[] = {
     "Ultima mossa: SEGNATA",  // "Dernier coup : MARQUÉ"
     "Ultima mossa: NON SEGNATA",  // "Dernier coup : NON MARQUÉ"
     "Ultimo incidente: %s",  // "Dernier incident : %s"
+    "Ultime ricariche",  // "Dernières charges"
     "Entrambi passano: segna i gruppi morti",  // "Deux passes : marquez les groupes morts"
     "Difficile",  // "Difficile"
     "Difficoltà: %s",  // "Difficulté : %s"
@@ -8429,6 +8479,7 @@ static const char* const kI18n_it[] = {
     "Ora fissa",  // "Heure fixe"
     "Ora non sincronizzata",  // "Heure non synchronisée"
     "Ore",  // "Heures"
+    "Ieri",  // "Hier"
     "Storia",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Home Assistant non risponde",  // "Home Assistant ne répond pas"
@@ -8928,6 +8979,7 @@ static const char* const kI18n_it[] = {
     "Segnale",  // "Signal"
     "Segnaletica",  // "Signalisation"
     "Silenzioso",  // "Silence"
+    "Sole",  // "Soleil"
     "Scuro",  // "Sombre"
     "Audio",  // "Son"
     "Volume del tablet",  // "Son de la tablette"
@@ -8989,6 +9041,8 @@ static const char* const kI18n_it[] = {
     "Top 10 locale",  // "Top 10 local"
     "Top 10 locale (NVS)",  // "Top 10 local (NVS)"
     "Top 10 locale - salvata in NVS, resiste a riavvii e OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Totale: %s",  // "Total : %s"
+    "Totale: %s, di cui %d %% dal sole",  // "Total : %s, dont %d %% par le soleil"
     "Tocca: riproduzione · Tieni premuto: altro",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tocca la barra in alto durante la partita per il menu di pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tocca per cambiare",  // "Toucher pour changer"
@@ -9119,6 +9173,7 @@ static const char* const kI18n_it[] = {
     "deficit giorno",  // "déficit du jour"
     "deficit mese",  // "déficit du mois"
     "in attesa del calendario",  // "en attente du calendrier"
+    "in corso",  // "en cours"
     "tra due squilli",  // "entre deux sonneries"
     "fulminea",  // "fulgur."
     "febbraio",  // "février"
@@ -9217,6 +9272,7 @@ static const char* const kI18n_it[] = {
     "Re",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
     "RETE",  // "energie|RÉSEAU"
+    "Rete",  // "energie|Réseau"
     "In ascolto",  // "lecteur|Lecture"
     "Bassa",  // "nudge|Douce"
     "Normale",  // "nudge|Normale"
@@ -9550,6 +9606,7 @@ static const char* const kI18n_tr[] = {
     "CPU yükü",  // "Charge CPU"
     "Görsel yükleniyor...",  // "Chargement image..."
     "Yükleniyor...",  // "Chargement..."
+    "Şarjlar",  // "Charges"
     "Sıcak",  // "Chaud"
     "Sensörlerini Home Assistant'ta seçin: “Tab5 · serveur IA · AI server” listeleri.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Sensörlerinizi Home Assistant'ta seçin: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
@@ -9630,6 +9687,7 @@ static const char* const kI18n_tr[] = {
     "Son hamle: İŞARETLİ",  // "Dernier coup : MARQUÉ"
     "Son hamle: İŞARETSİZ",  // "Dernier coup : NON MARQUÉ"
     "Son olay: %s",  // "Dernier incident : %s"
+    "Son şarjlar",  // "Dernières charges"
     "İki pas: ölü grupları işaretle",  // "Deux passes : marquez les groupes morts"
     "Zor",  // "Difficile"
     "Zorluk: %s",  // "Difficulté : %s"
@@ -9748,6 +9806,7 @@ static const char* const kI18n_tr[] = {
     "Sabit saat",  // "Heure fixe"
     "Saat eşitlenmedi",  // "Heure non synchronisée"
     "Saatler",  // "Heures"
+    "Dün",  // "Hier"
     "Tarih",  // "Histoire"
     "Home Assistant çevrimdışı",  // "Home Assistant hors ligne"
     "Home Assistant yanıt vermiyor",  // "Home Assistant ne répond pas"
@@ -10247,6 +10306,7 @@ static const char* const kI18n_tr[] = {
     "Sinyal",  // "Signal"
     "Tabela",  // "Signalisation"
     "Sessiz",  // "Silence"
+    "Güneş",  // "Soleil"
     "Koyu",  // "Sombre"
     "Ses",  // "Son"
     "Tablet ses düzeyi",  // "Son de la tablette"
@@ -10308,6 +10368,8 @@ static const char* const kI18n_tr[] = {
     "Yerel ilk 10",  // "Top 10 local"
     "Yerel ilk 10 (NVS)",  // "Top 10 local (NVS)"
     "Yerel ilk 10 - NVS'de saklanır, yeniden başlatma ve OTA'da korunur.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Toplam: %s",  // "Total : %s"
+    "Toplam: %s, bunun %d %% güneşten",  // "Total : %s, dont %d %% par le soleil"
     "Dokun: çalanı gör · Uzun bas: daha fazla",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Oyun sırasında üst banda dokunmak duraklatma menüsünü açar.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Değiştirmek için dokun",  // "Toucher pour changer"
@@ -10438,6 +10500,7 @@ static const char* const kI18n_tr[] = {
     "günlük eksik",  // "déficit du jour"
     "aylık eksik",  // "déficit du mois"
     "takvim bekleniyor",  // "en attente du calendrier"
+    "sürüyor",  // "en cours"
     "iki çalma arasında",  // "entre deux sonneries"
     "şimşek",  // "fulgur."
     "Şubat",  // "février"
@@ -10536,6 +10599,7 @@ static const char* const kI18n_tr[] = {
     "Şah",  // "echecs|Roi"
     "Kale",  // "echecs|Tour"
     "ŞEBEKE",  // "energie|RÉSEAU"
+    "Şebeke",  // "energie|Réseau"
     "Çalıyor",  // "lecteur|Lecture"
     "Düşük",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"

@@ -43,6 +43,7 @@ FAMILLES = [
     ("B", "tab5_maj_musique_pieces", ("pieces", "contexte")),
     ("C", "tab5_maj_musique_liste", ("contexte", "elements")),
     ("D", "tab5_maj_voiture", ("rang", "payload")),
+    ("E", "tab5_maj_voiture_charges", "payload"),
 ]
 
 

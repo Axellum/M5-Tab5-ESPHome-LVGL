@@ -1268,3 +1268,40 @@ struct VoitureLue {
 // Lit un payload ; vrai si une voiture est présente (out.presente). Aucune écriture dans
 // le payload ; out ne le survit pas (nom et unité y pointent).
 bool voiture_lire(const Champ& payload, VoitureLue& out);
+
+// ─── 18. Charges des voitures (page « Charges » du popup Énergie, tab5_maj_voiture_charges) ───
+// Jusqu'à kChargesMax lignes séparées par « ; », la plus récente d'abord, chacune
+// « rang|jour|heure|duree_min|kwh|part_soleil_pct » : la sortie de `charges` du script
+// tab5_voitures_analyse (packages/tab5_voitures.yaml, ADR-0074), poussée telle quelle. Même
+// famille que tab5_maj_voiture : un champ vide se lit « inconnu », un champ de trop est
+// ignoré, on ajoute à la FIN seulement.
+//   rang          1 ou 2 : la voiture de tab5_maj_voiture ; autre chose : la ligne est ignorée ;
+//   jour          AAAA-MM-JJ local du début, sinon illisible (annee = 0) ;
+//   heure         HH:MM local du début, sinon illisible (heure = -1) ;
+//   duree_min     minutes, de 0 à kChargeDureeMax, sinon inconnue ;
+//   kwh           énergie de la charge (energie_kwh), sinon inconnue ;
+//   part_soleil   0..100, la part de l'énergie venue du soleil ; vide (aucun capteur solaire
+//                 choisi) ou « nan » (non calculable) : inconnue.
+// Une ligne dont ni le jour, ni l'heure, ni la durée, ni l'énergie ne se lit est ignorée.
+// Un payload vide : aucune charge (la page « Charges » disparaît).
+constexpr int kChargesMax = 6;
+constexpr float kChargeDureeMax = 7.0f * 24.0f * 60.0f;   // une semaine
+struct ChargeLue {
+    int rang = 0;
+    int annee = 0, mois = 0, jour = 0;   // annee 0 : jour illisible
+    int heure = -1, minute = -1;         // heure -1 : heure illisible
+    float duree = NAN;                   // minutes
+    float kwh = NAN;
+    float soleil = NAN;                  // 0..100
+};
+// Lit un payload ; renvoie le nombre de charges lues (0 à kChargesMax), dans l'ordre reçu.
+// Aucune écriture dans le payload ; `out` (kChargesMax places) ne contient rien qui y pointe.
+int charges_lire(const Champ& payload, ChargeLue out[kChargesMax]);
+// Total d'une liste : énergie des lignes qui en ont une, et part du soleil de ce total, pondérée
+// par l'énergie des lignes dont la part est connue (NAN si aucune ne l'est ; NAN aussi pour le
+// total sans énergie lisible). « 12.4 kWh à 76 % + 14.4 kWh à 0 % » : 26.8 kWh, 35 %.
+struct ChargesTotal {
+    float kwh = NAN;
+    float soleil = NAN;
+};
+ChargesTotal charges_total(const ChargeLue* charges, int n);
