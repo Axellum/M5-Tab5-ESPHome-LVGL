@@ -43,6 +43,10 @@
       Chaque poussée boucle dessus :
         {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
         {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+  tab5_prefixe_publie(device_id), tab5_tablettes(choisie, trigger)
+      Poussée de connexion (09/11/2026) : 'oui' quand HA connaît le préfixe d'une tablette
+      (tab5_pret l'exige en plus de l'API) ; la liste des destinataires du blueprint
+      « Tab5 — emplacements », recalculée après l'attente de la connexion.
   tab5_cibles(appareil), tab5_entite(appareil, role), tab5_nom(appareil)
       Registre des écrans (ADR-0071, 25/10/2026) : ce qui lit les entités d'UN écran
       (allumer à la présence, thème et nuit, micro, santé, briefing) boucle sur les
@@ -110,6 +114,20 @@
         | map('states') | reject('in', ['unknown', 'unavailable', 'none']) | select('match', '^[a-z0-9_]+$') | list -%}
   {{- lisibles | first | default('tab5_ha_hmi', true) -}}
 {%- endmacro -%}
+{%- macro tab5_prefixe_publie(d) -%}
+  {#- 'oui' quand HA connaît le préfixe des actions de l'appareil d : son capteur « Préfixe
+      des actions » a publié une valeur, ou l'appareil n'a pas ce capteur (firmware d'avant
+      ADR-0063 : le nom par défaut est le bon). '' tant que le capteur existe sans valeur
+      (`unknown` / `unavailable`) : la tablette vient de se connecter et publie son préfixe
+      une trentaine de millisecondes APRÈS son « HA API Status » (09/11/2026, 17:42:23,56
+      puis 23,59). Une poussée calculée dans cet intervalle retombait sur « tab5_ha_hmi »,
+      le nom par défaut, c'est-à-dire sur les actions d'une autre carte, hors ligne :
+      « Not connected to tab5-ha-hmi », et pots, températures, clim et tuiles perdus
+      jusqu'à la reconnexion suivante. Une valeur illisible mais publiée (« Salon-7B »)
+      compte : tab5_prefixe retombe alors sur le nom par défaut, comme avant. -#}
+  {%- set capteurs = device_entities(d | string) | select('match', 'sensor[.].*_(prefixe_des_actions|action_prefix)(_[0-9]+)?$') | list -%}
+  {{- 'oui' if not capteurs or capteurs | map('states') | reject('in', ['unknown', 'unavailable']) | list | count > 0 else '' -}}
+{%- endmacro -%}
 {%- macro tab5_cibles(appareil) -%}
   {#- device_id à servir, séparés par des virgules (lire avec `.split(',') | select | list`) :
       la tablette `appareil` (device_id de l'événement qui demande une réponse) si c'en est
@@ -141,6 +159,19 @@
     {%- endif -%}
   {%- endfor -%}
   {{- ns.l | join(',') -}}
+{%- endmacro -%}
+{%- macro tab5_tablettes(choisie, trigger) -%}
+  {#- Les destinataires d'une poussée du blueprint « Tab5 — emplacements » (ADR-0063) :
+      `choisie` (son entrée « tablette ») si ce n'est pas le nom par défaut ; sinon
+      tab5_destinataires de l'écran dont vient l'événement, ou de chaque écran connecté
+      quand le déclencheur n'est pas un événement. Le blueprint l'appelle deux fois : au
+      déclenchement, puis APRÈS l'attente d'une connexion (tab5_pret), seul moment où le
+      préfixe d'un écran qui vient de redémarrer est connu. Rend une liste Python (texte). -#}
+  {%- if (choisie | default('', true) | string) not in ['', 'tab5_ha_hmi'] -%}
+    {{- [choisie | string] -}}
+  {%- else -%}
+    {{- tab5_destinataires(trigger.event.data.device_id | default('', true) if (trigger.platform | default('')) == 'event' else '').split(',') | select | list -}}
+  {%- endif -%}
 {%- endmacro -%}
 {%- macro tab5_entite(appareil, role) -%}
   {#- entity_id du rôle `role` de l'appareil `appareil` ('' sinon). Noms français (avant
@@ -179,8 +210,10 @@
   {{- (device_attr(d, 'name_by_user') or device_attr(d, 'name') or 'Tab5') if d and '.' not in d else 'Tab5' -}}
 {%- endmacro -%}
 {%- macro tab5_pret(appareil='') -%}
-  {#- 'oui' quand on peut envoyer à `appareil` : son « HA API Status » est `on`. Sans
-      appareil (ou pas une tablette) : une tablette connectée, comme tab5_connectee().
+  {#- 'oui' quand on peut envoyer à `appareil` : son « HA API Status » est `on` ET son
+      préfixe d'actions est connu (tab5_prefixe_publie : sans lui, la poussée part vers le
+      nom par défaut, 09/11/2026). Sans appareil (ou pas une tablette) : une tablette
+      connectée, comme tab5_connectee().
       Plusieurs écrans (25/10/2026) : à la connexion de la 7B, l'attente « une tablette
       connectée » passait aussitôt grâce au Tab5, la liste des destinataires était
       calculée 0,15 s avant que la 7B soit `on` et sa poussée complète partait au Tab5
@@ -189,7 +222,7 @@
         {{ tab5_pret(appareil) == 'oui' }} -#}
   {%- set d = appareil | default('', true) | string -%}
   {%- if d and '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' -%}
-    {{- 'oui' if is_state(tab5_entite(d, 'api'), 'on') else '' -}}
+    {{- 'oui' if is_state(tab5_entite(d, 'api'), 'on') and tab5_prefixe_publie(d) == 'oui' else '' -}}
   {%- else -%}
     {{- tab5_connectee() -}}
   {%- endif -%}
