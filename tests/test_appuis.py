@@ -63,6 +63,8 @@ OPTIONS = {
     "FROID": "Fridges",
     # Serveur IA (ADR-0059, 10/10/2026) : après lui.
     "SERVEUR_IA": "AI server",
+    # Popup Voitures (ADR-0079, 09/11/2026) : après lui, avant l'Arcade.
+    "VOITURES": "Cars",
 }
 # Code du blueprint → valeur d'Ecran.
 CODES = {

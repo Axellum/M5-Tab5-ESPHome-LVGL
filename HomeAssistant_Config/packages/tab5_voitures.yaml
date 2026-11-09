@@ -26,6 +26,9 @@
 #           maison, aucune ligne de maison pendant la charge)
 #       jour_debut, jour_1, jour_2     le jour et 24 kWh par heure locale (3 décimales) séparés par
 #           « ; » ; vide = aucune ligne pour la voiture cette heure (heure à venir, voiture muette)
+#       jour_maison                    comme jour_1, pour la maison SANS les voitures (ADR-0078, page
+#           « Aujourd'hui ») : son capteur moins la charge des voitures s'il la compte, jamais sous 0 ;
+#           entièrement vide sans capteur de maison ni voiture
 #       bilan_debut, bilan             le 1er du mois (AAAA-MM-01) et 11 champs séparés par « | » :
 #           voiture 1 puis voiture 2, 5 champs chacune (vides si la voiture n'existe pas) :
 #           kwh (1 décimale) | part_soleil_pct | km | kwh_100km | reseau_kwh (kWh pris au réseau,
@@ -347,6 +350,35 @@ script:
               {%- set sortie.d = dict(sortie.d, **{v.rang: lg.l | join(';')}) -%}
             {%- endfor -%}
             {{ sortie.d }}
+          # 24 kWh par heure locale du jour pour la maison SANS les voitures (ADR-0078) : son capteur,
+          # moins la charge des voitures s'il la compte (jamais sous 0). Vide : pas de capteur de
+          # maison, pas de voiture, ou aucune ligne de maison dans l'heure.
+          jour_maison: >-
+            {%- set wh = namespace(d={}) -%}
+            {%- for r in (mesures.get(maison, []) if maison and voitures else []) -%}
+              {%- if fen.j0 <= r[0] < fen.j1 -%}
+                {%- set h = (as_local(as_datetime(r[3])).hour) | string -%}
+                {%- set wh.d = dict(wh.d, **{h: wh.d.get(h, 0) + r[2] * r[1] / 3600}) -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- set lg = namespace(l=[]) -%}
+            {%- for h in range(24) -%}
+              {%- set k = h | string -%}
+              {%- if k in wh.d -%}
+                {%- set v = namespace(x=wh.d[k]) -%}
+                {%- if inclut -%}
+                  {%- set cars = namespace(s=0) -%}
+                  {%- for vo in voitures -%}
+                    {%- set cars.s = cars.s + analyse[vo.rang].heures.get(k, 0) -%}
+                  {%- endfor -%}
+                  {%- set v.x = [0, v.x - cars.s] | max -%}
+                {%- endif -%}
+                {%- set lg.l = lg.l + [(v.x / 1000) | round(3) | string] -%}
+              {%- else -%}
+                {%- set lg.l = lg.l + [''] -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ (lg.l | join(';')) if maison and voitures else '' }}
           # Le bilan du mois, 11 champs : 5 par voiture (kwh | part | km | kwh_100km | reseau),
           # puis la part de la maison.
           bilan_txt: >-
@@ -392,7 +424,7 @@ script:
           reponse: >-
             {{ {'charges': charges_txt.get('tout', ''), 'charges_1': charges_txt.get('1', ''),
                 'charges_2': charges_txt.get('2', ''), 'jour_debut': fen.jour,
-                'jour_1': jour_txt.get('1', ''), 'jour_2': jour_txt.get('2', ''),
+                'jour_1': jour_txt.get('1', ''), 'jour_2': jour_txt.get('2', ''), 'jour_maison': jour_maison,
                 'bilan_debut': fen.mois, 'bilan': bilan_txt if voitures else '', 'precision': precision} }}
       - stop: "Cars charge analysis done"
         response_variable: reponse

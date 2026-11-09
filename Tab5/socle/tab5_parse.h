@@ -1312,3 +1312,42 @@ ChargesTotal charges_total(const ChargeLue* charges, int n);
 // et compte par créneaux de 5 minutes, donc une charge qui vient de commencer n'y est pas encore et
 // la ligne la plus récente peut être celle d'hier (qui ne doit pas passer pour la charge en cours).
 bool charge_en_cours(const ChargeLue& charge, int32_t maintenant);
+
+// ─── 19. Consommation du jour, empilée (page « Aujourd'hui », tab5_maj_voiture_jour, ADR-0078) ───
+// Une série par appel : variables `rang` (« 0 » la maison SANS les voitures, « 1 » et « 2 » les
+// voitures de tab5_maj_voiture), `debut` (AAAA-MM-JJ du jour, lu par l'écran) et `valeurs` : 24 kWh
+// par heure locale du jour, « ; » entre deux, exactement le format de tab5_maj_energie_historique
+// (energie_kwh_liste : un champ vide compte et vaut NAN, négatif, illisible ou au-delà de
+// kEnergieKwhMax aussi). C'est la sortie `jour_1`, `jour_2` du script tab5_voitures_analyse (ADR-0074)
+// et sa sortie `jour_maison` (ADR-0078), poussées telles quelles. Une valeur vide = pas de ligne de
+// statistique pour cette heure (heure à venir, voiture endormie) ; un payload vide retire la ligne.
+// La maison est celle de la page Flux : sa mesure moins la charge des voitures quand le compteur
+// les compte (HA le fait, la tablette ne retranche rien ici).
+constexpr int kConsoLignes = kVoituresMax + 1;
+struct ConsoJour {
+    bool recue[kConsoLignes] = {};                  // la ligne a été reçue (et n'est pas vide)
+    float kwh[kConsoLignes][kEnergieHeures] = {};   // NAN : heure sans valeur ; sans objet si !recue
+};
+// Lit la série d'un rang dans `out` (les autres lignes ne bougent pas) ; renvoie vrai si le rang est
+// 0, 1 ou 2 (sinon rien n'est écrit). Valeurs vides : la ligne est retirée (recue = faux).
+bool conso_jour_lire(const Champ& rang, const Champ& valeurs, ConsoJour& out);
+// Une voiture a au moins une heure connue : la couche de consommation existe (sans voiture, la page
+// « Aujourd'hui » reste celle d'avant).
+bool conso_jour_voitures(const ConsoJour& c);
+// Hauteur d'une pile à l'heure h (0..23) : la somme des lignes reçues qui y ont une valeur ; NAN si
+// aucune.
+float conso_jour_pile(const ConsoJour& c, int h);
+// Totaux du jour pour la légende et la ligne de bilan. `production` : les kWh de chaque heure de la
+// page (n_production valeurs, NAN = heure sans valeur). La part du soleil se calcule heure par
+// heure comme le script de HA le fait par créneau (ADR-0074) : disponible = production − maison
+// (jamais sous 0), le soleil couvre min(voitures, disponible) ; seules comptent les heures où une
+// voiture ET la maison ont une valeur (le même soleil n'est pas compté deux fois : les voitures
+// sont additionnées avant le min) ; une heure sans production vaut 0. NAN : pas de ligne de maison,
+// pas de production, ou voitures à moins de 10 Wh dans le jour.
+struct ConsoJourTotaux {
+    float maison = NAN;                   // kWh du jour : somme des heures connues
+    float voiture[kVoituresMax] = {NAN, NAN};
+    float voitures = NAN;                 // la somme des deux
+    float part = NAN;                     // 0..100 : la part des voitures venue du soleil
+};
+ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, int n_production);

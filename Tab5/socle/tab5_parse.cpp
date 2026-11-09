@@ -2002,3 +2002,59 @@ bool charge_en_cours(const ChargeLue& charge, int32_t maintenant) {
     const int32_t retard = maintenant - fin;
     return retard >= -kEnAvanceMax && retard <= kEnRetardMax;
 }
+
+// ─── 19. Consommation du jour, empilée (ADR-0078) ───
+static_assert(kVoituresMax == 2, "ConsoJourTotaux::voiture : une valeur initiale par voiture");
+
+bool conso_jour_lire(const Champ& rang, const Champ& valeurs, ConsoJour& out) {
+    if (rang.p == nullptr || rang.n != 1 || rang.p[0] < '0' || rang.p[0] > '0' + kVoituresMax) return false;
+    const int r = rang.p[0] - '0';
+    float v[kEnergieHeures];
+    const int n = energie_kwh_liste(valeurs, v, kEnergieHeures);
+    out.recue[r] = n > 0;
+    for (int h = 0; h < kEnergieHeures; h++) out.kwh[r][h] = h < n ? v[h] : NAN;
+    return true;
+}
+
+bool conso_jour_voitures(const ConsoJour& c) {
+    for (int r = 1; r < kConsoLignes; r++) {
+        if (!c.recue[r]) continue;
+        for (int h = 0; h < kEnergieHeures; h++)
+            if (std::isfinite(c.kwh[r][h])) return true;
+    }
+    return false;
+}
+
+float conso_jour_pile(const ConsoJour& c, int h) {
+    if (h < 0 || h >= kEnergieHeures) return NAN;
+    float somme = NAN;
+    for (int r = 0; r < kConsoLignes; r++)
+        if (c.recue[r]) somme = somme_si(somme, c.kwh[r][h]);
+    return somme;
+}
+
+ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, int n_production) {
+    ConsoJourTotaux t;
+    for (int h = 0; h < kEnergieHeures; h++) {
+        if (c.recue[0]) t.maison = somme_si(t.maison, c.kwh[0][h]);
+        for (int r = 1; r < kConsoLignes; r++)
+            if (c.recue[r]) t.voiture[r - 1] = somme_si(t.voiture[r - 1], c.kwh[r][h]);
+    }
+    for (int k = 0; k < kVoituresMax; k++) t.voitures = somme_si(t.voitures, t.voiture[k]);
+    // Part du soleil : voitures et maison connues à l'heure, la production de l'heure (0 sans valeur).
+    if (!c.recue[0] || production == nullptr || n_production <= 0) return t;
+    float voitures = 0.0f, soleil = 0.0f;
+    for (int h = 0; h < kEnergieHeures; h++) {
+        float v = NAN;
+        for (int r = 1; r < kConsoLignes; r++)
+            if (c.recue[r]) v = somme_si(v, c.kwh[r][h]);
+        const float maison = c.kwh[0][h];
+        if (!std::isfinite(v) || !std::isfinite(maison)) continue;
+        const float prod = h < n_production && std::isfinite(production[h]) && production[h] > 0.0f ? production[h] : 0.0f;
+        const float dispo = std::max(prod - maison, 0.0f);
+        voitures += v;
+        soleil += std::min(v, dispo);
+    }
+    if (voitures >= 0.01f) t.part = std::min(std::max(100.0f * soleil / voitures, 0.0f), 100.0f);
+    return t;
+}

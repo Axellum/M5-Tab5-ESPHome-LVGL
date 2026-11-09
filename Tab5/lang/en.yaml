@@ -1203,6 +1203,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Hier": "Yesterday"
 "Total : %s, dont %d %% par le soleil": "Total: %s, of which %d %% solar"
 "Total : %s": "Total: %s"
+# Page « Aujourd'hui » avec la consommation des voitures (ADR-0078) : « 62 % » en gras, puis cette phrase
+# à droite, dans un cadre de 172 px (trois lignes au plus, 22 px la ligne)
+"de la charge par le soleil": "of charging from the sun"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "GRID BATTERY"
 "d'avance sur le réseau ce mois-ci": "ahead of the grid this month"
@@ -1552,3 +1555,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Bonbon": "Candy"
 "Sorbet": "Sorbet"
 "Ultraviolet": "Ultraviolet"
+# --- Popup Voitures (tab5_voitures.cpp, ADR-0079) -------------------------------
+"Voitures": "Cars"
+"d'autonomie": "of range"
+"Aucune voiture reçue": "No car received"
+"Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Choose them in the blueprint, section “Energy: cars”."

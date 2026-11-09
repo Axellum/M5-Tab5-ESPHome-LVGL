@@ -34,7 +34,8 @@ from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_
                        build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
-                       build_charges_payload, build_voiture_payload, build_zones_absentes, code_pluie)
+                       build_charges_payload, build_conso_jour, build_voiture_payload, build_zones_absentes, code_pluie,
+                       CONSO_JOUR_RANGS)
 
 
 @dataclass(frozen=True)
@@ -674,6 +675,20 @@ def _charges(charges: tuple = CHARGES) -> Service:
 CHARGES_DEUX_VOITURES = _charges()
 CHARGES_UNE_VOITURE = _charges(tuple(c for c in CHARGES if c[0] == 1))
 CHARGES_AUCUNE = _charges(())
+
+
+# La consommation du jour heure par heure (ADR-0078), datée du jour figé des captures : la maison hors
+# voitures (rang 0) et les voitures de la démo (1 et 2), la voiture 1 seule avec la maison, aucune (séries
+# vides : la page « Aujourd'hui » redevient celle d'avant). La tablette garde ce qu'elle a reçu : chaque
+# écran qui en pousse finit par CONSO_AUCUNE.
+def _conso(rang: str, valeurs: tuple | None = None) -> Service:
+    return Service("tab5_maj_voiture_jour",
+                   tuple(build_conso_jour(rang, MOMENT_DES_CAPTURES.date(), valeurs).items()), apres=0.3)
+
+
+CONSO_DEUX_VOITURES = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS)
+CONSO_UNE_VOITURE = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS[:2])
+CONSO_AUCUNE = tuple(_conso(rang, ()) for rang in CONSO_JOUR_RANGS)
 # Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
 # la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
 # droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
@@ -1539,6 +1554,17 @@ ECRANS: tuple[Ecran, ...] = (
           (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
     Ecran("energie-aujourdhui", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_AUJOURDHUI,
           ENERGIE_RETOUR_AUJOURDHUI + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    # Page Aujourd'hui avec la consommation (ADR-0078) : une voiture et la maison, puis deux voitures et la
+    # maison ; le repère « sans voiture » est energie-aujourdhui, juste au-dessus, qui ne doit pas changer.
+    # Chaque écran retire ensuite les séries (CONSO_AUCUNE) et les voitures.
+    Ecran("energie-aujourdhui-1-voiture",
+          (FLUX_SANS_BATTERIE, VOITURE_1) + CONSO_UNE_VOITURE + (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_AUJOURDHUI,
+          ENERGIE_RETOUR_AUJOURDHUI + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    Ecran("energie-aujourdhui-2-voitures",
+          (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_AUJOURDHUI,
+          ENERGIE_RETOUR_AUJOURDHUI + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
     Ecran("energie-bilan", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_BILAN,
           ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
     Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_PRODUCTION,
@@ -1685,6 +1711,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("serveur-ia-confirmer", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("AI server"),
                                                        SERVEUR_IA_REDEMARRER),
           (SERVEUR_IA_REMISE,)),
+    # Popup Voitures (ADR-0079, page Aperçu) : deux voitures côte à côte (l'une en charge, l'autre
+    # branchée), une seule en pleine largeur, puis aucune (le message et où les choisir). Les
+    # voitures sont retirées à la fin de l'écran, comme pour le Flux : la scène suivante repart de
+    # zéro (le firmware n'en garde aucune sans poussée).
+    Ecran("voitures-2", (VOITURE_1, VOITURE_2, Aller("Cars")), FLUX_SANS_VOITURE),
+    Ecran("voitures-1", (VOITURE_1, Aller("Cars")), FLUX_SANS_VOITURE),
+    Ecran("voitures-aucune", (Aller("Cars"),)),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée

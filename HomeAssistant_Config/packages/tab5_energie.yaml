@@ -43,6 +43,13 @@
 #       de la section « Énergie : voitures » du blueprint (puissance de la voiture, renommée
 #       puissance_charge pour l'analyse), plus les solaires, la maison et la case « compteur
 #       séparé » de l'instantané.
+#       tab5_maj_voiture_jour (ADR-0078, 09/11/2026) : rang « 0 » (la maison SANS les voitures), « 1 »
+#       ou « 2 » (une voiture), debut (AAAA-MM-JJ local : `jour_debut` de la réponse) et 24 kWh par
+#       heure locale séparés par « ; » (vide = pas de donnée), les chaînes `jour_maison`, `jour_1` et
+#       `jour_2` de la MÊME réponse de script.tab5_voitures_analyse, aux mêmes moments (ouverture du
+#       popup puis au plus toutes les 5 minutes) : trois appels, un par rang, tous les rangs à chaque
+#       fois (une série vide retire la voiture de la page « Aujourd'hui »). Un firmware plus ancien
+#       n'a pas l'action : continue_on_error.
 # @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
 #       depuis minuit (heure locale), plus le partiel depuis la dernière ligne (état
 #       actuel − dernier « state », converti en kWh). Heures : les mêmes lignes, par heure
@@ -166,7 +173,9 @@ script:
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
       # « Écran courant » de LA tablette qui a demandé : fin de la boucle quand il quitte
       # « Energy » (« Énergie » pour un firmware d'avant le 24/10/2026 : états en anglais,
-      # ADR-0070 ; les deux sont acceptés). Sans lui (entité désactivée), un seul passage.
+      # ADR-0070 ; les deux sont acceptés) ou « Cars » (le popup Voitures, ouvert depuis un cercle
+      # de voiture de la page Flux, ADR-0079 : il lit les mêmes voitures). Sans lui (entité
+      # désactivée), un seul passage.
       ecran: >-
         {{ (device_entities(appareil) | select('match', 'sensor[.].*_(ecran_courant|current_screen)(_[0-9]+)?$') | first | default(''))
            if appareil is string and appareil else '' }}
@@ -610,6 +619,20 @@ script:
                       data:
                         payload: "{{ analyse_voitures.get('charges', '') | string }}"
                       continue_on_error: true
+                    # La même réponse, la consommation du jour heure par heure (ADR-0078, page
+                    # « Aujourd'hui ») : rang 0 la maison sans les voitures (`jour_maison`), 1 et 2 les
+                    # voitures (`jour_1`, `jour_2`). Une série vide retire la voiture (ou la maison)
+                    # de la page. Un firmware sans l'action : continue_on_error, le script continue.
+                    - repeat:
+                        for_each: ["0", "1", "2"]
+                        sequence:
+                          - action: "esphome.{{ tablette }}_tab5_maj_voiture_jour"
+                            data:
+                              rang: "{{ repeat.item }}"
+                              debut: "{{ analyse_voitures.get('jour_debut', '') | string }}"
+                              valeurs: >-
+                                {{ analyse_voitures.get('jour_maison' if repeat.item == '0' else 'jour_' ~ repeat.item, '') | string }}
+                            continue_on_error: true
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
             # suivante (bouton de vue, réouverture). Au premier passage d'une autre vue que
@@ -1162,8 +1185,8 @@ script:
                   {%- set ns.vu = true -%}
                 {%- endfor -%}
                 {{ ns.vu or not ecran
-                   or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie']) }}
+                   or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie', 'Cars']) }}
               timeout: 60
           until: >-
             {{ not ecran or now().timestamp() - debut > duree_max
-               or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie']) }}
+               or (now().timestamp() - debut > grace and states(ecran) not in ['Energy', 'Énergie', 'Cars']) }}

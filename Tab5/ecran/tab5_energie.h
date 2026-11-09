@@ -93,6 +93,12 @@ void energie_voiture(const std::string& rang, const std::string& payload);
 // charges_lire ; la sortie de `charges` du script tab5_voitures_analyse, ADR-0074). Payload vide
 // = aucune charge : la page « Charges » disparaît (elle n'existe que depuis la première reçue).
 void energie_voiture_charges(const std::string& payload);
+// Action tab5_maj_voiture_jour (ADR-0078) : rang (« 0 » la maison sans les voitures, « 1 » et « 2 » les
+// voitures), début (AAAA-MM-JJ) et 24 kWh par heure séparés par « ; » (tab5_parse.h, conso_jour_lire ;
+// les sorties `jour_1`, `jour_2` et `jour_maison` du script tab5_voitures_analyse). Page « Aujourd'hui » :
+// la consommation de chaque heure empilée à côté de la production, une légende avec les kWh du jour et la
+// part des voitures venue du soleil. Sans voiture qui ait une heure connue, la page est celle d'avant.
+void energie_voiture_jour(const std::string& rang, const std::string& debut, const std::string& valeurs);
 // Action tab5_maj_energie_historique : vue (heures | jours | mois), début (AAAA-MM-JJ :
 // le jour des heures, le premier des jours, le 1er du premier mois), valeurs en kWh
 // séparées par « ; » (vide = pas de donnée). 24, 30 et 12 valeurs au plus.

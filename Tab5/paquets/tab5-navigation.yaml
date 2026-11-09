@@ -126,6 +126,10 @@ script:
           // Serveur IA (ADR-0059) : le serveur de LLM local, dernier état reçu.
           ModalRegistry::add(id(serveur_ia_popup),       "AI server",        ModalRegistry::POPUP,
                              [] { id(tab5_serveur_ia_ouvrir).execute(); });
+          // Voitures (ADR-0079) : pose les widgets à la première ouverture, dernier état reçu ; sans
+          // voiture reçue, demande à HA de pousser.
+          ModalRegistry::add(id(voitures_popup),         "Cars",             ModalRegistry::POPUP,
+                             [] { id(tab5_voitures_ouvrir).execute(); });
           // Après les popups qu'une de ses lignes ouvre : ouverts devant lui, ils sont nommés.
           // Maison (ADR-0037) : pose les widgets, les dispose et peint.
           ModalRegistry::add(id(maison_popup),           "House",            ModalRegistry::POPUP,
@@ -417,6 +421,8 @@ select:
       - "Fridges"
       # Le serveur de LLM local (ADR-0059, 10/10/2026), à la fin aussi.
       - "AI server"
+      # Les voitures électriques de la maison (ADR-0079, 09/11/2026), à la fin aussi.
+      - "Cars"
     on_value:
       # Toute l'ouverture est dans tab5_ecran_ouvrir (plus haut), partagé avec les appuis
       # longs des boutons du haut : l'index de l'option EST la valeur d'Ecran

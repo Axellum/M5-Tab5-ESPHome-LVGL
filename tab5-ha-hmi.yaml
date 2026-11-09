@@ -173,6 +173,7 @@ esphome:
     - Tab5/ecran/tab5_cameras_charge.h
     - Tab5/ecran/tab5_froid.h
     - Tab5/ecran/tab5_serveur_ia.h
+    - Tab5/ecran/tab5_voitures.h
     - Tab5/ecran/tab5_telecommande.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_barre_demarrage.h
@@ -267,6 +268,8 @@ esphome:
     - Tab5/ecran/tab5_froid.cpp
     # Serveur IA : tableau de bord d'un serveur de LLM local (ADR-0059).
     - Tab5/ecran/tab5_serveur_ia.cpp
+    # Voitures : popup « Voitures », une grande carte par voiture électrique (ADR-0079).
+    - Tab5/ecran/tab5_voitures.cpp
     # Télécommandes : une page par télécommande du blueprint (ADR-0056).
     - Tab5/ecran/tab5_telecommande.cpp
     # Registre unique des consoles (GameRegistry) et des fenêtres modales
@@ -568,6 +571,9 @@ packages:
   # Serveur IA (ADR-0059) : APRES tab5_lvgl (widgets), poussé par HA, ouvert par un geste,
   # la roue de navigation ou HA.
   tab5_serveur_ia: !include Tab5/paquets/tab5-serveur-ia.yaml
+  # Voitures (ADR-0079) : APRES tab5_lvgl (widgets) et tab5_energie (script d'événement), poussées
+  # par HA (tab5_maj_voiture), ouvertes par un cercle de voiture de la page Flux ou par HA.
+  tab5_voitures: !include Tab5/paquets/tab5-voitures.yaml
   # Télécommandes (ADR-0056) : APRES tab5_lvgl (widgets), script lancé par tab5_tuiles_ui.
   tab5_telecommande: !include Tab5/paquets/tab5-telecommande.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les

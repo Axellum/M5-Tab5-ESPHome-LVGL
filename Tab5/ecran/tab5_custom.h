@@ -53,6 +53,7 @@
 #include "tab5_suivi.h"
 #include "tab5_froid.h"
 #include "tab5_serveur_ia.h"
+#include "tab5_voitures.h"
 #include "tab5_telecommande.h"
 #include "tab5_alertes.h"
 #include "tab5_maison.h"
