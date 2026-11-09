@@ -1408,8 +1408,10 @@ void peindre_charges() {
         ui_text(l.pct, x);
         ui_text_color(l.pct, soleil && pct > 0 ? UIColor.TEXT_PRIMARY : UIColor.TEXT_DIM);
         if (kChBarre) {
-            // Le réseau en fond, le soleil devant ; sans part connue, une piste vide.
-            ui_style_couleur(l.piste, LV_STYLE_BG_COLOR, soleil ? UIColor.WARNING : UIColor.ARC_TRACK);
+            // Le réseau en fond, le soleil devant ; sans part connue, une piste vide. Le réseau
+            // est en ACCENT_ALT, pas en WARNING : ce jaune-là était presque celui du soleil
+            // (GOLD), « on ne reconnaît pas le soleil et le réseau » (Axel, 09/11/2026).
+            ui_style_couleur(l.piste, LV_STYLE_BG_COLOR, soleil ? UIColor.ACCENT_ALT : UIColor.ARC_TRACK);
             const int32_t w = soleil ? static_cast<int32_t>(std::lround(kChBarreL * c.soleil / 100.0f)) : 0;
             ui_hidden(l.soleil, w < 1);
             if (w >= 1 && lv_obj_get_style_width(l.soleil, LV_PART_MAIN) != w) lv_obj_set_width(l.soleil, w);
@@ -2156,7 +2158,7 @@ void couleurs() {
     ChargesUI& ch = s_ch;
     ui_text_color(ch.titre, UIColor.ACCENT);
     ui_style_couleur(ch.filet_titre, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
-    const uint32_t marques[kChLegendes] = {UIColor.SUCCESS, UIColor.GOLD, UIColor.WARNING};
+    const uint32_t marques[kChLegendes] = {UIColor.SUCCESS, UIColor.GOLD, UIColor.ACCENT_ALT};
     for (int j = 0; j < kChLegendes; j++) {
         ui_style_couleur(ch.marque[j], LV_STYLE_BG_COLOR, marques[j]);
         ui_text_color(ch.legende[j], UIColor.TEXT_SOFT);

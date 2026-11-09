@@ -363,6 +363,52 @@ def test_chaque_mode_reste_lisible():
     assert not trop_faibles, "\n".join(trop_faibles)
 
 
+def _lab(c: int) -> tuple[float, float, float]:
+    """Couleur 0xRRGGBB en CIE L*a*b* (sRGB, D65)."""
+    def lin(v: int) -> float:
+        v /= 255
+        return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+
+    r, g, b = lin((c >> 16) & 0xFF), lin((c >> 8) & 0xFF), lin(c & 0xFF)
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
+
+    def f(t: float) -> float:
+        return t ** (1 / 3) if t > 0.008856 else 7.787 * t + 16 / 116
+
+    return 116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))
+
+
+def _ecart_teinte(a: int, b: int) -> float:
+    """Écart de couleur CIE76 : au-dessus de 20, deux aplats voisins se distinguent d'un coup d'œil."""
+    return sum((p - q) ** 2 for p, q in zip(_lab(a), _lab(b))) ** 0.5
+
+
+def test_charges_soleil_et_reseau_se_distinguent_dans_chaque_mode():
+    """Retour d'Axel (09/11/2026), la page Charges sur son Tab5 : « le jaune est trop proche, on
+    ne reconnaît pas le soleil et le réseau ». La barre avait le réseau en fond en WARNING et
+    le soleil devant en GOLD : deux jaunes (écart de 0 à 35 selon la palette, 0 dans « Pixel »).
+    Il a choisi le violet de la palette : le réseau (piste de la barre et pastille de la
+    légende) est en ACCENT_ALT, un rôle qui existe dans les 21 thèmes, clair et sombre. La
+    page Flux garde WARNING pour le réseau (décision d'Axel à prendre)."""
+    cpp = (TAB5 / "ecran" / "tab5_energie.cpp").read_text(encoding="utf-8").replace("\r\n", "\n")
+    assert "soleil ? UIColor.ACCENT_ALT : UIColor.ARC_TRACK" in cpp
+    assert "marques[kChLegendes] = {UIColor.SUCCESS, UIColor.GOLD, UIColor.ACCENT_ALT};" in cpp
+    confus, peu_lisibles = [], []
+    for theme in gen_themes.charger():
+        for mode, p in theme.modes.items():
+            ecart = _ecart_teinte(p["GOLD"], p["ACCENT_ALT"])
+            if ecart < 20.0:
+                confus.append(f"{theme.nom} ({mode}) : GOLD / ACCENT_ALT = {ecart:.1f}")
+            for surface in SURFACES:
+                r = _contraste(p["ACCENT_ALT"], p[surface])
+                if r < 3.0:
+                    peu_lisibles.append(f"{theme.nom} ({mode}) : ACCENT_ALT sur {surface} = {r:.2f}")
+    assert not confus, "\n".join(confus)
+    assert not peu_lisibles, "\n".join(peu_lisibles)
+
+
 def test_console_lisible_dans_chaque_mode():
     """Retour d'Axel (05/10/2026) : en clair, la console système gardait les valeurs
     blanches et les libellés gris de la console sombre sur le verre clair du popup, et ses
