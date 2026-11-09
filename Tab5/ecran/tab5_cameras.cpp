@@ -3,8 +3,8 @@
  * @file tab5_cameras.cpp
  * @role Popup « Caméras » (ADR-0049, 09/10/2026, discussion #278 ; pièces et mémoire des
  *       images : ADR-0057, 10/10/2026) : l'image fixe des caméras de Home Assistant,
- *       rangées par pièce, rafraîchie tant que le popup est ouvert. Pas de vidéo : un JPEG
- *       à la fois, jamais deux.
+ *       rangées par pièce, rafraîchie tant que le popup est ouvert. Un JPEG à la fois,
+ *       jamais deux ; la caméra montrée en grand peut passer en VIDÉO (ADR-0073, ci-dessous).
  *         - Liste : action tab5_maj_cameras (adresse, cameras), poussée par le blueprint
  *           en réponse à esphome.tab5_cameras, émis à l'ouverture, toutes les 4 minutes
  *           tant que le popup reste ouvert (le jeton des URL de HA change toutes les
@@ -34,6 +34,17 @@
  *           ligne n'est pas demandée ; une caméra en échec attend 10 s, 30 s, puis 60 s
  *           (kEchecsDelaisMs) sans retenir les autres. Deux échecs de suite : « Hors ligne
  *           depuis … », sa dernière image grisée.
+ *         - Vidéo (ADR-0073, 09/11/2026), facultative : avec l'entrée cameras_video du blueprint
+ *           (5e champ « 1 » de la liste), la caméra montrée EN GRAND est lue dans le flux MJPEG
+ *           de HA (camera_flux_url(), chargeur en mode flux : la connexion reste ouverte, chaque
+ *           demande rend l'image la plus récente reçue). Une image à la fois comme les fixes,
+ *           demandée dès la précédente peinte, au plus toutes les kVideoMs ; les suivantes ne
+ *           repeignent que l'image et l'heure (peindre_video). Jamais en mosaïque, jamais de
+ *           prélecture des voisines (la connexion est au flux). Un échec du flux (pas un
+ *           flux, image trop grande, rien en 12 s…) n'est PAS un échec de l'image fixe : images
+ *           fixes aussitôt, vidéo retentée après 1, 5 puis 30 minutes (kVideoEchecsDelaisMs).
+ *           Les images du flux ne comptent pas comme un toucher : le retour automatique au bout
+ *           de 45 s reste.
  *         - Mémoire : la dernière image de chaque caméra (Vue), en grand et en vignette,
  *           reste en PSRAM tant que le popup est ouvert, kVuesOctetsMax au plus et jamais
  *           sous kPsramReserve libres (la plus anciennement vue part d'abord, jamais une
@@ -137,6 +148,16 @@ constexpr uint32_t kEchecsDelaisMs[] = {10000, 30000, 60000};
 constexpr int kEchecsHorsLigne = 2;   // à partir de là : « Hors ligne depuis … »
 constexpr int kSondeMs = 100;         // chargement en cours, popup ouvert
 constexpr int kSondeFermeMs = 1000;   // chargement en cours, popup fermé (libérer à sa fin)
+// Vidéo (ADR-0073) : la caméra montrée en grand, quand le blueprint l'autorise, est lue en flux
+// MJPEG. Une image à la fois comme les fixes ; la suivante est demandée dès que la précédente
+// est peinte, au plus toutes les kVideoMs (l'écran ne suit pas plus vite : le rendu d'une
+// image pleine prend à lui seul une soixantaine de millisecondes).
+constexpr uint32_t kVideoMs = 50;
+constexpr int kSondeVideoMs = 10;     // chargement vidéo en cours : une image arrive vite, ne pas la faire attendre
+// Échecs de suite de la vidéo d'une caméra : images fixes pendant 1 min, puis 5 min, puis
+// 30 min avant un nouvel essai (un flux refusé coûte un ffmpeg à HA). Remis à zéro par une
+// image de flux, par une réouverture du popup ou une liste où la caméra est de nouveau en ligne.
+constexpr uint32_t kVideoEchecsDelaisMs[] = {60000, 300000, 1800000};
 
 // ─── Mémoire des images (ADR-0057) ──────────────────────────────────────────────────
 // 8 Mio : huit images 960 × 540 (1 Mio), treize 640 × 480, ou les seize vignettes
@@ -173,6 +194,10 @@ struct Camera {
     time_t premier_echec;          // heure du premier de ces échecs
     uint32_t du_ms;                // millis() à partir duquel elle peut être rechargée
     bool du_pose;                  // du_ms a un sens (sinon : tout de suite)
+    bool video;                    // le blueprint autorise sa vidéo (5e champ de la liste)
+    uint8_t video_echecs;          // échecs de suite de la vidéo
+    bool video_ko_pose;            // images fixes seulement jusqu'à video_ko_ms
+    uint32_t video_ko_ms;
     Vue vue;                       // en grand (960 × 540 demandée)
     Vue mini;                      // en vignette (480 × 270 demandée)
 };
@@ -199,6 +224,8 @@ int s_cam = 0;             // caméra montrée (index dans s_cams)
 bool s_charge = false;     // un chargement est en cours dans la tâche
 int s_en_cours = -1;       // sa caméra, -1 : plus dans la liste (image jetée à la fin)
 bool s_en_cours_mini = false;   // ce chargement est une vignette
+bool s_en_cours_video = false;  // ce chargement est une image de flux
+int s_video_cam = -1;      // caméra dont la vidéo est peinte en entier : ses images suivantes ne repeignent que l'image
 bool s_sans_adresse = false;
 uint32_t s_demande_ms = 0;
 Affichage s_grand;         // l'image du cadre
@@ -259,6 +286,12 @@ uint32_t delai_apres_echec(int echecs) {
     const int n = static_cast<int>(sizeof(kEchecsDelaisMs) / sizeof(kEchecsDelaisMs[0]));
     const int i = echecs < 1 ? 0 : (echecs > n ? n - 1 : echecs - 1);
     return kEchecsDelaisMs[i];
+}
+
+uint32_t delai_video_apres_echec(int echecs) {
+    const int n = static_cast<int>(sizeof(kVideoEchecsDelaisMs) / sizeof(kVideoEchecsDelaisMs[0]));
+    const int i = echecs < 1 ? 0 : (echecs > n ? n - 1 : echecs - 1);
+    return kVideoEchecsDelaisMs[i];
 }
 
 // ─── NVS ────────────────────────────────────────────────────────────────────────────
@@ -385,7 +418,8 @@ size_t vues_octets() {
 // Garde les images dans le budget : la plus anciennement vue part d'abord, jamais une
 // image à l'écran. Libérée, pas gardée par le chargeur : sinon la PSRAM libre ne
 // remonterait pas et tout partirait. Hors budget : le tampon de sortie du chargeur et
-// le JPEG reçu (≈ 2 Mio au plus, kPsramReserve les couvre).
+// le JPEG reçu (une image : ≈ 1 Mio ; un flux vidéo : jusqu'à 2 Mio gardés, 3 Mio le temps d'une
+// croissance du tampon — non mesuré, kPsramReserve devrait les couvrir).
 void vues_borner() {
     size_t total = vues_octets();
     while (total > kVuesOctetsMax || camera_psram_libre() < kPsramReserve) {
@@ -536,6 +570,17 @@ void nom_complet(const Camera& c, char* out, size_t n) {
     else snprintf(out, n, "%s", c.nom[0] != '\0' ? c.nom : c.piece);
 }
 
+// « Image de 14:32:07 » (ou « Plus d'image depuis … » après un échec) sous l'image gardée de
+// `c` ; vide sans heure valide. `hl` : la caméra est hors ligne (son échec est dit ailleurs).
+void ecrire_heure_image(const Camera& c, bool hl, char* out, size_t n) {
+    out[0] = '\0';
+    if (!tab5_heure_valide(c.vue.quand)) return;
+    struct tm t{};
+    localtime_r(&c.vue.quand, &t);
+    snprintf(out, n, (c.echecs > 0 && !hl) ? tr("Plus d'image depuis %02d:%02d:%02d") : tr("Image de %02d:%02d:%02d"),
+             t.tm_hour, t.tm_min, t.tm_sec);
+}
+
 // La caméra montrée en grand.
 void peindre_grand(const int* f, int nf, char* message, size_t n) {
     CamerasUI& u = g_cameras_ui;
@@ -556,13 +601,7 @@ void peindre_grand(const int* f, int nf, char* message, size_t n) {
     if (c != nullptr) nom_complet(*c, nom, sizeof(nom));
     ui_text(u.nom, nom);
     char heure[64] = "";
-    if (image && tab5_heure_valide(c->vue.quand)) {
-        struct tm t{};
-        localtime_r(&c->vue.quand, &t);
-        snprintf(heure, sizeof(heure),
-                 (c->echecs > 0 && !hl) ? tr("Plus d'image depuis %02d:%02d:%02d") : tr("Image de %02d:%02d:%02d"), t.tm_hour,
-                 t.tm_min, t.tm_sec);
-    }
+    if (image) ecrire_heure_image(*c, hl, heure, sizeof(heure));
     ui_text(u.heure, heure);
     ui_hidden(u.pastilles, nf < 2);
     for (int i = 0; i < kCamerasPastilles; i++) ui_hidden(u.pastille[i], i >= nf);
@@ -614,7 +653,18 @@ void peindre_mosaique(const int* f, int nf) {
     pagination_afficher(u.pastille, pages, s_page);
 }
 
+// Image suivante d'une vidéo déjà peinte en entier (peindre(), puis s_video_cam) : l'image et
+// l'heure, rien d'autre. Une repeinte complète réécrit les styles des puces (choix_peindre) :
+// LVGL ne compare pas, la colonne entière serait invalidée à chaque image.
+void peindre_video(Camera& c) {
+    montrer(s_grand, &c.vue.img, kImageL, kImageH);
+    char heure[64];
+    ecrire_heure_image(c, false, heure, sizeof(heure));
+    ui_text(g_cameras_ui.heure, heure);
+}
+
 void peindre() {
+    s_video_cam = -1;   // toute repeinte complète : la vidéo en cours est à repeindre en entier à son image suivante
     if (!visible()) return;
     CamerasUI& u = g_cameras_ui;
     disposer();
@@ -641,7 +691,10 @@ void demander() {
 // jamais plus loin que la sonde suivante.
 void attendre(int ms) {
     if (s_charge) {
-        const int sonde = visible() ? kSondeMs : kSondeFermeMs;
+        // Sonde rapide seulement quand les images du flux arrivent déjà (la vue est peinte pour cette
+        // caméra) : pendant l'attente de la première, jusqu'à 12 s, la sonde ordinaire suffit.
+        const bool images_en_route = s_en_cours_video && s_video_cam == s_en_cours;
+        const int sonde = !visible() ? kSondeFermeMs : (images_en_route ? kSondeVideoMs : kSondeMs);
         if (ms > sonde) ms = sonde;
     }
     if (ms < 0) ms = 0;
@@ -660,6 +713,13 @@ void liberer() {
 bool chargeable(const Camera& c) { return c.hors_ligne_ha == 0 && c.image[0] != '\0'; }
 
 bool due(const Camera& c, uint32_t t) { return !c.du_pose || passe(c.du_ms, t); }
+
+// La caméra `c`, montrée en grand, est lue en flux : autorisée par le blueprint, en ligne, pas
+// en pause après un échec du flux. Jamais en mosaïque (une connexion de flux par vignette
+// n'est pas dans ce que la tâche et la mémoire portent) ; les images fixes y suffisent.
+bool video_voulue(const Camera& c, uint32_t t) {
+    return c.video && chargeable(c) && !(c.video_ko_pose && !passe(c.video_ko_ms, t)) && !en_mosaique();
+}
 
 // Prochaine image à charger (*mini : une vignette), -1 : rien maintenant, *attente_ms dit
 // dans combien de temps revenir voir.
@@ -701,8 +761,12 @@ int prochaine(uint32_t t, int* attente_ms, bool* mini) {
     int nc = 0;
     if (k >= 0) {
         candidates[nc++] = s_cam;
-        if (nf >= 2) candidates[nc++] = f[(k + 1) % nf];
-        if (nf >= 3) candidates[nc++] = f[(k + nf - 1) % nf];
+        // En vidéo, la tâche et la connexion sont au flux : ni image fixe de voisine (elle le
+        // fermerait), la voisine est chargée quand on y glisse.
+        if (!video_voulue(s_cams[s_cam], t)) {
+            if (nf >= 2) candidates[nc++] = f[(k + 1) % nf];
+            if (nf >= 3) candidates[nc++] = f[(k + nf - 1) % nf];
+        }
     }
     for (int j = 0; j < nc; j++) {
         const int i = candidates[j];
@@ -725,8 +789,12 @@ void charger(int i, bool mini) {
     const char* base = s_adresse[0] != '\0' ? s_adresse : s_hote;
     char url[kCameraUrlMax];
     const uint32_t t = maintenant_ms();
-    if (!camera_url(Champ{c.image, std::strlen(c.image)}, base, mini ? kVignetteL : kImageL, mini ? kVignetteH : kImageH,
-                    url, sizeof(url))) {
+    // Vidéo : seulement la caméra montrée en grand. Une URL de flux qu'on ne sait pas
+    // construire (image sans /api/camera_proxy/, trop longue) : une image fixe, comme avant.
+    const Champ image{c.image, std::strlen(c.image)};
+    bool video = !mini && i == s_cam && video_voulue(c, t);
+    if (video && !camera_flux_url(image, base, url, sizeof(url))) video = false;
+    if (!video && !camera_url(image, base, mini ? kVignetteL : kImageL, mini ? kVignetteH : kImageH, url, sizeof(url))) {
         s_sans_adresse = c.image[0] != '\0' && std::strncmp(c.image, "http", 4) != 0 && base[0] == '\0';
         // Sans l'URL : elle porte le jeton d'accès de HA.
         ESP_LOGW("tab5.cameras", "URL de la caméra %d illisible (%s)", i + 1,
@@ -743,12 +811,14 @@ void charger(int i, bool mini) {
     s_charge = true;
     s_en_cours = i;
     s_en_cours_mini = mini;
-    if (!camera_charge_lancer(url)) {
+    s_en_cours_video = video;
+    if (!(video ? camera_charge_lancer_flux(url) : camera_charge_lancer(url))) {
         image_erreur(i);
         return;
     }
-    peindre();
-    attendre(kSondeMs);
+    // Une image du flux repeint déjà ce qu'il faut : pas de repeinte complète à chaque demande.
+    if (!video || s_video_cam != i) peindre();
+    attendre(kSondeMs);   // attendre() ramène à la sonde rapide quand les images du flux arrivent déjà
 }
 
 void charger_suivante() {
@@ -764,6 +834,8 @@ void charger_suivante() {
 void image_prete(int cam) {
     s_charge = false;
     s_en_cours = -1;
+    const bool video = s_en_cours_video;
+    s_en_cours_video = false;
     if (!visible()) {
         CameraImage img;
         if (camera_charge_prendre(&img)) camera_image_rendre(&img);
@@ -789,13 +861,24 @@ void image_prete(int cam) {
     v.vue_ms = maintenant_ms();
     c.echecs = 0;
     c.premier_echec = 0;
+    if (video) {   // le flux marche : plus d'échec à compter
+        c.video_echecs = 0;
+        c.video_ko_pose = false;
+    }
     // Le tour suivant, seulement si la vue n'a pas changé pendant le chargement : une
     // vignette finie après le tap sur sa case ne doit pas retarder la grande image.
     if (s_en_cours_mini == en_mosaique()) {
-        c.du_ms = maintenant_ms() + (s_en_cours_mini ? kRafraichirMosaiqueMs : kRafraichirMs);
+        c.du_ms = maintenant_ms() + (video ? kVideoMs : (s_en_cours_mini ? kRafraichirMosaiqueMs : kRafraichirMs));
         c.du_pose = true;
     }
-    peindre();                 // la nouvelle image d'abord (sans trou à l'écran)…
+    // La nouvelle image d'abord (sans trou à l'écran)… Une image de flux de plus, sur une vue
+    // déjà peinte en entier, ne repeint que l'image et l'heure.
+    if (video && s_video_cam == cam && cam == s_cam && !en_mosaique()) {
+        peindre_video(c);
+    } else {
+        peindre();
+        s_video_cam = video ? cam : -1;
+    }
     vue_rendre(ancienne);      // … puis l'ancienne rendue
     vues_borner();
     attendre(0);
@@ -806,12 +889,25 @@ void image_prete(int cam) {
 void image_erreur(int cam) {
     s_charge = false;
     s_en_cours = -1;
+    const bool video = s_en_cours_video;
+    s_en_cours_video = false;
     camera_charge_acquitter();
     if (!visible()) {
         liberer();
         return;
     }
-    if (cam >= 0 && cam < s_n) {
+    if (cam >= 0 && cam < s_n && video) {
+        // Le flux a raté (pas de flux, trop grande image, décodage refusé…) : des images fixes
+        // tout de suite, et la vidéo n'est retentée qu'après une pause qui s'allonge. Pas un
+        // échec de l'image fixe : la caméra n'est pas pour autant « Hors ligne ».
+        Camera& c = s_cams[cam];
+        if (c.video_echecs < 255) c.video_echecs++;
+        c.video_ko_pose = true;
+        c.video_ko_ms = maintenant_ms() + delai_video_apres_echec(c.video_echecs);
+        c.du_pose = false;
+        ESP_LOGW("tab5.cameras", "vidéo de la caméra %d indisponible (%d échec(s) de suite) : images fixes", cam + 1,
+                 c.video_echecs);
+    } else if (cam >= 0 && cam < s_n) {
         Camera& c = s_cams[cam];
         if (c.echecs < 255) c.echecs++;
         if (c.echecs == 1) c.premier_echec = tab5_time_source(nullptr);
@@ -959,6 +1055,7 @@ void cameras_recues(const std::string& adresse, const std::string& cameras) {
         if (lues[i].image.n < sizeof(c.image)) std::memcpy(c.image, lues[i].image.p, lues[i].image.n);
         else payload_refuse("tab5.cameras", "image trop longue", lues[i].image.n);
         c.hors_ligne_ha = lues[i].hors_ligne;
+        c.video = lues[i].video;
         c.piece_i = lues[i].piece_i;
         ancien_de[i] = -1;
         for (int j = 0; j < s_n; j++) {
@@ -972,11 +1069,16 @@ void cameras_recues(const std::string& adresse, const std::string& cameras) {
             c.premier_echec = a.premier_echec;
             c.du_ms = a.du_ms;
             c.du_pose = a.du_pose;
+            c.video_echecs = a.video_echecs;
+            c.video_ko_pose = a.video_ko_pose;
+            c.video_ko_ms = a.video_ko_ms;
             break;
         }
         // HA la dit de nouveau en ligne : ses échecs ne comptent plus.
         if (ancien_de[i] >= 0 && s_cams[ancien_de[i]].hors_ligne_ha != 0 && c.hors_ligne_ha == 0) {
             c.echecs = 0;
+            c.video_echecs = 0;
+            c.video_ko_pose = false;
             c.du_pose = false;
         }
     }
@@ -1065,6 +1167,8 @@ void cameras_ouvrir() {
         s_cams[i].du_pose = false;
         s_cams[i].echecs = 0;
         s_cams[i].url_ko = false;
+        s_cams[i].video_echecs = 0;
+        s_cams[i].video_ko_pose = false;
     }
     peindre();
     if (colonne() && s_piece >= 0 && u.puce[s_piece + 1] != nullptr) {
@@ -1149,6 +1253,10 @@ void cameras_tic() {
         return;
     }
     if (t - s_demande_ms >= kRedemanderMs) demander();
+    // Le flux ouvert ne sert plus (autre vue, caméra sans vidéo, vidéo en pause) : fermé, et HA
+    // arrête sa caméra. Une autre caméra en vidéo n'a pas à le fermer : le chargeur rouvre.
+    if (camera_flux_ouvert() && !(s_n > 0 && s_cam >= 0 && s_cam < s_n && video_voulue(s_cams[s_cam], t)))
+        camera_flux_fermer();
     charger_suivante();
 }
 
