@@ -4,7 +4,8 @@
  * @role Roue d'actions rapides (ADR-0036, 07/10/2026, discussion #278 : « one click opens
  *       a mini popup, like a spring, or a circular popup ») : un moyeu posé sur une ancre
  *       (la pastille d'une carte du mode HA, le centre d'une tuile météo, la pastille d'une
- *       ligne du popup Maison) et deux anneaux de boutons ronds au-dessus, devant un voile.
+ *       ligne du popup Maison) et deux anneaux de boutons ronds au-dessus, sur la page telle
+ *       qu'elle est (sans voile : il mettait trop de temps à s'afficher, 09/11/2026).
  *       Premier anneau : les commandes de l'appareil, ses familles de réglages et deux
  *       liens aux bouts (« Maison », « Détails ») ; toucher une famille déplie, sur le
  *       second anneau et centrés sur elle, ses choix (luminosités, couleurs, modes…) —
@@ -16,8 +17,8 @@
  *       La roue de navigation (ADR-0042, tab5_roue_navigation.cpp) est la même roue, ancrée
  *       sur la carte centrale : ses boutons sont des écrans et des familles d'écrans, chacun
  *       avec son mot (RoueTete::mots) ; une famille dépliée écrit le sien dans le moyeu.
- * @architecture_constraint Widgets : ui_components/roue_actions.yaml (voile plein écran,
- *       bandes, jauge, moyeu, mots) et ses roue_bouton.yaml, roue_choix.yaml,
+ * @architecture_constraint Widgets : ui_components/roue_actions.yaml (bouton plein écran
+ *       invisible qui reçoit le toucher hors des boutons, bandes, jauge, moyeu, mots) et ses roue_bouton.yaml, roue_choix.yaml,
  *       roue_legende.yaml, posés dans g_roue_ui par tab5-roue.yaml. Sous-fenêtre
  *       (SUBWINDOW du registre, comme la liste de la tuile − / +) : refermée avec les
  *       popups, par l'inactivité, à l'ouverture d'un popup (animate_popup_open), à

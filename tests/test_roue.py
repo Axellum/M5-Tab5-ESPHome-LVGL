@@ -537,10 +537,11 @@ def test_widgets_et_leurs_pointeurs():
     assert tuiles.rstrip().endswith("- script.execute: tab5_roue_ui")
     for entree in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
         assert "tab5_roue: !include Tab5/paquets/tab5-roue.yaml" in _lire(entree), entree
-    # Le voile est celui des popups (ADR-0009), à 60 % : les tuiles restent visibles
-    # dessous ; premier enfant, sous tout le reste.
+    # Pas de fond (Axel, 09/11/2026 : le voile à 60 % mettait trop de temps à s'afficher) :
+    # le bouton plein écran du cadre des popups (ADR-0009) reste, à 0 %, pour recevoir le
+    # toucher hors des boutons ; premier enfant, sous tout le reste.
     premier = yaml.split("widgets:", 1)[1].split("\n    - ", 2)[1]
-    assert premier.startswith('!include { file: modal_scrim.yaml, vars: { scrim_opa: "60",')
+    assert premier.startswith('!include { file: modal_scrim.yaml, vars: { scrim_opa: "0",')
 
 
 def test_glyphes_de_mdi_font_36():
