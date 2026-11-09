@@ -1207,6 +1207,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Hier": "Gisteren"
 "Total : %s, dont %d %% par le soleil": "Totaal: %s, waarvan %d %% zon"
 "Total : %s": "Totaal: %s"
+# Page « Aujourd'hui » avec la consommation des voitures (ADR-0078) : « 62 % » en gras, puis cette phrase
+# à droite, dans un cadre de 172 px (trois lignes au plus, 22 px la ligne)
+"de la charge par le soleil": "van het laden door de zon"
 # Page Bilan du popup Énergie en kWh (ADR-0062)
 "BATTERIE RÉSEAU": "NETBATTERIJ"
 "d'avance sur le réseau ce mois-ci": "voorsprong op het net deze maand"

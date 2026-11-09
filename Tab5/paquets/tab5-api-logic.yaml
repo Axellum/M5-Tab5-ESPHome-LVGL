@@ -653,6 +653,24 @@ api:
       then:
         - lambda: 'energie_voiture_charges(payload);'
 
+    - service: tab5_maj_voiture_jour
+      description: "Popup Énergie, page Aujourd'hui : la consommation du jour par heure, empilée (la maison sans les voitures, puis chaque voiture) (ADR-0078), poussée avec les charges."
+      variables:
+        rang:
+          type: string
+          description: "0 : la maison sans les voitures ; 1 ou 2 : la voiture (celle de tab5_maj_voiture)"
+          example: "1"
+        debut:
+          type: string
+          description: "AAAA-MM-JJ : le jour des 24 heures (une série d'un autre jour remplace toutes les lignes reçues)"
+          example: "2026-11-09"
+        valeurs:
+          type: string
+          description: "24 kWh, un par heure locale du jour, séparés par « ; » (comme la vue des heures de tab5_maj_energie_historique) ; champ vide = pas de valeur (heure à venir) ; vide = la ligne disparaît. Sans voiture ayant une heure connue, la page Aujourd'hui reste celle d'avant. Toujours ajouter à la fin."
+          example: "0;0;3.1;3.2;0;0;0;0;0.4;1.9;2.6;3;3.1;;;;;;;;;;;"
+      then:
+        - lambda: 'energie_voiture_jour(rang, debut, valeurs);'
+
     - service: tab5_maj_energie_historique
       description: "Popup Énergie : la production d'une vue en barres (heures du jour, 30 derniers jours, 12 derniers mois)."
       variables:

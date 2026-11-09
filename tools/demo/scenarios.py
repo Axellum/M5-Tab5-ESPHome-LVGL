@@ -798,6 +798,38 @@ def build_charges_payload(aujourd_hui: _dt.date, charges=CHARGES) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Consommation du jour, page « Aujourd'hui » du popup Énergie (ADR-0078) —
+# tab5_maj_voiture_jour(rang, debut, valeurs) : rang « 0 » = la maison SANS les voitures, « 1 » et « 2 »
+# = les voitures (les chaînes jour_maison, jour_1 et jour_2 de script.tab5_voitures_analyse, ADR-0074),
+# debut = AAAA-MM-JJ du jour, valeurs = 24 kWh par heure locale séparés par « ; » (vide = pas de donnée :
+# heure à venir). Une série vide retire le rang de la page. La démo montre le matin figé des captures
+# (07:45) : la voiture 2 a chargé de 01:00 à 03:00 à 7,2 kW (14,4 kWh, la deuxième charge de CHARGES), la
+# voiture 1 charge depuis 06:02 (6,96 kWh à 6 h, 5,4 kWh à 7 h, 12,4 kWh en tout comme la première charge de
+# CHARGES) ; la maison hors voitures consomme 0,2 à 0,3 kWh par heure.
+# ---------------------------------------------------------------------------
+
+CONSO_JOUR_RANGS = ("0", "1", "2")
+CONSO_JOUR_HEURES = 24
+CONSO_JOUR = {
+    "0": ("0.31", "0.28", "0.27", "0.29", "0.33", "0.31", "0.18", "0.22"),
+    "1": ("0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "6.96", "5.4"),
+    "2": ("0.0", "7.2", "7.2", "0.0", "0.0", "0.0", "0.0", "0.0"),
+}
+
+
+def build_conso_jour(rang: str, aujourd_hui: _dt.date, valeurs: tuple[str, ...] | None = None) -> dict[str, str]:
+    """Les variables de tab5_maj_voiture_jour pour `rang` : debut (le jour) et valeurs (24 champs, ceux de
+    `valeurs` — CONSO_JOUR[rang] par défaut — puis des champs vides). () = série vide : le rang est retiré."""
+    assert rang in CONSO_JOUR_RANGS, f"rang : {rang!r} (0, 1 ou 2)"
+    v = CONSO_JOUR[rang] if valeurs is None else valeurs
+    assert len(v) <= CONSO_JOUR_HEURES, f"{CONSO_JOUR_HEURES} valeurs au plus"
+    for x in v:
+        assert x == "" or (_nombre(x) is not None and float(x) >= 0), f"kWh : {x!r}"
+    champs = [] if not v else list(v) + [""] * (CONSO_JOUR_HEURES - len(v))
+    return {"rang": rang, "debut": aujourd_hui.isoformat(), "valeurs": ";".join(champs)}
+
+
+# ---------------------------------------------------------------------------
 # Popup Serveur IA (ADR-0059) — tab5_maj_serveur_ia, payload d'un serveur :
 #   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance|actions »
 # etat 1 / 0 / vide ; nombres à point décimal, vides si inconnus ; niveau 0-2 (seuils de

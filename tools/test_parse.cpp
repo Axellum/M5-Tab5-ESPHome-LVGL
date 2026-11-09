@@ -2237,6 +2237,119 @@ static void test_charges_lire() {
     expect(n == 1 && !charge_en_cours(c[0], ce_matin), "charge en cours : sans jour lisible, non");
 }
 
+// Consommation du jour empilée de la page « Aujourd'hui » (tab5_maj_voiture_jour, ADR-0078) : une série de
+// 24 kWh par rang (0 = la maison sans les voitures, 1 et 2 = les voitures), les totaux et la part du soleil.
+static void test_conso_jour() {
+    ConsoJour c;
+    expect(!conso_jour_voitures(c) && std::isnan(conso_jour_pile(c, 0)), "conso : rien reçu, aucune couche");
+    expect(conso_jour_lire(ch("1"), ch("0.1;0.2;;3.5"), c) && c.recue[1] && !c.recue[0] && !c.recue[2] &&
+               proche(c.kwh[1][0], 0.1f) && proche(c.kwh[1][1], 0.2f) && std::isnan(c.kwh[1][2]) &&
+               proche(c.kwh[1][3], 3.5f) && std::isnan(c.kwh[1][4]) && std::isnan(c.kwh[1][23]),
+           "conso : une série, le champ vide vaut NAN, la fin de la journée aussi");
+    // Un rang qui n'est pas 0, 1 ou 2 : refusé, rien n'est écrit.
+    ConsoJour v;
+    const char* mauvais[] = {"3", "", "01", "a", "-1", "10", "1 "};
+    bool refus = true;
+    for (const char* r : mauvais) refus = refus && !conso_jour_lire(ch(r), ch("1;2;3"), v);
+    refus = refus && !conso_jour_lire(Champ{nullptr, 1}, ch("1;2;3"), v);
+    expect(refus && !v.recue[0] && !v.recue[1] && !v.recue[2], "conso : un rang inconnu n'écrit rien");
+    // Le payload vide retire la ligne ; les autres lignes restent.
+    expect(conso_jour_lire(ch("0"), ch("1;1;1"), c) && c.recue[0] && c.recue[1], "conso : la maison et la voiture 1");
+    expect(conso_jour_lire(ch("1"), ch(""), c) && !c.recue[1] && c.recue[0], "conso : une série vide retire la ligne");
+    expect(conso_jour_lire(ch("1"), Champ{nullptr, 0}, c) && !c.recue[1], "conso : valeurs sans pointeur = vide");
+    // Valeurs fausses : illisible, négative, absurde = NAN ; au-delà de 24 valeurs, ignorées.
+    expect(conso_jour_lire(ch("2"), ch("abc;-3;1e99;2.5;inf;nan"), v) && std::isnan(v.kwh[2][0]) &&
+               std::isnan(v.kwh[2][1]) && std::isnan(v.kwh[2][2]) && proche(v.kwh[2][3], 2.5f) && std::isnan(v.kwh[2][4]) &&
+               std::isnan(v.kwh[2][5]),
+           "conso : une valeur fausse est inconnue");
+    expect(conso_jour_lire(ch("2"), ch("1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;9;9;9"), v) && proche(v.kwh[2][23], 1.0f),
+           "conso : au plus 24 valeurs");
+    // Une voiture qui n'a aucune heure connue ne fait pas la couche ; des zéros, si (elle a des lignes).
+    ConsoJour d;
+    conso_jour_lire(ch("0"), ch("1;1;1"), d);
+    conso_jour_lire(ch("1"), ch(";;;;;;;;;;;;;;;;;;;;;;;"), d);
+    expect(d.recue[1] && !conso_jour_voitures(d), "conso : 24 heures vides, pas de couche");
+    conso_jour_lire(ch("1"), ch("0;0;0"), d);
+    expect(conso_jour_voitures(d), "conso : des zéros sont des valeurs : la couche existe");
+    ConsoJour seule;
+    conso_jour_lire(ch("0"), ch("1;2;3"), seule);
+    expect(!conso_jour_voitures(seule), "conso : la maison seule ne fait pas la couche");
+
+    // La pile d'une heure : la somme des lignes reçues qui y ont une valeur.
+    ConsoJour p;
+    conso_jour_lire(ch("0"), ch("1;2;;"), p);
+    conso_jour_lire(ch("1"), ch("0.5;;;"), p);
+    expect(proche(conso_jour_pile(p, 0), 1.5f) && proche(conso_jour_pile(p, 1), 2.0f) && std::isnan(conso_jour_pile(p, 2)) &&
+               std::isnan(conso_jour_pile(p, 24)) && std::isnan(conso_jour_pile(p, -1)),
+           "conso : pile = somme des lignes connues, NAN hors journée");
+
+    // Totaux et part du soleil, à la main. Heures 0 à 3, maison 1 kWh partout, voiture 1 : 0, 2, 0, 0 ;
+    // voiture 2 : 0, 0, 3, 0 ; production 0, 4, 2, 5. Heure 1 : disponible 4 - 1 = 3, le soleil couvre
+    // min(2, 3) = 2 ; heure 2 : disponible 1, min(3, 1) = 1 ; les heures 0 et 3 ne chargent pas. Soleil 3 kWh
+    // sur 5 : 60 %.
+    ConsoJour a;
+    conso_jour_lire(ch("0"), ch("1;1;1;1"), a);
+    conso_jour_lire(ch("1"), ch("0;2;0;0"), a);
+    conso_jour_lire(ch("2"), ch("0;0;3;0"), a);
+    const float prod_a[4] = {0.0f, 4.0f, 2.0f, 5.0f};
+    ConsoJourTotaux t = conso_jour_totaux(a, prod_a, 4);
+    expect(proche_w(t.maison, 4.0f) && proche_w(t.voiture[0], 2.0f) && proche_w(t.voiture[1], 3.0f) &&
+               proche_w(t.voitures, 5.0f) && proche_w(t.part, 60.0f),
+           "conso : totaux du jour et part du soleil (3 kWh sur 5)");
+    // Charge de nuit : aucune production, 0 %.
+    ConsoJour n;
+    conso_jour_lire(ch("0"), ch("1;1;1"), n);
+    conso_jour_lire(ch("1"), ch("3;3;3"), n);
+    const float prod_nuit[3] = {0.0f, 0.0f, 0.0f};
+    t = conso_jour_totaux(n, prod_nuit, 3);
+    expect(proche_w(t.part, 0.0f) && proche_w(t.voitures, 9.0f), "conso : une charge de nuit = 0 % par le soleil");
+    // Deux voitures ensemble partagent le même soleil : 0,5 kWh de maison, 2 × 4 kWh, 5,2 kWh produits :
+    // disponible 4,7, soleil min(8, 4,7) = 4,7 sur 8 = 58,75 % (et non 100 % : le soleil serait compté deux fois).
+    ConsoJour deux;
+    conso_jour_lire(ch("0"), ch("0.5"), deux);
+    conso_jour_lire(ch("1"), ch("4"), deux);
+    conso_jour_lire(ch("2"), ch("4"), deux);
+    const float prod_deux[1] = {5.2f};
+    t = conso_jour_totaux(deux, prod_deux, 1);
+    expect(proche_w(t.part, 58.75f), "conso : deux voitures qui chargent ensemble ne comptent qu'une fois le soleil");
+    // Plus de soleil que de besoin : bornée à 100 %. Une voiture seule, la production de l'heure énorme.
+    ConsoJour beaucoup;
+    conso_jour_lire(ch("0"), ch("0"), beaucoup);
+    conso_jour_lire(ch("1"), ch("2"), beaucoup);
+    const float prod_beaucoup[1] = {10.0f};
+    t = conso_jour_totaux(beaucoup, prod_beaucoup, 1);
+    expect(proche_w(t.part, 100.0f), "conso : le soleil couvre toute la charge = 100 %");
+    // Sans ligne de maison, sans production ou sans charge à compter : pas de part (les totaux restent).
+    ConsoJour sans_maison;
+    conso_jour_lire(ch("1"), ch("2;2"), sans_maison);
+    t = conso_jour_totaux(sans_maison, prod_a, 4);
+    expect(std::isnan(t.part) && std::isnan(t.maison) && proche_w(t.voitures, 4.0f) && std::isnan(t.voiture[1]),
+           "conso : sans maison, pas de part du soleil");
+    t = conso_jour_totaux(a, nullptr, 0);
+    expect(std::isnan(t.part) && proche_w(t.voitures, 5.0f), "conso : sans production, pas de part du soleil");
+    t = conso_jour_totaux(a, prod_a, 0);
+    expect(std::isnan(t.part), "conso : production de 0 heure, pas de part");
+    ConsoJour tout_zero;
+    conso_jour_lire(ch("0"), ch("1;1"), tout_zero);
+    conso_jour_lire(ch("1"), ch("0;0.005"), tout_zero);
+    t = conso_jour_totaux(tout_zero, prod_a, 4);
+    expect(std::isnan(t.part), "conso : moins de 10 Wh de charge dans le jour, pas de part");
+    // Une heure sans ligne de maison est exclue des deux sommes ; une heure sans production vaut 0.
+    ConsoJour trou;
+    conso_jour_lire(ch("0"), ch("1;;1"), trou);          // heure 1 : pas de maison
+    conso_jour_lire(ch("1"), ch("2;2;2"), trou);
+    const float prod_trou[3] = {3.0f, 3.0f, NAN};        // heure 2 : production inconnue = 0
+    t = conso_jour_totaux(trou, prod_trou, 3);
+    // Heure 0 : disponible 2, soleil min(2, 2) = 2 ; heure 2 : disponible 0, soleil 0 ; 2 kWh sur 4 = 50 %.
+    expect(proche_w(t.part, 50.0f) && proche_w(t.voitures, 6.0f), "conso : heure sans maison exclue, heure sans production = 0");
+    // Une heure au-delà de la production reçue vaut 0 aussi.
+    ConsoJour loin;
+    conso_jour_lire(ch("0"), ch(";;;;1"), loin);
+    conso_jour_lire(ch("1"), ch(";;;;2"), loin);
+    t = conso_jour_totaux(loin, prod_a, 4);
+    expect(proche_w(t.part, 0.0f), "conso : une heure que la production n'a pas reçue vaut 0");
+}
+
 static void test_voiture_lire() {
     VoitureLue v;
     expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95"), v) && v.presente && champ_est(v.nom, "Model Y") &&
@@ -2344,6 +2457,7 @@ int main() {
     test_energie_flux_voitures();
     test_voiture_lire();
     test_charges_lire();
+    test_conso_jour();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
