@@ -50,6 +50,12 @@
 #       popup puis au plus toutes les 5 minutes) : trois appels, un par rang, tous les rangs à chaque
 #       fois (une série vide retire la voiture de la page « Aujourd'hui »). Un firmware plus ancien
 #       n'a pas l'action : continue_on_error.
+#       tab5_maj_voiture_bilan (ADR-0080, 10/11/2026) : vue « mois_civil », debut (le 1er du mois,
+#       AAAA-MM-JJ : `bilan_debut` de la réponse) et payload « kwh|part_soleil|km|kwh_100km|reseau »
+#       de chaque voiture puis la part de la maison (`bilan`), de la MÊME réponse de script.tab5_voitures_analyse,
+#       aux mêmes moments (ouverture du popup puis au plus toutes les 5 minutes) : un appel, poussé tel quel.
+#       Page « Bilan », bouton « Voitures ». Un payload vide retire le bouton ; un firmware plus ancien
+#       n'a pas l'action : continue_on_error.
 # @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
 #       depuis minuit (heure locale), plus le partiel depuis la dernière ligne (état
 #       actuel − dernier « state », converti en kWh). Heures : les mêmes lignes, par heure
@@ -633,6 +639,17 @@ script:
                               valeurs: >-
                                 {{ analyse_voitures.get('jour_maison' if repeat.item == '0' else 'jour_' ~ repeat.item, '') | string }}
                             continue_on_error: true
+                    # La même réponse encore, le bilan du mois civil (ADR-0080, page « Bilan », bouton
+                    # « Voitures ») : `bilan_debut` (le 1er du mois) et `bilan` (kWh, part du soleil, km,
+                    # kWh/100 km et kWh du réseau de chaque voiture, puis la part de la maison), poussés
+                    # tels quels. Un payload vide retire le bouton. Un firmware sans l'action :
+                    # continue_on_error, le script continue.
+                    - action: "esphome.{{ tablette }}_tab5_maj_voiture_bilan"
+                      data:
+                        vue: mois_civil
+                        debut: "{{ analyse_voitures.get('bilan_debut', '') | string }}"
+                        payload: "{{ analyse_voitures.get('bilan', '') | string }}"
+                      continue_on_error: true
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
             # suivante (bouton de vue, réouverture). Au premier passage d'une autre vue que
