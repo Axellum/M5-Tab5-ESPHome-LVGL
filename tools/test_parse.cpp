@@ -2350,6 +2350,88 @@ static void test_conso_jour() {
     expect(proche_w(t.part, 0.0f), "conso : une heure que la production n'a pas reçue vaut 0");
 }
 
+// Bilan du mois des voitures (tab5_maj_voiture_bilan, ADR-0080) : onze champs, cinq par voiture puis la part
+// de la maison ; les totaux et ce que chaque voiture pèse dans la maison.
+static void test_voiture_bilan() {
+    VoitureBilanLu b;
+    // La sortie `bilan` du script de HA pour deux voitures (tests/test_voitures_charges.py : « 28.4|26|246|11.6|21.0|
+    // 6.0|87||||0.8|10 ») : la première roule 246 km, la seconde n'a pas d'odomètre.
+    expect(voiture_bilan_lire(ch("28.4|26|246|11.6|21.0|6.0|87|||0.8|10"), b) && b.voiture[0].presente &&
+               b.voiture[1].presente && proche(b.voiture[0].kwh, 28.4f) && proche(b.voiture[0].soleil, 26.0f) &&
+               proche(b.voiture[0].km, 246.0f) && proche(b.voiture[0].conso, 11.6f) && proche(b.voiture[0].reseau, 21.0f) &&
+               proche(b.voiture[1].kwh, 6.0f) && proche(b.voiture[1].soleil, 87.0f) && std::isnan(b.voiture[1].km) &&
+               std::isnan(b.voiture[1].conso) && proche(b.voiture[1].reseau, 0.8f) && proche(b.part, 10.0f),
+           "bilan voitures : deux voitures, la seconde sans odomètre");
+    // Une seule voiture : les cinq champs de l'autre sont vides ; la voiture 2 seule fait de même.
+    expect(voiture_bilan_lire(ch("12.5|40|||7.5||||||55"), b) && b.voiture[0].presente && !b.voiture[1].presente &&
+               std::isnan(b.voiture[0].km) && proche(b.part, 55.0f),
+           "bilan voitures : la voiture 1 seule");
+    expect(voiture_bilan_lire(ch("|||||3.5|nan|120|18.0|2.5|"), b) && !b.voiture[0].presente && b.voiture[1].presente &&
+               std::isnan(b.voiture[1].soleil) && proche(b.voiture[1].km, 120.0f) && proche(b.voiture[1].conso, 18.0f) &&
+               std::isnan(b.part),
+           "bilan voitures : la voiture 2 seule, la part du soleil « nan », la part de la maison vide");
+    // Vide, blanc, pointeur nul, sans énergie lisible : aucune voiture (les autres champs seuls n'y font rien).
+    expect(!voiture_bilan_lire(ch(""), b) && !b.voiture[0].presente && !b.voiture[1].presente, "bilan voitures : vide");
+    expect(!voiture_bilan_lire(Champ{nullptr, 5}, b) && !b.voiture[0].presente, "bilan voitures : pointeur nul");
+    expect(!voiture_bilan_lire(ch("||||||||||"), b) && !voiture_bilan_lire(ch("abc|50|10|10|5|||||||"), b) &&
+               !voiture_bilan_lire(ch("-2|50|10|10|5||||||"), b) && !voiture_bilan_lire(ch("1e99|50||||||||"), b) &&
+               !voiture_bilan_lire(ch("nan|50|10|10|5|nan|1|1|1|1|10"), b),
+           "bilan voitures : sans énergie lisible (vide, illisible, négative, absurde, nan) la voiture n'existe pas");
+    // Hors bornes ou illisible : inconnu, jamais une valeur fausse.
+    expect(voiture_bilan_lire(ch("10|150|-5|2000|-1|5|abc|1e9|-3|x|101"), b) && std::isnan(b.voiture[0].soleil) &&
+               std::isnan(b.voiture[0].km) && std::isnan(b.voiture[0].conso) && std::isnan(b.voiture[0].reseau) &&
+               proche(b.voiture[1].kwh, 5.0f) && std::isnan(b.voiture[1].soleil) && std::isnan(b.voiture[1].km) &&
+               std::isnan(b.voiture[1].conso) && std::isnan(b.voiture[1].reseau) && std::isnan(b.part),
+           "bilan voitures : hors bornes = inconnu");
+    // Un champ de trop est ignoré ; un payload court se lit « vide » à la fin.
+    expect(voiture_bilan_lire(ch("10|50|100|15|5||||||20|futur|autre"), b) && proche(b.part, 20.0f),
+           "bilan voitures : un champ de trop est ignoré");
+    expect(voiture_bilan_lire(ch("10|50"), b) && b.voiture[0].presente && proche(b.voiture[0].soleil, 50.0f) &&
+               !b.voiture[1].presente && std::isnan(b.part),
+           "bilan voitures : payload court, le reste inconnu");
+    // 0 kWh ce mois-ci : la voiture existe (elle n'a pas chargé), sa part n'a pas de sens.
+    expect(voiture_bilan_lire(ch("0.0|nan|||0.0||||||0"), b) && b.voiture[0].presente && proche(b.voiture[0].kwh, 0.0f),
+           "bilan voitures : une voiture qui n'a pas chargé existe");
+
+    // Totaux : 28.4 kWh à 26 % + 6.0 kWh à 87 % = 34.4 kWh dont 7.384 + 5.22 = 12.604 du soleil (36.64 %),
+    // réseau 21.0 + 0.8 = 21.8.
+    voiture_bilan_lire(ch("28.4|26|246|11.6|21.0|6.0|87|||0.8|10"), b);
+    VoitureBilanTotal t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 34.4f) && proche_w(t.soleil_kwh, 12.604f) && proche_w(t.soleil, 36.64f) &&
+               proche_w(t.reseau, 21.8f),
+           "bilan voitures : totaux de deux voitures");
+    // Une part inconnue n'entre ni au numérateur ni au dénominateur ; sans part du tout, NAN.
+    voiture_bilan_lire(ch("10|50|||5|10|nan|||5|"), b);
+    t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 20.0f) && proche_w(t.soleil, 50.0f) && proche_w(t.soleil_kwh, 5.0f) && proche_w(t.reseau, 10.0f),
+           "bilan voitures : la part inconnue n'est pas comptée dans la part du soleil");
+    voiture_bilan_lire(ch("10|nan|||||nan||||"), b);
+    t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 10.0f) && std::isnan(t.soleil) && std::isnan(t.soleil_kwh) && std::isnan(t.reseau),
+           "bilan voitures : sans part ni réseau connus, NAN");
+    voiture_bilan_lire(ch("0.0|50|||0.0||||||"), b);
+    t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 0.0f) && std::isnan(t.soleil), "bilan voitures : 0 kWh, la part du soleil est sans objet");
+    VoitureBilanLu vide;
+    t = voiture_bilan_total(vide);
+    expect(std::isnan(t.kwh) && std::isnan(t.soleil) && std::isnan(t.reseau), "bilan voitures : total sans voiture");
+
+    // Ce que chaque voiture pèse dans la maison : la part répartie à l'énergie.
+    float parts[kVoituresMax];
+    voiture_bilan_lire(ch("30|||||10||||||40"), b);
+    voiture_bilan_parts(b, parts);
+    expect(proche_w(parts[0], 30.0f) && proche_w(parts[1], 10.0f), "bilan voitures : 40 % de la maison, 30 + 10");
+    voiture_bilan_lire(ch("30||||||||||"), b);   // la part de la maison inconnue
+    voiture_bilan_parts(b, parts);
+    expect(std::isnan(parts[0]) && std::isnan(parts[1]), "bilan voitures : sans part de la maison, pas de répartition");
+    voiture_bilan_lire(ch("|||||8||||||5"), b);   // la voiture 1 absente
+    voiture_bilan_parts(b, parts);
+    expect(std::isnan(parts[0]) && proche_w(parts[1], 5.0f), "bilan voitures : une voiture absente n'a pas de part");
+    voiture_bilan_lire(ch("0.0||||0.0||||||0"), b);   // aucune énergie : rien à répartir
+    voiture_bilan_parts(b, parts);
+    expect(std::isnan(parts[0]), "bilan voitures : sans énergie, rien à répartir");
+}
+
 static void test_voiture_lire() {
     VoitureLue v;
     expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95"), v) && v.presente && champ_est(v.nom, "Model Y") &&
@@ -2458,6 +2540,7 @@ int main() {
     test_voiture_lire();
     test_charges_lire();
     test_conso_jour();
+    test_voiture_bilan();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

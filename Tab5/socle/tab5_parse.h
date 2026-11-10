@@ -1351,3 +1351,54 @@ struct ConsoJourTotaux {
     float part = NAN;                     // 0..100 : la part des voitures venue du soleil
 };
 ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, int n_production);
+
+// ─── 20. Bilan du mois des voitures (page « Bilan », tab5_maj_voiture_bilan, ADR-0080) ───
+// Le mois en cours de chaque voiture, une seule chaîne `payload` de onze champs séparés par « | » :
+// voiture 1 puis voiture 2, cinq champs chacune, puis la part de la maison. C'est la sortie `bilan`
+// du script tab5_voitures_analyse (packages/tab5_voitures.yaml, ADR-0074), poussée telle quelle, avec
+// `bilan_debut` (le 1er du mois) pour `debut` :
+//   kwh       énergie chargée depuis le 1er (energie_kwh), sinon la voiture est absente ;
+//   soleil    0..100, la part de cette énergie venue du soleil ; vide (aucun capteur solaire) ou « nan » :
+//             inconnue ;
+//   km        kilomètres parcourus (l'odomètre, désactivé par défaut chez Tesla : vide sans lui) ;
+//   conso     kWh / 100 km : l'énergie chargée divisée par les km, une APPROXIMATION (les pertes de
+//             charge, la charge ailleurs, la batterie qui se vide ne sont pas comptés), jamais une
+//             consommation mesurée ; vide sous 20 km ou sans odomètre ;
+//   reseau    kWh pris au réseau (la part que le soleil n'a pas couverte) ;
+//   part      0..100, ce que les voitures pèsent dans la consommation de la maison (compteur de la
+//             maison, voitures comprises).
+// Même famille que tab5_maj_voiture : un champ vide se lit « inconnu », un champ de trop est ignoré,
+// on ajoute à la FIN seulement. Les cinq champs d'une voiture tous vides : la voiture n'existe pas
+// (le cas d'un compte à une seule voiture). Un payload vide : aucun bilan (la vue « Voitures » du Bilan
+// disparaît).
+constexpr int kVoitureBilanChamps = 5 * kVoituresMax + 1;
+constexpr float kVoitureKmMax = 1e6f;      // un mois de route : bien au-delà du possible
+constexpr float kVoitureConsoMax = 1000.0f;   // kWh / 100 km
+struct VoitureBilanVoiture {
+    bool presente = false;
+    float kwh = NAN;
+    float soleil = NAN;   // 0..100
+    float km = NAN;
+    float conso = NAN;    // kWh / 100 km, approchée
+    float reseau = NAN;   // kWh
+};
+struct VoitureBilanLu {
+    VoitureBilanVoiture voiture[kVoituresMax];
+    float part = NAN;     // 0..100
+};
+// Lit un payload ; vrai si au moins une voiture est présente. Aucune écriture dans le payload ; `out` n'y
+// pointe pas.
+bool voiture_bilan_lire(const Champ& payload, VoitureBilanLu& out);
+// Totaux des voitures présentes : l'énergie, ce que le réseau en a fourni, et la part du soleil du total
+// (pondérée par l'énergie des voitures dont la part est connue, comme charges_total : NAN si aucune ne
+// l'est), avec ses kWh. `reseau` somme les champs reçus ; NAN si aucune voiture n'en a un.
+struct VoitureBilanTotal {
+    float kwh = NAN;
+    float soleil = NAN;      // 0..100
+    float soleil_kwh = NAN;
+    float reseau = NAN;
+};
+VoitureBilanTotal voiture_bilan_total(const VoitureBilanLu& b);
+// Ce que pèse chaque voiture dans la maison (0..100, `part` répartie à l'énergie de chacune) ; NAN pour
+// une voiture absente ou quand la part de la maison est inconnue. Le total des deux ne dépasse pas `part`.
+void voiture_bilan_parts(const VoitureBilanLu& b, float parts[kVoituresMax]);

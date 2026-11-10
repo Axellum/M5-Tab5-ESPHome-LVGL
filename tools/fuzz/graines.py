@@ -45,6 +45,7 @@ FAMILLES = [
     ("D", "tab5_maj_voiture", ("rang", "payload")),
     ("E", "tab5_maj_voiture_charges", "payload"),
     ("F", "tab5_maj_voiture_jour", ("rang", "debut", "valeurs")),
+    ("G", "tab5_maj_voiture_bilan", ("vue", "debut", "payload")),
 ]
 
 
