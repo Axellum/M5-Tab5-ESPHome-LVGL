@@ -519,8 +519,6 @@ void voitures_ouvrir() {
     if (u.demander != nullptr) u.demander();
 }
 
-void voitures_page(int rang) { afficher_page(rang); }
-
 void voitures_rejouer_theme() {
     if (!s_construit || !popup_ouvert()) return;
     peindre();
