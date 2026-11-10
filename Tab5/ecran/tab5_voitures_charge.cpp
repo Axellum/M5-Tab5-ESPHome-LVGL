@@ -234,28 +234,16 @@ lv_obj_t* libelle(lv_obj_t* parent, const lv_font_t* f, lv_text_align_t align = 
     return l;
 }
 
-// Un verre : la carte de verre des autres popups (style_glass_card : dégradé, arête lumineuse), faite
-// ici en C++ ; ses couleurs suivent le thème (verre_couleurs).
+// Un verre : la carte de verre des autres popups, faite ici en C++ avec leur style (style_glass_card,
+// posé par tab5_voitures_lier) : rayon, bord, fond et dégradé viennent du thème, aucune valeur ici.
 lv_obj_t* verre_creer(lv_obj_t* parent) {
     lv_obj_t* o = lv_obj_create(parent);
     lv_obj_remove_style_all(o);
-    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_bg_grad_dir(o, LV_GRAD_DIR_VER, LV_PART_MAIN);
-    lv_obj_set_style_bg_main_stop(o, 25, LV_PART_MAIN);
-    lv_obj_set_style_bg_grad_stop(o, 240, LV_PART_MAIN);
-    lv_obj_set_style_border_width(o, 2, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(o, LV_OPA_COVER * 55 / 100, LV_PART_MAIN);
-    lv_obj_set_style_radius(o, 20, LV_PART_MAIN);
+    if (g_voitures_ui.style_carte != nullptr) lv_obj_add_style(o, g_voitures_ui.style_carte, LV_PART_MAIN);
     lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
     return o;
-}
-
-void verre_couleurs(lv_obj_t* o) {
-    ui_style_couleur(o, LV_STYLE_BG_COLOR, UIColor.GLASS_HI);
-    ui_style_couleur(o, LV_STYLE_BG_GRAD_COLOR, UIColor.GLASS_LO);
-    ui_style_couleur(o, LV_STYLE_BORDER_COLOR, UIColor.GLASS_RIM);
 }
 
 // Bordure d'un rectangle, écrite si elle change.
@@ -358,7 +346,6 @@ void creer() {
 void peindre_carte(int c, const Ligne& li, int32_t x, int32_t w) {
     Carte& k = s_p.carte[c];
     const VoitureRecue& v = *li.v;
-    verre_couleurs(k.fond);
     ui_poser(k.fond, x, 0, w, kResumeH);
     const int32_t col = w - 2 * kPad;
     const int32_t h32 = haut(s_p.f32);
@@ -451,7 +438,6 @@ void peindre_carte(int c, const Ligne& li, int32_t x, int32_t w) {
 // La frise des 24 heures du jour.
 void peindre_frise(const Ligne* l, int n, int maint, const CreneauSolaire& cr) {
     Page& p = s_p;
-    verre_couleurs(p.frise);
     ui_poser(p.frise, 0, kFriseY, kCorpsW, kFriseH);
     const int32_t h22 = haut(p.f22);
     const int32_t nowx = maint >= 0 ? kTraceX + static_cast<int32_t>(static_cast<int64_t>(maint) * kTraceL / (24 * 60)) : -1;

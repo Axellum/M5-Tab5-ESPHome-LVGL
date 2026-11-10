@@ -55,6 +55,7 @@ script:
           u.detail[1] = id(voitures_detail_1);
           u.limite[0] = id(voitures_limite_0);
           u.limite[1] = id(voitures_limite_1);
+          u.style_carte = id(style_glass_card);
           u.demander = []() { id(tab5_energie_demande).execute(std::string("heures")); };
           // En dernier : peindre() ne fait rien tant que popup est nul.
           u.popup = id(voitures_popup);

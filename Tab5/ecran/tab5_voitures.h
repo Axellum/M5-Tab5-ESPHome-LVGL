@@ -51,6 +51,9 @@ struct VoituresUI {
     lv_obj_t* etat[kVoituresCartes] = {};            // voitures_etat_N : « En charge · 7.20 kW »
     lv_obj_t* detail[kVoituresCartes] = {};          // voitures_detail_N : énergie ajoutée, fin de charge
     lv_obj_t* limite[kVoituresCartes] = {};          // voitures_limite_N : « Limite 80 % »
+    // Le style de la carte de verre des thèmes (style_glass_card) : une carte faite en C++ le prend, elle
+    // suit ainsi le rayon, le bord et le fond de chaque thème.
+    lv_style_t* style_carte = nullptr;
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture) : demande à
     // Home Assistant de pousser les voitures quand le popup s'ouvre sans en avoir reçu.
     void (*demander)() = nullptr;
