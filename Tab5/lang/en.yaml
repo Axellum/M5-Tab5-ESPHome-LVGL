@@ -1560,3 +1560,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "of range"
 "Aucune voiture reçue": "No car received"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Choose them in the blueprint, section “Energy: cars”."
+"Aperçu": "Overview"

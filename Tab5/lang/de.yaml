@@ -1581,3 +1581,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "Reichweite"
 "Aucune voiture reçue": "Keine Autos empfangen"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Wähle sie im Blueprint, Bereich „Énergie : voitures · Energy: cars“."
+"Aperçu": "Überblick"

@@ -1615,3 +1615,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "di autonomia"
 "Aucune voiture reçue": "Nessuna auto ricevuta"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Scegli le auto nel blueprint, sezione «Énergie : voitures · Energy: cars»."
+"Aperçu": "Panoramica"
