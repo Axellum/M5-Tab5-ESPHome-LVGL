@@ -1394,3 +1394,44 @@ struct ConsoJourTotaux {
     float part = NAN;                     // 0..100 : la part des voitures venue du soleil
 };
 ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, int n_production);
+
+// ─── 20. Trajets des voitures (page « Trajets » du popup Voitures, tab5_maj_voiture_trajets, ADR-0083) ───
+// Une voiture par appel : variables `rang` (« 1 » ou « 2 », la voiture de tab5_maj_voiture) et `payload`
+// « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours » : les chaînes `trajets_1` et `trajets_2` du
+// script tab5_voitures_analyse (packages/tab5_voitures.yaml, ADR-0074 et ADR-0083), poussées telles
+// quelles. Même famille que tab5_maj_voiture : un champ vide se lit « inconnu », un champ de trop est
+// ignoré, on ajoute à la FIN seulement.
+//   debut        AAAA-MM-JJ local du premier des sept jours (le dernier est aujourd'hui), sinon illisible
+//                (annee = 0) ;
+//   compteur_km  le dernier relevé de l'odomètre, 0..kTrajetsCompteurMax, sinon inconnu ;
+//   km_mois      les kilomètres du mois en cours, 0..kTrajetsKmMoisMax, sinon inconnus ;
+//   kwh_100km    l'énergie chargée ce mois-ci divisée par les km du mois : une APPROXIMATION (une charge
+//                n'est pas une consommation), 0..kTrajetsConsoMax, sinon inconnue ;
+//   km_jours     sept km séparés par « ; », du plus ancien à aujourd'hui, 0..kTrajetsKmJourMax, vide = pas
+//                de ligne ce jour-là (ce n'est pas 0 km), au-delà : inconnu ;
+//   kwh_jours    sept kWh reçus par la voiture ce jour-là, même règle, 0..kTrajetsKwhJourMax.
+// Un payload vide, ou blanc : la voiture n'a pas d'odomètre choisi (sa colonne disparaît ; sans aucune
+// voiture qui en ait un, la page « Trajets » n'existe pas). Une voiture dont l'odomètre est choisi mais
+// dont aucun relevé n'est lisible est PRÉSENTE (ses sept valeurs sont inconnues).
+constexpr int kTrajetsJours = 7;
+constexpr float kTrajetsKmJourMax = 3000.0f;       // aucune voiture ne fait plus en un jour
+constexpr float kTrajetsKwhJourMax = 5000.0f;      // ni ne reçoit plus de kWh en un jour
+constexpr float kTrajetsCompteurMax = 3.0e6f;
+constexpr float kTrajetsKmMoisMax = 90000.0f;
+constexpr float kTrajetsConsoMax = 1000.0f;        // kWh / 100 km
+struct TrajetsLu {
+    bool presente = false;
+    int annee = 0, mois = 0, jour = 0;             // le premier des sept jours ; annee 0 : illisible
+    float compteur = NAN;
+    float km_mois = NAN;
+    float kwh_100km = NAN;
+    float km[kTrajetsJours] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+    float kwh[kTrajetsJours] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+};
+// Lit un payload ; vrai si une voiture est présente (out.presente). Aucune écriture dans le payload ;
+// `out` ne contient rien qui y pointe.
+bool trajets_lire(const Champ& payload, TrajetsLu& out);
+// Le jour i (0 = le plus ancien … kTrajetsJours - 1 = aujourd'hui) de la fenêtre : jour du mois (1..31)
+// et jour de la semaine (0 = dimanche, pour day_short_utf8). Faux si `i` est hors bornes ou si la date de
+// début est illisible.
+bool trajets_jour(const TrajetsLu& t, int i, int& jour_du_mois, int& jour_semaine);

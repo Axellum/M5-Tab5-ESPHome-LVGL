@@ -1657,6 +1657,14 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Pneus corrects": "Neumáticos OK"
 "Pression basse": "Presión baja"
 "Aperçu": "Resumen"
+# --- Page Trajets du popup Voitures (tab5_voitures_trajets.cpp, ADR-0083) ---
+"Trajets": "Viajes"
+"Compteur %s km": "Odómetro %s km"
+"ce mois-ci": "este mes"
+"kWh / 100 km · estimé": "kWh / 100 km · estimado"
+"Km par jour": "Km por día"
+"kWh chargés par jour": "kWh cargados por día"
+"Pas encore de relevé du compteur": "Aún no hay lectura del cuentakilómetros"
 
 # --- Popup Voitures, page Charge (ADR-0082) ---
 "Aujourd'hui, heure par heure": "Hoy, hora por hora"

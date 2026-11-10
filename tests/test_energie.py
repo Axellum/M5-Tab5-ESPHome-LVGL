@@ -2268,7 +2268,7 @@ def test_flux_dispositions_voitures(carte):
 
 # ─── Package et blueprint : tab5_maj_voiture (ADR-0076) ──────────────────────
 
-CHAMPS_VOITURE = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "fin",
+CHAMPS_VOITURE = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "odometre", "fin",
                   "pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d", "temp_int", "temp_ext",
                   "verrou", "sentinelle", "logiciel"]
 MODEL_Y = {"nom": "Model Y", "batterie": "sensor.model_y_batterie", "autonomie": "sensor.model_y_autonomie",
@@ -2694,8 +2694,12 @@ def test_charges_l_action_et_ses_variables():
 def test_charges_les_voitures_analysees():
     """Une voiture est analysée quand elle a un capteur de puissance de charge, sous son rang dans le
     blueprint (« 1 » ou « 2 »), avec le nom et le capteur que lit script.tab5_voitures_analyse."""
-    un = {"rang": "1", "nom": "Model Y", "puissance_charge": "sensor.model_y_puissance"}
+    un = {"rang": "1", "nom": "Model Y", "puissance_charge": "sensor.model_y_puissance", "odometre": ""}
     assert _passe_charges([MODEL_Y, SANS_VOITURE])["voitures_analyse"] == [un]
+    # Le compteur kilométrique choisi (ADR-0083) suit sa voiture, vide quand il ne l'est pas.
+    avec_compteur = dict(MODEL_Y, odometre="sensor.model_y_odometre")
+    assert _passe_charges([avec_compteur, MODEL_Y])["voitures_analyse"] == [
+        dict(un, odometre="sensor.model_y_odometre"), dict(un, rang="2")]
     # Le rang vient de la place dans le blueprint, pas de l'ordre des voitures présentes.
     assert _passe_charges([SANS_VOITURE, MODEL_Y])["voitures_analyse"] == [dict(un, rang="2")]
     assert _passe_charges([MODEL_Y, MODEL_Y])["voitures_analyse"] == [un, dict(un, rang="2")]

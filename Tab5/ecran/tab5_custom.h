@@ -55,6 +55,7 @@
 #include "tab5_serveur_ia.h"
 #include "tab5_voitures.h"
 #include "tab5_voitures_charge.h"
+#include "tab5_voitures_trajets.h"
 #include "tab5_voitures_etat.h"   // la page « État » du popup Voitures (ADR-0081)
 #include "tab5_telecommande.h"
 #include "tab5_alertes.h"

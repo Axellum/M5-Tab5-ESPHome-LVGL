@@ -861,6 +861,55 @@ def build_conso_jour(rang: str, aujourd_hui: _dt.date, valeurs: tuple[str, ...] 
 
 
 # ---------------------------------------------------------------------------
+# Trajets des voitures, page « Trajets » du popup Voitures (ADR-0083) —
+# tab5_maj_voiture_trajets(rang, payload), payload d'une voiture (les chaînes trajets_1 et trajets_2 de
+# script.tab5_voitures_analyse, ADR-0074 et ADR-0083) :
+#   « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours »
+# debut = AAAA-MM-JJ du premier des sept jours (le dernier est aujourd'hui), compteur = le dernier relevé
+# de l'odomètre, km_mois = les kilomètres du mois, kwh_100km = l'énergie chargée ce mois-ci divisée par ces
+# kilomètres (une ESTIMATION, pas une consommation mesurée), km_jours et kwh_jours = sept nombres séparés
+# par « ; », du plus ancien à aujourd'hui (vide = pas de relevé ce jour-là, ce n'est pas 0). Un payload
+# vide = la voiture n'a pas d'odomètre choisi : elle n'a pas de colonne. La démo montre deux voitures
+# (la planche C3 du plan) : leurs kWh par jour sont ceux de CHARGES et de CONSO_JOUR (la voiture 1 a chargé
+# 19,8 kWh il y a quatre jours, 11,0 il y a trois jours et 12,4 ce matin ; la voiture 2 21,6 kWh il y a
+# trois jours, 15,9 hier et 14,4 cette nuit).
+# ---------------------------------------------------------------------------
+
+TRAJETS_CHAMPS = ("compteur", "km_mois", "kwh_100km", "km_jours", "kwh_jours")
+TRAJETS_JOURS = 7
+TRAJETS = {
+    "1": {"compteur": "41280", "km_mois": "600", "kwh_100km": "18.6",
+          "km_jours": ("62", "81", "47", "112", "74", "38", "5"),
+          "kwh_jours": ("0.0", "0.0", "19.8", "11.0", "0.0", "0.0", "12.4")},
+    "2": {"compteur": "9640", "km_mois": "520", "kwh_100km": "15.7",
+          "km_jours": ("55", "72", "44", "96", "65", "36", "4"),
+          "kwh_jours": ("0.0", "0.0", "0.0", "21.6", "0.0", "15.9", "14.4")},
+}
+
+
+def build_trajets_payload(aujourd_hui: _dt.date, trajets: dict | None = None) -> str:
+    """tab5_maj_voiture_trajets : le payload d'une voiture dans le format du contrat, la fenêtre de sept jours
+    finissant à `aujourd_hui` ; None = payload vide (la voiture n'a pas d'odomètre choisi). Un jour sans
+    relevé s'écrit « » (champ vide) dans km_jours ou kwh_jours."""
+    if trajets is None:
+        return ""
+    assert set(trajets) <= set(TRAJETS_CHAMPS), f"champ inconnu : {set(trajets) - set(TRAJETS_CHAMPS)}"
+    debut = aujourd_hui - _dt.timedelta(days=TRAJETS_JOURS - 1)
+    for champ in ("compteur", "km_mois", "kwh_100km"):
+        v = trajets.get(champ, "")
+        assert v == "" or (_nombre(v) is not None and float(v) >= 0), f"{champ} : {v!r}"
+    listes = []
+    for champ in ("km_jours", "kwh_jours"):
+        v = tuple(trajets.get(champ, ("",) * TRAJETS_JOURS))
+        assert len(v) == TRAJETS_JOURS, f"{champ} : {TRAJETS_JOURS} valeurs"
+        for x in v:
+            assert x == "" or (_nombre(x) is not None and float(x) >= 0), f"{champ} : {x!r}"
+        listes.append(";".join(v))
+    return "|".join((debut.isoformat(), trajets.get("compteur", ""), trajets.get("km_mois", ""),
+                     trajets.get("kwh_100km", ""), listes[0], listes[1]))
+
+
+# ---------------------------------------------------------------------------
 # Popup Serveur IA (ADR-0059) — tab5_maj_serveur_ia, payload d'un serveur :
 #   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance|actions »
 # etat 1 / 0 / vide ; nombres à point décimal, vides si inconnus ; niveau 0-2 (seuils de

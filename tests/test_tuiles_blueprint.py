@@ -498,10 +498,11 @@ def test_editeur_lisible():
                                                                "energie_devise"]
     assert list(sections["energie_stockage"]["input"]) == ["energie_batterie", "energie_batterie_puissance",
                                                            "energie_batterie_inverse", "energie_batterie_temperature"]
-    # Voitures (ADR-0076, ADR-0081) : l'option du compteur, puis dix-huit entrées par voiture (les neuf
-    # du popup Énergie, puis les neuf de la page « État »), dans l'ordre des champs du payload de
-    # tab5_maj_voiture ; toutes facultatives (test ci-dessous).
-    par_voiture = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "fin",
+    # Voitures (ADR-0076, ADR-0081, ADR-0083) : l'option du compteur, puis vingt entrées par voiture, dans
+    # l'ordre du blueprint : les neuf du popup Énergie, le compteur kilométrique de la page Trajets (entre
+    # la limite et la fin, il n'est pas dans le payload de tab5_maj_voiture), puis les neuf de la page
+    # « État » ; toutes facultatives (test ci-dessous).
+    par_voiture = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "odometre", "fin",
                    "pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d", "temp_int", "temp_ext", "verrou",
                    "sentinelle", "logiciel"]
     assert list(sections["energie_voitures"]["input"]) == (

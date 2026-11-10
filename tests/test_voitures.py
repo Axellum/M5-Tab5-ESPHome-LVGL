@@ -25,7 +25,7 @@ from tests.test_voitures_charges import MAINTENANT, PARIS, SCENARIOS, T1, capteu
 
 PACKAGE = HA / "packages" / "tab5_voitures.yaml"
 CLES = ["charges", "charges_1", "charges_2", "jour_debut", "jour_1", "jour_2", "jour_maison", "bilan_debut", "bilan",
-        "precision"]
+        "precision", "trajets_1", "trajets_2"]
 
 
 # ─── Imitation de ce que les modèles appellent dans HA ───────────────────────
@@ -115,7 +115,8 @@ class Execution:
         self.appels.append(data)
         if self.sans_recorder:
             return
-        source = {"5minute": self.cas["stats5"], "hour": self.cas["stats1"], "month": self.cas["odo"]}[data["period"]]
+        source = {"5minute": self.cas["stats5"], "hour": self.cas["stats1"], "month": self.cas["odo"],
+                  "day": self.cas.get("odo_jours", {})}[data["period"]]
         ids = data["statistic_ids"]
         self.ctx[etape["response_variable"]] = {"statistics": {s: source[s] for s in ids if source.get(s)}}
 
@@ -172,7 +173,7 @@ def test_recorder_en_echec_reponse_vide_sans_erreur():
 
 def test_les_demandes_au_recorder():
     r = executer("bilan")
-    cinq, heure, mois = r.appels
+    cinq, heure, mois, jours = r.appels
     ids = ["sensor.solaire_a", "sensor.maison_puissance", "sensor.tesla_2023_puissance_de_charge",
            "sensor.tesla_2025_puissance_de_charge"]
     for d, periode in ((cinq, "5minute"), (heure, "hour")):
@@ -182,6 +183,10 @@ def test_les_demandes_au_recorder():
     assert mois["period"] == "month" and mois["types"] == ["change"] and mois["units"] == {"distance": "km"}
     assert mois["statistic_ids"] == ["sensor.tesla_2023_odometre", "sensor.tesla_2025_odometre"]
     assert mois["start_time"] == "2026-06-01T00:00:00+02:00"
+    # Trajets (ADR-0083) : les sept derniers jours locaux, un odomètre en km, `change` et `state`
+    assert jours["period"] == "day" and jours["types"] == ["change", "state"] and jours["units"] == {"distance": "km"}
+    assert jours["statistic_ids"] == mois["statistic_ids"]
+    assert jours["start_time"] == "2026-06-10T00:00:00+02:00"
     # sans odomètre : pas de troisième demande ; capteur solaire commun à deux voitures : sans doublon
     assert len(executer("nuit").appels) == 2
     assert executer("sans_voiture").appels == []

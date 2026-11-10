@@ -241,6 +241,14 @@ NON_MONTREES = {
     "voitures-etat-1-psi": "voitures-etat-2 montre la même page ; pressions en psi et températures en °F",
     "voitures-etat-incomplet": "voitures-etat-2 montre la même page ; une voiture à moitié renseignée, des « -- »",
     "voitures-etat-3-onglets": "voitures-etat-2 montre la même page ; trois onglets en haut (Aperçu, Charge, État)",
+    # Page Trajets du popup Voitures (ADR-0083) : décrite dans screens.md ; images à tirer du rendu de la PR.
+    "voitures-trajets-2": "page Trajets du popup Voitures, deux voitures, décrite dans screens.md ; image à tirer du rendu",
+    "voitures-trajets-1": "voitures-trajets-2 montre la même page ; une seule voiture en pleine largeur",
+    "voitures-trajets-sans-releve": "voitures-trajets-2 montre la même page ; « Pas encore de relevé du compteur » "
+                                    "est décrit dans screens.md",
+    "voitures-trajets-aucun": "voitures-2 montre la même fenêtre ; sans trajets reçus, la page et son onglet n'existent pas",
+    "voitures-trajets-3-onglets": "voitures-trajets-2 montre la même page ; ici avec la page Charge en plus (trois onglets, "
+                                  "Tab5 seulement : la 7B n'a pas de page Charge)",
 }
 
 
