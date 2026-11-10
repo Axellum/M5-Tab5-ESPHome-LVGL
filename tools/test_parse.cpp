@@ -2418,16 +2418,16 @@ static void test_voiture_bilan() {
 
     // Ce que chaque voiture pèse dans la maison : la part répartie à l'énergie.
     float parts[kVoituresMax];
-    voiture_bilan_lire(ch("30|||||10||||||40"), b);
+    voiture_bilan_lire(ch("30|||||10|||||40"), b);
     voiture_bilan_parts(b, parts);
     expect(proche_w(parts[0], 30.0f) && proche_w(parts[1], 10.0f), "bilan voitures : 40 % de la maison, 30 + 10");
     voiture_bilan_lire(ch("30||||||||||"), b);   // la part de la maison inconnue
     voiture_bilan_parts(b, parts);
     expect(std::isnan(parts[0]) && std::isnan(parts[1]), "bilan voitures : sans part de la maison, pas de répartition");
-    voiture_bilan_lire(ch("|||||8||||||5"), b);   // la voiture 1 absente
+    voiture_bilan_lire(ch("|||||8|||||5"), b);   // la voiture 1 absente
     voiture_bilan_parts(b, parts);
     expect(std::isnan(parts[0]) && proche_w(parts[1], 5.0f), "bilan voitures : une voiture absente n'a pas de part");
-    voiture_bilan_lire(ch("0.0||||0.0||||||0"), b);   // aucune énergie : rien à répartir
+    voiture_bilan_lire(ch("0.0|||||0.0|||||0"), b);   // aucune énergie : rien à répartir
     voiture_bilan_parts(b, parts);
     expect(std::isnan(parts[0]), "bilan voitures : sans énergie, rien à répartir");
 }
