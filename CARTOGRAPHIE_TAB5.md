@@ -80,7 +80,7 @@ graph TD
 règles calendrier ouverture/fermeture, snooze, liste RDV<br/>lit cal_jours_data[] de tab5_core.h — ni ESPHome, ni LVGL, ni réseau<br/>testé sur PC : tools/test_alarm_clock.cpp"]
     ALARMR["alarm_render.h/.cpp<br/>rendu LVGL du réveil (popup en 5 pages et rouleaux, sonnerie, pastille)"]
 
-    subgraph UI["ui_components/*.yaml (110 fichiers, 40 inclus par tab5-lvgl.yaml, les autres par ces composants)"]
+    subgraph UI["ui_components/*.yaml (115 fichiers, 40 inclus par tab5-lvgl.yaml, les autres par ces composants)"]
         RANGEEUI["rangee.yaml + rangee_panneau.yaml ×4 + rangee_element.yaml ×16 + rangee_pastilles.yaml ×2 + moisture_sensors.yaml<br/>rangée sous l'horloge (ADR-0031) : ligne des plantes + 2 panneaux de 4 éléments ; panneau Ok Nabu (ADR-0041) : ligne d'écoute + 2 panneaux"]
         REGLABLESUI["reglables_liste.yaml + reglables_ligne.yaml ×10<br/>liste de la tuile − / + (ADR-0033) : un appareil par ligne"]
         ROUEUI["roue_actions.yaml + roue_bouton.yaml ×6 + roue_choix.yaml ×8 + roue_legende.yaml ×14<br/>roue d'actions rapides à deux anneaux (ADR-0036) : appui long d'une lampe, d'un volet, d'une clim"]
@@ -409,7 +409,7 @@ Fichiers de `Tab5/socle/`, `Tab5/ecran/` et `Tab5/jeux/` (table du § 1). Avant 
 
 **Règle d'architecture vérifiée et respectée dans le code** (`Tab5/README.md:44`) : les `sensor:`/`text_sensor:` YAML ne manipulent jamais `lv_obj_*` directement — ils appellent toujours une fonction de la couche C++ (`tab5_*.cpp`, déclarée dans `tab5_custom.h`). Confirmé par lecture de `tab5-sensors-diagnostics.yaml`/`tab5-sensors-domotique.yaml` (tous les `on_value:` appellent une fonction C++ nommée, sauf les cas triviaux de couleur d'icône à 2-3 lignes qui restent inline).
 
-### 3.4 Composants UI (`ui_components/*.yaml` — 110 fichiers, dont 40 inclus directement par `tab5-lvgl.yaml`)
+### 3.4 Composants UI (`ui_components/*.yaml` — 115 fichiers, dont 40 inclus directement par `tab5-lvgl.yaml`)
 
 Le tableau ci-dessous couvre les composants **domotique**. Les 11 autres fichiers sont traités à part : `game_selector.yaml` + les 8 `*_game.yaml` (§3.4bis), et les deux briques de chrome partagé `modal_scrim.yaml` / `modal_header.yaml` (ADR-0009) incluses avec `vars` par chaque popup.
 
