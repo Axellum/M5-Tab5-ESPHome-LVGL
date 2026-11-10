@@ -78,6 +78,8 @@ from scenarios import (
     CONSO_JOUR_RANGS,
     build_conso_jour,
     build_voiture_bilan,
+    TRAJETS,
+    build_trajets_payload,
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -132,6 +134,10 @@ SERVICE_VOITURE_JOUR = "tab5_maj_voiture_jour"
 # kWh/100 km, réseau, part de la maison), poussé avec elles (--voitures) ; absent d'un firmware plus ancien (le
 # bouton « Voitures » de la page n'existe alors pas).
 SERVICE_VOITURE_BILAN = "tab5_maj_voiture_bilan"
+# Page « Trajets » du popup Voitures (ADR-0083) : les kilomètres des sept derniers jours et le kWh / 100 km
+# estimé de chaque voiture, poussés avec elles (--voitures) ; absente d'un firmware plus ancien (le popup
+# n'a alors pas de page Trajets).
+SERVICE_VOITURE_TRAJETS = "tab5_maj_voiture_trajets"
 # Popup Température (ADR-0032) : absent d'un firmware plus ancien. HA ne pousse qu'à
 # l'ouverture du popup (événement esphome.tab5_historique) et le popup ignore une réponse
 # pour une autre température : la démo ne répond qu'à l'événement (le rendu pousse
@@ -360,8 +366,9 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
     voitures tirent (ENERGIE_INSTANTANE_VOITURES) et, juste après, ces deux voitures
     (tab5_maj_voiture, ADR-0076), leurs six dernières charges (tab5_maj_voiture_charges,
     ADR-0077, datées de `aujourd_hui`), leur consommation du jour heure par heure avec celle de la
-    maison (tab5_maj_voiture_jour, ADR-0078) et leur bilan du mois (tab5_maj_voiture_bilan, ADR-0080) ;
-    absentes d'un firmware qui n'a pas l'action."""
+    maison (tab5_maj_voiture_jour, ADR-0078), leur bilan du mois (tab5_maj_voiture_bilan, ADR-0080) et
+    leurs trajets des sept derniers jours (tab5_maj_voiture_trajets, ADR-0083) ; absentes d'un firmware
+    qui n'a pas l'action."""
     if SERVICE_ENERGIE not in services_par_nom:
         return
     jour = aujourd_hui or _dt.date.today()
@@ -379,6 +386,10 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
                 await _appeler(client, services_par_nom, SERVICE_VOITURE_JOUR, **build_conso_jour(rang, jour))
         if SERVICE_VOITURE_BILAN in services_par_nom:
             await _appeler(client, services_par_nom, SERVICE_VOITURE_BILAN, **build_voiture_bilan(jour))
+        if SERVICE_VOITURE_TRAJETS in services_par_nom:
+            for rang, trajets in TRAJETS.items():
+                await _appeler(client, services_par_nom, SERVICE_VOITURE_TRAJETS, rang=rang,
+                               payload=build_trajets_payload(jour, trajets))
     if SERVICE_ENERGIE_SOLEIL in services_par_nom:
         await _appeler(client, services_par_nom, SERVICE_ENERGIE_SOLEIL, payload=build_energie_soleil())
     if "heures" not in vues:

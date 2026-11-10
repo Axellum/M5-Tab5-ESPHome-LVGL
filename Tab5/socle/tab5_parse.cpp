@@ -2059,7 +2059,55 @@ ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, i
     return t;
 }
 
-// ─── 20. Bilan du mois des voitures (ADR-0080) ───
+// ─── 20. Trajets des voitures (page « Trajets » du popup Voitures, ADR-0083) ───
+namespace {
+constexpr int kTrajetsChamps = 6;   // début, compteur, km du mois, kWh/100 km, km par jour, kWh par jour
+
+// Une liste de kTrajetsJours valeurs « ; » : la boucle de l'énergie (un champ vide compte et vaut NAN),
+// puis le plafond propre à la série (`haut`) ; au-delà de sept valeurs, le reste est ignoré.
+void trajets_liste(const Champ& c, float haut, float out[kTrajetsJours]) {
+    for (int i = 0; i < kTrajetsJours; i++) out[i] = NAN;
+    float v[kTrajetsJours];
+    const int n = energie_kwh_liste(c, v, kTrajetsJours);
+    for (int i = 0; i < n; i++) out[i] = std::isfinite(v[i]) && v[i] <= haut ? v[i] : NAN;
+}
+}  // namespace
+
+bool trajets_lire(const Champ& payload, TrajetsLu& out) {
+    out = TrajetsLu{};
+    if (payload.p == nullptr || payload.n == 0) return false;
+    Champ f[kTrajetsChamps];
+    const int k = champs_decouper(payload.p, payload.n, '|', f, kTrajetsChamps);
+    for (int i = k; i < kTrajetsChamps; i++) f[i] = Champ{payload.p + payload.n, 0};
+    bool un_champ = false;
+    for (int i = 0; i < kTrajetsChamps; i++) un_champ = un_champ || !voiture_blanc(f[i]);
+    if (!un_champ) return false;
+    out.presente = true;
+    if (!charge_jour(f[0], out.annee, out.mois, out.jour)) out.annee = out.mois = out.jour = 0;
+    out.compteur = voiture_borne(f[1], kTrajetsCompteurMax);
+    out.km_mois = voiture_borne(f[2], kTrajetsKmMoisMax);
+    out.kwh_100km = voiture_borne(f[3], kTrajetsConsoMax);
+    trajets_liste(f[4], kTrajetsKmJourMax, out.km);
+    trajets_liste(f[5], kTrajetsKwhJourMax, out.kwh);
+    return true;
+}
+
+bool trajets_jour(const TrajetsLu& t, int i, int& jour_du_mois, int& jour_semaine) {
+    if (i < 0 || i >= kTrajetsJours || t.annee <= 0) return false;
+    int a = t.annee, m = t.mois, j = t.jour + i;
+    while (j > jours_du_mois(a, m)) {
+        j -= jours_du_mois(a, m);
+        if (++m > 12) {
+            m = 1;
+            a++;
+        }
+    }
+    jour_du_mois = j;
+    jour_semaine = static_cast<int>((jour_civil(a, m, j) + 4) % 7);   // le 01/01/1970 était un jeudi
+    return true;
+}
+
+// ─── 21. Bilan du mois des voitures (ADR-0080) ───
 bool voiture_bilan_lire(const Champ& payload, VoitureBilanLu& out) {
     out = VoitureBilanLu{};
     if (payload.p == nullptr || payload.n == 0) return false;

@@ -388,6 +388,9 @@ const Page kPages[] = {
     // `nom(`, une adresse prise dans la table n'en est pas un.
     {tr_noop("Charge"), [] { return voitures_charge_a_donnees(); }, [](bool v) { voitures_charge_montrer(v); },
      [] { voitures_charge_peindre(); }},
+    // Même raison (CPP-4) : des lambdas sans capture.
+    {tr_noop("Trajets"), [] { return voitures_trajets_a_donnees(); }, [](bool visible) { voitures_trajets_montrer(visible); },
+     [] { voitures_trajets_peindre(); }},
 };
 constexpr int kNbPages = static_cast<int>(sizeof(kPages) / sizeof(kPages[0]));
 static_assert(kNbPages <= kVoituresPages, "un onglet YAML par page (voitures_popup.yaml)");

@@ -34,6 +34,15 @@
 #           kwh (1 décimale) | part_soleil_pct | km | kwh_100km | reseau_kwh (kWh pris au réseau,
 #           1 décimale) ; puis la part de la maison (voitures / consommation de la maison, en %)
 #       precision                      5min | heure | mixte | aucune : les statistiques lues
+#       trajets_1, trajets_2           (ADR-0083, page « Trajets » du popup Voitures) la voiture 1 / 2 :
+#           « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours » : debut = AAAA-MM-JJ local du
+#           premier des SEPT derniers jours (aujourd'hui compris), compteur_km = le dernier relevé
+#           de l'odomètre (km entiers), km_mois et kwh_100km = ceux du bilan (kwh_100km : l'énergie
+#           chargée ce mois-ci divisée par les km, au-delà de 20 km : une APPROXIMATION), km_jours et
+#           kwh_jours = sept valeurs (1 décimale) séparées par « ; », du plus ancien à aujourd'hui,
+#           vide = pas de ligne ce jour-là. Vide en entier : la voiture n'a pas d'odomètre choisi.
+#           Les kilomètres viennent d'UNE lecture du recorder de plus (période day, `change` et
+#           `state` de l'odomètre, en km) faite seulement quand un odomètre est choisi.
 # @method Voir tools/voitures_charges.py (la RÉFÉRENCE Python, testée à la main) : ce modèle fait
 #       les mêmes opérations dans le même ordre, tests/test_voitures.py exige les mêmes chaînes.
 #       Une modification de la méthode se fait dans les deux, et dans l'ADR-0074.
@@ -138,6 +147,15 @@ script:
         {{ {'jour': j0.strftime('%Y-%m-%d'), 'j0': j0.timestamp() | int, 'j1': j1.timestamp() | int,
             'mois': m0.strftime('%Y-%m-%d'), 'm0': m0.timestamp() | int,
             'mois_iso': m0.isoformat(), 'debut': debut.isoformat()} }}
+      # Les sept derniers jours locaux, aujourd'hui compris (page « Trajets », ADR-0083) : la date
+      # du premier, son minuit local en ISO avec son décalage, en secondes, et les sept dates.
+      sept: >-
+        {%- set d0 = now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=6) -%}
+        {%- set ns = namespace(l=[]) -%}
+        {%- for i in range(7) -%}
+          {%- set ns.l = ns.l + [(d0 + timedelta(days=i)).strftime('%Y-%m-%d')] -%}
+        {%- endfor -%}
+        {{ {'debut': ns.l[0], 'iso': d0.isoformat(), 's0': d0.timestamp() | int, 'jours': ns.l} }}
     sequence:
       # Les statistiques : 5 minutes (gardées `purge_keep_days` jours) et heures (gardées
       # longtemps) du même début ; HA répond avec ce qui existe. Les puissances en W, la moyenne
@@ -179,6 +197,21 @@ script:
                   units:
                     distance: km
                 response_variable: odo
+                continue_on_error: true
+              # Kilomètres de chacun des sept derniers jours et dernier relevé de l'odomètre (page
+              # « Trajets », ADR-0083) : une ligne par jour local, `change` = km du jour, `state` =
+              # le relevé en fin de jour.
+              - action: recorder.get_statistics
+                data:
+                  start_time: "{{ sept.iso }}"
+                  statistic_ids: "{{ odometres }}"
+                  period: day
+                  types:
+                    - change
+                    - state
+                  units:
+                    distance: km
+                response_variable: odo_j
                 continue_on_error: true
       - variables:
           # Les créneaux de chaque capteur : [début (s), durée (s), puissance moyenne (W),
@@ -426,5 +459,67 @@ script:
                 'charges_2': charges_txt.get('2', ''), 'jour_debut': fen.jour,
                 'jour_1': jour_txt.get('1', ''), 'jour_2': jour_txt.get('2', ''), 'jour_maison': jour_maison,
                 'bilan_debut': fen.mois, 'bilan': bilan_txt if voitures else '', 'precision': precision} }}
+      # Trajets (ADR-0083) : NOUVELLES sorties, ajoutées à la réponse sans toucher aux autres. Mêmes
+      # opérations que tools/voitures_charges.py (kilometres_jours, kwh_jours, trajets_en_texte).
+      - variables:
+          # Par voiture (clé = rang) : les km de chaque jour de `sept.jours` qui a une ligne (jamais
+          # négatifs) et le dernier relevé de l'odomètre (None sans ligne).
+          trajets_km: >-
+            {%- set st = odo_j.statistics if odo_j is defined and odo_j is mapping and odo_j.statistics is defined else {} -%}
+            {%- set out = namespace(d={}) -%}
+            {%- for v in voitures -%}
+              {%- set lignes = st.get(v.odometre, []) if v.odometre else [] -%}
+              {%- set a = namespace(j={}, c=none) -%}
+              {%- for r in lignes -%}
+                {%- set jour_r = as_local(as_datetime(r.start)).strftime('%Y-%m-%d') -%}
+                {%- if jour_r in sept.jours and r.get('change') is not none -%}
+                  {%- set a.j = dict(a.j, **{jour_r: ([(r.get('change') | float(0)), 0.0] | max)}) -%}
+                {%- endif -%}
+                {%- if r.get('state') is not none -%}{%- set a.c = r.get('state') | float(0) -%}{%- endif -%}
+              {%- endfor -%}
+              {%- set out.d = dict(out.d, **{v.rang: {'jours': a.j, 'compteur': a.c}}) -%}
+            {%- endfor -%}
+            {{ out.d }}
+          # Par voiture : les Wh reçus chaque jour de `sept.jours` qui a une ligne de puissance (les
+          # créneaux au-dessus du seuil, comme les charges).
+          trajets_wh: >-
+            {%- set out = namespace(d={}) -%}
+            {%- for v in voitures -%}
+              {%- set a = namespace(w={}) -%}
+              {%- for r in mesures.get(v.puissance, []) if r[0] >= sept.s0 -%}
+                {%- set jour_r = as_local(as_datetime(r[3])).strftime('%Y-%m-%d') -%}
+                {%- if jour_r in sept.jours -%}
+                  {%- set a.w = dict(a.w, **{jour_r: a.w.get(jour_r, 0) + (r[2] if r[2] > seuil_w else 0) * r[1] / 3600}) -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- set out.d = dict(out.d, **{v.rang: a.w}) -%}
+            {%- endfor -%}
+            {{ out.d }}
+          # Les chaînes de tab5_maj_voiture_trajets : « debut|compteur_km|km_mois|kwh_100km|km_jours|
+          # kwh_jours » ; vide pour une voiture sans odomètre choisi. kwh_100km = l'énergie chargée
+          # ce mois-ci / les km du mois (au-delà de km_min_conso km) : une approximation.
+          trajets_txt: >-
+            {%- set out = namespace(d={'1': '', '2': ''}) -%}
+            {%- for rang in ['1', '2'] -%}
+              {%- set v = voitures | selectattr('rang', 'eq', rang) | first | default(none) -%}
+              {%- if v is not none and v.odometre -%}
+                {%- set k = trajets_km[rang] -%}
+                {%- set kmv = km.get(rang) -%}
+                {%- set wh = analyse[rang].mois.wh -%}
+                {%- set conso = ((wh / 1000 / kmv * 100) | round(1)) if kmv is not none and kmv >= km_min_conso else '' -%}
+                {%- set lg = namespace(km=[], kwh=[]) -%}
+                {%- for jour_r in sept.jours -%}
+                  {%- set lg.km = lg.km + [(k.jours[jour_r] | round(1) | string) if jour_r in k.jours else ''] -%}
+                  {%- set lg.kwh = lg.kwh + [((trajets_wh[rang][jour_r] / 1000) | round(1) | string) if jour_r in trajets_wh[rang] else ''] -%}
+                {%- endfor -%}
+                {%- set out.d = dict(out.d, **{rang: [sept.debut,
+                                                      (k.compteur | round(0) | int | string) if k.compteur is not none else '',
+                                                      (kmv | round(0) | int | string) if kmv is not none else '',
+                                                      conso | string, lg.km | join(';'), lg.kwh | join(';')] | join('|')}) -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ out.d }}
+          reponse: >-
+            {{ dict(reponse, **{'trajets_1': trajets_txt.get('1', ''), 'trajets_2': trajets_txt.get('2', '')}) }}
       - stop: "Cars charge analysis done"
         response_variable: reponse
