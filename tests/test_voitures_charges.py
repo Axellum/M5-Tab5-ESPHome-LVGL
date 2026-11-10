@@ -255,6 +255,39 @@ def _avec_jour(jour):
     return c
 
 
+def _ligne_odo(jour, change, etat, mois=6):
+    """Une ligne `day` de `recorder.get_statistics` pour l'odomètre : le jour local `jour` (de minuit à
+    minuit, début donné en UTC comme le fait HA), `change` = km du jour, `etat` = relevé en fin de jour ;
+    None : la clé manque (le recorder n'a pas pu la calculer)."""
+    debut = D(jour, 0, mois=mois).astimezone(UTC)
+    ligne_j = {"start": debut.isoformat(), "end": (D(jour, 0, mois=mois) + dt.timedelta(days=1)).astimezone(UTC).isoformat()}
+    if change is not None:
+        ligne_j["change"] = change
+    if etat is not None:
+        ligne_j["state"] = etat
+    return ligne_j
+
+
+def _trajets():
+    # Le mois du bilan (voiture 1 : 245,6 km, 28,4 kWh ; voiture 2 : 6 kWh, pas de km du mois), plus la
+    # lecture « jour » des odomètres du 10 au 16 juin. Voiture 1 : une ligne par jour, relevé 41 280 km à la
+    # fin. Voiture 2 : pas de ligne les 11 et 12, un `change` de -3 le 13 (un odomètre ne recule pas : 0),
+    # une ligne sans `state` le 13, relevé final 9 640.
+    c = _bilan()
+    c["odo_jours"] = {
+        ODO1: [_ligne_odo(10 + i, km, 41040.0 + 40 * i) for i, km in enumerate([41.2, 0.0, 112.4, 56.8, 23.0, 5.6, 88.0])],
+        ODO2: [_ligne_odo(10, 30.0, 9500.0), _ligne_odo(13, -3.0, None), _ligne_odo(14, 12.5, 9512.5),
+               _ligne_odo(15, 0.0, 9512.5), _ligne_odo(16, 7.2, 9640.0)],
+    }
+    return c
+
+
+def _trajets_12_km():
+    c = _bilan_km(12.0)
+    c["odo_jours"] = {ODO1: [_ligne_odo(16, 12.0, 20012.0)]}
+    return c
+
+
 SCENARIOS.update({
     "six_charges": _six_charges, "deux_voitures_decalees": _deux_voitures_decalees,
     "changement_d_heure": _changement_d_heure,
@@ -262,6 +295,7 @@ SCENARIOS.update({
     "jour_hier": lambda: _avec_jour("2026-06-15"), "jour_30_fevrier": lambda: _avec_jour("2026-02-30"),
     "jour_texte": lambda: _avec_jour("n'importe quoi"), "jour_ancien": lambda: _avec_jour("2025-01-01"),
     "jour_vide": lambda: _avec_jour(""),
+    "trajets": _trajets, "trajets_12_km": _trajets_12_km,
 })
 
 
@@ -459,8 +493,80 @@ def test_kilometres_minimum_pour_les_kwh_aux_100_km():
     assert rep("bilan_sans_odometre")["bilan"].split("|")[2:4] == ["", ""]    # pas d'odomètre : ni km ni kWh/100 km
 
 
+# ─── Trajets (ADR-0083) ──────────────────────────────────────────────────────
+
+def test_trajets_sept_jours_compteur_et_kwh():
+    """Du 10 au 16 juin (aujourd'hui compris). Voiture 1 : km par jour tels que la lecture du recorder les
+    donne, relevé final 41 280 km, 246 km ce mois-ci (245,6) et 28,4 kWh chargés : 28,4 / 245,6 × 100 =
+    11,6 kWh/100 km ; elle a chargé 7,4 kWh le 15 (3,7 kW de 11 h à 13 h), 0 les autres jours (des lignes
+    de puissance existent, la voiture ne chargeait pas). Voiture 2 : pas de ligne les 11 et 12 (ni 0 km
+    ni valeur), -3 km le 13 ramené à 0,0, relevé final 9 640, pas de km du mois donc pas de kWh/100 km ;
+    6 kWh le 10 (6 kW de 12 h à 13 h)."""
+    r = rep("trajets")
+    assert r["trajets_1"] == "2026-06-10|41280|246|11.6|41.2;0.0;112.4;56.8;23.0;5.6;88.0|0.0;0.0;0.0;0.0;0.0;7.4;0.0"
+    assert r["trajets_2"] == "2026-06-10|9640|||30.0;;;0.0;12.5;0.0;7.2|6.0;0.0;0.0;0.0;0.0;0.0;0.0"
+    # les km et le kWh/100 km du mois sont ceux du bilan : une seule méthode
+    assert r["bilan"].split("|")[2:4] == r["trajets_1"].split("|")[2:4]
+
+
+def test_trajets_odometre_choisi_sans_aucune_ligne_du_recorder():
+    """Un odomètre désactivé dans l'intégration (le cas par défaut chez Tesla) n'a pas de statistiques :
+    la chaîne existe (l'odomètre est choisi), sans relevé ni km, les kWh restent."""
+    r = rep("deux_voitures")
+    assert r["trajets_1"] == "2026-06-10||||;;;;;;|0.0;0.0;0.0;0.0;0.0;4.0;0.0"
+    assert r["trajets_2"] == r["trajets_1"]
+
+
+def test_trajets_sans_odometre_choisi_chaine_vide():
+    r = rep("nuit")                                         # une voiture, odomètre vide
+    assert r["trajets_1"] == "" and r["trajets_2"] == ""
+    r = rep("trajets")
+    assert r["trajets_1"] != ""                             # témoin : avec l'odomètre, une chaîne
+    c = SCENARIOS["trajets"]()
+    c["capteurs"] = capteurs(voitures=((T1, ODO1), (T2, "")))     # la voiture 2 sans odomètre
+    r = ref.reponse(**c)
+    assert r["trajets_1"] != "" and r["trajets_2"] == ""
+
+
+def test_trajets_pas_de_kwh_aux_100_km_sous_20_km():
+    t = rep("trajets_12_km")["trajets_1"].split("|")
+    assert t[1:4] == ["20012", "12", ""]                    # 12 km ce mois-ci : pas de kWh/100 km
+    assert t[4] == ";;;;;;12.0"
+
+
+def test_fenetre_trajets_jours_locaux_et_changement_d_heure():
+    w = ref.fenetre_trajets(MAINTENANT)
+    assert w["jours"] == ["2026-06-10", "2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14", "2026-06-15",
+                          "2026-06-16"]
+    assert w["debut"] == "2026-06-10" and w["iso"] == "2026-06-10T00:00:00+02:00"
+    assert w["s0"] == int(D(10, 0).timestamp())
+    # la semaine du passage à l'heure d'été (29/03/2026) : sept jours distincts, minuit à +01:00 puis jour de 23 h
+    w = ref.fenetre_trajets(dt.datetime(2026, 3, 29, 18, 7, tzinfo=PARIS))
+    assert w["jours"][0] == "2026-03-23" and w["jours"][-1] == "2026-03-29" and len(set(w["jours"])) == 7
+    assert w["iso"] == "2026-03-23T00:00:00+01:00"
+    # au passage à l'heure d'hiver (25/10/2026) : minuit à +02:00 le 19, sept jours
+    w = ref.fenetre_trajets(dt.datetime(2026, 10, 25, 18, 7, tzinfo=PARIS))
+    assert w["jours"][0] == "2026-10-19" and w["jours"][-1] == "2026-10-25"
+    assert w["iso"] == "2026-10-19T00:00:00+02:00"
+
+
+def test_trajets_un_jour_est_un_jour_local_pas_utc():
+    """Le recorder donne le début du jour local en UTC : minuit à Paris le 12 juin est le 11 à 22:00 UTC,
+    et ce jour-là compte pour le 12."""
+    cap = ref.normaliser(capteurs(voitures=((T1, ODO1),)))
+    w = ref.fenetre_trajets(MAINTENANT)
+    f = {"tz": PARIS}
+    lignes_j = [{"start": "2026-06-09T22:00:00+00:00", "change": 99.0, "state": 4000.0},     # le 10 à Paris
+                {"start": "2026-06-11T22:00:00+00:00", "change": 10.0, "state": 5000.0}]     # le 12 à Paris
+    sortie = ref.kilometres_jours({ODO1: lignes_j}, cap, w, f)["1"]
+    assert sortie["jours"] == {"2026-06-10": 99.0, "2026-06-12": 10.0} and sortie["compteur"] == 5000.0  # le dernier relevé
+    hors = ref.kilometres_jours({ODO1: [{"start": "2026-06-08T22:00:00+00:00", "change": 5.0}]}, cap, w, f)["1"]
+    assert hors["jours"] == {} and hors["compteur"] is None                  # le 9, hors de la fenêtre
+
+
 def test_sans_voiture_reponse_vide():
     r = rep("sans_voiture")
+    assert r["trajets_1"] == r["trajets_2"] == ""
     assert r["charges"] == r["charges_1"] == r["charges_2"] == r["jour_1"] == r["jour_2"] == r["bilan"] == ""
     assert r["precision"] == "aucune" and r["jour_debut"] == "2026-06-16" and r["bilan_debut"] == "2026-06-01"
 

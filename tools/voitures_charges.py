@@ -308,6 +308,87 @@ def kilometres(odo_stats: dict, cap: dict) -> dict:
     return sortie
 
 
+# ─── Trajets : kilomètres par jour, kWh chargés par jour, compteur (ADR-0083) ─
+
+NB_JOURS_TRAJETS = 7   # les sept derniers jours locaux, aujourd'hui compris (page « Trajets » du popup Voitures)
+
+
+def fenetre_trajets(maintenant: dt.datetime) -> dict:
+    """Les NB_JOURS_TRAJETS derniers jours locaux, le plus ancien d'abord, aujourd'hui compris :
+    `debut` (AAAA-MM-JJ du premier), `iso` (son minuit local avec son décalage, pour
+    `recorder.get_statistics`), `s0` (le même instant en secondes depuis 1970) et `jours` (les dates
+    AAAA-MM-JJ locales). Ajouter des jours à un instant d'un fuseau garde l'heure du mur : un jour de
+    changement d'heure reste un jour."""
+    minuit = maintenant.replace(hour=0, minute=0, second=0, microsecond=0)
+    d0 = minuit - dt.timedelta(days=NB_JOURS_TRAJETS - 1)
+    jours = [(d0 + dt.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(NB_JOURS_TRAJETS)]
+    return {"debut": jours[0], "iso": d0.isoformat(), "s0": int(d0.timestamp()), "jours": jours}
+
+
+def kilometres_jours(odo_j: dict, cap: dict, w: dict, f: dict) -> dict:
+    """{rang: {"jours": {AAAA-MM-JJ: km}, "compteur": km ou None}} d'après la réponse de
+    `recorder.get_statistics` (period day, types change et state, en km) : les km de chaque jour local
+    de la fenêtre (une ligne `change` par jour ; jamais négatif, un odomètre ne recule pas ; un jour
+    sans ligne n'a pas de valeur, ce qui n'est pas 0 km) et le dernier relevé de l'odomètre."""
+    sortie = {}
+    for v in cap["voitures"]:
+        lignes = odo_j.get(v["odometre"], []) if v["odometre"] else []
+        jours, compteur = {}, None
+        for r in lignes:
+            j = _locale(r["start"], f).strftime("%Y-%m-%d")
+            if j in w["jours"] and r.get("change") is not None:
+                jours[j] = max(0.0, float(r["change"]))
+            if r.get("state") is not None:
+                compteur = float(r["state"])
+        sortie[v["rang"]] = {"jours": jours, "compteur": compteur}
+    return sortie
+
+
+def kwh_jours(mesures: dict, cap: dict, w: dict, f: dict) -> dict:
+    """{rang: {AAAA-MM-JJ: Wh}} : l'énergie reçue par chaque voiture un jour local de la fenêtre (les
+    créneaux qui chargent, comme `analyser`) ; un jour sans aucune ligne de puissance n'a pas de valeur."""
+    sortie = {}
+    for v in cap["voitures"]:
+        wh = {}
+        for (t, d, p, iso) in mesures.get(v["puissance"], []):
+            if t < w["s0"]:
+                continue
+            j = _locale(iso, f).strftime("%Y-%m-%d")
+            if j in w["jours"]:
+                wh[j] = wh.get(j, 0) + (p if p > SEUIL_W else 0) * d / 3600
+        sortie[v["rang"]] = wh
+    return sortie
+
+
+def trajets_en_texte(cap: dict, w: dict, km_mois: dict, kj: dict, ej: dict, analyse: dict) -> dict:
+    """{"1": payload, "2": payload} de `tab5_maj_voiture_trajets` (une voiture sans odomètre choisi, ou
+    absente : texte vide) : `debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours`.
+      debut        AAAA-MM-JJ local du premier des sept jours ;
+      compteur_km  le dernier relevé de l'odomètre, km entiers ;
+      km_mois      les km du mois en cours (la valeur du bilan) ; kwh_100km, 1 décimale, au-delà de
+                   KM_MIN_CONSO km : l'énergie chargée ce mois-ci divisée par ces km, une APPROXIMATION
+                   (une charge n'est pas une consommation) ;
+      km_jours     sept km (1 décimale) séparés par « ; », du plus ancien à aujourd'hui, vide = pas de ligne ;
+      kwh_jours    sept kWh reçus par la voiture (1 décimale), même règle."""
+    sortie = {"1": "", "2": ""}
+    for rang in ("1", "2"):
+        v = next((x for x in cap["voitures"] if x["rang"] == rang), None)
+        if v is None or not v["odometre"]:
+            continue
+        k = kj[rang]
+        km = km_mois.get(rang)
+        wh = analyse[rang]["mois"]["wh"]
+        conso = round(wh / 1000 / km * 100, 1) if km is not None and km >= KM_MIN_CONSO else ""
+        sortie[rang] = "|".join([
+            w["debut"],
+            str(int(round(k["compteur"]))) if k["compteur"] is not None else "",
+            str(int(round(km))) if km is not None else "",
+            str(conso),
+            ";".join(str(round(k["jours"][j], 1)) if j in k["jours"] else "" for j in w["jours"]),
+            ";".join(str(round(ej[rang][j] / 1000, 1)) if j in ej[rang] else "" for j in w["jours"])])
+    return sortie
+
+
 # ─── Le tout : la réponse du script ──────────────────────────────────────────
 
 def precision(mesures: dict, cap: dict) -> str:
@@ -322,7 +403,8 @@ def precision(mesures: dict, cap: dict) -> str:
     return "aucune" if n5 + n1 == 0 else ("heure" if n5 == 0 else ("5min" if n1 == 0 else "mixte"))
 
 
-def reponse(stats5: dict, stats1: dict, odo: dict, capteurs, maintenant: dt.datetime, jour: str | None = None) -> dict:
+def reponse(stats5: dict, stats1: dict, odo: dict, capteurs, maintenant: dt.datetime, jour: str | None = None,
+            odo_jours: dict | None = None) -> dict:
     """Ce que renvoie `script.tab5_voitures_analyse` (chaînes seulement) :
 
     charges, charges_1, charges_2   lignes « rang|jour|heure|duree_min|kwh|part_soleil_pct » séparées
@@ -333,6 +415,10 @@ def reponse(stats5: dict, stats1: dict, odo: dict, capteurs, maintenant: dt.date
     bilan_debut                    AAAA-MM-01 du mois du bilan
     bilan                           11 champs « | » (voir bilan_en_texte)
     precision                       5min | heure | mixte | aucune
+    trajets_1, trajets_2            « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours » (voir
+                                    trajets_en_texte, ADR-0083) ; vide = pas d'odomètre choisi pour la
+                                    voiture. `odo_jours` = la réponse de get_statistics de l'odomètre,
+                                    period day (change, state), en km.
     """
     cap = normaliser(capteurs)
     f = fenetres(maintenant, jour)
@@ -350,4 +436,8 @@ def reponse(stats5: dict, stats1: dict, odo: dict, capteurs, maintenant: dt.date
     r["bilan_debut"] = f["mois"]
     r["bilan"] = bilan_en_texte(a, cap, f, mesures, kilometres(odo, cap)) if cap["voitures"] else ""
     r["precision"] = precision(mesures, cap)
+    w = fenetre_trajets(maintenant)
+    t = trajets_en_texte(cap, w, kilometres(odo, cap), kilometres_jours(odo_jours or {}, cap, w, f),
+                         kwh_jours(mesures, cap, w, f), a)
+    r["trajets_1"], r["trajets_2"] = t["1"], t["2"]
     return r
