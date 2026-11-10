@@ -50,6 +50,14 @@
 #       popup puis au plus toutes les 5 minutes) : trois appels, un par rang, tous les rangs à chaque
 #       fois (une série vide retire la voiture de la page « Aujourd'hui »). Un firmware plus ancien
 #       n'a pas l'action : continue_on_error.
+#       tab5_maj_voiture_trajets (ADR-0083, 10/11/2026) : rang « 1 » ou « 2 » et payload « debut|
+#       compteur_km|km_mois|kwh_100km|km_jours|kwh_jours » : les chaînes `trajets_1` et `trajets_2` de
+#       la MÊME réponse de script.tab5_voitures_analyse, aux mêmes moments (les deux rangs à chaque
+#       fois). debut = AAAA-MM-JJ du premier des SEPT derniers jours (aujourd'hui compris), km_jours et
+#       kwh_jours = sept valeurs séparées par « ; » (vide = pas de ligne ce jour-là), kwh_100km = l'énergie
+#       chargée ce mois-ci / les km du mois (une approximation). Chaîne vide = la voiture n'a pas
+#       d'odomètre choisi (champ `odometre` de la section « Énergie : voitures » du blueprint, passé à
+#       l'analyse avec la puissance de charge) : la page « Trajets » n'existe pas sans un odomètre.
 # @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
 #       depuis minuit (heure locale), plus le partiel depuis la dernière ligne (état
 #       actuel − dernier « state », converti en kWh). Heures : les mêmes lignes, par heure
@@ -167,7 +175,7 @@ script:
           (entité qui l'emporte), devise (texte), prevision_jour et prevision_demain
           (capteurs de prévision externe, kWh). Voitures (ADR-0076) : voitures (liste de
           deux mappings nom, batterie, autonomie, etat, cable, puissance, energie, limite,
-          fin ; texte vide = non choisi) et voitures_compteur_compte (booléen).
+          fin, odometre (ADR-0083) ; texte vide = non choisi) et voitures_compteur_compte (booléen).
     variables:
       c: "{{ capteurs if capteurs is mapping else {} }}"
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
@@ -230,7 +238,8 @@ script:
           {%- set ns.r = ns.r + 1 -%}
           {%- if v is mapping and v.get('puissance') -%}
             {%- set ns.l = ns.l + [{'rang': ns.r | string, 'nom': v.get('nom', '') | string,
-                                    'puissance_charge': v.get('puissance')}] -%}
+                                    'puissance_charge': v.get('puissance'),
+                                    'odometre': v.get('odometre') if v.get('odometre') is string else ''}] -%}
           {%- endif -%}
         {%- endfor -%}
         {{ ns.l }}
@@ -632,6 +641,20 @@ script:
                               debut: "{{ analyse_voitures.get('jour_debut', '') | string }}"
                               valeurs: >-
                                 {{ analyse_voitures.get('jour_maison' if repeat.item == '0' else 'jour_' ~ repeat.item, '') | string }}
+                            continue_on_error: true
+                    # Les trajets (ADR-0083, page « Trajets » du popup Voitures, action
+                    # tab5_maj_voiture_trajets : rang et payload « debut|compteur_km|km_mois|kwh_100km|
+                    # km_jours|kwh_jours ») : `trajets_1` et `trajets_2` de la MÊME réponse, une
+                    # chaîne VIDE pour la voiture sans odomètre choisi (la tablette retire sa colonne,
+                    # et la page quand aucune n'en a). Les deux rangs à chaque fois. Un firmware plus
+                    # ancien n'a pas l'action : continue_on_error, le script continue.
+                    - repeat:
+                        for_each: ["1", "2"]
+                        sequence:
+                          - action: "esphome.{{ tablette }}_tab5_maj_voiture_trajets"
+                            data:
+                              rang: "{{ repeat.item }}"
+                              payload: "{{ analyse_voitures.get('trajets_' ~ repeat.item, '') | string }}"
                             continue_on_error: true
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
