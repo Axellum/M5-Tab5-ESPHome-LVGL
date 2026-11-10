@@ -1581,3 +1581,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "Reichweite"
 "Aucune voiture reçue": "Keine Autos empfangen"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Wähle sie im Blueprint, Bereich „Énergie : voitures · Energy: cars“."
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+# « des Hauses » : « 54 % des Hauses » ; clé 6 = estimation (« Geschätzte »), jamais une mesure.
+"de la maison": "des Hauses"
+"chargés par les voitures ce mois-ci": "von den Autos geladen diesen Monat"
+"Part du soleil": "Sonnenanteil"
+"chargés ce mois-ci": "geladen diesen Monat"
+"km parcourus": "km gefahren"
+"kWh/100 km estimés : énergie chargée / km parcourus": "Geschätzte kWh/100 km: geladene Energie / gefahrene km"

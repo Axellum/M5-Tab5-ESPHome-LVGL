@@ -1560,3 +1560,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "of range"
 "Aucune voiture reçue": "No car received"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Choose them in the blueprint, section “Energy: cars”."
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+"de la maison": "of the home"
+"chargés par les voitures ce mois-ci": "charged by the cars this month"
+"Part du soleil": "Solar share"
+"chargés ce mois-ci": "charged this month"
+"km parcourus": "km driven"
+"kWh/100 km estimés : énergie chargée / km parcourus": "Estimated kWh/100 km: charged energy / km driven"

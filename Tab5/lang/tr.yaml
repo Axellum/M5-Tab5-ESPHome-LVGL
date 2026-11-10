@@ -1612,3 +1612,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "menzil"
 "Aucune voiture reçue": "Hiç araç alınmadı"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Bunları blueprint'te “Énergie : voitures · Energy: cars” bölümünden seçin."
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+# « evin » (génitif) : « 54 % evin » = part de la maison ; « kat edilen km » = km parcourus.
+"de la maison": "evin"
+"chargés par les voitures ce mois-ci": "bu ay araçlarla şarj edildi"
+"Part du soleil": "Güneş payı"
+"chargés ce mois-ci": "bu ay şarj edildi"
+"km parcourus": "kat edilen km"
+"kWh/100 km estimés : énergie chargée / km parcourus": "Tahmini kWh/100 km: şarj edilen enerji / kat edilen km"

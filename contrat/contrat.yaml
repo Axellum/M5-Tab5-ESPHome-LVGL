@@ -7,7 +7,7 @@
 # MAJEURE si un fichier HA d'avant peut casser (action retirée, variable ajoutée, retirée
 # ou de type changé, événement ou champ plus émis), MINEURE pour un ajout pur (action,
 # événement ou champ nouveau). tests/test_contrat_versions.py le vérifie.
-version: 1.7.0
+version: 1.8.0
 services:
   tab5_assist_reponse:
     image_url: string
@@ -102,6 +102,10 @@ services:
   tab5_maj_voiture:
     payload: string
     rang: string
+  tab5_maj_voiture_bilan:
+    debut: string
+    payload: string
+    vue: string
   tab5_maj_voiture_charges:
     payload: string
   tab5_maj_voiture_jour:

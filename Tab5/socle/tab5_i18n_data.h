@@ -8,9 +8,15 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1328;
+static const uint16_t kI18nKeyCount = 1334;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -2116,6 +2122,7 @@ static const char* const kI18nKeys[] = {
     "PV invulnérable",
     "Page suivante",
     "Parler",
+    "Part du soleil",
     "Part gagnée ! Vous rejouez.",
     "Partie bouclée en %u tours · %u bonnes réponses sur %u",
     "Partie interrompue : historique plein",
@@ -2532,6 +2539,8 @@ static const char* const kI18nKeys[] = {
     "avril",
     "b = billes jouées, MB = multiball déclenché.",
     "capteur muet",
+    "chargés ce mois-ci",
+    "chargés par les voitures ce mois-ci",
     "coup de chaud",
     "cumul",
     "cumul de l'année",
@@ -2540,6 +2549,7 @@ static const char* const kI18nKeys[] = {
     "d'autonomie",
     "d'avance sur le réseau ce mois-ci",
     "de la charge par le soleil",
+    "de la maison",
     "de retard sur le réseau ce mois-ci",
     "de ta conso couverte par le soleil",
     "dimanche",
@@ -2562,6 +2572,8 @@ static const char* const kI18nKeys[] = {
     "kWh / heure",
     "kWh / jour",
     "kWh / mois",
+    "kWh/100 km estimés : énergie chargée / km parcourus",
+    "km parcourus",
     "le début du rendez-vous",
     "lue %s",
     "lundi",
@@ -3448,6 +3460,7 @@ static const char* const kI18n_en[] = {
     "HP invulnerable",  // "PV invulnérable"
     "Next page",  // "Page suivante"
     "Speak",  // "Parler"
+    "Solar share",  // "Part du soleil"
     "Wedge won! Roll again.",  // "Part gagnée ! Vous rejouez."
     "Finished in %u rounds · %u correct answers out of %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Game stopped: history full",  // "Partie interrompue : historique plein"
@@ -3864,6 +3877,8 @@ static const char* const kI18n_en[] = {
     "April",  // "avril"
     "b = balls played, MB = multiball triggered.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor silent",  // "capteur muet"
+    "charged this month",  // "chargés ce mois-ci"
+    "charged by the cars this month",  // "chargés par les voitures ce mois-ci"
     "heat spike",  // "coup de chaud"
     "total",  // "cumul"
     "year's total",  // "cumul de l'année"
@@ -3872,6 +3887,7 @@ static const char* const kI18n_en[] = {
     "of range",  // "d'autonomie"
     "ahead of the grid this month",  // "d'avance sur le réseau ce mois-ci"
     "of charging from the sun",  // "de la charge par le soleil"
+    "of the home",  // "de la maison"
     "behind the grid this month",  // "de retard sur le réseau ce mois-ci"
     "of your use covered by the sun",  // "de ta conso couverte par le soleil"
     "Sunday",  // "dimanche"
@@ -3894,6 +3910,8 @@ static const char* const kI18n_en[] = {
     "kWh / hour",  // "kWh / heure"
     "kWh / day",  // "kWh / jour"
     "kWh / month",  // "kWh / mois"
+    "Estimated kWh/100 km: charged energy / km driven",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km driven",  // "km parcourus"
     "before the appointment",  // "le début du rendez-vous"
     "read %s",  // "lue %s"
     "Monday",  // "lundi"
@@ -4780,6 +4798,7 @@ static const char* const kI18n_de[] = {
     "LP unverwundbar",  // "PV invulnérable"
     "Nächste Seite",  // "Page suivante"
     "Reden",  // "Parler"
+    "Sonnenanteil",  // "Part du soleil"
     "Ecke gewonnen! Nochmal würfeln.",  // "Part gagnée ! Vous rejouez."
     "In %u Runden geschafft · %u von %u Antworten richtig",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partie abgebrochen: Verlauf voll",  // "Partie interrompue : historique plein"
@@ -5196,6 +5215,8 @@ static const char* const kI18n_de[] = {
     "April",  // "avril"
     "b = gespielte Bälle, MB = Multiball ausgelöst.",  // "b = billes jouées, MB = multiball déclenché."
     "Sensor stumm",  // "capteur muet"
+    "geladen diesen Monat",  // "chargés ce mois-ci"
+    "von den Autos geladen diesen Monat",  // "chargés par les voitures ce mois-ci"
     "Hitzespitze",  // "coup de chaud"
     "Summe",  // "cumul"
     "Jahressumme",  // "cumul de l'année"
@@ -5204,6 +5225,7 @@ static const char* const kI18n_de[] = {
     "Reichweite",  // "d'autonomie"
     "Vorsprung aufs Netz diesen Monat",  // "d'avance sur le réseau ce mois-ci"
     "der Ladung durch die Sonne",  // "de la charge par le soleil"
+    "des Hauses",  // "de la maison"
     "Rückstand zum Netz diesen Monat",  // "de retard sur le réseau ce mois-ci"
     "deines Verbrauchs von der Sonne gedeckt",  // "de ta conso couverte par le soleil"
     "Sonntag",  // "dimanche"
@@ -5226,6 +5248,8 @@ static const char* const kI18n_de[] = {
     "kWh / Stunde",  // "kWh / heure"
     "kWh / Tag",  // "kWh / jour"
     "kWh / Monat",  // "kWh / mois"
+    "Geschätzte kWh/100 km: geladene Energie / gefahrene km",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km gefahren",  // "km parcourus"
     "vor dem Termin",  // "le début du rendez-vous"
     "gelesen %s",  // "lue %s"
     "Montag",  // "lundi"
@@ -6112,6 +6136,7 @@ static const char* const kI18n_nl[] = {
     "HP onkwetsbaar",  // "PV invulnérable"
     "Volgende pagina",  // "Page suivante"
     "Spreek",  // "Parler"
+    "Aandeel zon",  // "Part du soleil"
     "Partje gewonnen! Gooi opnieuw.",  // "Part gagnée ! Vous rejouez."
     "Klaar in %u rondes · %u van %u antwoorden goed",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partij gestopt: geschiedenis vol",  // "Partie interrompue : historique plein"
@@ -6528,6 +6553,8 @@ static const char* const kI18n_nl[] = {
     "april",  // "avril"
     "b = gespeelde ballen, MB = multiball gestart.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor stil",  // "capteur muet"
+    "geladen deze maand",  // "chargés ce mois-ci"
+    "geladen door auto's deze maand",  // "chargés par les voitures ce mois-ci"
     "hitte-piek",  // "coup de chaud"
     "totaal",  // "cumul"
     "jaartotaal",  // "cumul de l'année"
@@ -6536,6 +6563,7 @@ static const char* const kI18n_nl[] = {
     "actieradius",  // "d'autonomie"
     "voorsprong op het net deze maand",  // "d'avance sur le réseau ce mois-ci"
     "van het laden door de zon",  // "de la charge par le soleil"
+    "van het huis",  // "de la maison"
     "achterstand op het net deze maand",  // "de retard sur le réseau ce mois-ci"
     "van je verbruik gedekt door de zon",  // "de ta conso couverte par le soleil"
     "zondag",  // "dimanche"
@@ -6558,6 +6586,8 @@ static const char* const kI18n_nl[] = {
     "kWh / uur",  // "kWh / heure"
     "kWh / dag",  // "kWh / jour"
     "kWh / maand",  // "kWh / mois"
+    "Geschatte kWh/100 km: geladen energie / gereden km",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km gereden",  // "km parcourus"
     "vóór de afspraak",  // "le début du rendez-vous"
     "gelezen %s",  // "lue %s"
     "maandag",  // "lundi"
@@ -7444,6 +7474,7 @@ static const char* const kI18n_es[] = {
     "PV invulnerable",  // "PV invulnérable"
     "Página siguiente",  // "Page suivante"
     "Hablar",  // "Parler"
+    "Parte del sol",  // "Part du soleil"
     "¡Quesito ganado! Vuelves a tirar.",  // "Part gagnée ! Vous rejouez."
     "Partida acabada en %u rondas · %u aciertos de %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partida interrumpida: historial lleno",  // "Partie interrompue : historique plein"
@@ -7860,6 +7891,8 @@ static const char* const kI18n_es[] = {
     "abril",  // "avril"
     "b = bolas jugadas, MB = multiball activado.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor mudo",  // "capteur muet"
+    "cargados este mes",  // "chargés ce mois-ci"
+    "cargados por los coches este mes",  // "chargés par les voitures ce mois-ci"
     "pico de calor",  // "coup de chaud"
     "acumulado",  // "cumul"
     "acumulado año",  // "cumul de l'année"
@@ -7868,6 +7901,7 @@ static const char* const kI18n_es[] = {
     "de autonomía",  // "d'autonomie"
     "de ventaja sobre la red este mes",  // "d'avance sur le réseau ce mois-ci"
     "de la carga por el sol",  // "de la charge par le soleil"
+    "de la casa",  // "de la maison"
     "de retraso con la red este mes",  // "de retard sur le réseau ce mois-ci"
     "de tu consumo cubierto por el sol",  // "de ta conso couverte par le soleil"
     "domingo",  // "dimanche"
@@ -7890,6 +7924,8 @@ static const char* const kI18n_es[] = {
     "kWh / hora",  // "kWh / heure"
     "kWh / día",  // "kWh / jour"
     "kWh / mes",  // "kWh / mois"
+    "kWh/100 km estimados: energía cargada / km recorridos",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km recorridos",  // "km parcourus"
     "antes de la cita",  // "le début du rendez-vous"
     "leída %s",  // "lue %s"
     "lunes",  // "lundi"
@@ -8776,6 +8812,7 @@ static const char* const kI18n_it[] = {
     "PV invulnerabile",  // "PV invulnérable"
     "Pagina seguente",  // "Page suivante"
     "Parla",  // "Parler"
+    "Quota del sole",  // "Part du soleil"
     "Spicchio vinto! Tira ancora.",  // "Part gagnée ! Vous rejouez."
     "Partita chiusa in %u turni · %u risposte esatte su %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partita interrotta: cronologia piena",  // "Partie interrompue : historique plein"
@@ -9192,6 +9229,8 @@ static const char* const kI18n_it[] = {
     "aprile",  // "avril"
     "b = palle giocate, MB = multiball attivato.",  // "b = billes jouées, MB = multiball déclenché."
     "sensore muto",  // "capteur muet"
+    "caricati questo mese",  // "chargés ce mois-ci"
+    "caricati dalle auto questo mese",  // "chargés par les voitures ce mois-ci"
     "picco di caldo",  // "coup de chaud"
     "cumulato",  // "cumul"
     "cumulato anno",  // "cumul de l'année"
@@ -9200,6 +9239,7 @@ static const char* const kI18n_it[] = {
     "di autonomia",  // "d'autonomie"
     "di vantaggio sulla rete questo mese",  // "d'avance sur le réseau ce mois-ci"
     "della ricarica dal sole",  // "de la charge par le soleil"
+    "della casa",  // "de la maison"
     "di ritardo sulla rete questo mese",  // "de retard sur le réseau ce mois-ci"
     "dei tuoi consumi coperti dal sole",  // "de ta conso couverte par le soleil"
     "domenica",  // "dimanche"
@@ -9222,6 +9262,8 @@ static const char* const kI18n_it[] = {
     "kWh / ora",  // "kWh / heure"
     "kWh / giorno",  // "kWh / jour"
     "kWh / mese",  // "kWh / mois"
+    "kWh/100 km stimati: energia caricata / km percorsi",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km percorsi",  // "km parcourus"
     "prima dell'appuntamento",  // "le début du rendez-vous"
     "letto %s",  // "lue %s"
     "lunedì",  // "lundi"
@@ -10108,6 +10150,7 @@ static const char* const kI18n_tr[] = {
     "Can dokunulmaz",  // "PV invulnérable"
     "Sonraki sayfa",  // "Page suivante"
     "Konuş",  // "Parler"
+    "Güneş payı",  // "Part du soleil"
     "Dilim kazanıldı! Tekrar atıyorsun.",  // "Part gagnée ! Vous rejouez."
     "Oyun %u turda bitti · %u doğru yanıt, toplam %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Oyun kesildi: geçmiş dolu",  // "Partie interrompue : historique plein"
@@ -10524,6 +10567,8 @@ static const char* const kI18n_tr[] = {
     "Nisan",  // "avril"
     "b = oynanan bilye, MB = multiball tetiklendi.",  // "b = billes jouées, MB = multiball déclenché."
     "sensör sessiz",  // "capteur muet"
+    "bu ay şarj edildi",  // "chargés ce mois-ci"
+    "bu ay araçlarla şarj edildi",  // "chargés par les voitures ce mois-ci"
     "sıcaklık artışı",  // "coup de chaud"
     "toplam",  // "cumul"
     "yıllık toplam",  // "cumul de l'année"
@@ -10532,6 +10577,7 @@ static const char* const kI18n_tr[] = {
     "menzil",  // "d'autonomie"
     "bu ay şebekeye karşı fazla",  // "d'avance sur le réseau ce mois-ci"
     "şarj güneşten geldi",  // "de la charge par le soleil"
+    "evin",  // "de la maison"
     "bu ay şebekeye karşı eksik",  // "de retard sur le réseau ce mois-ci"
     "tüketiminin güneşten karşılanan kısmı",  // "de ta conso couverte par le soleil"
     "Pazar",  // "dimanche"
@@ -10554,6 +10600,8 @@ static const char* const kI18n_tr[] = {
     "kWh / saat",  // "kWh / heure"
     "kWh / gün",  // "kWh / jour"
     "kWh / ay",  // "kWh / mois"
+    "Tahmini kWh/100 km: şarj edilen enerji / kat edilen km",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "kat edilen km",  // "km parcourus"
     "randevudan önce",  // "le début du rendez-vous"
     "okundu %s",  // "lue %s"
     "Pazartesi",  // "lundi"

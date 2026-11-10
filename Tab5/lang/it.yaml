@@ -1615,3 +1615,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "di autonomia"
 "Aucune voiture reçue": "Nessuna auto ricevuta"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Scegli le auto nel blueprint, sezione «Énergie : voitures · Energy: cars»."
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+"de la maison": "della casa"
+"chargés par les voitures ce mois-ci": "caricati dalle auto questo mese"
+"Part du soleil": "Quota del sole"
+"chargés ce mois-ci": "caricati questo mese"
+"km parcourus": "km percorsi"
+"kWh/100 km estimés : énergie chargée / km parcourus": "kWh/100 km stimati: energia caricata / km percorsi"

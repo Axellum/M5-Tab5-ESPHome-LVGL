@@ -1562,3 +1562,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "actieradius"
 "Aucune voiture reçue": "Geen auto ontvangen"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Kies ze in de blueprint, sectie „Énergie : voitures · Energy: cars”."
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+"de la maison": "van het huis"
+"chargés par les voitures ce mois-ci": "geladen door auto's deze maand"
+"Part du soleil": "Aandeel zon"
+"chargés ce mois-ci": "geladen deze maand"
+"km parcourus": "km gereden"
+"kWh/100 km estimés : énergie chargée / km parcourus": "Geschatte kWh/100 km: geladen energie / gereden km"
