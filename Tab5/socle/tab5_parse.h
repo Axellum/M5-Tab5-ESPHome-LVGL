@@ -1366,12 +1366,13 @@ ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, i
 //                n'est pas une consommation), 0..kTrajetsConsoMax, sinon inconnue ;
 //   km_jours     sept km séparés par « ; », du plus ancien à aujourd'hui, 0..kTrajetsKmJourMax, vide = pas
 //                de ligne ce jour-là (ce n'est pas 0 km), au-delà : inconnu ;
-//   kwh_jours    sept kWh reçus par la voiture ce jour-là, même règle, 0..kEnergieKwhMax.
+//   kwh_jours    sept kWh reçus par la voiture ce jour-là, même règle, 0..kTrajetsKwhJourMax.
 // Un payload vide, ou blanc : la voiture n'a pas d'odomètre choisi (sa colonne disparaît ; sans aucune
 // voiture qui en ait un, la page « Trajets » n'existe pas). Une voiture dont l'odomètre est choisi mais
 // dont aucun relevé n'est lisible est PRÉSENTE (ses sept valeurs sont inconnues).
 constexpr int kTrajetsJours = 7;
 constexpr float kTrajetsKmJourMax = 3000.0f;       // aucune voiture ne fait plus en un jour
+constexpr float kTrajetsKwhJourMax = 5000.0f;      // ni ne reçoit plus de kWh en un jour
 constexpr float kTrajetsCompteurMax = 3.0e6f;
 constexpr float kTrajetsKmMoisMax = 90000.0f;
 constexpr float kTrajetsConsoMax = 1000.0f;        // kWh / 100 km

@@ -1582,3 +1582,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucune voiture reçue": "Keine Autos empfangen"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Wähle sie im Blueprint, Bereich „Énergie : voitures · Energy: cars“."
 "Aperçu": "Überblick"
+# --- Page Trajets du popup Voitures (tab5_voitures_trajets.cpp, ADR-0083) ---
+"Trajets": "Fahrten"
+"Compteur %s km": "Kilometerstand %s km"
+"ce mois-ci": "diesen Monat"
+"kWh / 100 km · estimé": "kWh / 100 km · geschätzt"
+"Km par jour": "Km pro Tag"
+"kWh chargés par jour": "Geladene kWh pro Tag"
+"Pas encore de relevé du compteur": "Noch kein Kilometerstand erfasst"

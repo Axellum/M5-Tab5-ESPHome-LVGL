@@ -2088,7 +2088,7 @@ bool trajets_lire(const Champ& payload, TrajetsLu& out) {
     out.km_mois = voiture_borne(f[2], kTrajetsKmMoisMax);
     out.kwh_100km = voiture_borne(f[3], kTrajetsConsoMax);
     trajets_liste(f[4], kTrajetsKmJourMax, out.km);
-    trajets_liste(f[5], kEnergieKwhMax, out.kwh);
+    trajets_liste(f[5], kTrajetsKwhJourMax, out.kwh);
     return true;
 }
 

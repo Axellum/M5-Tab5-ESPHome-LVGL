@@ -400,6 +400,10 @@ void apercu_peindre() {
 // en-tête dans tab5_custom.h et ses fichiers dans les includes: de tab5-ha-hmi.yaml).
 const Page kPages[] = {
     {tr_noop("Aperçu"), apercu_a_donnees, apercu_montrer, apercu_peindre},
+    // Des lambdas sans capture, pas les adresses : la règle CPP-4 (tools/check_tab5_code_rules.py) ne compte
+    // comme appel que `nom(`, et une fonction seulement pointée par la table serait signalée.
+    {tr_noop("Trajets"), [] { return voitures_trajets_a_donnees(); }, [](bool visible) { voitures_trajets_montrer(visible); },
+     [] { voitures_trajets_peindre(); }},
 };
 constexpr int kNbPages = static_cast<int>(sizeof(kPages) / sizeof(kPages[0]));
 static_assert(kNbPages <= kVoituresPages, "un onglet YAML par page (voitures_popup.yaml)");

@@ -1561,3 +1561,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucune voiture reçue": "No car received"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Choose them in the blueprint, section “Energy: cars”."
 "Aperçu": "Overview"
+# --- Page Trajets du popup Voitures (tab5_voitures_trajets.cpp, ADR-0083) ---
+"Trajets": "Trips"
+"Compteur %s km": "Odometer %s km"
+"ce mois-ci": "this month"
+"kWh / 100 km · estimé": "kWh / 100 km · estimated"
+"Km par jour": "Km per day"
+"kWh chargés par jour": "kWh charged per day"
+"Pas encore de relevé du compteur": "No odometer reading yet"
