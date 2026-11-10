@@ -16,7 +16,8 @@
 #       APRÈS tab5_lvgl et tab5_energie : il référence des widgets et le script d'événement.
 #       Aucun lv_* ici.
 # @ai_instruction Un widget de plus = son champ dans VoituresUI (tab5_voitures.h), son id dans
-#       voitures_carte.yaml et sa ligne ici.
+#       voitures_carte.yaml et sa ligne ici. Une page qui a des widgets YAML (« État », ADR-0081) :
+#       son conteneur dans voitures_popup.yaml et son `…_lier(id(…))` ici.
 # ============================================================================
 
 script:
@@ -56,6 +57,8 @@ script:
           u.limite[0] = id(voitures_limite_0);
           u.limite[1] = id(voitures_limite_1);
           u.style_carte = id(style_glass_card);
+          // Le conteneur de la page « État » (ADR-0081) : ses widgets YAML sont liés par son fichier C++.
+          voitures_etat_lier(id(voitures_page_etat));
           u.demander = []() { id(tab5_energie_demande).execute(std::string("heures")); };
           // En dernier : peindre() ne fait rien tant que popup est nul.
           u.popup = id(voitures_popup);

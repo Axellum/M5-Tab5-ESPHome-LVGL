@@ -637,8 +637,8 @@ api:
           example: "1"
         payload:
           type: string
-          description: "nom|batterie_pct|autonomie|unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|minutes_restantes|compteur_compte — vide = voiture absente (son cercle disparaît) ; champ vide = inconnu. etat : 0 inconnue ou endormie, 1 débranchée, 2 branchée sans charge, 3 en charge ; puissance en W reçus par la voiture, énergie en kWh, minutes jusqu'à la fin de la charge ; compteur_compte : 0 = le compteur de la maison ne compte pas les voitures, 1 ou vide = il les compte (leur charge est retranchée de la maison). Toujours ajouter à la fin."
-          example: "Model Y|78|412|km|3|7200|12.4|90|95|1"
+          description: "nom|batterie_pct|autonomie|unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|minutes_restantes|compteur_compte|pneu_av_g|pneu_av_d|pneu_ar_g|pneu_ar_d|unite_pression|temp_int|temp_ext|unite_temperature|verrouillee|sentinelle|logiciel_a_jour — vide = voiture absente (son cercle disparaît) ; champ vide = inconnu. etat : 0 inconnue ou endormie, 1 débranchée, 2 branchée sans charge, 3 en charge ; puissance en W reçus par la voiture, énergie en kWh, minutes jusqu'à la fin de la charge ; compteur_compte : 0 = le compteur de la maison ne compte pas les voitures, 1 ou vide = il les compte (leur charge est retranchée de la maison). Page État du popup Voitures (ADR-0081) : les quatre pressions des pneus (avant gauche, avant droit, arrière gauche, arrière droit) dans unite_pression (bar, psi, kPa, hPa, mbar, cbar, Pa ; vide = bar), les températures de la cabine et de l'extérieur dans unite_temperature (°C, °F ; vide = °C), verrouillee / sentinelle / logiciel_a_jour : 1 oui, 0 non, vide = inconnu. Toujours ajouter à la fin."
+          example: "Model Y|78|412|km|3|7200|12.4|90|95|1|2.9|2.9|2.8|2.8|bar|19|14|°C|1|0|1"
       then:
         # Le popup Voitures (ADR-0079) lit le même payload : sa propre copie des voitures.
         - lambda: 'energie_voiture(rang, payload); voitures_recu(rang, payload);'

@@ -23,9 +23,10 @@
 // seule voiture : une carte pleine largeur). Chaque carte : le nom, la silhouette (un grand glyphe
 // MDI, à la couleur de l'état), l'anneau de la batterie et son pourcentage, l'autonomie, une ligne
 // d'état courte (« En charge · 7.20 kW ») et le détail (énergie ajoutée, fin de la charge, limite).
-// Les pages Charge, Trajets et État s'y ajoutent (ADR-0046, ADR-0082) : une page sans donnée n'a pas
-// d'onglet, et le popup n'a pas d'onglets tant qu'il n'a qu'une page. Ouvert en appuyant sur un
-// cercle de voiture de la page Flux du popup Énergie, ou par « Aller à l'écran → Cars ».
+// Les pages Charge, Trajets et État s'y ajoutent (ADR-0046, ADR-0082 ; État : ADR-0081,
+// tab5_voitures_etat.cpp) : une page sans donnée n'a pas d'onglet, et le popup n'a pas d'onglets
+// tant qu'il n'a qu'une page. Ouvert en appuyant sur un cercle de voiture de la page Flux du popup
+// Énergie, ou par « Aller à l'écran → Cars ».
 constexpr int kVoituresCartes = 2;
 // Pages du popup, dans l'ordre des onglets : Aperçu, Charge, Trajets, État (table kPages de
 // tab5_voitures.cpp ; une page de plus = une ligne là et un onglet de plus dans voitures_popup.yaml).

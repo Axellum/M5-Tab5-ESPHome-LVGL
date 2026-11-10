@@ -712,14 +712,36 @@ def build_energie_payload(instantane: dict | None = None) -> str:
 # pas connus.
 # ---------------------------------------------------------------------------
 
+# Onze champs de plus à la FIN (page « État » du popup Voitures, ADR-0081 ; l'ancien payload de dix
+# champs reste lisible) : pneu_av_g|pneu_av_d|pneu_ar_g|pneu_ar_d|unite_pression|temp_int|temp_ext|
+# unite_temperature|verrouillee|sentinelle|logiciel_a_jour. Pressions dans l'unité donnée (bar, psi,
+# kPa, hPa, mbar, cbar, Pa ; vide = bar), températures en °C ou °F (vide = °C), verrouillee /
+# sentinelle / logiciel_a_jour « 1 » oui, « 0 » non. Tous facultatifs : champ vide = inconnu, la
+# tablette écrit « -- » ; sans aucun d'eux, la page « État » n'existe pas.
 VOITURE_CHAMPS = ("nom", "batterie", "autonomie", "unite_distance", "etat", "puissance", "energie",
-                  "limite", "minutes", "compteur")
+                  "limite", "minutes", "compteur",
+                  "pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d", "unite_pression", "temp_int",
+                  "temp_ext", "unite_temperature", "verrouillee", "sentinelle", "logiciel_a_jour")
+VOITURE_CHAMPS_ETAT = VOITURE_CHAMPS[10:]
 VOITURES = (
     {"nom": "Tesla 2023", "batterie": "78", "autonomie": "412", "unite_distance": "km", "etat": "3",
      "puissance": "7200", "energie": "12.4", "limite": "90", "minutes": "95", "compteur": "1"},
     {"nom": "Tesla 2025", "batterie": "52", "autonomie": "275", "unite_distance": "km", "etat": "2",
      "puissance": "0", "energie": "", "limite": "80", "minutes": "", "compteur": "1"},
 )
+# Ce que la page « État » montre de ces deux voitures (démo --voitures, captures de la page État) :
+# la première, pneus corrects, fermée à clé, logiciel à jour ; la seconde, un pneu trop mou (2,1 bar,
+# sous le seuil de 2,2 bar de la tablette), portes ouvertes, Sentinelle activée, une mise à jour qui
+# attend. Les écrans d'avant (Flux, Aperçu) gardent VOITURES telle quelle : leurs captures ne changent pas.
+VOITURES_ETAT = (
+    {"pneu_av_g": "2.9", "pneu_av_d": "2.9", "pneu_ar_g": "2.8", "pneu_ar_d": "2.8", "unite_pression": "bar",
+     "temp_int": "19", "temp_ext": "12", "unite_temperature": "°C",
+     "verrouillee": "1", "sentinelle": "0", "logiciel_a_jour": "1"},
+    {"pneu_av_g": "2.9", "pneu_av_d": "2.9", "pneu_ar_g": "2.1", "pneu_ar_d": "2.9", "unite_pression": "bar",
+     "temp_int": "21", "temp_ext": "12", "unite_temperature": "°C",
+     "verrouillee": "0", "sentinelle": "1", "logiciel_a_jour": "0"},
+)
+VOITURES_COMPLETES = tuple({**v, **e} for v, e in zip(VOITURES, VOITURES_ETAT))
 # Instantané qui va avec (une maison solaire sans batterie, en pleine journée) : 6,4 kW de soleil,
 # la maison mesurée à 8,1 kW avec la voiture en charge (7,2 kW) dedans, donc 0,9 kW pour la
 # maison seule, et 1,7 kW achetés au réseau pour finir la charge.
@@ -736,15 +758,16 @@ ENERGIE_INSTANTANE_VOITURES_BATTERIE = {
 
 
 def build_voiture_payload(voiture: dict | None) -> str:
-    """tab5_maj_voiture : les dix champs dans l'ordre du contrat, séparés par « | » ; None = payload
-    vide (voiture absente)."""
+    """tab5_maj_voiture : les vingt et un champs dans l'ordre du contrat, séparés par « | » (les onze
+    derniers, ceux de la page « État », vides si on ne les donne pas) ; None = payload vide (voiture
+    absente)."""
     if voiture is None:
         return ""
     assert set(voiture) <= set(VOITURE_CHAMPS), f"champ inconnu : {set(voiture) - set(VOITURE_CHAMPS)}"
     valeurs = [str(voiture.get(c, "")) for c in VOITURE_CHAMPS]
     for champ, v in zip(VOITURE_CHAMPS, valeurs):
         assert "|" not in v and ";" not in v, f"{champ} : séparateur dans {v!r}"
-        if champ not in ("nom", "unite_distance"):
+        if champ not in ("nom", "unite_distance", "unite_pression", "unite_temperature"):
             assert v == "" or _nombre(v) is not None, f"{champ} : {v!r} n'est pas un nombre"
     d = dict(zip(VOITURE_CHAMPS, valeurs))
     for champ in ("batterie", "limite"):
@@ -752,6 +775,12 @@ def build_voiture_payload(voiture: dict | None) -> str:
     assert d["etat"] in ("", "0", "1", "2", "3"), "etat : 0 à 3"
     assert d["puissance"] == "" or float(d["puissance"]).is_integer(), "puissance : W entiers"
     assert d["compteur"] in ("", "0", "1"), "compteur : 0 ou 1"
+    assert d["unite_pression"] in ("", "bar", "cbar", "mbar", "hPa", "kPa", "Pa", "psi"), "unite_pression"
+    assert d["unite_temperature"] in ("", "°C", "°F"), "unite_temperature : °C ou °F"
+    for champ in ("verrouillee", "sentinelle", "logiciel_a_jour"):
+        assert d[champ] in ("", "0", "1"), f"{champ} : 0 ou 1"
+    for champ in ("pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d"):
+        assert d[champ] == "" or float(d[champ]) > 0, f"{champ} : une pression positive"
     return "|".join(valeurs)
 
 

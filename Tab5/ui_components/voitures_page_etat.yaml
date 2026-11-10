@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Page « État » du popup Voitures (ADR-0081, 10/11/2026, lot 7 du plan des voitures) :
+# un conteneur transparent de la taille du corps de la carte modale, qui porte dans l'ordre les
+# quatre cartes de verre — haut 0, bas 0, haut 1, bas 1 — de deux voitures au plus (la carte du
+# haut : nom, verdict des pneus, voiture vue de dessus et ses pressions ; la carte du bas : cinq
+# lignes Cabine, Extérieur, Portes, Sentinelle, Logiciel). Ne rien assigner ici : tab5_voitures_etat.cpp
+# pose et dimensionne tout, écrit les textes, les icônes et les couleurs (rôles de la palette) et
+# crée le dessin de la voiture ; seuls les ids, les polices et les rôles de base sont ici.
+# Caché au départ : le popup (tab5_voitures.cpp) le montre quand l'onglet « État » est choisi.
+# @architecture_constraint L'ORDRE des enfants est lu par tab5_voitures_etat.cpp (lier_carte,
+#       kEnfantsHaut, kEnfantsLigne) : un widget de plus s'ajoute en fin de son gabarit et dans ce
+#       fichier C++. Le conteneur est lié par tab5_voitures_lier (tab5-voitures.yaml).
+# @geometry Corps de la carte modale : x 24, y ${modal_body_y}, ${corps_w} × ${corps_h}.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: voitures_page_etat
+  align: TOP_LEFT
+  x: 24
+  y: ${modal_body_y}
+  width: ${corps_w}
+  height: ${corps_h}
+  hidden: true
+  scrollable: false
+  styles: style_transparent
+  widgets:
+    - !include { file: voitures_etat_haut.yaml, vars: { n: "0" } }
+    - !include { file: voitures_etat_bas.yaml, vars: { n: "0" } }
+    - !include { file: voitures_etat_haut.yaml, vars: { n: "1" } }
+    - !include { file: voitures_etat_bas.yaml, vars: { n: "1" } }

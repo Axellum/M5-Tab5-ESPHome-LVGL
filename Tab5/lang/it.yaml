@@ -1615,6 +1615,18 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "di autonomia"
 "Aucune voiture reçue": "Nessuna auto ricevuta"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Scegli le auto nel blueprint, sezione «Énergie : voitures · Energy: cars»."
+# --- Popup Voitures, page État (tab5_voitures_etat.cpp, ADR-0081) ---------------
+# Libellés de lignes : colonne ~400 px, 12 caractères au plus. Valeurs : Roboto 32 gras, 16 au plus.
+"Cabine": "Abitacolo"
+"Portes": "Porte"
+"Sentinelle": "Sentinella"   # nom officiel Tesla en italien (Modalità Sentinella)
+"Logiciel": "Software"
+"Verrouillées": "Bloccate"
+"Déverrouillées": "Sbloccate"
+"À jour": "Aggiornato"
+"À mettre à jour": "Da aggiornare"
+"Pneus corrects": "Gomme OK"
+"Pression basse": "Pressione bassa"
 "Aperçu": "Panoramica"
 # --- Page Trajets du popup Voitures (tab5_voitures_trajets.cpp, ADR-0083) ---
 "Trajets": "Viaggi"

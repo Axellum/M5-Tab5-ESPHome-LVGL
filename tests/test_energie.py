@@ -2268,7 +2268,9 @@ def test_flux_dispositions_voitures(carte):
 
 # ─── Package et blueprint : tab5_maj_voiture (ADR-0076) ──────────────────────
 
-CHAMPS_VOITURE = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "odometre", "fin"]
+CHAMPS_VOITURE = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "odometre", "fin",
+                  "pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d", "temp_int", "temp_ext",
+                  "verrou", "sentinelle", "logiciel"]
 MODEL_Y = {"nom": "Model Y", "batterie": "sensor.model_y_batterie", "autonomie": "sensor.model_y_autonomie",
            "etat": "sensor.model_y_charge", "cable": "binary_sensor.model_y_cable",
            "puissance": "sensor.model_y_puissance", "energie": "sensor.model_y_energie",
@@ -2336,17 +2338,24 @@ def test_voiture_l_action_et_ses_variables():
     assert avec["suivis"] == avant["suivis"] + [v for v in MODEL_Y.values() if v.startswith(("sensor.", "binary_sensor.", "number."))]
 
 
+AVANT = "Model Y|78|412|km|3|7200|12.4|90|90|1"   # les dix champs d'avant l'ADR-0081
+SANS_ETAT = "|" * 11                              # les onze champs de la page État, tous vides
+
+
 def test_voiture_payload_complet():
-    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE]) == "Model Y|78|412|km|3|7200|12.4|90|90|1"
-    # Dix champs, dans l'ordre que lit voiture_lire (tab5_parse.cpp) et que pousse la démo.
-    assert len(_payload_voiture(1, [MODEL_Y, SANS_VOITURE]).split("|")) == len(scenarios.VOITURE_CHAMPS) == 10
+    # Sans capteur d'état choisi, le payload d'avant suivi de onze champs vides : la tablette n'a pas
+    # de page « État » (ADR-0081), un firmware d'avant ignore la fin.
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE]) == AVANT + SANS_ETAT
+    # Vingt et un champs, dans l'ordre que lit voiture_lire (tab5_parse.cpp) et que pousse la démo.
+    assert len(_payload_voiture(1, [MODEL_Y, SANS_VOITURE]).split("|")) == len(scenarios.VOITURE_CHAMPS) == 21
+    assert AVANT.split("|") == _payload_voiture(1, [MODEL_Y, SANS_VOITURE]).split("|")[:10]
 
 
 def test_voiture_le_rang_sans_voiture_part_vide():
     """Une seule voiture choisie : l'autre rang part avec un payload VIDE (la tablette retire son cercle)."""
     assert _payload_voiture(2, [MODEL_Y, SANS_VOITURE]) == ""
     assert _payload_voiture(1, [SANS_VOITURE, MODEL_Y]) == ""
-    assert _payload_voiture(2, [SANS_VOITURE, MODEL_Y]) == "Model Y|78|412|km|3|7200|12.4|90|90|1"
+    assert _payload_voiture(2, [SANS_VOITURE, MODEL_Y]) == AVANT + SANS_ETAT
     assert _payload_voiture(2, [MODEL_Y]) == "", "liste plus courte que deux voitures"
 
 
@@ -2404,6 +2413,155 @@ def test_voiture_energie_en_kwh(valeur, unite, attendu):
     assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats).split("|")[6] == attendu
 
 
+# ─── Page État du popup Voitures (ADR-0081) : pneus, températures, verrou, Sentinelle, logiciel ──────
+
+CAPTEURS_ETAT = {"pneu_av_g": "sensor.model_y_pneu_av_g", "pneu_av_d": "sensor.model_y_pneu_av_d",
+                 "pneu_ar_g": "sensor.model_y_pneu_ar_g", "pneu_ar_d": "sensor.model_y_pneu_ar_d",
+                 "temp_int": "sensor.model_y_temp_int", "temp_ext": "sensor.model_y_temp_ext",
+                 "verrou": "lock.model_y_verrou", "sentinelle": "switch.model_y_sentinelle",
+                 "logiciel": "update.model_y_logiciel"}
+MODEL_Y_ETAT = dict(MODEL_Y, **CAPTEURS_ETAT)
+# Les onze champs d'état, dans l'ordre du payload (après les dix d'avant).
+ETAT = ["pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d", "unite_pression", "temp_int", "temp_ext",
+        "unite_temperature", "verrouillee", "sentinelle", "logiciel_a_jour"]
+
+
+def _etats_etat(**surcharges):
+    """La voiture 1 avec tous ses capteurs d'état : pneus à 2,9 / 2,9 / 2,8 / 2,7 bar, 19,5 °C dedans et
+    12 °C dehors, fermée à clé, Sentinelle éteinte, logiciel à jour. Une surcharge {entité: EtatHA | None}
+    change un capteur."""
+    etats = _etats_model_y(**{
+        "sensor.model_y_pneu_av_g": EtatHA("sensor.model_y_pneu_av_g", "2.9", unit_of_measurement="bar"),
+        "sensor.model_y_pneu_av_d": EtatHA("sensor.model_y_pneu_av_d", "2.9", unit_of_measurement="bar"),
+        "sensor.model_y_pneu_ar_g": EtatHA("sensor.model_y_pneu_ar_g", "2.8", unit_of_measurement="bar"),
+        "sensor.model_y_pneu_ar_d": EtatHA("sensor.model_y_pneu_ar_d", "2.7", unit_of_measurement="bar"),
+        "sensor.model_y_temp_int": EtatHA("sensor.model_y_temp_int", "19.5", unit_of_measurement="°C"),
+        "sensor.model_y_temp_ext": EtatHA("sensor.model_y_temp_ext", "12", unit_of_measurement="°C"),
+        "lock.model_y_verrou": EtatHA("lock.model_y_verrou", "locked"),
+        "switch.model_y_sentinelle": EtatHA("switch.model_y_sentinelle", "off"),
+        "update.model_y_logiciel": EtatHA("update.model_y_logiciel", "off"),
+    })
+    etats.update(surcharges)
+    return etats
+
+
+def _etat(voiture=MODEL_Y_ETAT, **surcharges):
+    """Les onze champs d'état du payload de la voiture 1, par nom."""
+    champs = _payload_voiture(1, [voiture, SANS_VOITURE], _etats_etat(**surcharges)).split("|")
+    assert len(champs) == 21
+    return dict(zip(ETAT, champs[10:]))
+
+
+def test_voiture_etat_complet():
+    assert _etat() == {"pneu_av_g": "2.9", "pneu_av_d": "2.9", "pneu_ar_g": "2.8", "pneu_ar_d": "2.7",
+                       "unite_pression": "bar", "temp_int": "19.5", "temp_ext": "12.0", "unite_temperature": "°C",
+                       "verrouillee": "1", "sentinelle": "0", "logiciel_a_jour": "1"}
+    # Les dix premiers champs sont ceux d'avant, que les capteurs d'état n'y changent rien.
+    avant = _payload_voiture(1, [MODEL_Y_ETAT, SANS_VOITURE], _etats_etat()).split("|")[:10]
+    assert avant == AVANT.split("|")
+
+
+def test_voiture_etat_les_capteurs_sont_suivis():
+    """Un capteur d'état choisi relance l'instantané quand il change, comme les autres."""
+    sans = _passe_voitures([MODEL_Y, SANS_VOITURE])
+    avec = Passe(dict(CAPTEURS, voitures=[MODEL_Y_ETAT, SANS_VOITURE], voitures_compteur_compte=True),
+                 _maison(**_etats_etat()), cinq=_reponse(_lignes_5min()))
+    assert avec["suivis"] == sans["suivis"] + list(CAPTEURS_ETAT.values())
+    assert avec["voitures_actives"] == 1
+
+
+@pytest.mark.parametrize("unite, valeur, attendu", [
+    ("psi", ("42", "41", "40", "39.5"), ["42.0", "41.0", "40.0", "39.5"]),
+    ("kPa", ("200", "201", "199", "198"), ["200.0", "201.0", "199.0", "198.0"]),
+    ("bar", ("2.9", "2.93", "2.987", "2.8"), ["2.9", "2.93", "2.99", "2.8"]),
+])
+def test_voiture_pneus_dans_l_unite_du_capteur(unite, valeur, attendu):
+    """Les pressions partent telles quelles (arrondies à 0,01) avec l'unité du capteur, jamais converties ici."""
+    cles = ("av_g", "av_d", "ar_g", "ar_d")
+    surcharges = {f"sensor.model_y_pneu_{c}": EtatHA(f"sensor.model_y_pneu_{c}", v, unit_of_measurement=unite)
+                  for c, v in zip(cles, valeur)}
+    e = _etat(**surcharges)
+    assert [e[f"pneu_{c}"] for c in cles] == attendu and e["unite_pression"] == unite
+
+
+def test_voiture_pneu_d_une_autre_unite_reste_vide():
+    """Un pneu dans une autre unité que le premier n'est pas envoyé (jamais une valeur convertie de travers)."""
+    e = _etat(**{"sensor.model_y_pneu_av_d": EtatHA("sensor.model_y_pneu_av_d", "290", unit_of_measurement="kPa")})
+    assert e["pneu_av_g"] == "2.9" and e["pneu_av_d"] == "" and e["unite_pression"] == "bar"
+
+
+def test_voiture_pneus_unite_inconnue_de_la_tablette():
+    """mmHg ou inHg : la tablette ne les lit pas, aucune pression n'est envoyée (elle écrit « -- »)."""
+    surcharges = {f"sensor.model_y_pneu_{c}": EtatHA(f"sensor.model_y_pneu_{c}", "2200", unit_of_measurement="mmHg")
+                  for c in ("av_g", "av_d", "ar_g", "ar_d")}
+    e = _etat(**surcharges)
+    assert [e[f"pneu_{c}"] for c in ("av_g", "av_d", "ar_g", "ar_d")] == [""] * 4 and e["unite_pression"] == ""
+
+
+@pytest.mark.parametrize("etat", ["unavailable", "unknown", "abc"])
+def test_voiture_pneu_sans_valeur_reste_vide(etat):
+    """Les pressions sont désactivées par défaut chez Tesla : un capteur absent ou sans valeur laisse un
+    champ vide et ne gêne pas les trois autres."""
+    e = _etat(**{"sensor.model_y_pneu_ar_g": EtatHA("sensor.model_y_pneu_ar_g", etat, unit_of_measurement="bar")})
+    assert e["pneu_ar_g"] == "" and e["pneu_av_g"] == "2.9" and e["pneu_ar_d"] == "2.7"
+    # Capteur retiré de HA (entité désactivée : plus d'état du tout).
+    e = _etat(**{"sensor.model_y_pneu_ar_g": None})
+    assert e["pneu_ar_g"] == "" and e["pneu_av_g"] == "2.9"
+
+
+def test_voiture_temperatures_en_fahrenheit():
+    e = _etat(**{"sensor.model_y_temp_int": EtatHA("sensor.model_y_temp_int", "67", unit_of_measurement="°F"),
+                 "sensor.model_y_temp_ext": EtatHA("sensor.model_y_temp_ext", "54.4", unit_of_measurement="°F")})
+    assert (e["temp_int"], e["temp_ext"], e["unite_temperature"]) == ("67.0", "54.4", "°F")
+    # Une température dans l'autre unité que la première reste vide.
+    e = _etat(**{"sensor.model_y_temp_int": EtatHA("sensor.model_y_temp_int", "67", unit_of_measurement="°F")})
+    assert (e["temp_int"], e["temp_ext"], e["unite_temperature"]) == ("67.0", "", "°F")
+    # Sans la cabine, l'unité vient de l'extérieur ; ni l'un ni l'autre : rien.
+    e = _etat(**{"sensor.model_y_temp_int": None})
+    assert (e["temp_int"], e["temp_ext"], e["unite_temperature"]) == ("", "12.0", "°C")
+    e = _etat(**{"sensor.model_y_temp_int": None, "sensor.model_y_temp_ext": None})
+    assert (e["temp_int"], e["temp_ext"], e["unite_temperature"]) == ("", "", "")
+    # Kelvin : la tablette ne le lit pas.
+    e = _etat(**{"sensor.model_y_temp_int": EtatHA("sensor.model_y_temp_int", "292", unit_of_measurement="K")})
+    assert e["temp_int"] == "" and e["temp_ext"] == "12.0" and e["unite_temperature"] == "°C"
+
+
+@pytest.mark.parametrize("entite, etat, attendu", [
+    # Une serrure : verrouillée = 1, déverrouillée ou en mouvement = 0, le reste inconnu.
+    ("lock.model_y_verrou", "locked", "1"), ("lock.model_y_verrou", "unlocked", "0"),
+    ("lock.model_y_verrou", "unlocking", "0"), ("lock.model_y_verrou", "open", "0"),
+    ("lock.model_y_verrou", "jammed", ""), ("lock.model_y_verrou", "unavailable", ""),
+    ("lock.model_y_verrou", "unknown", ""),
+    # Un binary_sensor de classe « lock » : la convention de HA est inversée (éteint = verrouillée).
+    ("binary_sensor.model_y_verrou", "off", "1"), ("binary_sensor.model_y_verrou", "on", "0"),
+    ("binary_sensor.model_y_verrou", "unavailable", ""),
+])
+def test_voiture_verrou(entite, etat, attendu):
+    voiture = dict(MODEL_Y_ETAT, verrou=entite)
+    e = _etat(voiture, **{entite: EtatHA(entite, etat)})
+    assert e["verrouillee"] == attendu
+
+
+@pytest.mark.parametrize("etat, attendu", [("on", "1"), ("off", "0"), ("unavailable", ""), ("unknown", "")])
+def test_voiture_sentinelle(etat, attendu):
+    e = _etat(**{"switch.model_y_sentinelle": EtatHA("switch.model_y_sentinelle", etat)})
+    assert e["sentinelle"] == attendu
+
+
+@pytest.mark.parametrize("etat, attendu", [("off", "1"), ("on", "0"), ("unavailable", ""), ("unknown", "")])
+def test_voiture_logiciel(etat, attendu):
+    """Une entité `update` : éteinte = à jour (1), allumée = une mise à jour attend (0)."""
+    e = _etat(**{"update.model_y_logiciel": EtatHA("update.model_y_logiciel", etat)})
+    assert e["logiciel_a_jour"] == attendu
+
+
+def test_voiture_etat_aucun_capteur_choisi_ni_existant():
+    """Aucun capteur d'état choisi, ou choisis mais disparus de HA : les onze champs sont vides."""
+    assert _etat(MODEL_Y) == dict.fromkeys(ETAT, "")
+    disparus = {e: None for e in CAPTEURS_ETAT.values()}
+    assert _etat(**disparus) == dict.fromkeys(ETAT, "")
+
+
 def _fin(valeur, unite=None):
     attrs = {"unit_of_measurement": unite} if unite else {}
     etats = _etats_model_y(**{"sensor.model_y_fin": EtatHA("sensor.model_y_fin", valeur, **attrs)})
@@ -2439,7 +2597,7 @@ def test_voiture_endormie_champs_vides_et_etat_inconnu():
     écrit « -- »), l'état vaut 0, rien ne plante ; le nom et le réglage du compteur partent quand même."""
     inconnus = {e: EtatHA(e, "unavailable" if i % 2 else "unknown")
                 for i, e in enumerate(v for k, v in MODEL_Y.items() if k != "nom")}
-    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], inconnus) == "Model Y||||0|||||1"
+    assert _payload_voiture(1, [MODEL_Y, SANS_VOITURE], inconnus) == "Model Y||||0|||||1" + SANS_ETAT
 
 
 def test_voiture_champs_sans_valeur_restent_vides():
@@ -2447,10 +2605,10 @@ def test_voiture_champs_sans_valeur_restent_vides():
     etats = _etats_model_y(**{"sensor.model_y_batterie": EtatHA("sensor.model_y_batterie", "unavailable"),
                               "sensor.model_y_autonomie": None, "number.model_y_limite": EtatHA("number.model_y_limite", "unknown")})
     p = _payload_voiture(1, [MODEL_Y, SANS_VOITURE], etats)
-    assert p == "Model Y||||3|7200|12.4||90|1", p
+    assert p == "Model Y||||3|7200|12.4||90|1" + SANS_ETAT, p
     mince = {**SANS_VOITURE, "batterie": "sensor.model_y_batterie"}
     # Seule sa batterie est choisie : sans nom (la tablette dit « Voiture 1 »), état inconnu (0).
-    assert _payload_voiture(1, [mince, SANS_VOITURE]) == "|78|||0|||||1"
+    assert _payload_voiture(1, [mince, SANS_VOITURE]) == "|78|||0|||||1" + SANS_ETAT
 
 
 def test_voiture_nom_nettoye_et_borne():

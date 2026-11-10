@@ -410,6 +410,13 @@ void voiture(const std::string& p) {
     const std::string unite(v.unite_distance.p != nullptr ? v.unite_distance.p : "", v.unite_distance.n);
     (void) nom;
     (void) unite;
+    // Page « État » (ADR-0081) : les deux unités copiées, le verdict des pneus, une pression reconvertie.
+    const std::string unite_p(v.unite_pression.p != nullptr ? v.unite_pression.p : "", v.unite_pression.n);
+    const std::string unite_t(v.unite_temperature.p != nullptr ? v.unite_temperature.p : "", v.unite_temperature.n);
+    (void) unite_p;
+    (void) unite_t;
+    (void) voiture_pneus_verdict(v.pneu_bar);
+    for (int i = 0; i < kVoiturePneus; i++) (void) pression_en_bar(v.pneu[i], v.unite_pression);
     float charges[kVoituresMax] = {std::isfinite(v.puissance) ? v.puissance : 0.0f,
                                    rang.empty() ? 0.0f : static_cast<float>(rang.size()) * 1000.0f};
     energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, charges, kVoituresMax, !rang.empty() && rang[0] == '1');

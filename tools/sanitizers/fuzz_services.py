@@ -87,8 +87,10 @@ GRAINES: dict[str, dict[str, str]] = {
                                    "r0|son||||0|100|5|%|Volume;r1|lum|lampadaire|d|t00|0|255|25||Lampadaire;"},
     "tab5_maj_energie": {"payload": "3450|1180|-2270|78|0|24.5|°C|12.4"},
     # Une voiture électrique du Flux (ADR-0076) : rang, puis nom, batterie, autonomie, unité, état
-    # (3 = en charge), W, kWh ajoutés, limite, minutes restantes, « le compteur compte la voiture ».
-    "tab5_maj_voiture": {"rang": "1", "payload": "Model Y|78|412|km|3|7200|12.4|90|95|1"},
+    # (3 = en charge), W, kWh ajoutés, limite, minutes restantes, « le compteur compte la voiture »,
+    # puis (ADR-0081) quatre pneus, l'unité de pression, l'habitacle, l'extérieur, l'unité de température,
+    # verrouillée, sentinelle, logiciel à jour.
+    "tab5_maj_voiture": {"rang": "1", "payload": "Model Y|78|412|km|3|7200|12.4|90|95|1|2.9|2.8|2.7|2.9|bar|19|14|°C|1|0|1"},
     # Les dernières charges des voitures (page Charges) : rang|jour|heure|durée en minutes|kWh|part du soleil.
     "tab5_maj_voiture_charges": {"payload": "2|2026-11-09|09:02|103|12.4|76;1|2026-11-09|01:00|120|14.4|0"},
     # La consommation du jour empilée de la page Aujourd'hui (ADR-0078) : rang (0 la maison sans les voitures,
