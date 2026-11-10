@@ -107,6 +107,7 @@ script:
             u.bilan_vue_btn[0] = id(energie_bilan_vue_0);
             u.bilan_vue_btn[1] = id(energie_bilan_vue_1);
             u.bilan_vue_btn[2] = id(energie_bilan_vue_2);
+            u.bilan_vue_btn[3] = id(energie_bilan_vue_3);
             u.bilan_zone = id(energie_bilan_zone);
             u.police = id(roboto_22);
             u.police_grasse = id(roboto_32_b);

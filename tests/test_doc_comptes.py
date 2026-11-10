@@ -391,7 +391,9 @@ def _demo():
                                                  demo_pusher.SERVICE_HISTORIQUE, demo_pusher.SERVICE_ENERGIE_SOLEIL, demo_pusher.SERVICE_ENERGIE_BILAN,
                                                  demo_pusher.SERVICE_SERVEUR_IA, demo_pusher.SERVICE_VOITURE,
                                                  demo_pusher.SERVICE_VOITURE_CHARGES,
-                                                 demo_pusher.SERVICE_VOITURE_JOUR}
+                                                 demo_pusher.SERVICE_VOITURE_JOUR,
+                                                 demo_pusher.SERVICE_VOITURE_BILAN,
+                                                 demo_pusher.SERVICE_VOITURE_TRAJETS}
 
 
 def _noms(texte):
@@ -431,7 +433,9 @@ def test_demo_mode_services(motif_nombre, motif_restants, langue):
     a_part = {"tab5_maj_zones", "tab5_maj_emplacements", demo_pusher.SERVICE_TUILES,
               demo_pusher.SERVICE_ENERGIE, demo_pusher.SERVICE_ENERGIE_HISTORIQUE,
               demo_pusher.SERVICE_HISTORIQUE, demo_pusher.SERVICE_ENERGIE_SOLEIL, demo_pusher.SERVICE_ENERGIE_BILAN, demo_pusher.SERVICE_SERVEUR_IA,
-              demo_pusher.SERVICE_VOITURE, demo_pusher.SERVICE_VOITURE_CHARGES, demo_pusher.SERVICE_VOITURE_JOUR}
+              demo_pusher.SERVICE_VOITURE, demo_pusher.SERVICE_VOITURE_CHARGES, demo_pusher.SERVICE_VOITURE_JOUR,
+              demo_pusher.SERVICE_VOITURE_BILAN,
+              demo_pusher.SERVICE_VOITURE_TRAJETS}
     assert nombre.group(1) == _en_lettres(len(_demo() - a_part))[langue]
     assert sorted(set(_noms(restants.group(1)))) == sorted(set(_services()) - _demo())
 

@@ -1862,7 +1862,34 @@ int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]) {
 // (section 15), la lecture du payload ci-dessous.
 
 namespace {
-constexpr int kVoitureChamps = 10;   // nom, batterie, autonomie, unité, état, W, kWh, limite, minutes, compteur
+// nom, batterie, autonomie, unité, état, W, kWh, limite, minutes, compteur, puis (lot 7, page « État »)
+// quatre pneus, unité de pression, température intérieure, extérieure, unité, verrou, sentinelle, logiciel
+constexpr int kVoitureChamps = 21;
+constexpr int kVoitureChampPneu = 10;   // rang du premier pneu ; l'unité de pression suit les quatre
+
+// Vrai si le champ vaut `mot` sans tenir compte de la casse (ASCII).
+bool voiture_unite_est(const Champ& c, const char* mot) {
+    size_t i = 0;
+    for (; i < c.n && mot[i] != '\0'; i++) {
+        char a = c.p[i], b = mot[i];
+        if (a >= 'A' && a <= 'Z') a = static_cast<char>(a - 'A' + 'a');
+        if (b >= 'A' && b <= 'Z') b = static_cast<char>(b - 'A' + 'a');
+        if (a != b) return false;
+    }
+    return i == c.n && mot[i] == '\0';
+}
+
+// « 1 » = OUI, « 0 » = NON, tout autre texte (vide, « unknown », « 2 »…) = INCONNU.
+VoitureOuiNon voiture_oui_non(const Champ& c) {
+    if (c.p == nullptr || c.n != 1) return VoitureOuiNon::INCONNU;
+    return c.p[0] == '1' ? VoitureOuiNon::OUI : (c.p[0] == '0' ? VoitureOuiNon::NON : VoitureOuiNon::INCONNU);
+}
+
+// Température entre kVoitureTempMin et kVoitureTempMax (unité quelconque) : NAN sinon.
+float voiture_temp(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && v >= kVoitureTempMin && v <= kVoitureTempMax ? v : NAN;
+}
 
 // Pourcentage d'un champ : NAN s'il est vide, illisible ou hors de 0 à 100.
 float voiture_pct(const Champ& c) {
@@ -1907,7 +1934,47 @@ bool voiture_lire(const Champ& payload, VoitureLue& out) {
     out.limite = voiture_pct(f[7]);
     out.minutes = voiture_borne(f[8], kVoitureMinutesMax);
     out.compteur_compte = champ_entier(f[9], 1, 1) != 0;   // « 0 » seul dit non
+    // Lot 7 : la page « État ». Chaque pneu : strictement positif et d'au plus 10 bar convertis ;
+    // une unité inconnue rend les quatre inconnus (une valeur sans son unité ne se montre pas).
+    out.unite_pression = f[kVoitureChampPneu + kVoiturePneus];
+    for (int i = 0; i < kVoiturePneus; i++) {
+        const float v = champ_nombre(f[kVoitureChampPneu + i], NAN);
+        const float bar = pression_en_bar(v, out.unite_pression);
+        if (std::isfinite(bar) && bar > 0.0f && bar <= kVoiturePressionMaxBar) {
+            out.pneu[i] = v;
+            out.pneu_bar[i] = bar;
+        }
+    }
+    out.temp_int = voiture_temp(f[kVoitureChampPneu + kVoiturePneus + 1]);
+    out.temp_ext = voiture_temp(f[kVoitureChampPneu + kVoiturePneus + 2]);
+    out.unite_temperature = f[kVoitureChampPneu + kVoiturePneus + 3];
+    out.verrouillee = voiture_oui_non(f[kVoitureChampPneu + kVoiturePneus + 4]);
+    out.sentinelle = voiture_oui_non(f[kVoitureChampPneu + kVoiturePneus + 5]);
+    out.logiciel_a_jour = voiture_oui_non(f[kVoitureChampPneu + kVoiturePneus + 6]);
     return true;
+}
+
+float pression_en_bar(float valeur, const Champ& unite) {
+    if (!std::isfinite(valeur)) return NAN;
+    struct Unite {
+        const char* nom;
+        float bar;   // combien de bar vaut une de ces unités
+    };
+    static const Unite kUnites[] = {{"bar", 1.0f}, {"cbar", 0.01f}, {"mbar", 0.001f}, {"hpa", 0.001f}, {"kpa", 0.01f}, {"pa", 0.00001f}, {"psi", 0.0689476f}};
+    if (unite.n == 0) return valeur;
+    for (const Unite& u : kUnites)
+        if (voiture_unite_est(unite, u.nom)) return valeur * u.bar;
+    return NAN;
+}
+
+PneusVerdict voiture_pneus_verdict(const float pneu_bar[kVoiturePneus]) {
+    int connus = 0;
+    for (int i = 0; i < kVoiturePneus; i++) {
+        if (!std::isfinite(pneu_bar[i])) continue;
+        connus++;
+        if (pneu_bar[i] < kVoiturePneuBasBar) return PneusVerdict::BAS;
+    }
+    return connus == kVoiturePneus ? PneusVerdict::CORRECTS : PneusVerdict::INCONNU;
 }
 
 // ─── 18. Charges des voitures (page « Charges » du popup Énergie, tab5_maj_voiture_charges) ───
@@ -2057,4 +2124,108 @@ ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, i
     }
     if (voitures >= 0.01f) t.part = std::min(std::max(100.0f * soleil / voitures, 0.0f), 100.0f);
     return t;
+}
+
+// ─── 20. Trajets des voitures (page « Trajets » du popup Voitures, ADR-0083) ───
+namespace {
+constexpr int kTrajetsChamps = 6;   // début, compteur, km du mois, kWh/100 km, km par jour, kWh par jour
+
+// Une liste de kTrajetsJours valeurs « ; » : la boucle de l'énergie (un champ vide compte et vaut NAN),
+// puis le plafond propre à la série (`haut`) ; au-delà de sept valeurs, le reste est ignoré.
+void trajets_liste(const Champ& c, float haut, float out[kTrajetsJours]) {
+    for (int i = 0; i < kTrajetsJours; i++) out[i] = NAN;
+    float v[kTrajetsJours];
+    const int n = energie_kwh_liste(c, v, kTrajetsJours);
+    for (int i = 0; i < n; i++) out[i] = std::isfinite(v[i]) && v[i] <= haut ? v[i] : NAN;
+}
+}  // namespace
+
+bool trajets_lire(const Champ& payload, TrajetsLu& out) {
+    out = TrajetsLu{};
+    if (payload.p == nullptr || payload.n == 0) return false;
+    Champ f[kTrajetsChamps];
+    const int k = champs_decouper(payload.p, payload.n, '|', f, kTrajetsChamps);
+    for (int i = k; i < kTrajetsChamps; i++) f[i] = Champ{payload.p + payload.n, 0};
+    bool un_champ = false;
+    for (int i = 0; i < kTrajetsChamps; i++) un_champ = un_champ || !voiture_blanc(f[i]);
+    if (!un_champ) return false;
+    out.presente = true;
+    if (!charge_jour(f[0], out.annee, out.mois, out.jour)) out.annee = out.mois = out.jour = 0;
+    out.compteur = voiture_borne(f[1], kTrajetsCompteurMax);
+    out.km_mois = voiture_borne(f[2], kTrajetsKmMoisMax);
+    out.kwh_100km = voiture_borne(f[3], kTrajetsConsoMax);
+    trajets_liste(f[4], kTrajetsKmJourMax, out.km);
+    trajets_liste(f[5], kTrajetsKwhJourMax, out.kwh);
+    return true;
+}
+
+bool trajets_jour(const TrajetsLu& t, int i, int& jour_du_mois, int& jour_semaine) {
+    if (i < 0 || i >= kTrajetsJours || t.annee <= 0) return false;
+    int a = t.annee, m = t.mois, j = t.jour + i;
+    while (j > jours_du_mois(a, m)) {
+        j -= jours_du_mois(a, m);
+        if (++m > 12) {
+            m = 1;
+            a++;
+        }
+    }
+    jour_du_mois = j;
+    jour_semaine = static_cast<int>((jour_civil(a, m, j) + 4) % 7);   // le 01/01/1970 était un jeudi
+    return true;
+}
+
+// ─── 21. Bilan du mois des voitures (ADR-0080) ───
+bool voiture_bilan_lire(const Champ& payload, VoitureBilanLu& out) {
+    out = VoitureBilanLu{};
+    if (payload.p == nullptr || payload.n == 0) return false;
+    Champ f[kVoitureBilanChamps];
+    const int k = champs_decouper(payload.p, payload.n, '|', f, kVoitureBilanChamps);
+    for (int i = k; i < kVoitureBilanChamps; i++) f[i] = Champ{payload.p + payload.n, 0};
+    bool une = false;
+    for (int r = 0; r < kVoituresMax; r++) {
+        const Champ* c = f + 5 * r;
+        VoitureBilanVoiture& v = out.voiture[r];
+        v.kwh = energie_kwh(c[0]);
+        // Sans énergie lisible, la voiture n'existe pas : ses autres champs ne servent à rien seuls.
+        v.presente = std::isfinite(v.kwh);
+        if (!v.presente) continue;
+        une = true;
+        v.soleil = voiture_pct(c[1]);
+        v.km = voiture_borne(c[2], kVoitureKmMax);
+        v.conso = voiture_borne(c[3], kVoitureConsoMax);
+        v.reseau = energie_kwh(c[4]);
+    }
+    out.part = voiture_pct(f[5 * kVoituresMax]);
+    return une;
+}
+
+VoitureBilanTotal voiture_bilan_total(const VoitureBilanLu& b) {
+    VoitureBilanTotal t;
+    float kwh_part = 0.0f, soleil_kwh = 0.0f;
+    bool une_part = false;
+    for (const VoitureBilanVoiture& v : b.voiture) {
+        if (!v.presente) continue;
+        t.kwh = somme_si(t.kwh, v.kwh);
+        t.reseau = somme_si(t.reseau, v.reseau);
+        if (std::isfinite(v.soleil)) {
+            une_part = true;
+            kwh_part += v.kwh;
+            soleil_kwh += v.kwh * v.soleil / 100.0f;
+        }
+    }
+    if (une_part && kwh_part >= 0.05f) {
+        t.soleil_kwh = soleil_kwh;
+        t.soleil = std::min(std::max(100.0f * soleil_kwh / kwh_part, 0.0f), 100.0f);
+    }
+    return t;
+}
+
+void voiture_bilan_parts(const VoitureBilanLu& b, float parts[kVoituresMax]) {
+    float somme = 0.0f;
+    for (const VoitureBilanVoiture& v : b.voiture)
+        if (v.presente) somme += v.kwh;
+    for (int r = 0; r < kVoituresMax; r++) {
+        const VoitureBilanVoiture& v = b.voiture[r];
+        parts[r] = v.presente && std::isfinite(b.part) && somme > 0.0f ? b.part * v.kwh / somme : NAN;
+    }
 }

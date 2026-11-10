@@ -1,0 +1,13 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] La pression d'un pneu sur la carte du haut de la page « État » du popup Voitures
+# (ADR-0081), réutilisée 4 fois par voitures_etat_haut.yaml : un texte (« 2.9 bar », « -- »)
+# posé à côté du pneu par tab5_voitures_etat.cpp, qui l'aligne vers la voiture et le colorie.
+# vars : n (0-1, la voiture), p (0-3, le pneu : avant gauche, avant droit, arrière gauche, arrière droit).
+# ═══════════════════════════════════════════════════════
+label:
+  id: "voitures_etat_pression_${n}_${p}"
+  text: ""
+  align: TOP_LEFT
+  text_font: roboto_32_b
+  hidden: true
+  styles: style_text_dim

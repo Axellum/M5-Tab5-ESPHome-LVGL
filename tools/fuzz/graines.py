@@ -45,6 +45,8 @@ FAMILLES = [
     ("D", "tab5_maj_voiture", ("rang", "payload")),
     ("E", "tab5_maj_voiture_charges", "payload"),
     ("F", "tab5_maj_voiture_jour", ("rang", "debut", "valeurs")),
+    ("G", "tab5_maj_voiture_trajets", ("rang", "payload")),
+    ("H", "tab5_maj_voiture_bilan", ("vue", "debut", "payload")),
 ]
 
 
@@ -104,7 +106,21 @@ LIMITES = [
     ("D", "voiture_bornes", "9\nX|150|-5|mi|9|-1|-2|101|1e99|7|trop"),
     ("D", "voiture_illisible", "1\nX|abc|nan|km|x|inf||unknown|"),
     ("D", "voiture_vide", "2\n||||||||"),
+    # Page « Trajets » du popup Voitures (ADR-0083) : une date impossible, des nombres hors bornes ou
+    # illisibles, un odomètre sans relevé, plus de sept valeurs, un payload court et un blanc.
+    ("G", "trajets_date_impossible", "1\n2026-02-30|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"),
+    ("G", "trajets_bornes", "2\n2028-02-27|3000001|-5|1e99|3001;-1;abc;inf;nan;1e99;4;9;9|1000000;x;;;;;5|trop"),
+    ("G", "trajets_sans_releve", "1\n2026-12-29||||;;;;;;|;;;;;;"),
+    ("G", "trajets_court", "2\n2026-06-10|500"),
+    ("G", "trajets_blanc", "1\n  | \t||||"),
     ("D", "voiture_sans_rang", "|||"),
+    # Page « État » du popup Voitures (ADR-0081), onze champs ajoutés à la fin : un payload d'avant (dix
+    # champs), pressions et températures hors bornes ou illisibles, une unité inconnue, des états autres que
+    # « 0 » et « 1 », puis des unités tolérées (casse, °F) et un champ de trop.
+    ("D", "voiture_etat_ancien", "1\nModel Y|78|412|km|3|7200|12.4|90|95|1"),
+    ("D", "voiture_etat_bornes", "2\nX|50|||2|||||1|0|-2.8|10.01|abc|torr|-101|201|°C|2|oui|-1"),
+    ("D", "voiture_etat_unites", "1\nX|50|||2|||||1|290|290|290|290|KPA|-12.5|104|°F|1|0|1|trop"),
+    ("D", "voiture_etat_seul", "2\n||||||||||2.9|nan|1e99||bar|1e9|"),
     # Serveur IA (ADR-0059) : nombres négatifs, non finis, hors bornes, champs de trop, un
     # second serveur ignoré.
     ("?", "serveur_ia_bornes", ";A|x||-1|-1|1e99|-2|inf|101|nan|9|-5|1e9|en trop;B|1|m|1|1|1|1|1|1|1|1|1|1"),

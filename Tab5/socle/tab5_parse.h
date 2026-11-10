@@ -1245,13 +1245,41 @@ int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]);
 //                      consommation montrée est la mesure telle quelle) ; « 1 », vide ou
 //                      illisible : il les compte (la charge des voitures en est retranchée).
 //                      Réglage global du blueprint, répété dans le payload de chaque voiture.
+// Ajoutés à la fin au lot 7 (page « État » du popup Voitures, ADR-0081) : « …|pneu_av_g|pneu_av_d|
+// pneu_ar_g|pneu_ar_d|unite_pression|temp_int|temp_ext|unite_temperature|verrouillee|sentinelle|
+// logiciel_a_jour ». Un payload d'avant (dix champs) les lit tous « inconnus ».
+//   pneu_*             pression de chaque pneu (avant gauche, avant droit, arrière gauche, arrière
+//                      droit) dans `unite_pression` (« bar », « psi », « kPa », « hPa », « mbar »,
+//                      « Pa », « cbar » ; vide = « bar »). Strictement positive et d'au plus 10 bar
+//                      une fois convertie, sinon inconnue ; unité inconnue : les quatre inconnues ;
+//   temp_int, temp_ext température de l'habitacle et de l'extérieur dans `unite_temperature`
+//                      (« °C », « °F », texte tel quel, vide = « °C »), de -100 à 200, sinon inconnue ;
+//   verrouillee        « 1 » portes verrouillées, « 0 » déverrouillées, autre chose : inconnu ;
+//   sentinelle         « 1 » mode Sentinelle activé, « 0 » désactivé, autre chose : inconnu ;
+//   logiciel_a_jour    « 1 » logiciel à jour, « 0 » une mise à jour attend, autre chose : inconnu.
 // Vide, ou tous les champs vides : voiture absente (son nœud disparaît).
 constexpr float kVoitureAutonomieMax = 10000.0f;
 constexpr float kVoitureMinutesMax = 7.0f * 24.0f * 60.0f;   // une semaine
+constexpr float kVoiturePressionMaxBar = 10.0f;
+constexpr float kVoitureTempMin = -100.0f;
+constexpr float kVoitureTempMax = 200.0f;
+constexpr int kVoiturePneus = 4;
+// Un pneu en dessous de ce seuil (en bar : 2,2 bar = 220 kPa = 32 psi) est « bas ». Choix de
+// l'auteur, pas une règle de Tesla : à juger sur de vraies pressions (ADR-0081).
+constexpr float kVoiturePneuBasBar = 2.2f;
 enum class VoitureEtat : uint8_t { INCONNUE = 0,
                                    DEBRANCHEE = 1,
                                    BRANCHEE = 2,
                                    EN_CHARGE = 3 };
+// Un état à deux valeurs que HA peut ne pas connaître (voiture endormie, capteur absent).
+enum class VoitureOuiNon : int8_t { INCONNU = -1,
+                                    NON = 0,
+                                    OUI = 1 };
+// Verdict des quatre pneus : CORRECTS seulement quand les quatre sont connus et au-dessus du seuil ;
+// BAS dès qu'un pneu connu est en dessous ; INCONNU sinon (rien, ou des pneus manquants).
+enum class PneusVerdict : uint8_t { INCONNU = 0,
+                                    CORRECTS = 1,
+                                    BAS = 2 };
 struct VoitureLue {
     bool presente = false;
     Champ nom = {nullptr, 0};             // pointe dans le payload (copié par l'écran)
@@ -1264,10 +1292,25 @@ struct VoitureLue {
     float limite = NAN;
     float minutes = NAN;
     bool compteur_compte = true;
+    // Lot 7 : la page « État ».
+    float pneu[kVoiturePneus] = {NAN, NAN, NAN, NAN};       // dans `unite_pression` ; av. g., av. d., ar. g., ar. d.
+    float pneu_bar[kVoiturePneus] = {NAN, NAN, NAN, NAN};   // les mêmes, en bar (pour juger)
+    Champ unite_pression = {nullptr, 0};   // pointe dans le payload (copié par l'écran)
+    float temp_int = NAN;
+    float temp_ext = NAN;
+    Champ unite_temperature = {nullptr, 0};   // idem
+    VoitureOuiNon verrouillee = VoitureOuiNon::INCONNU;
+    VoitureOuiNon sentinelle = VoitureOuiNon::INCONNU;
+    VoitureOuiNon logiciel_a_jour = VoitureOuiNon::INCONNU;
 };
 // Lit un payload ; vrai si une voiture est présente (out.presente). Aucune écriture dans
-// le payload ; out ne le survit pas (nom et unité y pointent).
+// le payload ; out ne le survit pas (nom et unités y pointent).
 bool voiture_lire(const Champ& payload, VoitureLue& out);
+// Une pression en bar d'après son unité (« bar », « psi », « kPa »… ; vide = « bar », comparaison
+// sans casse) ; NAN si l'unité est inconnue ou la valeur non finie. Sert au verdict des pneus.
+float pression_en_bar(float valeur, const Champ& unite);
+// Le verdict des quatre pneus (en bar) : voir PneusVerdict.
+PneusVerdict voiture_pneus_verdict(const float pneu_bar[kVoiturePneus]);
 
 // ─── 18. Charges des voitures (page « Charges » du popup Énergie, tab5_maj_voiture_charges) ───
 // Jusqu'à kChargesMax lignes séparées par « ; », la plus récente d'abord, chacune
@@ -1351,3 +1394,95 @@ struct ConsoJourTotaux {
     float part = NAN;                     // 0..100 : la part des voitures venue du soleil
 };
 ConsoJourTotaux conso_jour_totaux(const ConsoJour& c, const float* production, int n_production);
+
+// ─── 20. Trajets des voitures (page « Trajets » du popup Voitures, tab5_maj_voiture_trajets, ADR-0083) ───
+// Une voiture par appel : variables `rang` (« 1 » ou « 2 », la voiture de tab5_maj_voiture) et `payload`
+// « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours » : les chaînes `trajets_1` et `trajets_2` du
+// script tab5_voitures_analyse (packages/tab5_voitures.yaml, ADR-0074 et ADR-0083), poussées telles
+// quelles. Même famille que tab5_maj_voiture : un champ vide se lit « inconnu », un champ de trop est
+// ignoré, on ajoute à la FIN seulement.
+//   debut        AAAA-MM-JJ local du premier des sept jours (le dernier est aujourd'hui), sinon illisible
+//                (annee = 0) ;
+//   compteur_km  le dernier relevé de l'odomètre, 0..kTrajetsCompteurMax, sinon inconnu ;
+//   km_mois      les kilomètres du mois en cours, 0..kTrajetsKmMoisMax, sinon inconnus ;
+//   kwh_100km    l'énergie chargée ce mois-ci divisée par les km du mois : une APPROXIMATION (une charge
+//                n'est pas une consommation), 0..kTrajetsConsoMax, sinon inconnue ;
+//   km_jours     sept km séparés par « ; », du plus ancien à aujourd'hui, 0..kTrajetsKmJourMax, vide = pas
+//                de ligne ce jour-là (ce n'est pas 0 km), au-delà : inconnu ;
+//   kwh_jours    sept kWh reçus par la voiture ce jour-là, même règle, 0..kTrajetsKwhJourMax.
+// Un payload vide, ou blanc : la voiture n'a pas d'odomètre choisi (sa colonne disparaît ; sans aucune
+// voiture qui en ait un, la page « Trajets » n'existe pas). Une voiture dont l'odomètre est choisi mais
+// dont aucun relevé n'est lisible est PRÉSENTE (ses sept valeurs sont inconnues).
+constexpr int kTrajetsJours = 7;
+constexpr float kTrajetsKmJourMax = 3000.0f;       // aucune voiture ne fait plus en un jour
+constexpr float kTrajetsKwhJourMax = 5000.0f;      // ni ne reçoit plus de kWh en un jour
+constexpr float kTrajetsCompteurMax = 3.0e6f;
+constexpr float kTrajetsKmMoisMax = 90000.0f;
+constexpr float kTrajetsConsoMax = 1000.0f;        // kWh / 100 km
+struct TrajetsLu {
+    bool presente = false;
+    int annee = 0, mois = 0, jour = 0;             // le premier des sept jours ; annee 0 : illisible
+    float compteur = NAN;
+    float km_mois = NAN;
+    float kwh_100km = NAN;
+    float km[kTrajetsJours] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+    float kwh[kTrajetsJours] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+};
+// Lit un payload ; vrai si une voiture est présente (out.presente). Aucune écriture dans le payload ;
+// `out` ne contient rien qui y pointe.
+bool trajets_lire(const Champ& payload, TrajetsLu& out);
+// Le jour i (0 = le plus ancien … kTrajetsJours - 1 = aujourd'hui) de la fenêtre : jour du mois (1..31)
+// et jour de la semaine (0 = dimanche, pour day_short_utf8). Faux si `i` est hors bornes ou si la date de
+// début est illisible.
+bool trajets_jour(const TrajetsLu& t, int i, int& jour_du_mois, int& jour_semaine);
+
+// ─── 21. Bilan du mois des voitures (page « Bilan », tab5_maj_voiture_bilan, ADR-0080) ───
+// Le mois en cours de chaque voiture, une seule chaîne `payload` de onze champs séparés par « | » :
+// voiture 1 puis voiture 2, cinq champs chacune, puis la part de la maison. C'est la sortie `bilan`
+// du script tab5_voitures_analyse (packages/tab5_voitures.yaml, ADR-0074), poussée telle quelle, avec
+// `bilan_debut` (le 1er du mois) pour `debut` :
+//   kwh       énergie chargée depuis le 1er (energie_kwh), sinon la voiture est absente ;
+//   soleil    0..100, la part de cette énergie venue du soleil ; vide (aucun capteur solaire) ou « nan » :
+//             inconnue ;
+//   km        kilomètres parcourus (l'odomètre, désactivé par défaut chez Tesla : vide sans lui) ;
+//   conso     kWh / 100 km : l'énergie chargée divisée par les km, une APPROXIMATION (les pertes de
+//             charge, la charge ailleurs, la batterie qui se vide ne sont pas comptés), jamais une
+//             consommation mesurée ; vide sous 20 km ou sans odomètre ;
+//   reseau    kWh pris au réseau (la part que le soleil n'a pas couverte) ;
+//   part      0..100, ce que les voitures pèsent dans la consommation de la maison (compteur de la
+//             maison, voitures comprises).
+// Même famille que tab5_maj_voiture : un champ vide se lit « inconnu », un champ de trop est ignoré,
+// on ajoute à la FIN seulement. Les cinq champs d'une voiture tous vides : la voiture n'existe pas
+// (le cas d'un compte à une seule voiture). Un payload vide : aucun bilan (la vue « Voitures » du Bilan
+// disparaît).
+constexpr int kVoitureBilanChamps = 5 * kVoituresMax + 1;
+constexpr float kVoitureKmMax = 1e6f;      // un mois de route : bien au-delà du possible
+constexpr float kVoitureConsoMax = 1000.0f;   // kWh / 100 km
+struct VoitureBilanVoiture {
+    bool presente = false;
+    float kwh = NAN;
+    float soleil = NAN;   // 0..100
+    float km = NAN;
+    float conso = NAN;    // kWh / 100 km, approchée
+    float reseau = NAN;   // kWh
+};
+struct VoitureBilanLu {
+    VoitureBilanVoiture voiture[kVoituresMax];
+    float part = NAN;     // 0..100
+};
+// Lit un payload ; vrai si au moins une voiture est présente. Aucune écriture dans le payload ; `out` n'y
+// pointe pas.
+bool voiture_bilan_lire(const Champ& payload, VoitureBilanLu& out);
+// Totaux des voitures présentes : l'énergie, ce que le réseau en a fourni, et la part du soleil du total
+// (pondérée par l'énergie des voitures dont la part est connue, comme charges_total : NAN si aucune ne
+// l'est), avec ses kWh. `reseau` somme les champs reçus ; NAN si aucune voiture n'en a un.
+struct VoitureBilanTotal {
+    float kwh = NAN;
+    float soleil = NAN;      // 0..100
+    float soleil_kwh = NAN;
+    float reseau = NAN;
+};
+VoitureBilanTotal voiture_bilan_total(const VoitureBilanLu& b);
+// Ce que pèse chaque voiture dans la maison (0..100, `part` répartie à l'énergie de chacune) ; NAN pour
+// une voiture absente ou quand la part de la maison est inconnue. Le total des deux ne dépasse pas `part`.
+void voiture_bilan_parts(const VoitureBilanLu& b, float parts[kVoituresMax]);

@@ -2350,6 +2350,88 @@ static void test_conso_jour() {
     expect(proche_w(t.part, 0.0f), "conso : une heure que la production n'a pas reçue vaut 0");
 }
 
+// Bilan du mois des voitures (tab5_maj_voiture_bilan, ADR-0080) : onze champs, cinq par voiture puis la part
+// de la maison ; les totaux et ce que chaque voiture pèse dans la maison.
+static void test_voiture_bilan() {
+    VoitureBilanLu b;
+    // La sortie `bilan` du script de HA pour deux voitures (tests/test_voitures_charges.py : « 28.4|26|246|11.6|21.0|
+    // 6.0|87||||0.8|10 ») : la première roule 246 km, la seconde n'a pas d'odomètre.
+    expect(voiture_bilan_lire(ch("28.4|26|246|11.6|21.0|6.0|87|||0.8|10"), b) && b.voiture[0].presente &&
+               b.voiture[1].presente && proche(b.voiture[0].kwh, 28.4f) && proche(b.voiture[0].soleil, 26.0f) &&
+               proche(b.voiture[0].km, 246.0f) && proche(b.voiture[0].conso, 11.6f) && proche(b.voiture[0].reseau, 21.0f) &&
+               proche(b.voiture[1].kwh, 6.0f) && proche(b.voiture[1].soleil, 87.0f) && std::isnan(b.voiture[1].km) &&
+               std::isnan(b.voiture[1].conso) && proche(b.voiture[1].reseau, 0.8f) && proche(b.part, 10.0f),
+           "bilan voitures : deux voitures, la seconde sans odomètre");
+    // Une seule voiture : les cinq champs de l'autre sont vides ; la voiture 2 seule fait de même.
+    expect(voiture_bilan_lire(ch("12.5|40|||7.5||||||55"), b) && b.voiture[0].presente && !b.voiture[1].presente &&
+               std::isnan(b.voiture[0].km) && proche(b.part, 55.0f),
+           "bilan voitures : la voiture 1 seule");
+    expect(voiture_bilan_lire(ch("|||||3.5|nan|120|18.0|2.5|"), b) && !b.voiture[0].presente && b.voiture[1].presente &&
+               std::isnan(b.voiture[1].soleil) && proche(b.voiture[1].km, 120.0f) && proche(b.voiture[1].conso, 18.0f) &&
+               std::isnan(b.part),
+           "bilan voitures : la voiture 2 seule, la part du soleil « nan », la part de la maison vide");
+    // Vide, blanc, pointeur nul, sans énergie lisible : aucune voiture (les autres champs seuls n'y font rien).
+    expect(!voiture_bilan_lire(ch(""), b) && !b.voiture[0].presente && !b.voiture[1].presente, "bilan voitures : vide");
+    expect(!voiture_bilan_lire(Champ{nullptr, 5}, b) && !b.voiture[0].presente, "bilan voitures : pointeur nul");
+    expect(!voiture_bilan_lire(ch("||||||||||"), b) && !voiture_bilan_lire(ch("abc|50|10|10|5|||||||"), b) &&
+               !voiture_bilan_lire(ch("-2|50|10|10|5||||||"), b) && !voiture_bilan_lire(ch("1e99|50||||||||"), b) &&
+               !voiture_bilan_lire(ch("nan|50|10|10|5|nan|1|1|1|1|10"), b),
+           "bilan voitures : sans énergie lisible (vide, illisible, négative, absurde, nan) la voiture n'existe pas");
+    // Hors bornes ou illisible : inconnu, jamais une valeur fausse.
+    expect(voiture_bilan_lire(ch("10|150|-5|2000|-1|5|abc|1e9|-3|x|101"), b) && std::isnan(b.voiture[0].soleil) &&
+               std::isnan(b.voiture[0].km) && std::isnan(b.voiture[0].conso) && std::isnan(b.voiture[0].reseau) &&
+               proche(b.voiture[1].kwh, 5.0f) && std::isnan(b.voiture[1].soleil) && std::isnan(b.voiture[1].km) &&
+               std::isnan(b.voiture[1].conso) && std::isnan(b.voiture[1].reseau) && std::isnan(b.part),
+           "bilan voitures : hors bornes = inconnu");
+    // Un champ de trop est ignoré ; un payload court se lit « vide » à la fin.
+    expect(voiture_bilan_lire(ch("10|50|100|15|5||||||20|futur|autre"), b) && proche(b.part, 20.0f),
+           "bilan voitures : un champ de trop est ignoré");
+    expect(voiture_bilan_lire(ch("10|50"), b) && b.voiture[0].presente && proche(b.voiture[0].soleil, 50.0f) &&
+               !b.voiture[1].presente && std::isnan(b.part),
+           "bilan voitures : payload court, le reste inconnu");
+    // 0 kWh ce mois-ci : la voiture existe (elle n'a pas chargé), sa part n'a pas de sens.
+    expect(voiture_bilan_lire(ch("0.0|nan|||0.0||||||0"), b) && b.voiture[0].presente && proche(b.voiture[0].kwh, 0.0f),
+           "bilan voitures : une voiture qui n'a pas chargé existe");
+
+    // Totaux : 28.4 kWh à 26 % + 6.0 kWh à 87 % = 34.4 kWh dont 7.384 + 5.22 = 12.604 du soleil (36.64 %),
+    // réseau 21.0 + 0.8 = 21.8.
+    voiture_bilan_lire(ch("28.4|26|246|11.6|21.0|6.0|87|||0.8|10"), b);
+    VoitureBilanTotal t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 34.4f) && proche_w(t.soleil_kwh, 12.604f) && proche_w(t.soleil, 36.64f) &&
+               proche_w(t.reseau, 21.8f),
+           "bilan voitures : totaux de deux voitures");
+    // Une part inconnue n'entre ni au numérateur ni au dénominateur ; sans part du tout, NAN.
+    voiture_bilan_lire(ch("10|50|||5|10|nan|||5|"), b);
+    t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 20.0f) && proche_w(t.soleil, 50.0f) && proche_w(t.soleil_kwh, 5.0f) && proche_w(t.reseau, 10.0f),
+           "bilan voitures : la part inconnue n'est pas comptée dans la part du soleil");
+    voiture_bilan_lire(ch("10|nan|||||nan||||"), b);
+    t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 10.0f) && std::isnan(t.soleil) && std::isnan(t.soleil_kwh) && std::isnan(t.reseau),
+           "bilan voitures : sans part ni réseau connus, NAN");
+    voiture_bilan_lire(ch("0.0|50|||0.0||||||"), b);
+    t = voiture_bilan_total(b);
+    expect(proche_w(t.kwh, 0.0f) && std::isnan(t.soleil), "bilan voitures : 0 kWh, la part du soleil est sans objet");
+    VoitureBilanLu vide;
+    t = voiture_bilan_total(vide);
+    expect(std::isnan(t.kwh) && std::isnan(t.soleil) && std::isnan(t.reseau), "bilan voitures : total sans voiture");
+
+    // Ce que chaque voiture pèse dans la maison : la part répartie à l'énergie.
+    float parts[kVoituresMax];
+    voiture_bilan_lire(ch("30|||||10|||||40"), b);
+    voiture_bilan_parts(b, parts);
+    expect(proche_w(parts[0], 30.0f) && proche_w(parts[1], 10.0f), "bilan voitures : 40 % de la maison, 30 + 10");
+    voiture_bilan_lire(ch("30||||||||||"), b);   // la part de la maison inconnue
+    voiture_bilan_parts(b, parts);
+    expect(std::isnan(parts[0]) && std::isnan(parts[1]), "bilan voitures : sans part de la maison, pas de répartition");
+    voiture_bilan_lire(ch("|||||8|||||5"), b);   // la voiture 1 absente
+    voiture_bilan_parts(b, parts);
+    expect(std::isnan(parts[0]) && proche_w(parts[1], 5.0f), "bilan voitures : une voiture absente n'a pas de part");
+    voiture_bilan_lire(ch("0.0|||||0.0|||||0"), b);   // aucune énergie : rien à répartir
+    voiture_bilan_parts(b, parts);
+    expect(std::isnan(parts[0]), "bilan voitures : sans énergie, rien à répartir");
+}
+
 static void test_voiture_lire() {
     VoitureLue v;
     expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95"), v) && v.presente && champ_est(v.nom, "Model Y") &&
@@ -2395,6 +2477,191 @@ static void test_voiture_lire() {
            "voiture : des espaces seulement = absente");
     expect(voiture_lire(ch("|80"), v) && v.presente && v.nom.n == 0 && proche(v.batterie, 80.0f),
            "voiture : nom vide, le reste est montré");
+}
+
+// Lot 7 (ADR-0081) : les onze champs de la page « État », ajoutés à la fin du payload.
+static void test_voiture_etat_lire() {
+    VoitureLue v;
+    const char* debut = "Model Y|78|412|km|3|7200|12.4|90|95|1|";
+    // Un payload d'avant (dix champs), ou court : tout ce qui est de l'état se lit « inconnu ».
+    expect(voiture_lire(ch("Model Y|78|412|km|3|7200|12.4|90|95|1"), v) && v.unite_pression.n == 0 &&
+               v.unite_temperature.n == 0 && std::isnan(v.temp_int) && std::isnan(v.temp_ext) &&
+               v.verrouillee == VoitureOuiNon::INCONNU && v.sentinelle == VoitureOuiNon::INCONNU &&
+               v.logiciel_a_jour == VoitureOuiNon::INCONNU,
+           "voiture état : un payload d'avant (dix champs) lit tout l'état « inconnu »");
+    bool pneus_inconnus = true;
+    for (int i = 0; i < kVoiturePneus; i++) pneus_inconnus = pneus_inconnus && std::isnan(v.pneu[i]) && std::isnan(v.pneu_bar[i]);
+    expect(pneus_inconnus && voiture_pneus_verdict(v.pneu_bar) == PneusVerdict::INCONNU,
+           "voiture état : sans pneu, pas de verdict");
+    expect(voiture_lire(ch("Model 3|55"), v) && v.verrouillee == VoitureOuiNon::INCONNU && std::isnan(v.pneu[0]),
+           "voiture état : un payload court");
+    // Les onze champs, dans l'ordre du contrat ; les dix premiers ne bougent pas.
+    const std::string plein = std::string(debut) + "2.9|2.8|2.7|2.9|bar|19|14|°C|1|0|1";
+    expect(voiture_lire(ch(plein.c_str()), v) && champ_est(v.nom, "Model Y") && proche(v.batterie, 78.0f) &&
+               v.etat == VoitureEtat::EN_CHARGE && v.compteur_compte && proche(v.pneu[0], 2.9f) &&
+               proche(v.pneu[1], 2.8f) && proche(v.pneu[2], 2.7f) && proche(v.pneu[3], 2.9f) &&
+               proche(v.pneu_bar[2], 2.7f) && champ_est(v.unite_pression, "bar") && proche(v.temp_int, 19.0f) &&
+               proche(v.temp_ext, 14.0f) && champ_est(v.unite_temperature, "°C") &&
+               v.verrouillee == VoitureOuiNon::OUI && v.sentinelle == VoitureOuiNon::NON &&
+               v.logiciel_a_jour == VoitureOuiNon::OUI,
+           "voiture état : tous les champs, dans l'ordre");
+    expect(voiture_pneus_verdict(v.pneu_bar) == PneusVerdict::CORRECTS, "voiture état : quatre pneus bons = corrects");
+    // Les unités de pression : psi et kPa donnent les mêmes bar ; la casse ne compte pas ; vide = bar.
+    expect(voiture_lire(ch((std::string(debut) + "42|42|42|42|psi").c_str()), v) && proche(v.pneu[0], 42.0f) &&
+               std::fabs(v.pneu_bar[0] - 2.896f) < 0.01f && voiture_pneus_verdict(v.pneu_bar) == PneusVerdict::CORRECTS,
+           "voiture état : 42 psi = 2,9 bar, corrects");
+    expect(voiture_lire(ch((std::string(debut) + "290|290|290|290|kPa").c_str()), v) && proche(v.pneu_bar[3], 2.9f) &&
+               voiture_lire(ch((std::string(debut) + "290|290|290|290|KPA").c_str()), v) && proche(v.pneu_bar[3], 2.9f),
+           "voiture état : 290 kPa = 2,9 bar, sans tenir compte de la casse");
+    expect(voiture_lire(ch((std::string(debut) + "2.9|2.9|2.9|2.9").c_str()), v) && proche(v.pneu_bar[0], 2.9f) &&
+               v.unite_pression.n == 0,
+           "voiture état : pas d'unité de pression = bar");
+    expect(proche(pression_en_bar(2900.0f, ch("hPa")), 2.9f) && proche(pression_en_bar(2900.0f, ch("mbar")), 2.9f) &&
+               proche(pression_en_bar(290000.0f, ch("Pa")), 2.9f) && proche(pression_en_bar(290.0f, ch("cbar")), 2.9f),
+           "pression : hPa, mbar, Pa et cbar");
+    expect(std::isnan(pression_en_bar(2.9f, ch("kgf"))) && std::isnan(pression_en_bar(NAN, ch("bar"))) &&
+               std::isnan(pression_en_bar(INFINITY, ch("bar"))) && std::isnan(pression_en_bar(2.9f, ch("ba"))) &&
+               std::isnan(pression_en_bar(2.9f, ch("bars"))),
+           "pression : unité inconnue ou valeur non finie = inconnue (pas de préfixe : « ba », « bars »)");
+    // Unité inconnue : les quatre inconnus (une valeur sans son unité ne se montre pas).
+    expect(voiture_lire(ch((std::string(debut) + "2.9|2.9|2.9|2.9|torr").c_str()), v) && std::isnan(v.pneu[0]) &&
+               std::isnan(v.pneu_bar[3]) && voiture_pneus_verdict(v.pneu_bar) == PneusVerdict::INCONNU,
+           "voiture état : unité de pression inconnue, pas de pneu");
+    // Hors bornes : zéro, négatif, au-delà de 10 bar, illisible, « nan » : inconnu, jamais une fausse valeur.
+    expect(voiture_lire(ch((std::string(debut) + "0|-2.8|10.01|abc|bar").c_str()), v) && std::isnan(v.pneu[0]) &&
+               std::isnan(v.pneu[1]) && std::isnan(v.pneu[2]) && std::isnan(v.pneu[3]),
+           "voiture état : 0, négatif, plus de 10 bar, illisible = inconnu");
+    expect(voiture_lire(ch((std::string(debut) + "10|nan|unknown||bar").c_str()), v) && proche(v.pneu[0], 10.0f) &&
+               std::isnan(v.pneu[1]) && std::isnan(v.pneu[2]) && std::isnan(v.pneu[3]),
+           "voiture état : 10 bar inclus, « nan », « unknown » et vide = inconnu");
+    // Le verdict : bas dès qu'un pneu connu est sous 2,2 bar ; corrects seulement avec les quatre.
+    float bons[kVoiturePneus] = {2.9f, 2.8f, 2.7f, 2.9f};
+    float un_bas[kVoiturePneus] = {2.9f, 2.1f, 2.7f, 2.9f};
+    float limite[kVoiturePneus] = {2.2f, 2.2f, 2.2f, 2.2f};
+    float trois[kVoiturePneus] = {2.9f, NAN, 2.7f, 2.9f};
+    float trois_dont_un_bas[kVoiturePneus] = {2.9f, NAN, 1.5f, 2.9f};
+    float aucun[kVoiturePneus] = {NAN, NAN, NAN, NAN};
+    expect(voiture_pneus_verdict(bons) == PneusVerdict::CORRECTS && voiture_pneus_verdict(un_bas) == PneusVerdict::BAS &&
+               voiture_pneus_verdict(limite) == PneusVerdict::CORRECTS,
+           "pneus : corrects, un bas, et le seuil lui-même est correct");
+    expect(voiture_pneus_verdict(trois) == PneusVerdict::INCONNU && voiture_pneus_verdict(aucun) == PneusVerdict::INCONNU &&
+               voiture_pneus_verdict(trois_dont_un_bas) == PneusVerdict::BAS,
+           "pneus : trois connus = pas de verdict, sauf un bas parmi eux");
+    // Températures : °C et °F tels quels, bornes de -100 à 200, hors bornes ou illisible : inconnue.
+    expect(voiture_lire(ch((std::string(debut) + "||||bar|-12.5|104|°F").c_str()), v) && proche(v.temp_int, -12.5f) &&
+               proche(v.temp_ext, 104.0f) && champ_est(v.unite_temperature, "°F"),
+           "voiture état : températures négative et en °F");
+    expect(voiture_lire(ch((std::string(debut) + "||||bar|-100|200|°C").c_str()), v) && proche(v.temp_int, -100.0f) &&
+               proche(v.temp_ext, 200.0f) &&
+               voiture_lire(ch((std::string(debut) + "||||bar|-100.1|200.1|°C").c_str()), v) && std::isnan(v.temp_int) &&
+               std::isnan(v.temp_ext) &&
+               voiture_lire(ch((std::string(debut) + "||||bar|abc|nan|").c_str()), v) && std::isnan(v.temp_int) &&
+               std::isnan(v.temp_ext) && v.unite_temperature.n == 0,
+           "voiture état : bornes des températures, hors bornes et illisible = inconnue");
+    expect(voiture_lire(ch((std::string(debut) + "||||bar|0|0|°C").c_str()), v) && proche(v.temp_int, 0.0f) &&
+               proche(v.temp_ext, 0.0f),
+           "voiture état : 0 °C est une valeur, pas une absence");
+    // Verrou, sentinelle, logiciel : « 1 » oui, « 0 » non, tout le reste inconnu.
+    expect(voiture_lire(ch((std::string(debut) + "||||bar|||°C|0|1|0").c_str()), v) &&
+               v.verrouillee == VoitureOuiNon::NON && v.sentinelle == VoitureOuiNon::OUI &&
+               v.logiciel_a_jour == VoitureOuiNon::NON,
+           "voiture état : « 0 » et « 1 »");
+    expect(voiture_lire(ch((std::string(debut) + "||||bar|||°C|2|oui|").c_str()), v) &&
+               v.verrouillee == VoitureOuiNon::INCONNU && v.sentinelle == VoitureOuiNon::INCONNU &&
+               v.logiciel_a_jour == VoitureOuiNon::INCONNU &&
+               voiture_lire(ch((std::string(debut) + "||||bar|||°C|11|-1|unknown").c_str()), v) &&
+               v.verrouillee == VoitureOuiNon::INCONNU && v.sentinelle == VoitureOuiNon::INCONNU &&
+               v.logiciel_a_jour == VoitureOuiNon::INCONNU,
+           "voiture état : autre chose que « 0 » et « 1 » = inconnu");
+    // Un champ de trop après les vingt et un est ignoré.
+    expect(voiture_lire(ch((plein + "|trop|encore").c_str()), v) && v.logiciel_a_jour == VoitureOuiNon::OUI &&
+               proche(v.pneu[0], 2.9f),
+           "voiture état : champs de trop ignorés");
+    // Une voiture « débranchée » garde ses pneus : l'état n'efface que la puissance.
+    expect(voiture_lire(ch("D|60|||1|7200|||||2.9|2.9|2.9|2.9|bar|20|10|°C|1|0|1"), v) &&
+               v.etat == VoitureEtat::DEBRANCHEE && proche(v.puissance, 0.0f) && proche(v.pneu[0], 2.9f) &&
+               proche(v.temp_ext, 10.0f),
+           "voiture état : débranchée, les pneus et les températures restent");
+    // Un payload qui ne porte que de l'état est une voiture (un champ lisible suffit).
+    expect(voiture_lire(ch("||||||||||2.9|2.9|2.9|2.9|bar"), v) && v.presente && v.nom.n == 0 &&
+               voiture_pneus_verdict(v.pneu_bar) == PneusVerdict::CORRECTS,
+           "voiture état : seulement l'état, la voiture est présente");
+}
+
+// Page « Trajets » du popup Voitures (tab5_maj_voiture_trajets, ADR-0083) :
+// « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours ».
+static void test_trajets_lire() {
+    TrajetsLu t;
+    expect(trajets_lire(ch("2026-06-10|41280|600|18.6|62;81;47;112;74;38;5|0;0;19.8;11;0;0;12.4"), t) && t.presente &&
+               t.annee == 2026 && t.mois == 6 && t.jour == 10 && proche(t.compteur, 41280.0f) &&
+               proche(t.km_mois, 600.0f) && proche(t.kwh_100km, 18.6f) && proche(t.km[0], 62.0f) &&
+               proche(t.km[3], 112.0f) && proche(t.km[6], 5.0f) && proche(t.kwh[2], 19.8f) &&
+               proche(t.kwh[3], 11.0f) && proche(t.kwh[6], 12.4f),
+           "trajets : un payload complet");
+    // Les sept jours : le premier, le dernier, et rien hors de la fenêtre.
+    int jm = 0, js = 0;
+    expect(trajets_jour(t, 0, jm, js) && jm == 10 && js == 3 && trajets_jour(t, 6, jm, js) && jm == 16 && js == 2 &&
+               !trajets_jour(t, -1, jm, js) && !trajets_jour(t, kTrajetsJours, jm, js),
+           "trajets : le 10 juin 2026 est un mercredi, le 16 un mardi ; hors fenêtre refusé");
+    // La fenêtre traverse un mois, une année, un 29 février : jour du mois et jour de la semaine suivent.
+    TrajetsLu m;
+    trajets_lire(ch("2026-06-28|||||"), m);
+    expect(trajets_jour(m, 3, jm, js) && jm == 1 && js == 3 && trajets_jour(m, 6, jm, js) && jm == 4 && js == 6,
+           "trajets : de juin à juillet");
+    trajets_lire(ch("2026-12-29|||||"), m);
+    expect(trajets_jour(m, 3, jm, js) && jm == 1 && js == 5, "trajets : de décembre à janvier");
+    trajets_lire(ch("2028-02-27|||||"), m);
+    expect(trajets_jour(m, 2, jm, js) && jm == 29 && js == 2 && trajets_jour(m, 3, jm, js) && jm == 1 && js == 3,
+           "trajets : 2028 est bissextile");
+
+    // Rien reçu, ou rien que des blancs : pas de voiture (sa colonne disparaît).
+    TrajetsLu v;
+    expect(!trajets_lire(ch(""), v) && !v.presente && !trajets_lire(Champ{nullptr, 5}, v) && !v.presente &&
+               !trajets_lire(ch("|||||"), v) && !trajets_lire(ch("  | \t|||| "), v) && !v.presente,
+           "trajets : payload vide ou blanc = la voiture n'a pas d'odomètre");
+    // Un odomètre choisi sans aucun relevé : la voiture est là, ses sept valeurs sont inconnues (jamais 0).
+    expect(trajets_lire(ch("2026-06-10||||;;;;;;|;;;;;;"), v) && v.presente && std::isnan(v.compteur) &&
+               std::isnan(v.km_mois) && std::isnan(v.kwh_100km) && std::isnan(v.km[0]) && std::isnan(v.km[6]) &&
+               std::isnan(v.kwh[0]) && std::isnan(v.kwh[6]),
+           "trajets : l'odomètre sans relevé est présent, tout est inconnu");
+    // Un jour sans ligne reste vide : inconnu, ce n'est pas 0 km ; un 0 connu reste 0.
+    expect(trajets_lire(ch("2026-06-10|100|0||30;;;0;12.5;0;7.2|6;0;0;0;0;0;0"), v) && proche(v.km[0], 30.0f) &&
+               std::isnan(v.km[1]) && std::isnan(v.km[2]) && proche(v.km[3], 0.0f) && proche(v.km[6], 7.2f) &&
+               proche(v.km_mois, 0.0f) && std::isnan(v.kwh_100km) && proche(v.kwh[0], 6.0f) && proche(v.kwh[1], 0.0f),
+           "trajets : un champ vide est inconnu, un zéro est un zéro");
+    // Une date illisible : la voiture est lue, mais les jours n'ont pas de nom (trajets_jour refuse).
+    expect(trajets_lire(ch("2026-02-30|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v) && v.annee == 0 && v.presente &&
+               proche(v.km[6], 7.0f) && !trajets_jour(v, 0, jm, js) &&
+               trajets_lire(ch("demain|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v) && v.annee == 0 && !trajets_jour(v, 3, jm, js) &&
+               trajets_lire(ch("2026-6-10|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v) && v.annee == 0,
+           "trajets : une date impossible ou mal écrite = jours sans nom");
+    // Chaque nombre a son plafond (inclus) ; au-delà, négatif, illisible ou non fini : inconnu.
+    expect(trajets_lire(ch("2026-06-10|3000000|90000|1000|3000;3000;3000;3000;3000;3000;3000|5000;5000;5000;5000;5000;5000;5000"), v) &&
+               proche(v.compteur, 3000000.0f) && proche(v.km_mois, 90000.0f) && proche(v.kwh_100km, 1000.0f) &&
+               proche(v.km[0], 3000.0f) && proche(v.kwh[0], 5000.0f),
+           "trajets : les plafonds sont inclus");
+    expect(trajets_lire(ch("2026-06-10|3000001|90001|1001|3001;-1;abc;inf;nan;1e99;4|5001;-2;x;inf;nan;1e99;5"), v) &&
+               std::isnan(v.compteur) && std::isnan(v.km_mois) && std::isnan(v.kwh_100km) && std::isnan(v.km[0]) &&
+               std::isnan(v.km[1]) && std::isnan(v.km[2]) && std::isnan(v.km[3]) && std::isnan(v.km[4]) &&
+               std::isnan(v.km[5]) && proche(v.km[6], 4.0f) && std::isnan(v.kwh[0]) && std::isnan(v.kwh[1]) &&
+               std::isnan(v.kwh[2]) && std::isnan(v.kwh[3]) && std::isnan(v.kwh[4]) && std::isnan(v.kwh[5]) &&
+               proche(v.kwh[6], 5.0f),
+           "trajets : au-delà du plafond, négatif, illisible ou non fini = inconnu");
+    // Moins de sept valeurs : la fin est inconnue ; plus de sept : le reste est ignoré ; un champ de trop aussi.
+    expect(trajets_lire(ch("2026-06-10|1|2|3|5;6|7"), v) && proche(v.km[0], 5.0f) && proche(v.km[1], 6.0f) &&
+               std::isnan(v.km[2]) && std::isnan(v.km[6]) && proche(v.kwh[0], 7.0f) && std::isnan(v.kwh[1]),
+           "trajets : moins de sept valeurs, la fin est inconnue");
+    expect(trajets_lire(ch("2026-06-10|1|2|3|1;2;3;4;5;6;7;8;9|1;2;3;4;5;6;7;8;9|trop|encore"), v) &&
+               proche(v.km[6], 7.0f) && proche(v.kwh[6], 7.0f),
+           "trajets : au plus sept valeurs, un champ de trop est ignoré");
+    // Un payload court : les champs absents sont inconnus ; un payload suivant efface le précédent.
+    expect(trajets_lire(ch("2026-06-10|500"), v) && proche(v.compteur, 500.0f) && std::isnan(v.km_mois) &&
+               std::isnan(v.km[0]) && std::isnan(v.kwh[0]),
+           "trajets : un payload court n'invente rien");
+    trajets_lire(ch("2026-06-10|41280|600|18.6|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v);
+    expect(trajets_lire(ch("2026-06-11|7"), v) && v.jour == 11 && proche(v.compteur, 7.0f) && std::isnan(v.km_mois) &&
+               std::isnan(v.km[0]) && std::isnan(v.kwh[3]),
+           "trajets : une lecture repart d'un état neuf");
 }
 
 int main() {
@@ -2456,8 +2723,11 @@ int main() {
     test_energie_flux();
     test_energie_flux_voitures();
     test_voiture_lire();
+    test_voiture_etat_lire();
     test_charges_lire();
     test_conso_jour();
+    test_trajets_lire();
+    test_voiture_bilan();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

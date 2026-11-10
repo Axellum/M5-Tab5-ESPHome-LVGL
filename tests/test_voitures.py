@@ -11,6 +11,7 @@ Non vérifié ici : le script sur un vrai HA et de vraies statistiques ; la dur�
 Raspberry Pi (le test mesure celle de ce PC)."""
 import ast
 import datetime as dt
+import math
 import re
 import time
 
@@ -21,11 +22,15 @@ from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 import voitures_charges as ref
 from tests.commun import BaseChargeur, HA, lire
-from tests.test_voitures_charges import MAINTENANT, PARIS, SCENARIOS, T1, capteurs
+from tests.test_voitures_charges import (MAINTENANT, MAISON, ODO1, ODO2, PARIS, PV, PVB, PVC, SCENARIOS, T1, T2,
+                                         D, _bilan, _trajets, capteurs, cas, soleil)
 
 PACKAGE = HA / "packages" / "tab5_voitures.yaml"
+# MAX_TEMPLATE_OUTPUT de Home Assistant : une sortie de gabarit plus longue est refusée (« Template
+# output exceeded maximum size of 262144 characters », HTTP 500 pour le script).
+LIMITE_SORTIE_HA = 256 * 1024
 CLES = ["charges", "charges_1", "charges_2", "jour_debut", "jour_1", "jour_2", "jour_maison", "bilan_debut", "bilan",
-        "precision"]
+        "precision", "trajets_1", "trajets_2"]
 
 
 # ─── Imitation de ce que les modèles appellent dans HA ───────────────────────
@@ -58,7 +63,11 @@ def _env(maintenant):
 
 def _rendre(env, valeur, ctx):
     if isinstance(valeur, str) and ("{{" in valeur or "{%" in valeur):
-        return _analyser(env.from_string(valeur).render(ctx))
+        brut = env.from_string(valeur).render(ctx)
+        if len(brut) > LIMITE_SORTIE_HA:
+            raise AssertionError("Template output exceeded maximum size of %d characters (%d)" % (LIMITE_SORTIE_HA, len(brut)))
+        env.plus_grande_sortie = max(getattr(env, "plus_grande_sortie", 0), len(brut))
+        return _analyser(brut)
     if isinstance(valeur, list):
         return [_rendre(env, v, ctx) for v in valeur]
     if isinstance(valeur, dict):
@@ -89,6 +98,11 @@ class Execution:
             self.ctx[nom] = _rendre(self.env, v, self.ctx)
         self._executer(script["sequence"])
 
+    @property
+    def plus_grande_sortie(self):
+        """La plus longue sortie de gabarit de ce passage (caractères)."""
+        return getattr(self.env, "plus_grande_sortie", 0)
+
     def _executer(self, etapes):
         for etape in etapes:
             if self.reponse is not None:
@@ -115,7 +129,8 @@ class Execution:
         self.appels.append(data)
         if self.sans_recorder:
             return
-        source = {"5minute": self.cas["stats5"], "hour": self.cas["stats1"], "month": self.cas["odo"]}[data["period"]]
+        source = {"5minute": self.cas["stats5"], "hour": self.cas["stats1"], "month": self.cas["odo"],
+                  "day": self.cas.get("odo_jours", {})}[data["period"]]
         ids = data["statistic_ids"]
         self.ctx[etape["response_variable"]] = {"statistics": {s: source[s] for s in ids if source.get(s)}}
 
@@ -172,7 +187,7 @@ def test_recorder_en_echec_reponse_vide_sans_erreur():
 
 def test_les_demandes_au_recorder():
     r = executer("bilan")
-    cinq, heure, mois = r.appels
+    cinq, heure, mois, jours = r.appels
     ids = ["sensor.solaire_a", "sensor.maison_puissance", "sensor.tesla_2023_puissance_de_charge",
            "sensor.tesla_2025_puissance_de_charge"]
     for d, periode in ((cinq, "5minute"), (heure, "hour")):
@@ -182,6 +197,10 @@ def test_les_demandes_au_recorder():
     assert mois["period"] == "month" and mois["types"] == ["change"] and mois["units"] == {"distance": "km"}
     assert mois["statistic_ids"] == ["sensor.tesla_2023_odometre", "sensor.tesla_2025_odometre"]
     assert mois["start_time"] == "2026-06-01T00:00:00+02:00"
+    # Trajets (ADR-0083) : les sept derniers jours locaux, un odomètre en km, `change` et `state`
+    assert jours["period"] == "day" and jours["types"] == ["change", "state"] and jours["units"] == {"distance": "km"}
+    assert jours["statistic_ids"] == mois["statistic_ids"]
+    assert jours["start_time"] == "2026-06-10T00:00:00+02:00"
     # sans odomètre : pas de troisième demande ; capteur solaire commun à deux voitures : sans doublon
     assert len(executer("nuit").appels) == 2
     assert executer("sans_voiture").appels == []
@@ -256,6 +275,73 @@ def test_formats_des_heures_et_du_bilan():
     assert len(champs) == 11
     assert executer("nuit").reponse["bilan"].split("|")[5:10] == [""] * 5      # pas de voiture 2 : champs vides
     assert executer("sans_voiture").reponse["bilan"] == ""
+
+
+# ─── Gros volumes : la limite de sortie des gabarits de Home Assistant ───────
+
+def _gros_foyer(graine=0, solaires=(PV, PVB, PVC), inclut=True, nb_voitures=2, jour=None):
+    """Un foyer complet : deux voitures, trois chaînes de panneaux et la maison, avec 10 jours de lignes de
+    5 minutes puis 19 jours de lignes horaires (la profondeur que garde le recorder), des moyennes au
+    flottant brut comme celles de HA. Les lignes de tous ces capteurs rendues d'un bloc (l'ancien gabarit
+    `mesures`) font plusieurs fois les 262 144 caractères : trois capteurs suffisaient."""
+    def bruit(t, k):
+        return 1 + 0.03 * math.sin(int(t.timestamp() // 300) * 0.7311 + k + graine)
+
+    def voiture1(t):    # 7,4 kW la nuit, trois jours sur quatre
+        nuit = t.hour >= 22 or t.hour < 5
+        return 7400 * bruit(t, 1) if nuit and (t.day + graine) % 4 else 0
+
+    def voiture2(t):    # 3,7 kW l'après-midi des jours de semaine, deux jours sur trois
+        return 3700 * bruit(t, 2) if t.weekday() < 5 and 12 <= t.hour < 16 and (t.day + graine) % 3 else 0
+
+    def panneaux(k, crete):
+        return lambda t: (crete * math.sin(math.pi * (t.hour + t.minute / 60 - 7) / 13) ** 2 * bruit(t, k)
+                          if 7 <= t.hour < 20 else None)
+
+    def maison(t):
+        hors = (450 + 250 * (18 <= t.hour < 22)) * bruit(t, 9)
+        return hors + (voiture1(t) + voiture2(t) if inclut else 0)
+
+    fonctions = {T1: voiture1, T2: voiture2, PV: panneaux(3, 4200), PVB: panneaux(4, 2600), PVC: panneaux(5, 1800),
+                 MAISON: maison}
+    cap = capteurs(solaires=solaires, inclut=inclut, voitures=((T1, ODO1), (T2, ODO2))[:nb_voitures])
+    c = cas(fonctions, cap=cap, jour=jour, debut_5min=D(6, 0))
+    c["odo"], c["odo_jours"] = _bilan()["odo"], _trajets()["odo_jours"]
+    return c
+
+
+def test_la_garde_de_taille_de_ha_est_active():
+    """Sans elle, le test des gros volumes ne prouverait rien : un gabarit de plus de 262 144 caractères
+    doit échouer ici comme dans HA."""
+    env = _env(MAINTENANT)
+    with pytest.raises(AssertionError, match="exceeded maximum size of 262144"):
+        _rendre(env, "{{ 'x' * 300000 }}", {})
+    assert _rendre(env, "{{ 'x' * 1000 }}", {}) == "x" * 1000
+
+
+@pytest.mark.parametrize("graine, solaires, inclut, nb_voitures, jour", [
+    (0, (PV, PVB, PVC), True, 2, None),          # un vrai foyer : 2 voitures, 3 chaînes de panneaux, la maison
+    (1, (PV,), False, 1, None),                  # le cas mesuré : 1 voiture + 1 solaire + la maison (HTTP 500)
+    (2, (), True, 2, "2026-06-12"),              # sans solaire, un jour plus ancien (lignes de 5 minutes encore là)
+    (3, (PV, PVB), True, 2, "2026-05-30"),       # un jour en lignes horaires seules
+])
+def test_gros_volumes_sous_la_limite_de_ha_et_memes_chiffres(graine, solaires, inclut, nb_voitures, jour):
+    """Aucune sortie de gabarit ne dépasse 262 144 caractères, même avec dix jours de lignes de 5 minutes
+    pour plusieurs capteurs, et les chaînes sont celles de la référence Python (qui n'a pas de limite)."""
+    c = _gros_foyer(graine, solaires, inclut, nb_voitures, jour)
+    lignes_lues = sum(len(v) for v in c["stats5"].values()) + sum(len(v) for v in c["stats1"].values())
+    assert len(repr(c["stats5"])) + len(repr(c["stats1"])) > 3 * LIMITE_SORTIE_HA    # de quoi casser l'ancien gabarit
+    debut = time.perf_counter()
+    ex = Execution(c)
+    duree = time.perf_counter() - debut
+    print("\n%d lignes lues, plus grande sortie de gabarit %d caractères, %.2f s de rendu"
+          % (lignes_lues, ex.plus_grande_sortie, duree))
+    assert ex.plus_grande_sortie < LIMITE_SORTIE_HA // 10      # la sortie ne dépend plus du volume lu
+    attendu = ref.reponse(**c)
+    assert list(ex.reponse) == CLES
+    for cle in CLES:
+        assert ex.reponse[cle] == attendu[cle], cle
+    assert len(ex.reponse["charges"].split(";")) == 6 and ex.reponse["jour_1"].count(";") == 23
 
 
 # ─── Durée du calcul ─────────────────────────────────────────────────────────

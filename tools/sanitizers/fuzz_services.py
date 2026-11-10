@@ -87,14 +87,24 @@ GRAINES: dict[str, dict[str, str]] = {
                                    "r0|son||||0|100|5|%|Volume;r1|lum|lampadaire|d|t00|0|255|25||Lampadaire;"},
     "tab5_maj_energie": {"payload": "3450|1180|-2270|78|0|24.5|°C|12.4"},
     # Une voiture électrique du Flux (ADR-0076) : rang, puis nom, batterie, autonomie, unité, état
-    # (3 = en charge), W, kWh ajoutés, limite, minutes restantes, « le compteur compte la voiture ».
-    "tab5_maj_voiture": {"rang": "1", "payload": "Model Y|78|412|km|3|7200|12.4|90|95|1"},
+    # (3 = en charge), W, kWh ajoutés, limite, minutes restantes, « le compteur compte la voiture »,
+    # puis (ADR-0081) quatre pneus, l'unité de pression, l'habitacle, l'extérieur, l'unité de température,
+    # verrouillée, sentinelle, logiciel à jour.
+    "tab5_maj_voiture": {"rang": "1", "payload": "Model Y|78|412|km|3|7200|12.4|90|95|1|2.9|2.8|2.7|2.9|bar|19|14|°C|1|0|1"},
     # Les dernières charges des voitures (page Charges) : rang|jour|heure|durée en minutes|kWh|part du soleil.
     "tab5_maj_voiture_charges": {"payload": "2|2026-11-09|09:02|103|12.4|76;1|2026-11-09|01:00|120|14.4|0"},
     # La consommation du jour empilée de la page Aujourd'hui (ADR-0078) : rang (0 la maison sans les voitures,
     # 1 et 2 les voitures), le jour, puis 24 kWh par heure locale (vides : heures sans ligne).
     "tab5_maj_voiture_jour": {"rang": "1", "debut": "2026-11-09",
                               "valeurs": "0;0;3.1;3.2;0;0;0;0;0.4;1.9;2.6;3;3.1;;;;;;;;;;;"},
+    # Le bilan du mois des voitures de la page Bilan (ADR-0080) : la vue, le 1er du mois, puis onze champs (cinq par
+    # voiture : kWh, part du soleil, km, kWh/100 km, kWh du réseau ; la part de la maison).
+    "tab5_maj_voiture_bilan": {"vue": "mois_civil", "debut": "2026-11-01",
+                               "payload": "28.4|26|246|11.6|21.0|6.0|87|||0.8|10"},
+    # Les trajets d'une voiture (page Trajets, ADR-0083) : rang, puis début de la fenêtre, compteur, km du mois,
+    # kWh / 100 km estimé, sept km par jour et sept kWh par jour (vide : un jour sans relevé).
+    "tab5_maj_voiture_trajets": {"rang": "1",
+                                 "payload": "2026-11-04|41280|600|18.6|62;81;47;112;74;38;5|0;0;19.8;11;0;0;12.4"},
     "tab5_maj_energie_historique": {"vue": "heures", "debut": "2026-06-16",
                                     "valeurs": "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"},
     # Pages « Aujourd'hui » et « Bilan » (ADR-0058) : les 24 valeurs de prevu et de clair, un créneau,

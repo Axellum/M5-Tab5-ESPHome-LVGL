@@ -67,12 +67,12 @@ struct EnergieUI {
     // Page Bilan (ADR-0062) : carte « Batterie réseau » à gauche, graphique du net à droite.
     lv_obj_t* bilan_heros = nullptr;      // energie_bilan_heros : la carte de gauche
     lv_obj_t* bilan_titre = nullptr;      // energie_bilan_titre : « Octobre », « Aujourd'hui »…
-    lv_obj_t* bilan_vue_btn[3] = {};      // energie_bilan_vue_N
+    lv_obj_t* bilan_vue_btn[4] = {};      // energie_bilan_vue_N : 0 à 2 les vues, 3 « Voitures » (ADR-0080)
     lv_obj_t* bilan_zone = nullptr;       // energie_bilan_zone : sous le titre et les boutons
     const esphome::font::Font* police = nullptr;          // roboto_22 : libellés de l'axe
     const esphome::font::Font* police_grasse = nullptr;   // roboto_32_b : chiffres
     const esphome::font::Font* police_grande = nullptr;   // roboto_55_b : net du mois (Bilan)
-    const esphome::font::Font* police_icone = nullptr;    // mdi_font_45 : icônes de la page Charges
+    const esphome::font::Font* police_icone = nullptr;    // mdi_font_45 : icônes des pages Charges et Bilan
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture).
     void (*demander)(const char* vue) = nullptr;
 };
@@ -99,6 +99,13 @@ void energie_voiture_charges(const std::string& payload);
 // la consommation de chaque heure empilée à côté de la production, une légende avec les kWh du jour et la
 // part des voitures venue du soleil. Sans voiture qui ait une heure connue, la page est celle d'avant.
 void energie_voiture_jour(const std::string& rang, const std::string& debut, const std::string& valeurs);
+// Action tab5_maj_voiture_bilan (ADR-0080) : vue (« mois_civil », la seule lue), début (le 1er du mois,
+// AAAA-MM-JJ) et « kwh|part_soleil|km|kwh_100km|reseau » de chaque voiture puis la part de la maison
+// (tab5_parse.h, voiture_bilan_lire ; la sortie `bilan` du script tab5_voitures_analyse, ADR-0074). Page
+// « Bilan » : un bouton « Voitures » à côté de Heures / Jours / Mois, qui remplace le graphique par un
+// anneau « les voitures = x % de la maison » et une carte par voiture. Payload vide = aucun bilan : le
+// bouton disparaît. Sans bilan reçu, la page est celle d'avant au pixel près ; la 7B ne le dessine pas.
+void energie_voiture_bilan(const std::string& vue, const std::string& debut, const std::string& payload);
 // Action tab5_maj_energie_historique : vue (heures | jours | mois), début (AAAA-MM-JJ :
 // le jour des heures, le premier des jours, le 1er du premier mois), valeurs en kWh
 // séparées par « ; » (vide = pas de donnée). 24, 30 et 12 valeurs au plus.

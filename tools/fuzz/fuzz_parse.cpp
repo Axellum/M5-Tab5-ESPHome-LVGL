@@ -410,6 +410,13 @@ void voiture(const std::string& p) {
     const std::string unite(v.unite_distance.p != nullptr ? v.unite_distance.p : "", v.unite_distance.n);
     (void) nom;
     (void) unite;
+    // Page « État » (ADR-0081) : les deux unités copiées, le verdict des pneus, une pression reconvertie.
+    const std::string unite_p(v.unite_pression.p != nullptr ? v.unite_pression.p : "", v.unite_pression.n);
+    const std::string unite_t(v.unite_temperature.p != nullptr ? v.unite_temperature.p : "", v.unite_temperature.n);
+    (void) unite_p;
+    (void) unite_t;
+    (void) voiture_pneus_verdict(v.pneu_bar);
+    for (int i = 0; i < kVoiturePneus; i++) (void) pression_en_bar(v.pneu[i], v.unite_pression);
     float charges[kVoituresMax] = {std::isfinite(v.puissance) ? v.puissance : 0.0f,
                                    rang.empty() ? 0.0f : static_cast<float>(rang.size()) * 1000.0f};
     energie_flux_calculer(6400.0f, 8100.0f, 1700.0f, NAN, charges, kVoituresMax, !rang.empty() && rang[0] == '1');
@@ -452,6 +459,39 @@ void voiture_jour(const std::string& p) {
     (void) conso_jour_totaux(c, nullptr, 0);
 }
 
+// Trajets des voitures (tab5_maj_voiture_trajets) : rang et payload séparés par un saut de ligne ; le rang est
+// lu par l'écran (tab5_voitures_trajets.cpp), pas par le socle. Le texte lu, puis les jours qu'il porte (la
+// date, ses jours de la semaine, y compris hors de la fenêtre) et ce que l'écran en tire.
+void voiture_trajets(const std::string& p) {
+    const size_t s = p.find('\n');
+    const std::string payload = s == std::string::npos ? std::string() : p.substr(s + 1);
+    TrajetsLu t;
+    trajets_lire(Champ{payload.data(), payload.size()}, t);
+    int jour = 0, semaine = 0;
+    for (int i = -1; i <= kTrajetsJours; i++) (void) trajets_jour(t, i, jour, semaine);
+    float total = 0.0f;
+    for (int i = 0; i < kTrajetsJours; i++) {
+        if (std::isfinite(t.km[i])) total += t.km[i];
+        if (std::isfinite(t.kwh[i])) total += t.kwh[i];
+    }
+    (void) total;
+}
+
+// Bilan du mois des voitures (tab5_maj_voiture_bilan) : vue, début et payload séparés par des sauts de ligne ;
+// seul le payload est lu par le socle (la vue et le début sont lus par l'écran, tab5_energie.cpp). Lu, puis
+// ses totaux et la répartition que l'écran en tire.
+void voiture_bilan(const std::string& p) {
+    const size_t s1 = p.find('\n');
+    const std::string reste = s1 == std::string::npos ? std::string() : p.substr(s1 + 1);
+    const size_t s2 = reste.find('\n');
+    const std::string payload = s2 == std::string::npos ? std::string() : reste.substr(s2 + 1);
+    VoitureBilanLu b;
+    if (!voiture_bilan_lire(Champ{payload.data(), payload.size()}, b)) return;
+    (void) voiture_bilan_total(b);
+    float parts[kVoituresMax];
+    voiture_bilan_parts(b, parts);
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -484,6 +524,8 @@ constexpr Parseur kParseurs[] = {
     voiture,          // 'D' tab5_maj_voiture
     charges,          // 'E' tab5_maj_voiture_charges
     voiture_jour,     // 'F' tab5_maj_voiture_jour
+    voiture_trajets,  // 'G' tab5_maj_voiture_trajets
+    voiture_bilan,    // 'H' tab5_maj_voiture_bilan
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

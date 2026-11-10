@@ -712,14 +712,36 @@ def build_energie_payload(instantane: dict | None = None) -> str:
 # pas connus.
 # ---------------------------------------------------------------------------
 
+# Onze champs de plus à la FIN (page « État » du popup Voitures, ADR-0081 ; l'ancien payload de dix
+# champs reste lisible) : pneu_av_g|pneu_av_d|pneu_ar_g|pneu_ar_d|unite_pression|temp_int|temp_ext|
+# unite_temperature|verrouillee|sentinelle|logiciel_a_jour. Pressions dans l'unité donnée (bar, psi,
+# kPa, hPa, mbar, cbar, Pa ; vide = bar), températures en °C ou °F (vide = °C), verrouillee /
+# sentinelle / logiciel_a_jour « 1 » oui, « 0 » non. Tous facultatifs : champ vide = inconnu, la
+# tablette écrit « -- » ; sans aucun d'eux, la page « État » n'existe pas.
 VOITURE_CHAMPS = ("nom", "batterie", "autonomie", "unite_distance", "etat", "puissance", "energie",
-                  "limite", "minutes", "compteur")
+                  "limite", "minutes", "compteur",
+                  "pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d", "unite_pression", "temp_int",
+                  "temp_ext", "unite_temperature", "verrouillee", "sentinelle", "logiciel_a_jour")
+VOITURE_CHAMPS_ETAT = VOITURE_CHAMPS[10:]
 VOITURES = (
     {"nom": "Tesla 2023", "batterie": "78", "autonomie": "412", "unite_distance": "km", "etat": "3",
      "puissance": "7200", "energie": "12.4", "limite": "90", "minutes": "95", "compteur": "1"},
     {"nom": "Tesla 2025", "batterie": "52", "autonomie": "275", "unite_distance": "km", "etat": "2",
      "puissance": "0", "energie": "", "limite": "80", "minutes": "", "compteur": "1"},
 )
+# Ce que la page « État » montre de ces deux voitures (démo --voitures, captures de la page État) :
+# la première, pneus corrects, fermée à clé, logiciel à jour ; la seconde, un pneu trop mou (2,1 bar,
+# sous le seuil de 2,2 bar de la tablette), portes ouvertes, Sentinelle activée, une mise à jour qui
+# attend. Les écrans d'avant (Flux, Aperçu) gardent VOITURES telle quelle : leurs captures ne changent pas.
+VOITURES_ETAT = (
+    {"pneu_av_g": "2.9", "pneu_av_d": "2.9", "pneu_ar_g": "2.8", "pneu_ar_d": "2.8", "unite_pression": "bar",
+     "temp_int": "19", "temp_ext": "12", "unite_temperature": "°C",
+     "verrouillee": "1", "sentinelle": "0", "logiciel_a_jour": "1"},
+    {"pneu_av_g": "2.9", "pneu_av_d": "2.9", "pneu_ar_g": "2.1", "pneu_ar_d": "2.9", "unite_pression": "bar",
+     "temp_int": "21", "temp_ext": "12", "unite_temperature": "°C",
+     "verrouillee": "0", "sentinelle": "1", "logiciel_a_jour": "0"},
+)
+VOITURES_COMPLETES = tuple({**v, **e} for v, e in zip(VOITURES, VOITURES_ETAT))
 # Instantané qui va avec (une maison solaire sans batterie, en pleine journée) : 6,4 kW de soleil,
 # la maison mesurée à 8,1 kW avec la voiture en charge (7,2 kW) dedans, donc 0,9 kW pour la
 # maison seule, et 1,7 kW achetés au réseau pour finir la charge.
@@ -736,15 +758,16 @@ ENERGIE_INSTANTANE_VOITURES_BATTERIE = {
 
 
 def build_voiture_payload(voiture: dict | None) -> str:
-    """tab5_maj_voiture : les dix champs dans l'ordre du contrat, séparés par « | » ; None = payload
-    vide (voiture absente)."""
+    """tab5_maj_voiture : les vingt et un champs dans l'ordre du contrat, séparés par « | » (les onze
+    derniers, ceux de la page « État », vides si on ne les donne pas) ; None = payload vide (voiture
+    absente)."""
     if voiture is None:
         return ""
     assert set(voiture) <= set(VOITURE_CHAMPS), f"champ inconnu : {set(voiture) - set(VOITURE_CHAMPS)}"
     valeurs = [str(voiture.get(c, "")) for c in VOITURE_CHAMPS]
     for champ, v in zip(VOITURE_CHAMPS, valeurs):
         assert "|" not in v and ";" not in v, f"{champ} : séparateur dans {v!r}"
-        if champ not in ("nom", "unite_distance"):
+        if champ not in ("nom", "unite_distance", "unite_pression", "unite_temperature"):
             assert v == "" or _nombre(v) is not None, f"{champ} : {v!r} n'est pas un nombre"
     d = dict(zip(VOITURE_CHAMPS, valeurs))
     for champ in ("batterie", "limite"):
@@ -752,6 +775,12 @@ def build_voiture_payload(voiture: dict | None) -> str:
     assert d["etat"] in ("", "0", "1", "2", "3"), "etat : 0 à 3"
     assert d["puissance"] == "" or float(d["puissance"]).is_integer(), "puissance : W entiers"
     assert d["compteur"] in ("", "0", "1"), "compteur : 0 ou 1"
+    assert d["unite_pression"] in ("", "bar", "cbar", "mbar", "hPa", "kPa", "Pa", "psi"), "unite_pression"
+    assert d["unite_temperature"] in ("", "°C", "°F"), "unite_temperature : °C ou °F"
+    for champ in ("verrouillee", "sentinelle", "logiciel_a_jour"):
+        assert d[champ] in ("", "0", "1"), f"{champ} : 0 ou 1"
+    for champ in ("pneu_av_g", "pneu_av_d", "pneu_ar_g", "pneu_ar_d"):
+        assert d[champ] == "" or float(d[champ]) > 0, f"{champ} : une pression positive"
     return "|".join(valeurs)
 
 
@@ -805,7 +834,9 @@ def build_charges_payload(aujourd_hui: _dt.date, charges=CHARGES) -> str:
 # heure à venir). Une série vide retire le rang de la page. La démo montre le matin figé des captures
 # (07:45) : la voiture 2 a chargé de 01:00 à 03:00 à 7,2 kW (14,4 kWh, la deuxième charge de CHARGES), la
 # voiture 1 charge depuis 06:02 (6,96 kWh à 6 h, 5,4 kWh à 7 h, 12,4 kWh en tout comme la première charge de
-# CHARGES) ; la maison hors voitures consomme 0,2 à 0,3 kWh par heure.
+# CHARGES) ; la maison hors voitures consomme 0,2 à 0,3 kWh par heure. La page « Charge » du popup
+# Voitures (ADR-0082) lit les mêmes séries (ses plages vertes : 1 h à 3 h pour la voiture 2, 6 h à 8 h
+# pour la 1) et, avec ENERGIE_SOLEIL plus bas, en tire son créneau conseillé (10 h – 16 h le matin des captures).
 # ---------------------------------------------------------------------------
 
 CONSO_JOUR_RANGS = ("0", "1", "2")
@@ -827,6 +858,105 @@ def build_conso_jour(rang: str, aujourd_hui: _dt.date, valeurs: tuple[str, ...] 
         assert x == "" or (_nombre(x) is not None and float(x) >= 0), f"kWh : {x!r}"
     champs = [] if not v else list(v) + [""] * (CONSO_JOUR_HEURES - len(v))
     return {"rang": rang, "debut": aujourd_hui.isoformat(), "valeurs": ";".join(champs)}
+
+
+# ---------------------------------------------------------------------------
+# Bilan du mois des voitures, bouton « Voitures » de la page « Bilan » (ADR-0080) —
+# tab5_maj_voiture_bilan(vue, debut, payload) : vue « mois_civil » (la seule lue), debut = le 1er du mois
+# (AAAA-MM-JJ), payload = « kwh|part_soleil|km|kwh_100km|reseau » de la voiture 1, des mêmes cinq champs de
+# la voiture 2, puis la part de la maison (la chaîne `bilan` de script.tab5_voitures_analyse, ADR-0074 ;
+# `bilan_debut` pour debut). kWh chargés ce mois-ci, part du soleil et part de la maison en %, km parcourus
+# (vide : pas d'odomètre choisi), kWh/100 km (énergie chargée / km, vide sans km : une approximation, pas une
+# consommation mesurée) et kWh venus du réseau. Champ vide = inconnu ; les cinq champs d'une voiture tous vides
+# = voiture absente ; payload vide = aucun bilan (le bouton disparaît). La démo montre deux voitures sur les
+# douze premiers jours du mois (celui des captures) : la première avec un odomètre, la seconde sans (« -- »).
+# Les kWh des deux voitures sont de l'ordre de ceux des six charges de CHARGES (les charges des cinq derniers
+# jours : 43,2 kWh pour la voiture 1, 51,9 pour la 2).
+# ---------------------------------------------------------------------------
+
+VOITURE_BILAN_CHAMPS = ("kwh", "part_soleil", "km", "kwh_100km", "reseau")
+VOITURE_BILAN_VUE = "mois_civil"
+# Les cinq champs de chaque voiture, puis la part de la maison.
+VOITURE_BILAN = (
+    ("86.4", "68", "410", "21.1", "27.6"),
+    ("71.2", "52", "", "", "34.2"),
+)
+VOITURE_BILAN_PART_MAISON = "54"
+
+
+def build_voiture_bilan(aujourd_hui: _dt.date, voitures=VOITURE_BILAN,
+                        part_maison: str = VOITURE_BILAN_PART_MAISON) -> dict[str, str]:
+    """Les variables de tab5_maj_voiture_bilan : vue, debut (le 1er du mois de `aujourd_hui`) et payload (les
+    cinq champs de chaque voiture de `voitures` — deux au plus, une voiture absente = cinq champs vides —, puis
+    `part_maison`). () = payload vide : aucun bilan, le bouton « Voitures » disparaît."""
+    assert len(voitures) <= 2, "deux voitures au plus"
+    if not voitures:
+        return {"vue": VOITURE_BILAN_VUE, "debut": aujourd_hui.replace(day=1).isoformat(), "payload": ""}
+    champs: list[str] = []
+    for voiture in list(voitures) + [("",) * len(VOITURE_BILAN_CHAMPS)] * (2 - len(voitures)):
+        assert len(voiture) == len(VOITURE_BILAN_CHAMPS), f"{len(VOITURE_BILAN_CHAMPS)} champs par voiture"
+        kwh, soleil, km, conso, reseau = voiture
+        assert not kwh or (_nombre(kwh) is not None and float(kwh) >= 0), f"kwh : {kwh!r}"
+        assert soleil in ("", "nan") or 0 <= float(soleil) <= 100, f"part du soleil : {soleil!r}"
+        assert km == "" or (_nombre(km) is not None and float(km) >= 0), f"km : {km!r}"
+        assert conso == "" or (_nombre(conso) is not None and float(conso) >= 0), f"kwh_100km : {conso!r}"
+        assert reseau == "" or (_nombre(reseau) is not None and float(reseau) >= 0), f"reseau : {reseau!r}"
+        assert (km == "") == (conso == ""), "les km et les kWh/100 km vont ensemble (même odomètre)"
+        champs.extend(voiture)
+    assert part_maison == "" or 0 <= float(part_maison) <= 100, f"part de la maison : {part_maison!r}"
+    champs.append(part_maison)
+    for x in champs:
+        assert "|" not in x and ";" not in x, f"séparateur dans {x!r}"
+    return {"vue": VOITURE_BILAN_VUE, "debut": aujourd_hui.replace(day=1).isoformat(), "payload": "|".join(champs)}
+
+
+# ---------------------------------------------------------------------------
+# Trajets des voitures, page « Trajets » du popup Voitures (ADR-0083) —
+# tab5_maj_voiture_trajets(rang, payload), payload d'une voiture (les chaînes trajets_1 et trajets_2 de
+# script.tab5_voitures_analyse, ADR-0074 et ADR-0083) :
+#   « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours »
+# debut = AAAA-MM-JJ du premier des sept jours (le dernier est aujourd'hui), compteur = le dernier relevé
+# de l'odomètre, km_mois = les kilomètres du mois, kwh_100km = l'énergie chargée ce mois-ci divisée par ces
+# kilomètres (une ESTIMATION, pas une consommation mesurée), km_jours et kwh_jours = sept nombres séparés
+# par « ; », du plus ancien à aujourd'hui (vide = pas de relevé ce jour-là, ce n'est pas 0). Un payload
+# vide = la voiture n'a pas d'odomètre choisi : elle n'a pas de colonne. La démo montre deux voitures
+# (la planche C3 du plan) : leurs kWh par jour sont ceux de CHARGES et de CONSO_JOUR (la voiture 1 a chargé
+# 19,8 kWh il y a quatre jours, 11,0 il y a trois jours et 12,4 ce matin ; la voiture 2 21,6 kWh il y a
+# trois jours, 15,9 hier et 14,4 cette nuit).
+# ---------------------------------------------------------------------------
+
+TRAJETS_CHAMPS = ("compteur", "km_mois", "kwh_100km", "km_jours", "kwh_jours")
+TRAJETS_JOURS = 7
+TRAJETS = {
+    "1": {"compteur": "41280", "km_mois": "600", "kwh_100km": "18.6",
+          "km_jours": ("62", "81", "47", "112", "74", "38", "5"),
+          "kwh_jours": ("0.0", "0.0", "19.8", "11.0", "0.0", "0.0", "12.4")},
+    "2": {"compteur": "9640", "km_mois": "520", "kwh_100km": "15.7",
+          "km_jours": ("55", "72", "44", "96", "65", "36", "4"),
+          "kwh_jours": ("0.0", "0.0", "0.0", "21.6", "0.0", "15.9", "14.4")},
+}
+
+
+def build_trajets_payload(aujourd_hui: _dt.date, trajets: dict | None = None) -> str:
+    """tab5_maj_voiture_trajets : le payload d'une voiture dans le format du contrat, la fenêtre de sept jours
+    finissant à `aujourd_hui` ; None = payload vide (la voiture n'a pas d'odomètre choisi). Un jour sans
+    relevé s'écrit « » (champ vide) dans km_jours ou kwh_jours."""
+    if trajets is None:
+        return ""
+    assert set(trajets) <= set(TRAJETS_CHAMPS), f"champ inconnu : {set(trajets) - set(TRAJETS_CHAMPS)}"
+    debut = aujourd_hui - _dt.timedelta(days=TRAJETS_JOURS - 1)
+    for champ in ("compteur", "km_mois", "kwh_100km"):
+        v = trajets.get(champ, "")
+        assert v == "" or (_nombre(v) is not None and float(v) >= 0), f"{champ} : {v!r}"
+    listes = []
+    for champ in ("km_jours", "kwh_jours"):
+        v = tuple(trajets.get(champ, ("",) * TRAJETS_JOURS))
+        assert len(v) == TRAJETS_JOURS, f"{champ} : {TRAJETS_JOURS} valeurs"
+        for x in v:
+            assert x == "" or (_nombre(x) is not None and float(x) >= 0), f"{champ} : {x!r}"
+        listes.append(";".join(v))
+    return "|".join((debut.isoformat(), trajets.get("compteur", ""), trajets.get("km_mois", ""),
+                     trajets.get("kwh_100km", ""), listes[0], listes[1]))
 
 
 # ---------------------------------------------------------------------------

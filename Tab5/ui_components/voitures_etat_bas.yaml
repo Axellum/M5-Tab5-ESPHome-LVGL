@@ -1,0 +1,25 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Carte du bas d'une voiture, page « État » du popup Voitures (ADR-0081), réutilisée
+# 2 fois par voitures_page_etat.yaml (n = 0 ou 1) : une carte de verre qui porte les cinq lignes
+# Cabine, Extérieur, Portes, Sentinelle, Logiciel (voitures_etat_ligne.yaml, une icône, un libellé,
+# une valeur). Ne rien assigner ici : tab5_voitures_etat.cpp pose et dimensionne tout.
+# vars : n (0-1, suffixe des ids).
+# @architecture_constraint ORDRE des enfants lu par tab5_voitures_etat.cpp (lier_carte) : les
+#       lignes 0 à 4 dans l'ordre de `Ligne` (cabine, extérieur, portes, sentinelle, logiciel).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "voitures_etat_bas_${n}"
+  align: TOP_LEFT
+  x: 0
+  y: 300
+  width: ${ (corps_w | int - 16) // 2 }
+  height: 250
+  hidden: true
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - !include { file: voitures_etat_ligne.yaml, vars: { n: "${n}", ligne: "0" } }
+    - !include { file: voitures_etat_ligne.yaml, vars: { n: "${n}", ligne: "1" } }
+    - !include { file: voitures_etat_ligne.yaml, vars: { n: "${n}", ligne: "2" } }
+    - !include { file: voitures_etat_ligne.yaml, vars: { n: "${n}", ligne: "3" } }
+    - !include { file: voitures_etat_ligne.yaml, vars: { n: "${n}", ligne: "4" } }

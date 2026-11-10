@@ -95,6 +95,14 @@ NON_MONTREES = {
     # décrite dans energy.md, comme les pages ci-dessus ; à faire avec les images du rendu validé par Axel.
     "energie-aujourdhui-1-voiture": "page Aujourd'hui avec une voiture ; à décrire dans energy.md, image à tirer du rendu",
     "energie-aujourdhui-2-voitures": "page Aujourd'hui avec deux voitures ; à décrire dans energy.md, image à tirer du rendu",
+    # Bilan du mois des voitures (ADR-0080, lot 5 des voitures) : pas encore décrit dans energy.md, comme les
+    # pages ci-dessus ; à faire avec les images du rendu validé par Axel.
+    "energie-bilan-voitures-boutons": "page Bilan avec le bouton Voitures ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-bilan-1-voiture": "Bilan, bouton Voitures, une voiture ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-bilan-2-voitures": "Bilan, bouton Voitures, deux voitures ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-bilan-2-voitures-km": "energie-bilan-2-voitures avec un odomètre sur chaque voiture",
+    "energie-bilan-voitures-energie-seule": "energie-bilan-1-voiture avec l'énergie pour seule donnée connue",
+    "energie-bilan-voitures-absent": "sans bilan des voitures, le Bilan garde ses trois boutons : la page d'avant, déjà décrite",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
@@ -229,6 +237,28 @@ NON_MONTREES = {
     "voitures-2": "popup Voitures, deux voitures, décrit dans screens.md ; notice avec les pages suivantes",
     "voitures-1": "voitures-2 montre la même fenêtre ; une seule voiture en pleine largeur, décrit dans screens.md",
     "voitures-aucune": "voitures-2 montre la même fenêtre ; sans voiture, le message est décrit dans screens.md",
+    # Page Charge du popup Voitures (ADR-0082) : décrite dans screens.md ; image à tirer du rendu.
+    "voitures-charge-2": "page Charge du popup Voitures, deux voitures, décrite dans screens.md ; image à tirer du rendu",
+    "voitures-charge-1": "voitures-charge-2 montre la même page ; une seule voiture en pleine largeur",
+    "voitures-charge-sans-soleil": "voitures-charge-2 montre la même page ; sans prévision du soleil, la bande du bas le dit",
+    # Page « État » du popup Voitures (ADR-0081, lot 7) : décrite dans screens.md ; la page de notice
+    # viendra avec les autres pages du popup, images à tirer du rendu validé par Axel.
+    "voitures-apercu-onglets": "l'Aperçu avec ses onglets (Aperçu, État) ; décrit dans screens.md, image à tirer du rendu",
+    "voitures-etat-2": "page État, deux voitures ; décrite dans screens.md, image à tirer du rendu",
+    "voitures-etat-1": "voitures-etat-2 montre la même page ; une seule voiture en pleine largeur",
+    "voitures-etat-1-psi": "voitures-etat-2 montre la même page ; pressions en psi et températures en °F",
+    "voitures-etat-incomplet": "voitures-etat-2 montre la même page ; une voiture à moitié renseignée, des « -- »",
+    "voitures-etat-3-onglets": "voitures-etat-2 montre la même page ; trois onglets en haut (Aperçu, Charge, État)",
+    # Page Trajets du popup Voitures (ADR-0083) : décrite dans screens.md ; images à tirer du rendu de la PR.
+    "voitures-trajets-2": "page Trajets du popup Voitures, deux voitures, décrite dans screens.md ; image à tirer du rendu",
+    "voitures-trajets-1": "voitures-trajets-2 montre la même page ; une seule voiture en pleine largeur",
+    "voitures-trajets-sans-releve": "voitures-trajets-2 montre la même page ; « Pas encore de relevé du compteur » "
+                                    "est décrit dans screens.md",
+    "voitures-trajets-aucun": "voitures-2 montre la même fenêtre ; sans trajets reçus, la page et son onglet n'existent pas",
+    "voitures-trajets-3-onglets": "voitures-trajets-2 montre la même page ; ici avec la page Charge en plus (trois onglets, "
+                                  "Tab5 seulement : la 7B n'a pas de page Charge)",
+    "voitures-4-onglets": "voitures-etat-2 montre la même page ; quatre onglets en haut (Aperçu, Charge, Trajets, État), "
+                          "Tab5 seulement : la 7B n'a pas de page Charge",
 }
 
 

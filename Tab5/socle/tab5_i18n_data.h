@@ -8,9 +8,44 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1328;
+static const uint16_t kI18nKeyCount = 1363;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1359,6 +1394,7 @@ static const char* const kI18nKeys[] = {
     "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo",
     "%d demi-coups joués",
     "%d erreurs",
+    "%d h",
     "%d h %02d",
     "%d h – %d h",
     "%d heures",
@@ -1510,6 +1546,7 @@ static const char* const kI18nKeys[] = {
     "Annuler",
     "Annuler le dernier coup",
     "Août",
+    "Aperçu",
     "Aperçu du territoire : ACTIVÉ",
     "Aperçu du territoire : DÉSACTIVÉ",
     "Appareil",
@@ -1569,6 +1606,7 @@ static const char* const kI18nKeys[] = {
     "Auj.",
     "Aujourd'hui",
     "Aujourd'hui {heure}",
+    "Aujourd'hui, heure par heure",
     "Auto",
     "Autres",
     "Avancer",
@@ -1617,6 +1655,7 @@ static const char* const kI18nKeys[] = {
     "COULEURS",
     "COUPS",
     "CREUSER",
+    "Cabine",
     "Calcule 3 coups + les prises en chaîne",
     "Calcule 4 coups, tactique correcte",
     "Calendrier",
@@ -1677,6 +1716,7 @@ static const char* const kI18nKeys[] = {
     "Complètes",
     "Composez les équipes, puis réglez les questions",
     "Comptabilise uniquement le mode Joueur contre Tab.",
+    "Compteur %s km",
     "Confirmation du coup : ACTIVÉE",
     "Confirmation du coup : DÉSACTIVÉE",
     "Confirmation, coordonnées, secousse",
@@ -1713,6 +1753,9 @@ static const char* const kI18nKeys[] = {
     "Craie et ardoise",
     "Crème",
     "Créneau",
+    "Créneau conseillé",
+    "Créneau conseillé : %d h – %d h",
+    "Créneau conseillé : jusqu'à %d h",
     "Cuivre",
     "Cumul carrière : %lu points",
     "Cœur de braise",
@@ -1765,6 +1808,7 @@ static const char* const kI18nKeys[] = {
     "Détails",
     "Détection BMI270",
     "Détecté",
+    "Déverrouillées",
     "EFFACER LES STATISTIQUES",
     "Effacer les scores",
     "Effacer les scores ?",
@@ -1810,6 +1854,7 @@ static const char* const kI18nKeys[] = {
     "Fin de partie : 16 coups chacun",
     "Fin de partie : 5 coups chacun",
     "Fin du mois (rythme %d j)",
+    "Fin prévue",
     "Finale manquée — il faudra revenir au centre.",
     "Finesse",
     "Fixe",
@@ -1909,6 +1954,7 @@ static const char* const kI18nKeys[] = {
     "Jours de repos",
     "Juil",
     "Juin",
+    "Km par jour",
     "Komi 0,5 pour Blanc",
     "Komi 6,5 pour Blanc",
     "L'adversaire gagne",
@@ -1979,6 +2025,7 @@ static const char* const kI18nKeys[] = {
     "Limite de charge",
     "Lire",
     "Lode Runner 1983\nCreuse · grimpe · fuis",
+    "Logiciel",
     "Luminosité",
     "Lumière",
     "Lumières",
@@ -2116,6 +2163,7 @@ static const char* const kI18nKeys[] = {
     "PV invulnérable",
     "Page suivante",
     "Parler",
+    "Part du soleil",
     "Part gagnée ! Vous rejouez.",
     "Partie bouclée en %u tours · %u bonnes réponses sur %u",
     "Partie interrompue : historique plein",
@@ -2127,9 +2175,13 @@ static const char* const kI18nKeys[] = {
     "Pas après",
     "Pas avant",
     "Pas de batterie détectée",
+    "Pas de charge en cours",
+    "Pas de créneau conseillé aujourd'hui",
     "Pas de données",
+    "Pas de prévision du soleil reçue",
     "Pas de velours",
     "Pas en charge",
+    "Pas encore de relevé du compteur",
     "Passe",
     "Passe — fin de partie",
     "Passer",
@@ -2159,11 +2211,13 @@ static const char* const kI18nKeys[] = {
     "Pluie sur %d h",
     "Plume de suie",
     "Plus d'image depuis %02d:%02d:%02d",
+    "Pneus corrects",
     "Podcasts",
     "Points neutres (dame) : %d",
     "Portail ouvert !",
     "Porte mal fermée",
     "Porte ouverte ?",
+    "Portes",
     "Pose la tablette PUIS appuie",
     "Pose la tablette avant d'appuyer",
     "Pose la tablette et appuie",
@@ -2178,6 +2232,7 @@ static const char* const kI18nKeys[] = {
     "Premier filon",
     "Prends. Tu en auras besoin.",
     "Presets",
+    "Pression basse",
     "Prise obligatoire",
     "Prise x%d",
     "Prisonniers de la partie : Noir %u, Blanc %u",
@@ -2199,6 +2254,7 @@ static const char* const kI18nKeys[] = {
     "Prévu demain",
     "Prêt",
     "Prête dans %s",
+    "Prête à %d h %02d",
     "Puissance",
     "Purement cosmétique",
     "Pyramide",
@@ -2342,6 +2398,7 @@ static const char* const kI18nKeys[] = {
     "Sensibilité",
     "Sensibilité IMU : %d/5",
     "Sensibilité du nudge : %s",
+    "Sentinelle",
     "Sept",
     "Serre",
     "Serveur IA",
@@ -2370,6 +2427,7 @@ static const char* const kI18nKeys[] = {
     "Sports & Loisirs",
     "Statistiques",
     "Stop",
+    "Suggestion d'après la prévision du soleil",
     "Suite",
     "Suivant",
     "Suivi",
@@ -2447,6 +2505,7 @@ static const char* const kI18nKeys[] = {
     "Toutes les parties et les réglages sont conservés dans le Tab.",
     "Trait : %s",
     "Trait aux %s",
+    "Trajets",
     "Travail",
     "Travail (horaire inconnu)",
     "Triple répétition de la position",
@@ -2482,6 +2541,7 @@ static const char* const kI18nKeys[] = {
     "Venteux",
     "Ventilation",
     "Verrouillé",
+    "Verrouillées",
     "Vers le réseau",
     "Victoire des Blancs",
     "Victoire des Noirs",
@@ -2532,6 +2592,9 @@ static const char* const kI18nKeys[] = {
     "avril",
     "b = billes jouées, MB = multiball déclenché.",
     "capteur muet",
+    "ce mois-ci",
+    "chargés ce mois-ci",
+    "chargés par les voitures ce mois",
     "coup de chaud",
     "cumul",
     "cumul de l'année",
@@ -2540,6 +2603,7 @@ static const char* const kI18nKeys[] = {
     "d'autonomie",
     "d'avance sur le réseau ce mois-ci",
     "de la charge par le soleil",
+    "de la maison",
     "de retard sur le réseau ce mois-ci",
     "de ta conso couverte par le soleil",
     "dimanche",
@@ -2559,9 +2623,13 @@ static const char* const kI18nKeys[] = {
     "jeudi",
     "juillet",
     "juin",
+    "kWh / 100 km · estimé",
     "kWh / heure",
     "kWh / jour",
     "kWh / mois",
+    "kWh chargés par jour",
+    "kWh/100 km estimés : énergie chargée / km parcourus",
+    "km parcourus",
     "le début du rendez-vous",
     "lue %s",
     "lundi",
@@ -2606,7 +2674,9 @@ static const char* const kI18nKeys[] = {
     "{n} titres",
     "À %s de lancer le dé",
     "À arroser !",
+    "À jour",
     "À la suite",
+    "À mettre à jour",
     "À suivre · {titre}",
     "À vous",
     "À vérifier",
@@ -2691,6 +2761,7 @@ static const char* const kI18n_en[] = {
     "%d half-moves  ·  level %s  ·  local rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d half-moves played",  // "%d demi-coups joués"
     "%d errors",  // "%d erreurs"
+    "%d:00",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d:00 – %d:00",  // "%d h – %d h"
     "%d:00",  // "%d heures"
@@ -2842,6 +2913,7 @@ static const char* const kI18n_en[] = {
     "Cancel",  // "Annuler"
     "Undo last move",  // "Annuler le dernier coup"
     "Aug",  // "Août"
+    "Overview",  // "Aperçu"
     "Territory preview: ON",  // "Aperçu du territoire : ACTIVÉ"
     "Territory preview: OFF",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Device",  // "Appareil"
@@ -2901,6 +2973,7 @@ static const char* const kI18n_en[] = {
     "Today",  // "Auj."
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
+    "Today, hour by hour",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Other",  // "Autres"
     "Forward",  // "Avancer"
@@ -2949,6 +3022,7 @@ static const char* const kI18n_en[] = {
     "COLORS",  // "COULEURS"
     "MOVES",  // "COUPS"
     "DIG",  // "CREUSER"
+    "Cabin",  // "Cabine"
     "Calculates 3 moves + capture chains",  // "Calcule 3 coups + les prises en chaîne"
     "Calculates 4 moves, decent tactics",  // "Calcule 4 coups, tactique correcte"
     "Calendar",  // "Calendrier"
@@ -3009,6 +3083,7 @@ static const char* const kI18n_en[] = {
     "Full",  // "Complètes"
     "Pick the teams, then set up the questions",  // "Composez les équipes, puis réglez les questions"
     "Only Player vs Tab games are counted.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Odometer %s km",  // "Compteur %s km"
     "Move confirmation: ON",  // "Confirmation du coup : ACTIVÉE"
     "Move confirmation: OFF",  // "Confirmation du coup : DÉSACTIVÉE"
     "Confirmation, coordinates, shake",  // "Confirmation, coordonnées, secousse"
@@ -3045,6 +3120,9 @@ static const char* const kI18n_en[] = {
     "Chalk and slate",  // "Craie et ardoise"
     "Cream",  // "Crème"
     "Window",  // "Créneau"
+    "Suggested slot",  // "Créneau conseillé"
+    "Suggested slot: %d:00 – %d:00",  // "Créneau conseillé : %d h – %d h"
+    "Suggested slot: until %d:00",  // "Créneau conseillé : jusqu'à %d h"
     "Copper",  // "Cuivre"
     "Career total: %lu points",  // "Cumul carrière : %lu points"
     "Ember Heart",  // "Cœur de braise"
@@ -3097,6 +3175,7 @@ static const char* const kI18n_en[] = {
     "Details",  // "Détails"
     "BMI270 detection",  // "Détection BMI270"
     "Detected",  // "Détecté"
+    "Unlocked",  // "Déverrouillées"
     "CLEAR STATISTICS",  // "EFFACER LES STATISTIQUES"
     "Clear scores",  // "Effacer les scores"
     "Clear scores?",  // "Effacer les scores ?"
@@ -3142,6 +3221,7 @@ static const char* const kI18n_en[] = {
     "Endgame: 16 moves each",  // "Fin de partie : 16 coups chacun"
     "Endgame: 5 moves each",  // "Fin de partie : 5 coups chacun"
     "End of month (%d-day pace)",  // "Fin du mois (rythme %d j)"
+    "Expected end",  // "Fin prévue"
     "Final missed — head back to the hub.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fixed",  // "Fixe"
@@ -3241,6 +3321,7 @@ static const char* const kI18n_en[] = {
     "Days off",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km per day",  // "Km par jour"
     "Komi 0.5 for White",  // "Komi 0,5 pour Blanc"
     "Komi 6.5 for White",  // "Komi 6,5 pour Blanc"
     "The opponent wins",  // "L'adversaire gagne"
@@ -3311,6 +3392,7 @@ static const char* const kI18n_en[] = {
     "Charge limit",  // "Limite de charge"
     "Play",  // "Lire"
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Brightness",  // "Luminosité"
     "Light",  // "Lumière"
     "Lights",  // "Lumières"
@@ -3448,6 +3530,7 @@ static const char* const kI18n_en[] = {
     "HP invulnerable",  // "PV invulnérable"
     "Next page",  // "Page suivante"
     "Speak",  // "Parler"
+    "Solar share",  // "Part du soleil"
     "Wedge won! Roll again.",  // "Part gagnée ! Vous rejouez."
     "Finished in %u rounds · %u correct answers out of %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Game stopped: history full",  // "Partie interrompue : historique plein"
@@ -3459,9 +3542,13 @@ static const char* const kI18n_en[] = {
     "Not after",  // "Pas après"
     "Not before",  // "Pas avant"
     "No battery detected",  // "Pas de batterie détectée"
+    "Not charging",  // "Pas de charge en cours"
+    "No suggested slot today",  // "Pas de créneau conseillé aujourd'hui"
     "No data",  // "Pas de données"
+    "No solar forecast received",  // "Pas de prévision du soleil reçue"
     "Velvet Step",  // "Pas de velours"
     "Not charging",  // "Pas en charge"
+    "No odometer reading yet",  // "Pas encore de relevé du compteur"
     "Pass",  // "Passe"
     "Pass — game over",  // "Passe — fin de partie"
     "Pass",  // "Passer"
@@ -3491,11 +3578,13 @@ static const char* const kI18n_en[] = {
     "Rain over %d h",  // "Pluie sur %d h"
     "Soot Feather",  // "Plume de suie"
     "No image since %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Tires OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Neutral points (dame): %d",  // "Points neutres (dame) : %d"
     "Portal open!",  // "Portail ouvert !"
     "Door not closed",  // "Porte mal fermée"
     "Door open?",  // "Porte ouverte ?"
+    "Doors",  // "Portes"
     "Set the tablet down THEN tap",  // "Pose la tablette PUIS appuie"
     "Lay the tablet down, then tap",  // "Pose la tablette avant d'appuyer"
     "Lay the tablet down and tap",  // "Pose la tablette et appuie"
@@ -3510,6 +3599,7 @@ static const char* const kI18n_en[] = {
     "First Lode",  // "Premier filon"
     "Take it. You'll need it.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Low pressure",  // "Pression basse"
     "Must capture",  // "Prise obligatoire"
     "Capture x%d",  // "Prise x%d"
     "Captures: Black %u, White %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -3531,6 +3621,7 @@ static const char* const kI18n_en[] = {
     "Forecast tomorrow",  // "Prévu demain"
     "Ready",  // "Prêt"
     "Ready in %s",  // "Prête dans %s"
+    "Ready at %d:%02d",  // "Prête à %d h %02d"
     "Power",  // "Puissance"
     "Purely cosmetic",  // "Purement cosmétique"
     "Pyramid",  // "Pyramide"
@@ -3674,6 +3765,7 @@ static const char* const kI18n_en[] = {
     "Sensitivity",  // "Sensibilité"
     "IMU sensitivity: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudge sensitivity: %s",  // "Sensibilité du nudge : %s"
+    "Sentry",  // "Sentinelle"
     "Sep",  // "Sept"
     "Greenhouse",  // "Serre"
     "AI server",  // "Serveur IA"
@@ -3702,6 +3794,7 @@ static const char* const kI18n_en[] = {
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
     "Stop",  // "Stop"
+    "Suggestion from the solar forecast",  // "Suggestion d'après la prévision du soleil"
     "More",  // "Suite"
     "Next",  // "Suivant"
     "Tracking",  // "Suivi"
@@ -3779,6 +3872,7 @@ static const char* const kI18n_en[] = {
     "All games and settings are kept on the Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turn: %s",  // "Trait : %s"
     "%s to move",  // "Trait aux %s"
+    "Trips",  // "Trajets"
     "Work",  // "Travail"
     "Work (unknown hours)",  // "Travail (horaire inconnu)"
     "Threefold repetition",  // "Triple répétition de la position"
@@ -3814,6 +3908,7 @@ static const char* const kI18n_en[] = {
     "Windy",  // "Venteux"
     "Fan",  // "Ventilation"
     "Locked",  // "Verrouillé"
+    "Locked",  // "Verrouillées"
     "To the grid",  // "Vers le réseau"
     "White wins",  // "Victoire des Blancs"
     "Black wins",  // "Victoire des Noirs"
@@ -3864,6 +3959,9 @@ static const char* const kI18n_en[] = {
     "April",  // "avril"
     "b = balls played, MB = multiball triggered.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor silent",  // "capteur muet"
+    "this month",  // "ce mois-ci"
+    "charged this month",  // "chargés ce mois-ci"
+    "charged by the cars this month",  // "chargés par les voitures ce mois"
     "heat spike",  // "coup de chaud"
     "total",  // "cumul"
     "year's total",  // "cumul de l'année"
@@ -3872,6 +3970,7 @@ static const char* const kI18n_en[] = {
     "of range",  // "d'autonomie"
     "ahead of the grid this month",  // "d'avance sur le réseau ce mois-ci"
     "of charging from the sun",  // "de la charge par le soleil"
+    "of the home",  // "de la maison"
     "behind the grid this month",  // "de retard sur le réseau ce mois-ci"
     "of your use covered by the sun",  // "de ta conso couverte par le soleil"
     "Sunday",  // "dimanche"
@@ -3891,9 +3990,13 @@ static const char* const kI18n_en[] = {
     "Thursday",  // "jeudi"
     "July",  // "juillet"
     "June",  // "juin"
+    "kWh / 100 km · estimated",  // "kWh / 100 km · estimé"
     "kWh / hour",  // "kWh / heure"
     "kWh / day",  // "kWh / jour"
     "kWh / month",  // "kWh / mois"
+    "kWh charged per day",  // "kWh chargés par jour"
+    "Estimated kWh/100 km: charged energy / km driven",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km driven",  // "km parcourus"
     "before the appointment",  // "le début du rendez-vous"
     "read %s",  // "lue %s"
     "Monday",  // "lundi"
@@ -3938,7 +4041,9 @@ static const char* const kI18n_en[] = {
     "{n} tracks",  // "{n} titres"
     "%s, roll the die",  // "À %s de lancer le dé"
     "Needs water!",  // "À arroser !"
+    "Up to date",  // "À jour"
     "Play next",  // "À la suite"
+    "Update due",  // "À mettre à jour"
     "Up next · {titre}",  // "À suivre · {titre}"
     "Your move",  // "À vous"
     "To check",  // "À vérifier"
@@ -4023,6 +4128,7 @@ static const char* const kI18n_de[] = {
     "%d Halbzüge  ·  Stufe %s  ·  lokale Wertung: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d Halbzüge gespielt",  // "%d demi-coups joués"
     "%d Fehler",  // "%d erreurs"
+    "%d Uhr",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d – %d Uhr",  // "%d h – %d h"
     "%d Uhr",  // "%d heures"
@@ -4174,6 +4280,7 @@ static const char* const kI18n_de[] = {
     "Abbrechen",  // "Annuler"
     "Letzten Zug zurücknehmen",  // "Annuler le dernier coup"
     "Aug",  // "Août"
+    "Überblick",  // "Aperçu"
     "Gebietsvorschau: AN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebietsvorschau: AUS",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Gerät",  // "Appareil"
@@ -4233,6 +4340,7 @@ static const char* const kI18n_de[] = {
     "Heute",  // "Auj."
     "Heute",  // "Aujourd'hui"
     "Heute {heure}",  // "Aujourd'hui {heure}"
+    "Heute, Stunde für Stunde",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Andere",  // "Autres"
     "Vorwärts",  // "Avancer"
@@ -4281,6 +4389,7 @@ static const char* const kI18n_de[] = {
     "FARBEN",  // "COULEURS"
     "ZÜGE",  // "COUPS"
     "GRABEN",  // "CREUSER"
+    "Innenraum",  // "Cabine"
     "Rechnet 3 Züge + Schlagketten",  // "Calcule 3 coups + les prises en chaîne"
     "Rechnet 4 Züge, solide Taktik",  // "Calcule 4 coups, tactique correcte"
     "Kalender",  // "Calendrier"
@@ -4341,6 +4450,7 @@ static const char* const kI18n_de[] = {
     "Alle",  // "Complètes"
     "Teams bilden, dann die Fragen einstellen",  // "Composez les équipes, puis réglez les questions"
     "Nur der Modus Spieler gegen Tab wird gezählt.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Kilometerstand %s km",  // "Compteur %s km"
     "Zugbestätigung: AN",  // "Confirmation du coup : ACTIVÉE"
     "Zugbestätigung: AUS",  // "Confirmation du coup : DÉSACTIVÉE"
     "Bestätigung, Koordinaten, Schütteln",  // "Confirmation, coordonnées, secousse"
@@ -4377,6 +4487,9 @@ static const char* const kI18n_de[] = {
     "Kreide und Schiefer",  // "Craie et ardoise"
     "Creme",  // "Crème"
     "Zeitfenster",  // "Créneau"
+    "Zeitfenster-Tipp",  // "Créneau conseillé"
+    "Empfohlen: %d – %d Uhr",  // "Créneau conseillé : %d h – %d h"
+    "Empfohlen: bis %d Uhr",  // "Créneau conseillé : jusqu'à %d h"
     "Kupfer",  // "Cuivre"
     "Karriere gesamt: %lu Punkte",  // "Cumul carrière : %lu points"
     "Glutherz",  // "Cœur de braise"
@@ -4429,6 +4542,7 @@ static const char* const kI18n_de[] = {
     "Details",  // "Détails"
     "BMI270-Erkennung",  // "Détection BMI270"
     "Erkannt",  // "Détecté"
+    "Entriegelt",  // "Déverrouillées"
     "STATISTIK LÖSCHEN",  // "EFFACER LES STATISTIQUES"
     "Scores löschen",  // "Effacer les scores"
     "Scores löschen?",  // "Effacer les scores ?"
@@ -4474,6 +4588,7 @@ static const char* const kI18n_de[] = {
     "Endspiel: je 16 Züge",  // "Fin de partie : 16 coups chacun"
     "Endspiel: je 5 Züge",  // "Fin de partie : 5 coups chacun"
     "Monatsende (Tempo %d T.)",  // "Fin du mois (rythme %d j)"
+    "Geplantes Ende",  // "Fin prévue"
     "Finale verpasst — zurück zur Mitte.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fest",  // "Fixe"
@@ -4573,6 +4688,7 @@ static const char* const kI18n_de[] = {
     "Freie Tage",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km pro Tag",  // "Km par jour"
     "Komi 0,5 für Weiß",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 für Weiß",  // "Komi 6,5 pour Blanc"
     "Der Gegner gewinnt",  // "L'adversaire gagne"
@@ -4643,6 +4759,7 @@ static const char* const kI18n_de[] = {
     "Ladegrenze",  // "Limite de charge"
     "Abspielen",  // "Lire"
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Helligkeit",  // "Luminosité"
     "Licht",  // "Lumière"
     "Lichter",  // "Lumières"
@@ -4780,6 +4897,7 @@ static const char* const kI18n_de[] = {
     "LP unverwundbar",  // "PV invulnérable"
     "Nächste Seite",  // "Page suivante"
     "Reden",  // "Parler"
+    "Sonnenanteil",  // "Part du soleil"
     "Ecke gewonnen! Nochmal würfeln.",  // "Part gagnée ! Vous rejouez."
     "In %u Runden geschafft · %u von %u Antworten richtig",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partie abgebrochen: Verlauf voll",  // "Partie interrompue : historique plein"
@@ -4791,9 +4909,13 @@ static const char* const kI18n_de[] = {
     "Nicht nach",  // "Pas après"
     "Nicht vor",  // "Pas avant"
     "Kein Akku erkannt",  // "Pas de batterie détectée"
+    "Lädt nicht",  // "Pas de charge en cours"
+    "Heute kein Zeitfenster empfohlen",  // "Pas de créneau conseillé aujourd'hui"
     "Keine Daten",  // "Pas de données"
+    "Keine Sonnenprognose empfangen",  // "Pas de prévision du soleil reçue"
     "Samtschritt",  // "Pas de velours"
     "Lädt nicht",  // "Pas en charge"
+    "Noch kein Kilometerstand erfasst",  // "Pas encore de relevé du compteur"
     "Passen",  // "Passe"
     "Passen — Spielende",  // "Passe — fin de partie"
     "Passen",  // "Passer"
@@ -4823,11 +4945,13 @@ static const char* const kI18n_de[] = {
     "Regen in %d Std.",  // "Pluie sur %d h"
     "Rußfeder",  // "Plume de suie"
     "Kein Bild seit %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Reifen OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Neutrale Punkte (Dame): %d",  // "Points neutres (dame) : %d"
     "Portal offen!",  // "Portail ouvert !"
     "Tür nicht richtig zu",  // "Porte mal fermée"
     "Tür offen?",  // "Porte ouverte ?"
+    "Türen",  // "Portes"
     "Tablet hinlegen, DANN tippen",  // "Pose la tablette PUIS appuie"
     "Tablet hinlegen, dann tippen",  // "Pose la tablette avant d'appuyer"
     "Tablet hinlegen und tippen",  // "Pose la tablette et appuie"
@@ -4842,6 +4966,7 @@ static const char* const kI18n_de[] = {
     "Erste Ader",  // "Premier filon"
     "Nimm. Du wirst es brauchen.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Druck niedrig",  // "Pression basse"
     "Schlagzwang",  // "Prise obligatoire"
     "Schlag x%d",  // "Prise x%d"
     "Gefangene: Schwarz %u, Weiß %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -4863,6 +4988,7 @@ static const char* const kI18n_de[] = {
     "Prognose morgen",  // "Prévu demain"
     "Bereit",  // "Prêt"
     "Fertig in %s",  // "Prête dans %s"
+    "Fertig um %d:%02d",  // "Prête à %d h %02d"
     "Leistung",  // "Puissance"
     "Rein kosmetisch",  // "Purement cosmétique"
     "Pyramide",  // "Pyramide"
@@ -5006,6 +5132,7 @@ static const char* const kI18n_de[] = {
     "Sensitivität",  // "Sensibilité"
     "IMU-Empfindlichkeit: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudge-Empfindlichkeit: %s",  // "Sensibilité du nudge : %s"
+    "Sentry",  // "Sentinelle"
     "Sep",  // "Sept"
     "Gewächshaus",  // "Serre"
     "KI-Server",  // "Serveur IA"
@@ -5034,6 +5161,7 @@ static const char* const kI18n_de[] = {
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
     "Stopp",  // "Stop"
+    "Vorschlag laut Sonnenprognose",  // "Suggestion d'après la prévision du soleil"
     "Weiter",  // "Suite"
     "Nächster",  // "Suivant"
     "Verlauf",  // "Suivi"
@@ -5111,6 +5239,7 @@ static const char* const kI18n_de[] = {
     "Alle Partien und Einstellungen bleiben im Tab gespeichert.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Am Zug: %s",  // "Trait : %s"
     "%s am Zug",  // "Trait aux %s"
+    "Fahrten",  // "Trajets"
     "Arbeit",  // "Travail"
     "Arbeit (Zeit unbekannt)",  // "Travail (horaire inconnu)"
     "Dreifache Stellungswiederholung",  // "Triple répétition de la position"
@@ -5146,6 +5275,7 @@ static const char* const kI18n_de[] = {
     "Windig",  // "Venteux"
     "Lüften",  // "Ventilation"
     "Gesperrt",  // "Verrouillé"
+    "Verriegelt",  // "Verrouillées"
     "Ins Netz",  // "Vers le réseau"
     "Weiß gewinnt",  // "Victoire des Blancs"
     "Schwarz gewinnt",  // "Victoire des Noirs"
@@ -5196,6 +5326,9 @@ static const char* const kI18n_de[] = {
     "April",  // "avril"
     "b = gespielte Bälle, MB = Multiball ausgelöst.",  // "b = billes jouées, MB = multiball déclenché."
     "Sensor stumm",  // "capteur muet"
+    "diesen Monat",  // "ce mois-ci"
+    "geladen diesen Monat",  // "chargés ce mois-ci"
+    "von den Autos geladen diesen Monat",  // "chargés par les voitures ce mois"
     "Hitzespitze",  // "coup de chaud"
     "Summe",  // "cumul"
     "Jahressumme",  // "cumul de l'année"
@@ -5204,6 +5337,7 @@ static const char* const kI18n_de[] = {
     "Reichweite",  // "d'autonomie"
     "Vorsprung aufs Netz diesen Monat",  // "d'avance sur le réseau ce mois-ci"
     "der Ladung durch die Sonne",  // "de la charge par le soleil"
+    "des Hauses",  // "de la maison"
     "Rückstand zum Netz diesen Monat",  // "de retard sur le réseau ce mois-ci"
     "deines Verbrauchs von der Sonne gedeckt",  // "de ta conso couverte par le soleil"
     "Sonntag",  // "dimanche"
@@ -5223,9 +5357,13 @@ static const char* const kI18n_de[] = {
     "Donnerstag",  // "jeudi"
     "Juli",  // "juillet"
     "Juni",  // "juin"
+    "kWh / 100 km · geschätzt",  // "kWh / 100 km · estimé"
     "kWh / Stunde",  // "kWh / heure"
     "kWh / Tag",  // "kWh / jour"
     "kWh / Monat",  // "kWh / mois"
+    "Geladene kWh pro Tag",  // "kWh chargés par jour"
+    "Geschätzte kWh/100 km: geladene Energie / gefahrene km",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km gefahren",  // "km parcourus"
     "vor dem Termin",  // "le début du rendez-vous"
     "gelesen %s",  // "lue %s"
     "Montag",  // "lundi"
@@ -5270,7 +5408,9 @@ static const char* const kI18n_de[] = {
     "{n} Titel",  // "{n} titres"
     "%s ist dran: würfeln",  // "À %s de lancer le dé"
     "Gießen!",  // "À arroser !"
+    "Aktuell",  // "À jour"
     "Als Nächstes",  // "À la suite"
+    "Update fällig",  // "À mettre à jour"
     "Als Nächstes · {titre}",  // "À suivre · {titre}"
     "Dein Zug",  // "À vous"
     "Prüfen",  // "À vérifier"
@@ -5355,6 +5495,7 @@ static const char* const kI18n_nl[] = {
     "%d halve zetten  ·  niveau %s  ·  lokale rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d halve zetten gespeeld",  // "%d demi-coups joués"
     "%d fouten",  // "%d erreurs"
+    "%d uur",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d – %d uur",  // "%d h – %d h"
     "%d uur",  // "%d heures"
@@ -5506,6 +5647,7 @@ static const char* const kI18n_nl[] = {
     "Annuleren",  // "Annuler"
     "Laatste zet terugnemen",  // "Annuler le dernier coup"
     "Aug",  // "Août"
+    "Overzicht",  // "Aperçu"
     "Gebiedsweergave: AAN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebiedsweergave: UIT",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Apparaat",  // "Appareil"
@@ -5565,6 +5707,7 @@ static const char* const kI18n_nl[] = {
     "Vand.",  // "Auj."
     "Vandaag",  // "Aujourd'hui"
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
+    "Vandaag, uur per uur",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Overige",  // "Autres"
     "Vooruit",  // "Avancer"
@@ -5613,6 +5756,7 @@ static const char* const kI18n_nl[] = {
     "KLEUREN",  // "COULEURS"
     "ZETTEN",  // "COUPS"
     "GRAAF",  // "CREUSER"
+    "Interieur",  // "Cabine"
     "Rekent 3 zetten + slagreeksen",  // "Calcule 3 coups + les prises en chaîne"
     "Rekent 4 zetten, redelijke tactiek",  // "Calcule 4 coups, tactique correcte"
     "Agenda",  // "Calendrier"
@@ -5673,6 +5817,7 @@ static const char* const kI18n_nl[] = {
     "Volledig",  // "Complètes"
     "Stel de teams samen en kies de vragen",  // "Composez les équipes, puis réglez les questions"
     "Telt alleen partijen Speler tegen Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Tellerstand %s km",  // "Compteur %s km"
     "Zetbevestiging: AAN",  // "Confirmation du coup : ACTIVÉE"
     "Zetbevestiging: UIT",  // "Confirmation du coup : DÉSACTIVÉE"
     "Bevestiging, coördinaten, schudden",  // "Confirmation, coordonnées, secousse"
@@ -5709,6 +5854,9 @@ static const char* const kI18n_nl[] = {
     "Krijt en leisteen",  // "Craie et ardoise"
     "Crème",  // "Crème"
     "Periode",  // "Créneau"
+    "Aanbevolen tijdvak",  // "Créneau conseillé"
+    "Aanbevolen: %d – %d uur",  // "Créneau conseillé : %d h – %d h"
+    "Aanbevolen: tot %d uur",  // "Créneau conseillé : jusqu'à %d h"
     "Koper",  // "Cuivre"
     "Carrièretotaal: %lu punten",  // "Cumul carrière : %lu points"
     "Gloeiend hart",  // "Cœur de braise"
@@ -5761,6 +5909,7 @@ static const char* const kI18n_nl[] = {
     "Details",  // "Détails"
     "BMI270-detectie",  // "Détection BMI270"
     "Gedetecteerd",  // "Détecté"
+    "Ontgrendeld",  // "Déverrouillées"
     "STATISTIEKEN WISSEN",  // "EFFACER LES STATISTIQUES"
     "Scores wissen",  // "Effacer les scores"
     "Scores wissen?",  // "Effacer les scores ?"
@@ -5806,6 +5955,7 @@ static const char* const kI18n_nl[] = {
     "Eindspel: elk 16 zetten",  // "Fin de partie : 16 coups chacun"
     "Eindspel: elk 5 zetten",  // "Fin de partie : 5 coups chacun"
     "Einde maand (tempo %d d)",  // "Fin du mois (rythme %d j)"
+    "Verwacht einde",  // "Fin prévue"
     "Finale gemist — terug naar het midden.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Vast",  // "Fixe"
@@ -5905,6 +6055,7 @@ static const char* const kI18n_nl[] = {
     "Vrije dagen",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km per dag",  // "Km par jour"
     "Komi 0,5 voor Wit",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 voor Wit",  // "Komi 6,5 pour Blanc"
     "De tegenstander wint",  // "L'adversaire gagne"
@@ -5975,6 +6126,7 @@ static const char* const kI18n_nl[] = {
     "Laadlimiet",  // "Limite de charge"
     "Afspelen",  // "Lire"
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Helderheid",  // "Luminosité"
     "Licht",  // "Lumière"
     "Lampen",  // "Lumières"
@@ -6112,6 +6264,7 @@ static const char* const kI18n_nl[] = {
     "HP onkwetsbaar",  // "PV invulnérable"
     "Volgende pagina",  // "Page suivante"
     "Spreek",  // "Parler"
+    "Aandeel zon",  // "Part du soleil"
     "Partje gewonnen! Gooi opnieuw.",  // "Part gagnée ! Vous rejouez."
     "Klaar in %u rondes · %u van %u antwoorden goed",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partij gestopt: geschiedenis vol",  // "Partie interrompue : historique plein"
@@ -6123,9 +6276,13 @@ static const char* const kI18n_nl[] = {
     "Niet na",  // "Pas après"
     "Niet vóór",  // "Pas avant"
     "Geen batterij gevonden",  // "Pas de batterie détectée"
+    "Laadt niet",  // "Pas de charge en cours"
+    "Vandaag geen aanbevolen tijdvak",  // "Pas de créneau conseillé aujourd'hui"
     "Geen gegevens",  // "Pas de données"
+    "Geen zonneprognose ontvangen",  // "Pas de prévision du soleil reçue"
     "Fluwelen tred",  // "Pas de velours"
     "Laadt niet",  // "Pas en charge"
+    "Nog geen tellerstand beschikbaar",  // "Pas encore de relevé du compteur"
     "Pas",  // "Passe"
     "Pas — einde partij",  // "Passe — fin de partie"
     "Passen",  // "Passer"
@@ -6155,11 +6312,13 @@ static const char* const kI18n_nl[] = {
     "Regen in %d u",  // "Pluie sur %d h"
     "Roetveer",  // "Plume de suie"
     "Geen beeld sinds %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Banden OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Neutrale punten (dame): %d",  // "Points neutres (dame) : %d"
     "Portaal open!",  // "Portail ouvert !"
     "Deur niet goed dicht",  // "Porte mal fermée"
     "Deur open?",  // "Porte ouverte ?"
+    "Deuren",  // "Portes"
     "Leg de tablet neer, tik DAN",  // "Pose la tablette PUIS appuie"
     "Leg de tablet neer, tik dan",  // "Pose la tablette avant d'appuyer"
     "Leg de tablet neer en tik",  // "Pose la tablette et appuie"
@@ -6174,6 +6333,7 @@ static const char* const kI18n_nl[] = {
     "Eerste ader",  // "Premier filon"
     "Pak aan. Je hebt het nodig.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Lage druk",  // "Pression basse"
     "Slagplicht",  // "Prise obligatoire"
     "Slag x%d",  // "Prise x%d"
     "Gevangen stenen: Zwart %u, Wit %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -6195,6 +6355,7 @@ static const char* const kI18n_nl[] = {
     "Verwacht morgen",  // "Prévu demain"
     "Klaar",  // "Prêt"
     "Klaar over %s",  // "Prête dans %s"
+    "Klaar om %d:%02d",  // "Prête à %d h %02d"
     "Vermogen",  // "Puissance"
     "Puur cosmetisch",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -6338,6 +6499,7 @@ static const char* const kI18n_nl[] = {
     "Gevoeligheid",  // "Sensibilité"
     "IMU-gevoeligheid: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudgegevoeligheid: %s",  // "Sensibilité du nudge : %s"
+    "Sentry",  // "Sentinelle"
     "Sep",  // "Sept"
     "Kas",  // "Serre"
     "AI-server",  // "Serveur IA"
@@ -6366,6 +6528,7 @@ static const char* const kI18n_nl[] = {
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
     "Stop",  // "Stop"
+    "Suggestie o.b.v. zonneprognose",  // "Suggestion d'après la prévision du soleil"
     "Meer",  // "Suite"
     "Volgende",  // "Suivant"
     "Volgen",  // "Suivi"
@@ -6443,6 +6606,7 @@ static const char* const kI18n_nl[] = {
     "Alle partijen en opties blijven bewaard in de Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Aan zet: %s",  // "Trait : %s"
     "%s aan zet",  // "Trait aux %s"
+    "Ritten",  // "Trajets"
     "Werk",  // "Travail"
     "Werk (tijden onbekend)",  // "Travail (horaire inconnu)"
     "Drievoudige stellingherhaling",  // "Triple répétition de la position"
@@ -6478,6 +6642,7 @@ static const char* const kI18n_nl[] = {
     "Winderig",  // "Venteux"
     "Ventilatie",  // "Ventilation"
     "Op slot",  // "Verrouillé"
+    "Vergrendeld",  // "Verrouillées"
     "Naar het net",  // "Vers le réseau"
     "Wit wint",  // "Victoire des Blancs"
     "Zwart wint",  // "Victoire des Noirs"
@@ -6528,6 +6693,9 @@ static const char* const kI18n_nl[] = {
     "april",  // "avril"
     "b = gespeelde ballen, MB = multiball gestart.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor stil",  // "capteur muet"
+    "deze maand",  // "ce mois-ci"
+    "geladen deze maand",  // "chargés ce mois-ci"
+    "geladen door auto's deze maand",  // "chargés par les voitures ce mois"
     "hitte-piek",  // "coup de chaud"
     "totaal",  // "cumul"
     "jaartotaal",  // "cumul de l'année"
@@ -6536,6 +6704,7 @@ static const char* const kI18n_nl[] = {
     "actieradius",  // "d'autonomie"
     "voorsprong op het net deze maand",  // "d'avance sur le réseau ce mois-ci"
     "van het laden door de zon",  // "de la charge par le soleil"
+    "van het huis",  // "de la maison"
     "achterstand op het net deze maand",  // "de retard sur le réseau ce mois-ci"
     "van je verbruik gedekt door de zon",  // "de ta conso couverte par le soleil"
     "zondag",  // "dimanche"
@@ -6555,9 +6724,13 @@ static const char* const kI18n_nl[] = {
     "donderdag",  // "jeudi"
     "juli",  // "juillet"
     "juni",  // "juin"
+    "kWh / 100 km · geschat",  // "kWh / 100 km · estimé"
     "kWh / uur",  // "kWh / heure"
     "kWh / dag",  // "kWh / jour"
     "kWh / maand",  // "kWh / mois"
+    "Geladen kWh per dag",  // "kWh chargés par jour"
+    "Geschatte kWh/100 km: geladen energie / gereden km",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km gereden",  // "km parcourus"
     "vóór de afspraak",  // "le début du rendez-vous"
     "gelezen %s",  // "lue %s"
     "maandag",  // "lundi"
@@ -6602,7 +6775,9 @@ static const char* const kI18n_nl[] = {
     "{n} nummers",  // "{n} titres"
     "%s mag dobbelen",  // "À %s de lancer le dé"
     "Water geven!",  // "À arroser !"
+    "Actueel",  // "À jour"
     "Hierna",  // "À la suite"
+    "Update nodig",  // "À mettre à jour"
     "Hierna · {titre}",  // "À suivre · {titre}"
     "Jouw zet",  // "À vous"
     "Controleren",  // "À vérifier"
@@ -6687,6 +6862,7 @@ static const char* const kI18n_es[] = {
     "%d medias jugadas  ·  nivel %s  ·  clasificación local: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d medias jugadas",  // "%d demi-coups joués"
     "%d errores",  // "%d erreurs"
+    "%d h",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d h – %d h",  // "%d h – %d h"
     "%d horas",  // "%d heures"
@@ -6838,6 +7014,7 @@ static const char* const kI18n_es[] = {
     "Cancelar",  // "Annuler"
     "Deshacer la última jugada",  // "Annuler le dernier coup"
     "Ago",  // "Août"
+    "Resumen",  // "Aperçu"
     "Vista del territorio: SÍ",  // "Aperçu du territoire : ACTIVÉ"
     "Vista del territorio: NO",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
@@ -6897,6 +7074,7 @@ static const char* const kI18n_es[] = {
     "Hoy",  // "Auj."
     "Hoy",  // "Aujourd'hui"
     "Hoy {heure}",  // "Aujourd'hui {heure}"
+    "Hoy, hora por hora",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Otras",  // "Autres"
     "Adelantar",  // "Avancer"
@@ -6945,6 +7123,7 @@ static const char* const kI18n_es[] = {
     "COLORES",  // "COULEURS"
     "JUG.",  // "COUPS"
     "CAVAR",  // "CREUSER"
+    "Cabina",  // "Cabine"
     "Calcula 3 jugadas + capturas en cadena",  // "Calcule 3 coups + les prises en chaîne"
     "Calcula 4 jugadas, táctica correcta",  // "Calcule 4 coups, tactique correcte"
     "Calendario",  // "Calendrier"
@@ -7005,6 +7184,7 @@ static const char* const kI18n_es[] = {
     "Completas",  // "Complètes"
     "Forma los equipos y luego ajusta las preguntas",  // "Composez les équipes, puis réglez les questions"
     "Solo cuenta el modo Jugador contra Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Odómetro %s km",  // "Compteur %s km"
     "Confirmar jugada: SÍ",  // "Confirmation du coup : ACTIVÉE"
     "Confirmar jugada: NO",  // "Confirmation du coup : DÉSACTIVÉE"
     "Confirmación, coordenadas, sacudida",  // "Confirmation, coordonnées, secousse"
@@ -7041,6 +7221,9 @@ static const char* const kI18n_es[] = {
     "Tiza y pizarra",  // "Craie et ardoise"
     "Crema",  // "Crème"
     "Franja",  // "Créneau"
+    "Franja sugerida",  // "Créneau conseillé"
+    "Franja sugerida: %d h – %d h",  // "Créneau conseillé : %d h – %d h"
+    "Franja sugerida: hasta las %d h",  // "Créneau conseillé : jusqu'à %d h"
     "Cobre",  // "Cuivre"
     "Total de carrera: %lu puntos",  // "Cumul carrière : %lu points"
     "Corazón de brasa",  // "Cœur de braise"
@@ -7093,6 +7276,7 @@ static const char* const kI18n_es[] = {
     "Detalles",  // "Détails"
     "Detección BMI270",  // "Détection BMI270"
     "Detectado",  // "Détecté"
+    "Desbloqueadas",  // "Déverrouillées"
     "BORRAR ESTADÍSTICAS",  // "EFFACER LES STATISTIQUES"
     "Borrar puntuaciones",  // "Effacer les scores"
     "¿Borrar puntuaciones?",  // "Effacer les scores ?"
@@ -7138,6 +7322,7 @@ static const char* const kI18n_es[] = {
     "Final: 16 jugadas cada uno",  // "Fin de partie : 16 coups chacun"
     "Final: 5 jugadas cada uno",  // "Fin de partie : 5 coups chacun"
     "Fin de mes (ritmo de %d d)",  // "Fin du mois (rythme %d j)"
+    "Fin prevista",  // "Fin prévue"
     "Final fallada — hay que volver al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Sutileza",  // "Finesse"
     "Fija",  // "Fixe"
@@ -7237,6 +7422,7 @@ static const char* const kI18n_es[] = {
     "Días libres",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km por día",  // "Km par jour"
     "Komi 0,5 para Blanco",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 para Blanco",  // "Komi 6,5 pour Blanc"
     "Gana el rival",  // "L'adversaire gagne"
@@ -7307,6 +7493,7 @@ static const char* const kI18n_es[] = {
     "Límite de carga",  // "Limite de charge"
     "Reproducir",  // "Lire"
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Brillo",  // "Luminosité"
     "Luz",  // "Lumière"
     "Luces",  // "Lumières"
@@ -7444,6 +7631,7 @@ static const char* const kI18n_es[] = {
     "PV invulnerable",  // "PV invulnérable"
     "Página siguiente",  // "Page suivante"
     "Hablar",  // "Parler"
+    "Parte del sol",  // "Part du soleil"
     "¡Quesito ganado! Vuelves a tirar.",  // "Part gagnée ! Vous rejouez."
     "Partida acabada en %u rondas · %u aciertos de %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partida interrumpida: historial lleno",  // "Partie interrompue : historique plein"
@@ -7455,9 +7643,13 @@ static const char* const kI18n_es[] = {
     "No después",  // "Pas après"
     "No antes",  // "Pas avant"
     "No se detecta batería",  // "Pas de batterie détectée"
+    "Sin carga en curso",  // "Pas de charge en cours"
+    "Hoy no hay franja sugerida",  // "Pas de créneau conseillé aujourd'hui"
     "Sin datos",  // "Pas de données"
+    "Sin previsión solar recibida",  // "Pas de prévision du soleil reçue"
     "Paso de seda",  // "Pas de velours"
     "No está cargando",  // "Pas en charge"
+    "Aún no hay lectura del cuentakilómetros",  // "Pas encore de relevé du compteur"
     "Pasa",  // "Passe"
     "Pasa — fin de la partida",  // "Passe — fin de partie"
     "Pasar",  // "Passer"
@@ -7487,11 +7679,13 @@ static const char* const kI18n_es[] = {
     "Lluvia en %d h",  // "Pluie sur %d h"
     "Pluma de hollín",  // "Plume de suie"
     "Sin imagen desde las %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Neumáticos OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Puntos neutrales (dame): %d",  // "Points neutres (dame) : %d"
     "¡Portal abierto!",  // "Portail ouvert !"
     "Puerta mal cerrada",  // "Porte mal fermée"
     "¿Puerta abierta?",  // "Porte ouverte ?"
+    "Puertas",  // "Portes"
     "Apoya la tableta Y LUEGO toca",  // "Pose la tablette PUIS appuie"
     "Apoya la tableta antes de tocar",  // "Pose la tablette avant d'appuyer"
     "Apoya la tableta y toca",  // "Pose la tablette et appuie"
@@ -7506,6 +7700,7 @@ static const char* const kI18n_es[] = {
     "Primera veta",  // "Premier filon"
     "Toma. Lo necesitarás.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Presión baja",  // "Pression basse"
     "Captura obligatoria",  // "Prise obligatoire"
     "Captura x%d",  // "Prise x%d"
     "Prisioneros: Negro %u, Blanco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -7527,6 +7722,7 @@ static const char* const kI18n_es[] = {
     "Previsto mañana",  // "Prévu demain"
     "Listo",  // "Prêt"
     "Listo en %s",  // "Prête dans %s"
+    "Listo a las %d:%02d",  // "Prête à %d h %02d"
     "Potencia",  // "Puissance"
     "Puramente estético",  // "Purement cosmétique"
     "Pirámide",  // "Pyramide"
@@ -7670,6 +7866,7 @@ static const char* const kI18n_es[] = {
     "Sensibilidad",  // "Sensibilité"
     "Sensibilidad IMU: %d/5",  // "Sensibilité IMU : %d/5"
     "Sensibilidad del nudge: %s",  // "Sensibilité du nudge : %s"
+    "Centinela",  // "Sentinelle"
     "Sept",  // "Sept"
     "Invernadero",  // "Serre"
     "Servidor IA",  // "Serveur IA"
@@ -7698,6 +7895,7 @@ static const char* const kI18n_es[] = {
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
     "Parar",  // "Stop"
+    "Sugerencia según la previsión solar",  // "Suggestion d'après la prévision du soleil"
     "Más",  // "Suite"
     "Siguiente",  // "Suivant"
     "Seguimiento",  // "Suivi"
@@ -7775,6 +7973,7 @@ static const char* const kI18n_es[] = {
     "Todas las partidas y ajustes se guardan en el Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Juegan %s",  // "Trait aux %s"
+    "Viajes",  // "Trajets"
     "Trabajo",  // "Travail"
     "Trabajo (sin horario)",  // "Travail (horaire inconnu)"
     "Triple repetición de la posición",  // "Triple répétition de la position"
@@ -7810,6 +8009,7 @@ static const char* const kI18n_es[] = {
     "Ventoso",  // "Venteux"
     "Ventilación",  // "Ventilation"
     "Bloqueado",  // "Verrouillé"
+    "Bloqueadas",  // "Verrouillées"
     "Hacia la red",  // "Vers le réseau"
     "Ganan las blancas",  // "Victoire des Blancs"
     "Ganan las negras",  // "Victoire des Noirs"
@@ -7860,6 +8060,9 @@ static const char* const kI18n_es[] = {
     "abril",  // "avril"
     "b = bolas jugadas, MB = multiball activado.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor mudo",  // "capteur muet"
+    "este mes",  // "ce mois-ci"
+    "cargados este mes",  // "chargés ce mois-ci"
+    "cargados por los coches este mes",  // "chargés par les voitures ce mois"
     "pico de calor",  // "coup de chaud"
     "acumulado",  // "cumul"
     "acumulado año",  // "cumul de l'année"
@@ -7868,6 +8071,7 @@ static const char* const kI18n_es[] = {
     "de autonomía",  // "d'autonomie"
     "de ventaja sobre la red este mes",  // "d'avance sur le réseau ce mois-ci"
     "de la carga por el sol",  // "de la charge par le soleil"
+    "de la casa",  // "de la maison"
     "de retraso con la red este mes",  // "de retard sur le réseau ce mois-ci"
     "de tu consumo cubierto por el sol",  // "de ta conso couverte par le soleil"
     "domingo",  // "dimanche"
@@ -7887,9 +8091,13 @@ static const char* const kI18n_es[] = {
     "jueves",  // "jeudi"
     "julio",  // "juillet"
     "junio",  // "juin"
+    "kWh / 100 km · estimado",  // "kWh / 100 km · estimé"
     "kWh / hora",  // "kWh / heure"
     "kWh / día",  // "kWh / jour"
     "kWh / mes",  // "kWh / mois"
+    "kWh cargados por día",  // "kWh chargés par jour"
+    "kWh/100 km estimados: energía cargada / km recorridos",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km recorridos",  // "km parcourus"
     "antes de la cita",  // "le début du rendez-vous"
     "leída %s",  // "lue %s"
     "lunes",  // "lundi"
@@ -7934,7 +8142,9 @@ static const char* const kI18n_es[] = {
     "{n} temas",  // "{n} titres"
     "%s, tira el dado",  // "À %s de lancer le dé"
     "¡Regar!",  // "À arroser !"
+    "Al día",  // "À jour"
     "A continuación",  // "À la suite"
+    "Por actualizar",  // "À mettre à jour"
     "A continuación · {titre}",  // "À suivre · {titre}"
     "Tu turno",  // "À vous"
     "Revisar",  // "À vérifier"
@@ -8019,6 +8229,7 @@ static const char* const kI18n_it[] = {
     "%d semimosse  ·  livello %s  ·  punteggio locale: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d semimosse giocate",  // "%d demi-coups joués"
     "%d errori",  // "%d erreurs"
+    "%d",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d – %d",  // "%d h – %d h"
     "%d",  // "%d heures"
@@ -8170,6 +8381,7 @@ static const char* const kI18n_it[] = {
     "Annulla",  // "Annuler"
     "Annulla l'ultima mossa",  // "Annuler le dernier coup"
     "Ago",  // "Août"
+    "Panoramica",  // "Aperçu"
     "Anteprima territorio: ATTIVA",  // "Aperçu du territoire : ACTIVÉ"
     "Anteprima territorio: DISATTIVATA",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
@@ -8229,6 +8441,7 @@ static const char* const kI18n_it[] = {
     "Oggi",  // "Auj."
     "Oggi",  // "Aujourd'hui"
     "Oggi {heure}",  // "Aujourd'hui {heure}"
+    "Oggi, ora per ora",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Altre",  // "Autres"
     "Avanti",  // "Avancer"
@@ -8277,6 +8490,7 @@ static const char* const kI18n_it[] = {
     "COLORI",  // "COULEURS"
     "MOSSE",  // "COUPS"
     "SCAVA",  // "CREUSER"
+    "Abitacolo",  // "Cabine"
     "Calcola 3 mosse + le prese a catena",  // "Calcule 3 coups + les prises en chaîne"
     "Calcola 4 mosse, tattica discreta",  // "Calcule 4 coups, tactique correcte"
     "Calendario",  // "Calendrier"
@@ -8337,6 +8551,7 @@ static const char* const kI18n_it[] = {
     "Complete",  // "Complètes"
     "Forma le squadre, poi imposta le domande",  // "Composez les équipes, puis réglez les questions"
     "Conta solo la modalità Giocatore vs Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Contachilometri %s km",  // "Compteur %s km"
     "Conferma mossa: ATTIVA",  // "Confirmation du coup : ACTIVÉE"
     "Conferma mossa: DISATTIVATA",  // "Confirmation du coup : DÉSACTIVÉE"
     "Conferma, coordinate, scossa",  // "Confirmation, coordonnées, secousse"
@@ -8373,6 +8588,9 @@ static const char* const kI18n_it[] = {
     "Gesso e ardesia",  // "Craie et ardoise"
     "Crema",  // "Crème"
     "Fascia",  // "Créneau"
+    "Fascia consigliata",  // "Créneau conseillé"
+    "Fascia consigliata: %d – %d",  // "Créneau conseillé : %d h – %d h"
+    "Fascia consigliata: fino alle %d",  // "Créneau conseillé : jusqu'à %d h"
     "Rame",  // "Cuivre"
     "Totale carriera: %lu punti",  // "Cumul carrière : %lu points"
     "Cuore di brace",  // "Cœur de braise"
@@ -8425,6 +8643,7 @@ static const char* const kI18n_it[] = {
     "Dettagli",  // "Détails"
     "Rilevamento BMI270",  // "Détection BMI270"
     "Rilevato",  // "Détecté"
+    "Sbloccate",  // "Déverrouillées"
     "CANCELLA LE STATISTICHE",  // "EFFACER LES STATISTIQUES"
     "Cancella punteggi",  // "Effacer les scores"
     "Cancellare i punteggi?",  // "Effacer les scores ?"
@@ -8470,6 +8689,7 @@ static const char* const kI18n_it[] = {
     "Finale: 16 mosse a testa",  // "Fin de partie : 16 coups chacun"
     "Finale: 5 mosse a testa",  // "Fin de partie : 5 coups chacun"
     "Fine mese (ritmo su %d g)",  // "Fin du mois (rythme %d j)"
+    "Fine prevista",  // "Fin prévue"
     "Finale mancata — torna al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Finezza",  // "Finesse"
     "Fissa",  // "Fixe"
@@ -8569,6 +8789,7 @@ static const char* const kI18n_it[] = {
     "Giorni liberi",  // "Jours de repos"
     "Lug",  // "Juil"
     "Giu",  // "Juin"
+    "Km al giorno",  // "Km par jour"
     "Komi 0,5 al Bianco",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 al Bianco",  // "Komi 6,5 pour Blanc"
     "Vince l'avversario",  // "L'adversaire gagne"
@@ -8639,6 +8860,7 @@ static const char* const kI18n_it[] = {
     "Limite di carica",  // "Limite de charge"
     "Riproduci",  // "Lire"
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Luminosità",  // "Luminosité"
     "Luce",  // "Lumière"
     "Luci",  // "Lumières"
@@ -8776,6 +8998,7 @@ static const char* const kI18n_it[] = {
     "PV invulnerabile",  // "PV invulnérable"
     "Pagina seguente",  // "Page suivante"
     "Parla",  // "Parler"
+    "Quota del sole",  // "Part du soleil"
     "Spicchio vinto! Tira ancora.",  // "Part gagnée ! Vous rejouez."
     "Partita chiusa in %u turni · %u risposte esatte su %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Partita interrotta: cronologia piena",  // "Partie interrompue : historique plein"
@@ -8787,9 +9010,13 @@ static const char* const kI18n_it[] = {
     "Non dopo",  // "Pas après"
     "Non prima",  // "Pas avant"
     "Nessuna batteria rilevata",  // "Pas de batterie détectée"
+    "Non in carica",  // "Pas de charge en cours"
+    "Nessuna fascia consigliata oggi",  // "Pas de créneau conseillé aujourd'hui"
     "Nessun dato",  // "Pas de données"
+    "Nessuna previsione solare ricevuta",  // "Pas de prévision du soleil reçue"
     "Passo di velluto",  // "Pas de velours"
     "Non in carica",  // "Pas en charge"
+    "Nessuna lettura del contachilometri",  // "Pas encore de relevé du compteur"
     "Passo",  // "Passe"
     "Passo — fine partita",  // "Passe — fin de partie"
     "Passa",  // "Passer"
@@ -8819,11 +9046,13 @@ static const char* const kI18n_it[] = {
     "Pioggia in %d h",  // "Pluie sur %d h"
     "Piuma di fuliggine",  // "Plume de suie"
     "Nessuna immagine dalle %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Gomme OK",  // "Pneus corrects"
     "Podcast",  // "Podcasts"
     "Punti neutri (dame): %d",  // "Points neutres (dame) : %d"
     "Portale aperto!",  // "Portail ouvert !"
     "Porta chiusa male",  // "Porte mal fermée"
     "Porta aperta?",  // "Porte ouverte ?"
+    "Porte",  // "Portes"
     "Appoggia il tablet, POI tocca",  // "Pose la tablette PUIS appuie"
     "Appoggia il tablet, poi tocca",  // "Pose la tablette avant d'appuyer"
     "Appoggia il tablet e tocca",  // "Pose la tablette et appuie"
@@ -8838,6 +9067,7 @@ static const char* const kI18n_it[] = {
     "Primo filone",  // "Premier filon"
     "Prendi. Ti servirà.",  // "Prends. Tu en auras besoin."
     "Preset",  // "Presets"
+    "Pressione bassa",  // "Pression basse"
     "Presa obbligatoria",  // "Prise obligatoire"
     "Presa x%d",  // "Prise x%d"
     "Prigionieri: Nero %u, Bianco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -8859,6 +9089,7 @@ static const char* const kI18n_it[] = {
     "Previsto domani",  // "Prévu demain"
     "Pronto",  // "Prêt"
     "Pronta in %s",  // "Prête dans %s"
+    "Pronta alle %d:%02d",  // "Prête à %d h %02d"
     "Potenza",  // "Puissance"
     "Puramente estetico",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -9002,6 +9233,7 @@ static const char* const kI18n_it[] = {
     "Sensibilità",  // "Sensibilité"
     "Sensibilità IMU: %d/5",  // "Sensibilité IMU : %d/5"
     "Sensibilità del nudge: %s",  // "Sensibilité du nudge : %s"
+    "Sentinella",  // "Sentinelle"
     "Set",  // "Sept"
     "Serra",  // "Serre"
     "Server IA",  // "Serveur IA"
@@ -9030,6 +9262,7 @@ static const char* const kI18n_it[] = {
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
     "Stop",  // "Stop"
+    "Suggerimento dalla previsione solare",  // "Suggestion d'après la prévision du soleil"
     "Altre",  // "Suite"
     "Successivo",  // "Suivant"
     "Monitoraggio",  // "Suivi"
@@ -9107,6 +9340,7 @@ static const char* const kI18n_it[] = {
     "Partite e opzioni restano salvate nel Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Muove il %s",  // "Trait aux %s"
+    "Viaggi",  // "Trajets"
     "Lavoro",  // "Travail"
     "Lavoro (orario ignoto)",  // "Travail (horaire inconnu)"
     "Triplice ripetizione della posizione",  // "Triple répétition de la position"
@@ -9142,6 +9376,7 @@ static const char* const kI18n_it[] = {
     "Ventoso",  // "Venteux"
     "Ventilazione",  // "Ventilation"
     "Bloccato",  // "Verrouillé"
+    "Bloccate",  // "Verrouillées"
     "Verso la rete",  // "Vers le réseau"
     "Vince il Bianco",  // "Victoire des Blancs"
     "Vince il Nero",  // "Victoire des Noirs"
@@ -9192,6 +9427,9 @@ static const char* const kI18n_it[] = {
     "aprile",  // "avril"
     "b = palle giocate, MB = multiball attivato.",  // "b = billes jouées, MB = multiball déclenché."
     "sensore muto",  // "capteur muet"
+    "questo mese",  // "ce mois-ci"
+    "caricati questo mese",  // "chargés ce mois-ci"
+    "caricati dalle auto questo mese",  // "chargés par les voitures ce mois"
     "picco di caldo",  // "coup de chaud"
     "cumulato",  // "cumul"
     "cumulato anno",  // "cumul de l'année"
@@ -9200,6 +9438,7 @@ static const char* const kI18n_it[] = {
     "di autonomia",  // "d'autonomie"
     "di vantaggio sulla rete questo mese",  // "d'avance sur le réseau ce mois-ci"
     "della ricarica dal sole",  // "de la charge par le soleil"
+    "della casa",  // "de la maison"
     "di ritardo sulla rete questo mese",  // "de retard sur le réseau ce mois-ci"
     "dei tuoi consumi coperti dal sole",  // "de ta conso couverte par le soleil"
     "domenica",  // "dimanche"
@@ -9219,9 +9458,13 @@ static const char* const kI18n_it[] = {
     "giovedì",  // "jeudi"
     "luglio",  // "juillet"
     "giugno",  // "juin"
+    "kWh / 100 km · stimato",  // "kWh / 100 km · estimé"
     "kWh / ora",  // "kWh / heure"
     "kWh / giorno",  // "kWh / jour"
     "kWh / mese",  // "kWh / mois"
+    "kWh caricati al giorno",  // "kWh chargés par jour"
+    "kWh/100 km stimati: energia caricata / km percorsi",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "km percorsi",  // "km parcourus"
     "prima dell'appuntamento",  // "le début du rendez-vous"
     "letto %s",  // "lue %s"
     "lunedì",  // "lundi"
@@ -9266,7 +9509,9 @@ static const char* const kI18n_it[] = {
     "{n} brani",  // "{n} titres"
     "%s, tira il dado",  // "À %s de lancer le dé"
     "Da annaffiare!",  // "À arroser !"
+    "Aggiornato",  // "À jour"
     "Di seguito",  // "À la suite"
+    "Da aggiornare",  // "À mettre à jour"
     "Di seguito · {titre}",  // "À suivre · {titre}"
     "Tocca a te",  // "À vous"
     "Da controllare",  // "À vérifier"
@@ -9351,6 +9596,7 @@ static const char* const kI18n_tr[] = {
     "%d yarım hamle  ·  seviye %s  ·  yerel derece: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d yarım hamle oynandı",  // "%d demi-coups joués"
     "%d hata",  // "%d erreurs"
+    "%d:00",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d:00 – %d:00",  // "%d h – %d h"
     "%d:00",  // "%d heures"
@@ -9502,6 +9748,7 @@ static const char* const kI18n_tr[] = {
     "İptal",  // "Annuler"
     "Son hamleyi geri al",  // "Annuler le dernier coup"
     "Ağu",  // "Août"
+    "Özet",  // "Aperçu"
     "Alan önizlemesi: AÇIK",  // "Aperçu du territoire : ACTIVÉ"
     "Alan önizlemesi: KAPALI",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Cihaz",  // "Appareil"
@@ -9561,6 +9808,7 @@ static const char* const kI18n_tr[] = {
     "Bugün",  // "Auj."
     "Bugün",  // "Aujourd'hui"
     "Bugün {heure}",  // "Aujourd'hui {heure}"
+    "Bugün, saat saat",  // "Aujourd'hui, heure par heure"
     "Otomatik",  // "Auto"
     "Diğer",  // "Autres"
     "İleri",  // "Avancer"
@@ -9609,6 +9857,7 @@ static const char* const kI18n_tr[] = {
     "RENKLER",  // "COULEURS"
     "HAMLE",  // "COUPS"
     "KAZ",  // "CREUSER"
+    "Kabin",  // "Cabine"
     "3 hamle + zincir almaları hesaplar",  // "Calcule 3 coups + les prises en chaîne"
     "4 hamle hesaplar, düzgün taktik",  // "Calcule 4 coups, tactique correcte"
     "Takvim",  // "Calendrier"
@@ -9669,6 +9918,7 @@ static const char* const kI18n_tr[] = {
     "Tümü",  // "Complètes"
     "Takımları kur, sonra soruları ayarla",  // "Composez les équipes, puis réglez les questions"
     "Yalnız Oyuncu - Tab modu sayılır.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Sayaç %s km",  // "Compteur %s km"
     "Hamle onayı: AÇIK",  // "Confirmation du coup : ACTIVÉE"
     "Hamle onayı: KAPALI",  // "Confirmation du coup : DÉSACTIVÉE"
     "Onay, koordinatlar, sallama",  // "Confirmation, coordonnées, secousse"
@@ -9705,6 +9955,9 @@ static const char* const kI18n_tr[] = {
     "Tebeşir ve arduvaz",  // "Craie et ardoise"
     "Krem",  // "Crème"
     "Aralık",  // "Créneau"
+    "Önerilen aralık",  // "Créneau conseillé"
+    "Önerilen aralık: %d:00 – %d:00",  // "Créneau conseillé : %d h – %d h"
+    "Önerilen aralık: %d:00'a kadar",  // "Créneau conseillé : jusqu'à %d h"
     "Bakır",  // "Cuivre"
     "Kariyer toplamı: %lu puan",  // "Cumul carrière : %lu points"
     "Kor Yürek",  // "Cœur de braise"
@@ -9757,6 +10010,7 @@ static const char* const kI18n_tr[] = {
     "Ayrıntılar",  // "Détails"
     "BMI270 algılama",  // "Détection BMI270"
     "Algılandı",  // "Détecté"
+    "Kilitsiz",  // "Déverrouillées"
     "İSTATİSTİKLERİ SİL",  // "EFFACER LES STATISTIQUES"
     "Skorları sil",  // "Effacer les scores"
     "Skorlar silinsin mi?",  // "Effacer les scores ?"
@@ -9802,6 +10056,7 @@ static const char* const kI18n_tr[] = {
     "Oyun sonu: her biri 16 hamle",  // "Fin de partie : 16 coups chacun"
     "Oyun sonu: her biri 5 hamle",  // "Fin de partie : 5 coups chacun"
     "Ay sonu (%d günlük hız)",  // "Fin du mois (rythme %d j)"
+    "Tahmini bitiş",  // "Fin prévue"
     "Final kaçtı — merkeze dönmen gerek.",  // "Finale manquée — il faudra revenir au centre."
     "İncelik",  // "Finesse"
     "Sabit",  // "Fixe"
@@ -9901,6 +10156,7 @@ static const char* const kI18n_tr[] = {
     "İzin günleri",  // "Jours de repos"
     "Tem",  // "Juil"
     "Haz",  // "Juin"
+    "Günlük km",  // "Km par jour"
     "Beyaz için komi 0,5",  // "Komi 0,5 pour Blanc"
     "Beyaz için komi 6,5",  // "Komi 6,5 pour Blanc"
     "Rakip kazanır",  // "L'adversaire gagne"
@@ -9971,6 +10227,7 @@ static const char* const kI18n_tr[] = {
     "Şarj sınırı",  // "Limite de charge"
     "Çal",  // "Lire"
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Yazılım",  // "Logiciel"
     "Parlaklık",  // "Luminosité"
     "Işık",  // "Lumière"
     "Işıklar",  // "Lumières"
@@ -10108,6 +10365,7 @@ static const char* const kI18n_tr[] = {
     "Can dokunulmaz",  // "PV invulnérable"
     "Sonraki sayfa",  // "Page suivante"
     "Konuş",  // "Parler"
+    "Güneş payı",  // "Part du soleil"
     "Dilim kazanıldı! Tekrar atıyorsun.",  // "Part gagnée ! Vous rejouez."
     "Oyun %u turda bitti · %u doğru yanıt, toplam %u",  // "Partie bouclée en %u tours · %u bonnes réponses sur %u"
     "Oyun kesildi: geçmiş dolu",  // "Partie interrompue : historique plein"
@@ -10119,9 +10377,13 @@ static const char* const kI18n_tr[] = {
     "En geç",  // "Pas après"
     "En erken",  // "Pas avant"
     "Pil algılanmadı",  // "Pas de batterie détectée"
+    "Şarj olmuyor",  // "Pas de charge en cours"
+    "Bugün önerilen aralık yok",  // "Pas de créneau conseillé aujourd'hui"
     "Veri yok",  // "Pas de données"
+    "Güneş tahmini alınmadı",  // "Pas de prévision du soleil reçue"
     "Kadife Adım",  // "Pas de velours"
     "Şarj olmuyor",  // "Pas en charge"
+    "Henüz sayaç okuması yok",  // "Pas encore de relevé du compteur"
     "Pas",  // "Passe"
     "Pas — oyun bitti",  // "Passe — fin de partie"
     "Pas",  // "Passer"
@@ -10151,11 +10413,13 @@ static const char* const kI18n_tr[] = {
     "%d saatte yağmur",  // "Pluie sur %d h"
     "Kurum Tüyü",  // "Plume de suie"
     "Son görsel: %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Lastikler normal",  // "Pneus corrects"
     "Podcast'ler",  // "Podcasts"
     "Nötr noktalar (dame): %d",  // "Points neutres (dame) : %d"
     "Portal açık!",  // "Portail ouvert !"
     "Kapı tam kapanmadı",  // "Porte mal fermée"
     "Kapı açık mı?",  // "Porte ouverte ?"
+    "Kapılar",  // "Portes"
     "Tableti yatır SONRA dokun",  // "Pose la tablette PUIS appuie"
     "Dokunmadan önce tableti yatır",  // "Pose la tablette avant d'appuyer"
     "Tableti yatır ve dokun",  // "Pose la tablette et appuie"
@@ -10170,6 +10434,7 @@ static const char* const kI18n_tr[] = {
     "İlk Damar",  // "Premier filon"
     "Al. İhtiyacın olacak.",  // "Prends. Tu en auras besoin."
     "Hazır ayar",  // "Presets"
+    "Düşük basınç",  // "Pression basse"
     "Alma zorunlu",  // "Prise obligatoire"
     "Alma x%d",  // "Prise x%d"
     "Oyundaki esirler: Siyah %u, Beyaz %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -10191,6 +10456,7 @@ static const char* const kI18n_tr[] = {
     "Yarın beklenen",  // "Prévu demain"
     "Hazır",  // "Prêt"
     "%s içinde hazır",  // "Prête dans %s"
+    "%d:%02d'de hazır",  // "Prête à %d h %02d"
     "Güç",  // "Puissance"
     "Tamamen kozmetik",  // "Purement cosmétique"
     "Piramit",  // "Pyramide"
@@ -10334,6 +10600,7 @@ static const char* const kI18n_tr[] = {
     "Hassasiyet",  // "Sensibilité"
     "IMU hassasiyeti: %d/5",  // "Sensibilité IMU : %d/5"
     "Dürtme hassasiyeti: %s",  // "Sensibilité du nudge : %s"
+    "Nöbetçi",  // "Sentinelle"
     "Eyl",  // "Sept"
     "Sera",  // "Serre"
     "YZ sunucusu",  // "Serveur IA"
@@ -10362,6 +10629,7 @@ static const char* const kI18n_tr[] = {
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
     "Dur",  // "Stop"
+    "Güneş tahminine göre öneri",  // "Suggestion d'après la prévision du soleil"
     "Devam",  // "Suite"
     "Sonraki",  // "Suivant"
     "Takip",  // "Suivi"
@@ -10439,6 +10707,7 @@ static const char* const kI18n_tr[] = {
     "Tüm oyunlar ve ayarlar Tab'da saklanır.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Sıra: %s",  // "Trait : %s"
     "Sıra: %s",  // "Trait aux %s"
+    "Yolculuk",  // "Trajets"
     "İş",  // "Travail"
     "İş (saat bilinmiyor)",  // "Travail (horaire inconnu)"
     "Konumun üç kez tekrarı",  // "Triple répétition de la position"
@@ -10474,6 +10743,7 @@ static const char* const kI18n_tr[] = {
     "Rüzgârlı",  // "Venteux"
     "Fan",  // "Ventilation"
     "Kilitli",  // "Verrouillé"
+    "Kilitli",  // "Verrouillées"
     "Şebekeye",  // "Vers le réseau"
     "Beyaz kazandı",  // "Victoire des Blancs"
     "Siyah kazandı",  // "Victoire des Noirs"
@@ -10524,6 +10794,9 @@ static const char* const kI18n_tr[] = {
     "Nisan",  // "avril"
     "b = oynanan bilye, MB = multiball tetiklendi.",  // "b = billes jouées, MB = multiball déclenché."
     "sensör sessiz",  // "capteur muet"
+    "bu ay",  // "ce mois-ci"
+    "bu ay şarj edildi",  // "chargés ce mois-ci"
+    "bu ay araçlarla şarj edildi",  // "chargés par les voitures ce mois"
     "sıcaklık artışı",  // "coup de chaud"
     "toplam",  // "cumul"
     "yıllık toplam",  // "cumul de l'année"
@@ -10532,6 +10805,7 @@ static const char* const kI18n_tr[] = {
     "menzil",  // "d'autonomie"
     "bu ay şebekeye karşı fazla",  // "d'avance sur le réseau ce mois-ci"
     "şarj güneşten geldi",  // "de la charge par le soleil"
+    "evin",  // "de la maison"
     "bu ay şebekeye karşı eksik",  // "de retard sur le réseau ce mois-ci"
     "tüketiminin güneşten karşılanan kısmı",  // "de ta conso couverte par le soleil"
     "Pazar",  // "dimanche"
@@ -10551,9 +10825,13 @@ static const char* const kI18n_tr[] = {
     "Perşembe",  // "jeudi"
     "Temmuz",  // "juillet"
     "Haziran",  // "juin"
+    "kWh / 100 km · tahmini",  // "kWh / 100 km · estimé"
     "kWh / saat",  // "kWh / heure"
     "kWh / gün",  // "kWh / jour"
     "kWh / ay",  // "kWh / mois"
+    "Günlük şarj edilen kWh",  // "kWh chargés par jour"
+    "Tahmini kWh/100 km: şarj edilen enerji / kat edilen km",  // "kWh/100 km estimés : énergie chargée / km parcourus"
+    "kat edilen km",  // "km parcourus"
     "randevudan önce",  // "le début du rendez-vous"
     "okundu %s",  // "lue %s"
     "Pazartesi",  // "lundi"
@@ -10598,7 +10876,9 @@ static const char* const kI18n_tr[] = {
     "{n} parça",  // "{n} titres"
     "Zarı atma sırası: %s",  // "À %s de lancer le dé"
     "Sulanmalı!",  // "À arroser !"
+    "Güncel",  // "À jour"
     "Sıradaki",  // "À la suite"
+    "Güncelleme var",  // "À mettre à jour"
     "Sıradaki · {titre}",  // "À suivre · {titre}"
     "Sıra sende",  // "À vous"
     "Kontrol et",  // "À vérifier"

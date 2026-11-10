@@ -637,8 +637,8 @@ api:
           example: "1"
         payload:
           type: string
-          description: "nom|batterie_pct|autonomie|unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|minutes_restantes|compteur_compte — vide = voiture absente (son cercle disparaît) ; champ vide = inconnu. etat : 0 inconnue ou endormie, 1 débranchée, 2 branchée sans charge, 3 en charge ; puissance en W reçus par la voiture, énergie en kWh, minutes jusqu'à la fin de la charge ; compteur_compte : 0 = le compteur de la maison ne compte pas les voitures, 1 ou vide = il les compte (leur charge est retranchée de la maison). Toujours ajouter à la fin."
-          example: "Model Y|78|412|km|3|7200|12.4|90|95|1"
+          description: "nom|batterie_pct|autonomie|unite_distance|etat|puissance_w|energie_ajoutee_kwh|limite_pct|minutes_restantes|compteur_compte|pneu_av_g|pneu_av_d|pneu_ar_g|pneu_ar_d|unite_pression|temp_int|temp_ext|unite_temperature|verrouillee|sentinelle|logiciel_a_jour — vide = voiture absente (son cercle disparaît) ; champ vide = inconnu. etat : 0 inconnue ou endormie, 1 débranchée, 2 branchée sans charge, 3 en charge ; puissance en W reçus par la voiture, énergie en kWh, minutes jusqu'à la fin de la charge ; compteur_compte : 0 = le compteur de la maison ne compte pas les voitures, 1 ou vide = il les compte (leur charge est retranchée de la maison). Page État du popup Voitures (ADR-0081) : les quatre pressions des pneus (avant gauche, avant droit, arrière gauche, arrière droit) dans unite_pression (bar, psi, kPa, hPa, mbar, cbar, Pa ; vide = bar), les températures de la cabine et de l'extérieur dans unite_temperature (°C, °F ; vide = °C), verrouillee / sentinelle / logiciel_a_jour : 1 oui, 0 non, vide = inconnu. Toujours ajouter à la fin."
+          example: "Model Y|78|412|km|3|7200|12.4|90|95|1|2.9|2.9|2.8|2.8|bar|19|14|°C|1|0|1"
       then:
         # Le popup Voitures (ADR-0079) lit le même payload : sa propre copie des voitures.
         - lambda: 'energie_voiture(rang, payload); voitures_recu(rang, payload);'
@@ -669,7 +669,41 @@ api:
           description: "24 kWh, un par heure locale du jour, séparés par « ; » (comme la vue des heures de tab5_maj_energie_historique) ; champ vide = pas de valeur (heure à venir) ; vide = la ligne disparaît. Sans voiture ayant une heure connue, la page Aujourd'hui reste celle d'avant. Toujours ajouter à la fin."
           example: "0;0;3.1;3.2;0;0;0;0;0.4;1.9;2.6;3;3.1;;;;;;;;;;;"
       then:
-        - lambda: 'energie_voiture_jour(rang, debut, valeurs);'
+        - lambda: |-
+            energie_voiture_jour(rang, debut, valeurs);
+            voitures_charge_jour(rang, debut, valeurs);
+
+    - service: tab5_maj_voiture_bilan
+      description: "Popup Énergie, page Bilan : le mois en cours des voitures (énergie, part du soleil, km, kWh/100 km, réseau, part de la maison) (ADR-0080), poussé avec les charges."
+      variables:
+        vue:
+          type: string
+          description: "mois_civil : le mois du bilan (seule vue lue pour l'instant ; une autre est refusée)"
+          example: "mois_civil"
+        debut:
+          type: string
+          description: "AAAA-MM-JJ : le 1er du mois (le nom du mois à l'écran)"
+          example: "2026-11-01"
+        payload:
+          type: string
+          description: "kwh|part_soleil_pct|km|kwh_100km|reseau_kwh pour la voiture 1, les mêmes cinq champs pour la voiture 2, puis la part des voitures dans la maison en % ; champ vide = inconnu (km et kWh/100 km n'existent qu'avec l'odomètre choisi), les cinq champs d'une voiture vides = pas de voiture ; vide = aucun bilan (la vue Voitures disparaît). C'est la chaîne `bilan` de script.tab5_voitures_analyse. Toujours ajouter à la fin."
+          example: "28.4|26|246|11.6|21.0|6.0|87|||0.8|10"
+      then:
+        - lambda: 'energie_voiture_bilan(vue, debut, payload);'
+
+    - service: tab5_maj_voiture_trajets
+      description: "Popup Voitures, page Trajets : les kilomètres des sept derniers jours d'une voiture, ceux du mois et son kWh / 100 km estimé (l'énergie chargée divisée par les kilomètres, pas une consommation mesurée) (ADR-0083), poussés avec les charges."
+      variables:
+        rang:
+          type: string
+          description: "1 ou 2 : la voiture (celle de tab5_maj_voiture)"
+          example: "1"
+        payload:
+          type: string
+          description: "debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours — debut AAAA-MM-JJ : le premier des sept jours, le dernier est aujourd'hui ; km_jours et kwh_jours : sept nombres séparés par « ; », du plus ancien à aujourd'hui, un jour sans relevé reste vide (ce n'est pas 0) ; un champ vide = inconnu. Vide = la voiture n'a pas d'odomètre choisi : elle disparaît de la page, qui n'existe plus sans voiture. On ajoute des champs à la fin seulement."
+          example: "2026-11-03|41280|600|18.6|41.2;0;112.4;56.8;23;5.6;88|0;0;0;0;0;7.4;0"
+      then:
+        - lambda: 'voitures_trajets_recu(rang, payload);'
 
     - service: tab5_maj_energie_historique
       description: "Popup Énergie : la production d'une vue en barres (heures du jour, 30 derniers jours, 12 derniers mois)."
@@ -699,7 +733,9 @@ api:
           description: "lever|midi|coucher|prevu_jour|prevu_demain|source|creneau_debut|creneau_fin|prevu|clair — heures locales HH:MM, kWh, source a (apprise × météo) ou e (prévision externe), créneau en heures entières 0-24 (fin exclue), prevu et clair = 24 valeurs en kWh séparées par ; (vide = pas de donnée)."
           example: "08:13|13:52|19:31|17.8|12.1|a|12|15|0;0;0;0;0;0;0;0;0.1;0.6;1.4;2.2;2.6;2.5;2.0;1.3;0.8;0.3;0.05;0;0;0;0;0|0;0;0;0;0;0;0;0;0.2;0.9;1.8;2.6;3.0;2.9;2.5;1.8;1.0;0.4;0.1;0;0;0;0;0"
       then:
-        - lambda: 'energie_soleil(payload);'
+        - lambda: |-
+            energie_soleil(payload);
+            voitures_charge_soleil(payload);
 
     - service: tab5_maj_energie_bilan
       description: "Popup Énergie : le bilan d'une vue en kWh (ADR-0062) — production, consommation, vente et achat au réseau, gains."

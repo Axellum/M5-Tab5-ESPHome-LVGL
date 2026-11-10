@@ -1612,3 +1612,45 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "menzil"
 "Aucune voiture reçue": "Hiç araç alınmadı"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Bunları blueprint'te “Énergie : voitures · Energy: cars” bölümünden seçin."
+# --- Popup Voitures, page État (tab5_voitures_etat.cpp, ADR-0081) ---------------
+# Libellés de lignes : colonne ~400 px, 12 caractères au plus. Valeurs : Roboto 32 gras, 16 au plus.
+"Cabine": "Kabin"
+"Portes": "Kapılar"
+"Sentinelle": "Nöbetçi"   # nom officiel Tesla en turc (Nöbetçi Modu)
+"Logiciel": "Yazılım"
+"Verrouillées": "Kilitli"
+"Déverrouillées": "Kilitsiz"
+"À jour": "Güncel"
+"À mettre à jour": "Güncelleme var"
+"Pneus corrects": "Lastikler normal"
+"Pression basse": "Düşük basınç"
+"Aperçu": "Özet"
+# --- Page Trajets du popup Voitures (tab5_voitures_trajets.cpp, ADR-0083) ---
+"Trajets": "Yolculuk"
+"Compteur %s km": "Sayaç %s km"
+"ce mois-ci": "bu ay"
+"kWh / 100 km · estimé": "kWh / 100 km · tahmini"
+"Km par jour": "Günlük km"
+"kWh chargés par jour": "Günlük şarj edilen kWh"
+"Pas encore de relevé du compteur": "Henüz sayaç okuması yok"
+
+# --- Popup Voitures, page Charge (ADR-0082) ---
+"Aujourd'hui, heure par heure": "Bugün, saat saat"
+"Fin prévue": "Tahmini bitiş"
+"Créneau conseillé": "Önerilen aralık"
+"%d h": "%d:00"
+"Créneau conseillé : %d h – %d h": "Önerilen aralık: %d:00 – %d:00"
+"Créneau conseillé : jusqu'à %d h": "Önerilen aralık: %d:00'a kadar"
+"Pas de créneau conseillé aujourd'hui": "Bugün önerilen aralık yok"
+"Pas de prévision du soleil reçue": "Güneş tahmini alınmadı"
+"Suggestion d'après la prévision du soleil": "Güneş tahminine göre öneri"
+"Pas de charge en cours": "Şarj olmuyor"
+"Prête à %d h %02d": "%d:%02d'de hazır"
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+# « evin » (génitif) : « 54 % evin » = part de la maison ; « kat edilen km » = km parcourus.
+"de la maison": "evin"
+"chargés par les voitures ce mois": "bu ay araçlarla şarj edildi"
+"Part du soleil": "Güneş payı"
+"chargés ce mois-ci": "bu ay şarj edildi"
+"km parcourus": "kat edilen km"
+"kWh/100 km estimés : énergie chargée / km parcourus": "Tahmini kWh/100 km: şarj edilen enerji / kat edilen km"

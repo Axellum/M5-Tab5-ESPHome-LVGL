@@ -31,6 +31,16 @@
 #       avec son unité h, min, s, d, ou horodatage). Poussé à chaque tour avec l'instantané, au
 #       moins une voiture choisie (sa batterie) ; le rang sans voiture part avec un payload
 #       vide (la tablette retire son cercle). Un blueprint plus ancien ne les envoie pas.
+#       Onze champs de plus à la FIN du payload (page « État » du popup Voitures, ADR-0081, tous
+#       facultatifs : champ vide = capteur non choisi ou sans valeur, la tablette écrit « -- ») :
+#       pneu_av_g|pneu_av_d|pneu_ar_g|pneu_ar_d|unite_pression|temp_int|temp_ext|unite_temperature|
+#       verrouillee|sentinelle|logiciel_a_jour. Pressions dans l'unité du capteur (bar, psi, kPa,
+#       hPa, mbar, cbar, Pa ; jamais convertie ici), températures en °C ou °F ; verrouillee,
+#       sentinelle, logiciel_a_jour : « 1 » oui, « 0 » non (serrure `lock` : locked = 1 ; binary_sensor
+#       de classe `lock` : éteint = verrouillée ; interrupteur de la Sentinelle : allumé = 1 ; mise
+#       à jour `update` : allumée = une mise à jour attend = 0). Chez Tesla (Fleet, Teslemetry), les
+#       pressions des pneus sont DÉSACTIVÉES par défaut dans l'intégration : à activer sur la page de
+#       l'appareil (entités désactivées), sans quoi la tablette écrit « -- ».
 #       tab5_maj_voiture_charges (ADR-0077, 09/11/2026) : payload « rang|jour|heure|duree_min|kwh|
 #       part_soleil_pct » séparées par « ; », six au plus, la plus récente d'abord : la chaîne
 #       `charges` de la réponse de script.tab5_voitures_analyse (packages/tab5_voitures.yaml,
@@ -50,6 +60,20 @@
 #       popup puis au plus toutes les 5 minutes) : trois appels, un par rang, tous les rangs à chaque
 #       fois (une série vide retire la voiture de la page « Aujourd'hui »). Un firmware plus ancien
 #       n'a pas l'action : continue_on_error.
+#       tab5_maj_voiture_bilan (ADR-0080, 10/11/2026) : vue « mois_civil », debut (le 1er du mois,
+#       AAAA-MM-JJ : `bilan_debut` de la réponse) et payload « kwh|part_soleil|km|kwh_100km|reseau »
+#       de chaque voiture puis la part de la maison (`bilan`), de la MÊME réponse de script.tab5_voitures_analyse,
+#       aux mêmes moments (ouverture du popup puis au plus toutes les 5 minutes) : un appel, poussé tel quel.
+#       Page « Bilan », bouton « Voitures ». Un payload vide retire le bouton ; un firmware plus ancien
+#       n'a pas l'action : continue_on_error.
+#       tab5_maj_voiture_trajets (ADR-0083, 10/11/2026) : rang « 1 » ou « 2 » et payload « debut|
+#       compteur_km|km_mois|kwh_100km|km_jours|kwh_jours » : les chaînes `trajets_1` et `trajets_2` de
+#       la MÊME réponse de script.tab5_voitures_analyse, aux mêmes moments (les deux rangs à chaque
+#       fois). debut = AAAA-MM-JJ du premier des SEPT derniers jours (aujourd'hui compris), km_jours et
+#       kwh_jours = sept valeurs séparées par « ; » (vide = pas de ligne ce jour-là), kwh_100km = l'énergie
+#       chargée ce mois-ci / les km du mois (une approximation). Chaîne vide = la voiture n'a pas
+#       d'odomètre choisi (champ `odometre` de la section « Énergie : voitures » du blueprint, passé à
+#       l'analyse avec la puissance de charge) : la page « Trajets » n'existe pas sans un odomètre.
 # @data_sources Production du jour = somme des « change » des statistiques de 5 minutes
 #       depuis minuit (heure locale), plus le partiel depuis la dernière ligne (état
 #       actuel − dernier « state », converti en kWh). Heures : les mêmes lignes, par heure
@@ -167,7 +191,9 @@ script:
           (entité qui l'emporte), devise (texte), prevision_jour et prevision_demain
           (capteurs de prévision externe, kWh). Voitures (ADR-0076) : voitures (liste de
           deux mappings nom, batterie, autonomie, etat, cable, puissance, energie, limite,
-          fin ; texte vide = non choisi) et voitures_compteur_compte (booléen).
+          fin, odometre (ADR-0083), et pour la page État pneu_av_g, pneu_av_d, pneu_ar_g, pneu_ar_d,
+          temp_int, temp_ext, verrou, sentinelle, logiciel ; texte vide = non choisi) et
+          voitures_compteur_compte (booléen).
     variables:
       c: "{{ capteurs if capteurs is mapping else {} }}"
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
@@ -211,7 +237,9 @@ script:
       voitures_entites: >-
         {%- set ns = namespace(l=[]) -%}
         {%- for v in voitures_c if v is mapping -%}
-          {%- for cle in ['batterie', 'autonomie', 'etat', 'cable', 'puissance', 'energie', 'limite', 'fin'] -%}
+          {%- for cle in ['batterie', 'autonomie', 'etat', 'cable', 'puissance', 'energie', 'limite', 'fin',
+                          'pneu_av_g', 'pneu_av_d', 'pneu_ar_g', 'pneu_ar_d', 'temp_int', 'temp_ext',
+                          'verrou', 'sentinelle', 'logiciel'] -%}
             {%- set e = v.get(cle, '') -%}
             {%- if e is string and e -%}{%- set ns.l = ns.l + [e] -%}{%- endif -%}
           {%- endfor -%}
@@ -230,7 +258,8 @@ script:
           {%- set ns.r = ns.r + 1 -%}
           {%- if v is mapping and v.get('puissance') -%}
             {%- set ns.l = ns.l + [{'rang': ns.r | string, 'nom': v.get('nom', '') | string,
-                                    'puissance_charge': v.get('puissance')}] -%}
+                                    'puissance_charge': v.get('puissance'),
+                                    'odometre': v.get('odometre') if v.get('odometre') is string else ''}] -%}
           {%- endif -%}
         {%- endfor -%}
         {{ ns.l }}
@@ -511,7 +540,8 @@ script:
                 payload: "{{ instantane }}"
               continue_on_error: true
             # Voitures (ADR-0076, action tab5_maj_voiture : rang, payload « nom|batterie|
-            # autonomie|unite|etat|puissance_w|energie_kwh|limite|minutes|compteur »). Rien
+            # autonomie|unite|etat|puissance_w|energie_kwh|limite|minutes|compteur », puis les onze
+            # champs de la page État, ADR-0081 : pneus, températures, verrou, Sentinelle, logiciel). Rien
             # n'est poussé sans voiture choisie (un firmware d'avant n'a pas l'action) ; avec
             # une seule, le rang de l'autre part VIDE : la tablette retire un cercle qu'un
             # réglage ancien aurait laissé. Champ vide = capteur non choisi ou sans valeur.
@@ -576,6 +606,43 @@ script:
                                 {%- set code = 3 -%}
                               {%- endif -%}
                               {%- set nom = (v.get('nom', '') | string | replace('|', '') | replace(';', '') | trim)[:24] -%}
+                              {#- Page « État » du popup Voitures (ADR-0081) : tout est facultatif, vide = capteur
+                                  non choisi ou sans valeur. Pneus : chaque valeur est envoyée telle quelle,
+                                  dans l'unité du premier pneu qui en a une, à condition que la tablette la
+                                  connaisse ; un pneu d'une autre unité reste vide (jamais une valeur
+                                  convertie de travers). Températures : même règle, en °C ou °F. Chez Tesla
+                                  les pressions sont désactivées par défaut dans l'intégration. -#}
+                              {%- set unites_pression = ['bar', 'cbar', 'mbar', 'hPa', 'kPa', 'Pa', 'psi'] -%}
+                              {%- set pn = namespace(u='', l=[]) -%}
+                              {%- for cle in ['pneu_av_g', 'pneu_av_d', 'pneu_ar_g', 'pneu_ar_d'] -%}
+                                {%- set ep = v.get(cle) -%}
+                                {%- set vp = (states(ep) | float(none)) if ep and states[ep] is not none else none -%}
+                                {%- set up = ((state_attr(ep, 'unit_of_measurement') or '') | string) if ep else '' -%}
+                                {%- if vp is not none and pn.u == '' and up in unites_pression -%}{%- set pn.u = up -%}{%- endif -%}
+                                {%- set pn.l = pn.l + [(vp | round(2) | string) if vp is not none and pn.u != '' and up == pn.u else ''] -%}
+                              {%- endfor -%}
+                              {%- set tp = namespace(u='', l=[]) -%}
+                              {%- for cle in ['temp_int', 'temp_ext'] -%}
+                                {%- set et = v.get(cle) -%}
+                                {%- set vt = (states(et) | float(none)) if et and states[et] is not none else none -%}
+                                {%- set ut = ((state_attr(et, 'unit_of_measurement') or '') | string) if et else '' -%}
+                                {%- if vt is not none and tp.u == '' and ut in ['°C', '°F'] -%}{%- set tp.u = ut -%}{%- endif -%}
+                                {%- set tp.l = tp.l + [(vt | round(1) | string) if vt is not none and tp.u != '' and ut == tp.u else ''] -%}
+                              {%- endfor -%}
+                              {#- Verrou : une serrure `lock` (locked = verrouillée) ou un binary_sensor de classe
+                                  `lock` (éteint = verrouillée, la convention de HA). Sentinelle : un interrupteur
+                                  ou un capteur vrai/faux (allumé = activée). Logiciel : une entité `update`
+                                  (éteinte = à jour, allumée = une mise à jour attend). -#}
+                              {%- set ev = v.get('verrou') -%}
+                              {%- set sv = (states(ev) | lower) if ev and states[ev] is not none else '' -%}
+                              {%- set dv = (ev | string).split('.')[0] if ev else '' -%}
+                              {%- set verrouillee = ('1' if sv == 'locked' else ('0' if sv in ['unlocked', 'unlocking', 'open', 'opening'] else '')) if dv == 'lock' else (('1' if sv == 'off' else ('0' if sv == 'on' else '')) if dv == 'binary_sensor' else '') -%}
+                              {%- set esn = v.get('sentinelle') -%}
+                              {%- set ss = (states(esn) | lower) if esn and states[esn] is not none else '' -%}
+                              {%- set sentinelle = '1' if ss == 'on' else ('0' if ss == 'off' else '') -%}
+                              {%- set elg = v.get('logiciel') -%}
+                              {%- set sl = (states(elg) | lower) if elg and states[elg] is not none else '' -%}
+                              {%- set logiciel = '1' if sl == 'off' else ('0' if sl == 'on' else '') -%}
                               {{ [nom,
                                   (bat | round(0) | int | string) if bat is not none else '',
                                   (auto | round(0) | int | string) if auto is not none else '',
@@ -584,7 +651,10 @@ script:
                                   (e | string) if e is not none else '',
                                   (lim | round(0) | int | string) if lim is not none else '',
                                   (minutes | string) if minutes is not none and code == 3 else '',
-                                  '1' if c.get('voitures_compteur_compte', true) else '0'] | join('|') }}
+                                  '1' if c.get('voitures_compteur_compte', true) else '0',
+                                  pn.l[0], pn.l[1], pn.l[2], pn.l[3], pn.u,
+                                  tp.l[0], tp.l[1], tp.u,
+                                  verrouillee, sentinelle, logiciel] | join('|') }}
                             {%- endif -%}
                       - action: "esphome.{{ tablette }}_tab5_maj_voiture"
                         data:
@@ -632,6 +702,31 @@ script:
                               debut: "{{ analyse_voitures.get('jour_debut', '') | string }}"
                               valeurs: >-
                                 {{ analyse_voitures.get('jour_maison' if repeat.item == '0' else 'jour_' ~ repeat.item, '') | string }}
+                            continue_on_error: true
+                    # La même réponse encore, le bilan du mois civil (ADR-0080, page « Bilan », bouton
+                    # « Voitures ») : `bilan_debut` (le 1er du mois) et `bilan` (kWh, part du soleil, km,
+                    # kWh/100 km et kWh du réseau de chaque voiture, puis la part de la maison), poussés
+                    # tels quels. Un payload vide retire le bouton. Un firmware sans l'action :
+                    # continue_on_error, le script continue.
+                    - action: "esphome.{{ tablette }}_tab5_maj_voiture_bilan"
+                      data:
+                        vue: mois_civil
+                        debut: "{{ analyse_voitures.get('bilan_debut', '') | string }}"
+                        payload: "{{ analyse_voitures.get('bilan', '') | string }}"
+                      continue_on_error: true
+                    # Les trajets (ADR-0083, page « Trajets » du popup Voitures, action
+                    # tab5_maj_voiture_trajets : rang et payload « debut|compteur_km|km_mois|kwh_100km|
+                    # km_jours|kwh_jours ») : `trajets_1` et `trajets_2` de la MÊME réponse, une
+                    # chaîne VIDE pour la voiture sans odomètre choisi (la tablette retire sa colonne,
+                    # et la page quand aucune n'en a). Les deux rangs à chaque fois. Un firmware plus
+                    # ancien n'a pas l'action : continue_on_error, le script continue.
+                    - repeat:
+                        for_each: ["1", "2"]
+                        sequence:
+                          - action: "esphome.{{ tablette }}_tab5_maj_voiture_trajets"
+                            data:
+                              rang: "{{ repeat.item }}"
+                              payload: "{{ analyse_voitures.get('trajets_' ~ repeat.item, '') | string }}"
                             continue_on_error: true
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande

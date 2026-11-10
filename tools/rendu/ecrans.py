@@ -28,14 +28,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
 from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_BATTERIE, JOURS_FR, NABU,  # noqa: E402
                        NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,
                        CHARGES, PIECES, PIECES_HUIT, PIECES_HUIT_NOMBRE, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES,
-                       VOITURES,
+                       VOITURES, VOITURES_COMPLETES,
                        HeureForecast, JourForecast, Piece,
                        Tuile, build_alerte_payload, build_climat_pieces, build_energie_bilan, build_energie_payload,
                        build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
-                       build_charges_payload, build_conso_jour, build_voiture_payload, build_zones_absentes, code_pluie,
-                       CONSO_JOUR_RANGS)
+                       build_charges_payload, build_conso_jour, build_energie_soleil, build_trajets_payload,
+                       build_voiture_payload, build_zones_absentes, code_pluie,
+                       CONSO_JOUR_RANGS, TRAJETS, VOITURE_BILAN, build_voiture_bilan)
 
 
 @dataclass(frozen=True)
@@ -611,6 +612,10 @@ ENERGIE_RETOUR_CHARGES = (ENERGIE_PAGE_PRECEDENTE,) * 3
 # 15 px des bords), y 87-685 à l'écran ; mêmes boutons de vue que la page Production (150 × 48
 # à 18, 178 et 338 px de son bord droit, x 1241), 10 px sous son haut.
 ENERGIE_BILAN_VUES = {"heures": (828, 121), "jours": (988, 121), "mois": (1148, 121)}
+# Avec le bilan des voitures reçu (ADR-0080) les boutons sont quatre, de 110 px, 10 px entre eux, le dernier
+# (« Voitures ») à 18 px du bord droit de la carte (x 1241) : centres à 808, 928, 1048 et 1168.
+ENERGIE_BILAN_VUES_VOITURES = {"heures": (808, 121), "jours": (928, 121), "mois": (1048, 121),
+                               "voitures": (1168, 121)}
 # Popup Réglages (reglages_popup.yaml), quatre pages depuis le 08/10/2026. Noms des pages
 # en haut : 200 × 44 à x 318 + 210 × i de la carte modale (posée à 15 px des bords), sur
 # la ligne du titre. Cartes des pages Écran et Apparence à (39, 87) à l'écran, 1202 de
@@ -662,6 +667,20 @@ FLUX_AVEC_BATTERIE = _instantane(ENERGIE_INSTANTANE_VOITURES_BATTERIE)
 FLUX_DE_LA_DEMO = _instantane()
 VOITURE_1, VOITURE_2 = _voiture(1, VOITURES[0]), _voiture(2, VOITURES[1])
 FLUX_SANS_VOITURE = (_voiture(1, None), _voiture(2, None), FLUX_DE_LA_DEMO)
+# Page « État » du popup Voitures (ADR-0081) : les deux voitures de la démo avec leurs pneus, leurs
+# températures, le verrou, la Sentinelle et le logiciel (la seconde a un pneu trop mou), et trois
+# variantes : en psi et en °F (un pneu à 30 psi = 2,07 bar : pression basse), partielle (la première
+# n'a que la température de la cabine et le verrou, la seconde rien : « -- » partout).
+VOITURE_1_ETAT, VOITURE_2_ETAT = _voiture(1, VOITURES_COMPLETES[0]), _voiture(2, VOITURES_COMPLETES[1])
+VOITURE_1_PSI = _voiture(1, {**VOITURES[0], "pneu_av_g": "42", "pneu_av_d": "42", "pneu_ar_g": "41",
+                             "pneu_ar_d": "30", "unite_pression": "psi", "temp_int": "67", "temp_ext": "54",
+                             "unite_temperature": "°F", "verrouillee": "1", "sentinelle": "1",
+                             "logiciel_a_jour": "1"})
+VOITURE_1_PARTIELLE = _voiture(1, {**VOITURES[0], "temp_int": "21", "unite_temperature": "°C",
+                                   "verrouillee": "1"})
+# Le nom de la page « État » dans l'en-tête : la seconde de deux pages, 200 px calés à gauche de la
+# croix (la dernière page des Réglages, de la Température : x 1048, y 41).
+ONGLET_ETAT_VOITURES = (1048, 41)
 
 
 # Les dernières charges des voitures (ADR-0077), datées du jour figé des captures : les six de la
@@ -689,6 +708,48 @@ def _conso(rang: str, valeurs: tuple | None = None) -> Service:
 CONSO_DEUX_VOITURES = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS)
 CONSO_UNE_VOITURE = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS[:2])
 CONSO_AUCUNE = tuple(_conso(rang, ()) for rang in CONSO_JOUR_RANGS)
+
+
+# Le bilan du mois des voitures (ADR-0080), daté du mois figé des captures : celui de la démo (deux voitures,
+# la première avec un odomètre, la seconde sans : « -- »), la voiture 1 seule, deux voitures qui ont chacune un
+# odomètre, une voiture dont seule l'énergie est connue (ni soleil, ni km, ni réseau), puis aucun (payload vide :
+# le bouton « Voitures » disparaît). La tablette garde ce qu'elle a reçu : chaque écran qui en pousse finit par
+# BILAN_VOITURES_AUCUN.
+def _bilan_voitures(voitures: tuple = VOITURE_BILAN, part: str = "54") -> Service:
+    return Service("tab5_maj_voiture_bilan",
+                   tuple(build_voiture_bilan(MOMENT_DES_CAPTURES.date(), voitures, part).items()), apres=0.3)
+
+
+BILAN_VOITURES_DEUX = _bilan_voitures()
+BILAN_VOITURES_UNE = _bilan_voitures(VOITURE_BILAN[:1], "30")
+BILAN_VOITURES_DEUX_KM = _bilan_voitures((VOITURE_BILAN[0], ("71.2", "52", "380", "18.7", "34.2")))
+BILAN_VOITURES_ENERGIE_SEULE = _bilan_voitures((("86.4", "", "", "", ""),), "")
+BILAN_VOITURES_AUCUN = _bilan_voitures(())
+
+# La prévision du soleil de la démo (la scène la pousse déjà), puis sa disparition (payload vide) : la page
+# Charge du popup Voitures (ADR-0082) dit alors qu'aucune prévision n'est arrivée. Chaque écran qui la
+# retire la repousse à la fin.
+SOLEIL_DE_LA_DEMO = Service("tab5_maj_energie_soleil", (("payload", build_energie_soleil()),), apres=0.3)
+SOLEIL_AUCUN = Service("tab5_maj_energie_soleil", (("payload", ""),), apres=0.3)
+
+
+# Les trajets des voitures (ADR-0083), datés du jour figé des captures : la fenêtre de sept jours finit au
+# 16 juin. Les deux voitures de la démo, la voiture 1 seule, une voiture dont l'odomètre est choisi mais sans
+# aucun relevé (tous les champs vides), aucune (payload vide : la page Trajets disparaît). La tablette garde
+# ce qu'elle a reçu : chaque écran qui en pousse finit par TRAJETS_AUCUN.
+def _trajets(rang: str, trajets: dict | None) -> Service:
+    return Service("tab5_maj_voiture_trajets",
+                   (("rang", rang), ("payload", build_trajets_payload(MOMENT_DES_CAPTURES.date(), trajets))),
+                   apres=0.3)
+
+
+TRAJETS_DEUX_VOITURES = tuple(_trajets(rang, t) for rang, t in TRAJETS.items())
+TRAJETS_UNE_VOITURE = (_trajets("1", TRAJETS["1"]),)
+TRAJETS_SANS_RELEVE = (_trajets("1", {}),)
+TRAJETS_AUCUN = tuple(_trajets(rang, None) for rang in TRAJETS)
+# Un glissement vers la gauche dans le popup Voitures : de l'Aperçu à la page suivante (Trajets quand c'est
+# la seule autre page ; sans autre page, le geste ne fait rien).
+VOITURES_PAGE_SUIVANTE = Glisser(1015, 520, 265, 520, dans_popup=True)
 # Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
 # la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
 # droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
@@ -1567,6 +1628,41 @@ ECRANS: tuple[Ecran, ...] = (
           ENERGIE_RETOUR_AUJOURDHUI + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
     Ecran("energie-bilan", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_BILAN,
           ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    # Bilan du mois des voitures (ADR-0080, lot 5) : le bouton « Voitures » à côté de Heures / Jours / Mois.
+    # Le repère « sans voiture » est energie-bilan, juste au-dessus, qui ne doit pas changer. Le graphique
+    # avec les quatre boutons (bilan reçu, bouton pas touché), une voiture, deux voitures, deux voitures qui
+    # ont chacune un odomètre, une voiture dont seule l'énergie est connue ; puis un bilan vidé en route
+    # (payload vide) : le bouton disparaît, la page est celle d'avant. Chaque écran referme le popup et retire
+    # le bilan et les voitures.
+    Ecran("energie-bilan-voitures-boutons",
+          (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2, BILAN_VOITURES_DEUX, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_BILAN,
+          ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE
+          + (BILAN_VOITURES_AUCUN,)),
+    Ecran("energie-bilan-1-voiture",
+          (FLUX_SANS_BATTERIE, VOITURE_1, BILAN_VOITURES_UNE, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES_VOITURES["voitures"]),),
+          ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE
+          + (BILAN_VOITURES_AUCUN,)),
+    Ecran("energie-bilan-2-voitures",
+          (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2, BILAN_VOITURES_DEUX, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES_VOITURES["voitures"]),),
+          ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE
+          + (BILAN_VOITURES_AUCUN,)),
+    Ecran("energie-bilan-2-voitures-km",
+          (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2, BILAN_VOITURES_DEUX_KM, VERS_LA_DROITE,
+           Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES_VOITURES["voitures"]),),
+          ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE
+          + (BILAN_VOITURES_AUCUN,)),
+    Ecran("energie-bilan-voitures-energie-seule",
+          (FLUX_SANS_BATTERIE, VOITURE_1, BILAN_VOITURES_ENERGIE_SEULE, VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE))
+          + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES_VOITURES["voitures"]),),
+          ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE
+          + (BILAN_VOITURES_AUCUN,)),
+    Ecran("energie-bilan-voitures-absent",
+          (FLUX_SANS_BATTERIE, VOITURE_1, VOITURE_2, BILAN_VOITURES_DEUX, BILAN_VOITURES_AUCUN, VERS_LA_DROITE,
+           Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_BILAN,
+          ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE) + FLUX_SANS_VOITURE),
     Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_PRODUCTION,
           ENERGIE_RETOUR_PRODUCTION + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
     Ecran("energie-jours", (Aller("Energy"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["jours"]),),
@@ -1718,6 +1814,57 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("voitures-2", (VOITURE_1, VOITURE_2, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-1", (VOITURE_1, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-aucune", (Aller("Cars"),)),
+    # Page Charge (ADR-0082, 2e onglet) : un glissement vers la gauche depuis l'Aperçu. Les heures du jour
+    # des voitures de la démo (CONSO_JOUR : la 2 a chargé de 1 h à 3 h, la 1 charge depuis 6 h) et la
+    # prévision du soleil de la scène, à 7 h 45 : deux voitures, une seule, puis la prévision absente.
+    # Chaque écran revient à l'Aperçu (glissement inverse) et retire séries et voitures.
+    Ecran("voitures-charge-2",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + (Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    Ecran("voitures-charge-1",
+          (VOITURE_1,) + CONSO_UNE_VOITURE + (Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    Ecran("voitures-charge-sans-soleil",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + (SOLEIL_AUCUN, Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE + (SOLEIL_DE_LA_DEMO,)),
+    # Page Trajets du popup (ADR-0083) : deux voitures côte à côte, une seule en pleine largeur, une voiture
+    # dont l'odomètre est choisi mais sans relevé (le message), puis des voitures sans trajets (aucune
+    # page ni onglet : l'Aperçu seul, comme voitures-2). Les trajets et les voitures sont retirés à la fin.
+    Ecran("voitures-trajets-2", (VOITURE_1, VOITURE_2) + TRAJETS_DEUX_VOITURES + (Aller("Cars"), VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE),
+    Ecran("voitures-trajets-1", (VOITURE_1,) + TRAJETS_UNE_VOITURE + (Aller("Cars"), VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE),
+    Ecran("voitures-trajets-sans-releve", (VOITURE_1,) + TRAJETS_SANS_RELEVE + (Aller("Cars"), VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE),
+    Ecran("voitures-trajets-aucun", (VOITURE_1, VOITURE_2, Aller("Cars"), VOITURES_PAGE_SUIVANTE), FLUX_SANS_VOITURE),
+    # Les trois pages ensemble (Aperçu, Charge, Trajets) : la rangée d'onglets au plus large, deux glissements
+    # vers la gauche. Sur la 7B la page Charge n'existe pas (kChargePage) : le second glissement ramène à l'Aperçu.
+    Ecran("voitures-trajets-3-onglets",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + TRAJETS_DEUX_VOITURES
+          + (Aller("Cars"), VOITURES_PAGE_SUIVANTE, VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    # Page État (ADR-0081, lot 7) : l'Aperçu avec le nom de ses deux pages dès qu'une voiture a un état
+    # (celui-là d'abord : le popup garde sa page), puis la page État avec deux voitures, une seule, en psi
+    # et en °F, et à moitié renseignée. Les voitures sont retirées à la fin de chaque écran (leur état avec).
+    Ecran("voitures-apercu-onglets", (VOITURE_1_ETAT, VOITURE_2_ETAT, Aller("Cars")), FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-2", (VOITURE_1_ETAT, VOITURE_2_ETAT, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
+          FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-1", (VOITURE_1_ETAT, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-1-psi", (VOITURE_1_PSI, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-incomplet",
+          (VOITURE_1_PARTIELLE, VOITURE_2, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
+    # Les trois pages ensemble (Aperçu, Charge, État : la Charge dès que les heures du jour sont reçues) :
+    # trois noms en haut, le dernier calé contre la croix, comme avec deux.
+    Ecran("voitures-etat-3-onglets",
+          (VOITURE_1_ETAT, VOITURE_2_ETAT) + CONSO_DEUX_VOITURES + (Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
+          FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    # Les quatre pages ensemble (Aperçu, Charge, Trajets, État) : la rangée d'onglets au plus large, la
+    # dernière ouverte, calée contre la croix comme avec deux ou trois noms. Sur la 7B la page Charge
+    # n'existe pas (kChargePage) : trois noms seulement. Les séries, les trajets et les voitures sont retirés.
+    Ecran("voitures-4-onglets",
+          (VOITURE_1_ETAT, VOITURE_2_ETAT) + CONSO_DEUX_VOITURES + TRAJETS_DEUX_VOITURES
+          + (Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE + CONSO_AUCUNE),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée
