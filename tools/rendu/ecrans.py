@@ -1858,6 +1858,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("voitures-etat-3-onglets",
           (VOITURE_1_ETAT, VOITURE_2_ETAT) + CONSO_DEUX_VOITURES + (Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
           FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    # Les quatre pages ensemble (Aperçu, Charge, Trajets, État) : la rangée d'onglets au plus large, la
+    # dernière ouverte, calée contre la croix comme avec deux ou trois noms. Sur la 7B la page Charge
+    # n'existe pas (kChargePage) : trois noms seulement. Les séries, les trajets et les voitures sont retirés.
+    Ecran("voitures-4-onglets",
+          (VOITURE_1_ETAT, VOITURE_2_ETAT) + CONSO_DEUX_VOITURES + TRAJETS_DEUX_VOITURES
+          + (Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE + CONSO_AUCUNE),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée
