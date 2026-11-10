@@ -27,6 +27,7 @@ script:
           if (u.popup != nullptr) return;
           u.message = id(voitures_message);
           u.conseil = id(voitures_conseil);
+          u.style_carte = id(style_glass_card);
           u.onglet[0] = id(voitures_onglet_0);
           u.onglet[1] = id(voitures_onglet_1);
           u.onglet[2] = id(voitures_onglet_2);

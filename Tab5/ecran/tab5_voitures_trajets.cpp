@@ -53,7 +53,6 @@ constexpr int32_t kEcartJour = hauteur_carte(6);                // sous les barr
 constexpr int32_t kBarresKmH = hauteur_carte(120);              // hauteur de la plus haute barre de km
 constexpr int32_t kBarresKwhH = hauteur_carte(70);              // … de la plus haute barre de kWh
 constexpr int32_t kTrait = 4;                                   // un zéro connu : un trait, pas une barre
-constexpr int32_t kRayonCarte = 20;                             // le rayon de style_glass_card
 constexpr int32_t kEcartInconnu = 16;                           // entre le nom et le compteur
 // La rangée des kWh reçus : une carte aussi haute que celle du Tab5 seulement.
 constexpr bool kAvecKwh = kCorpsH >= kCorpsHTab5;
@@ -106,18 +105,12 @@ lv_obj_t* libelle(lv_obj_t* parent, const lv_font_t* police, int32_t largeur, lv
     return l;
 }
 
-// La carte de verre de style_glass_card (tab5-styles.yaml), construite ici : les couleurs sont posées à
-// chaque peinture (peindre_colonne), elles suivent le thème.
-lv_obj_t* carte_verre(lv_obj_t* parent) {
+// La carte de verre : le style partagé style_glass_card lui-même (tab5-styles.yaml), pas une copie, pour que
+// ses formes (rayon, bords, opacité) et ses couleurs suivent le thème comme celles de l'Aperçu.
+lv_obj_t* carte_verre(lv_obj_t* parent, lv_style_t* style) {
     lv_obj_t* o = lv_obj_create(parent);
     lv_obj_remove_style_all(o);
-    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_bg_grad_dir(o, LV_GRAD_DIR_VER, LV_PART_MAIN);
-    lv_obj_set_style_bg_main_stop(o, 25, LV_PART_MAIN);
-    lv_obj_set_style_bg_grad_stop(o, 240, LV_PART_MAIN);
-    lv_obj_set_style_border_width(o, 2, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(o, static_cast<lv_opa_t>(140), LV_PART_MAIN);   // 55 %
-    lv_obj_set_style_radius(o, kRayonCarte, LV_PART_MAIN);
+    lv_obj_add_style(o, style, LV_PART_MAIN);
     lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
@@ -130,12 +123,13 @@ void creer() {
     if (s_cree) return;
     const VoituresUI& u = g_voitures_ui;
     lv_obj_t* corps = voitures_corps();
-    if (corps == nullptr || u.nom[0] == nullptr || u.autonomie[0] == nullptr || u.sous[0] == nullptr) return;
+    if (corps == nullptr || u.style_carte == nullptr || u.nom[0] == nullptr || u.autonomie[0] == nullptr || u.sous[0] == nullptr)
+        return;
     s_police_grasse = lv_obj_get_style_text_font(u.nom[0], LV_PART_MAIN);
     s_police_grande = lv_obj_get_style_text_font(u.autonomie[0], LV_PART_MAIN);
     s_police = lv_obj_get_style_text_font(u.sous[0], LV_PART_MAIN);
     for (Colonne& o : s_c) {
-        o.fond = carte_verre(corps);
+        o.fond = carte_verre(corps, u.style_carte);
         o.nom = libelle(o.fond, s_police_grasse, 0);
         o.compteur = libelle(o.fond, s_police, 0);
         o.km = libelle(o.fond, s_police_grande, 0);
@@ -183,12 +177,29 @@ int jour_du_mois_aujourdhui() {
     return t.tm_mday;
 }
 
-// Vrai si la voiture a au moins un relevé lisible (un jour, ou les kilomètres du mois).
+// Vrai si la voiture a au moins un relevé lisible : le compteur, les kilomètres du mois, le kWh / 100 km, ou
+// un jour (kilomètres ou kWh). Sinon la carte dit seulement qu'il n'y a pas encore de relevé.
 bool a_releves(const TrajetsLu& t) {
-    if (std::isfinite(t.km_mois)) return true;
+    if (std::isfinite(t.compteur) || std::isfinite(t.km_mois) || std::isfinite(t.kwh_100km)) return true;
     for (int i = 0; i < kJ; i++)
-        if (std::isfinite(t.km[i])) return true;
+        if (std::isfinite(t.km[i]) || std::isfinite(t.kwh[i])) return true;
     return false;
+}
+
+// « kWh / 100 km · estimé » : sur une ligne, ou sur deux (le séparateur « · » devient un saut de ligne) quand
+// la ligne entière ne tient pas dans `place` (la 7B, deux voitures). Renvoie le nombre de lignes ; `larg` reçoit
+// la largeur du bloc (la plus longue ligne), dans la police du label.
+int sous_conso(lv_obj_t* lbl, char* out, size_t n, int32_t place, int32_t& larg) {
+    snprintf(out, n, "%s", tr("kWh / 100 km · estimé"));
+    larg = ui_largeur_texte(lbl, out);
+    if (larg <= place) return 1;
+    char* sep = strstr(out, " \xC2\xB7 ");   // espace, point médian (2 octets), espace : 4 octets
+    if (sep == nullptr) return 1;
+    memmove(sep + 1, sep + 4, strlen(sep + 4) + 1);   // « a · b » devient « a », un octet, « b »
+    sep[0] = '\0';
+    larg = std::max(ui_largeur_texte(lbl, out), ui_largeur_texte(lbl, sep + 1));   // chaque ligne seule
+    sep[0] = '\n';
+    return 2;
 }
 
 // La plus grande valeur connue d'une série (0 sans valeur).
@@ -215,7 +226,12 @@ void peindre_barres(lv_obj_t* const* barres, lv_obj_t* const* valeurs, const flo
             ui_hidden(valeurs[i], true);
             continue;
         }
-        const bool zero = v[i] <= 0.0f;
+        // Le texte d'abord : une valeur qui s'écrit « 0 » ou « 0.0 » est un zéro (un trait, pas de nombre), et
+        // 99.96 s'écrit « 100 », pas « 100.0 ».
+        const bool une_decimale = decimales > 0 && std::round(v[i] * 10.0f) / 10.0f < 100.0f;
+        char txt[16];
+        snprintf(txt, sizeof(txt), une_decimale ? "%.1f" : "%.0f", v[i]);
+        const bool zero = v[i] <= 0.0f || strcmp(txt, une_decimale ? "0.0" : "0") == 0;
         int32_t h = kTrait;
         if (!zero && vmax > 0.0f) h = std::max<int32_t>(kTrait, std::lround(v[i] / vmax * hmax));
         ui_style_couleur(barres[i], LV_STYLE_BG_COLOR, zero ? UIColor.ARC_TRACK : couleur);
@@ -224,8 +240,6 @@ void peindre_barres(lv_obj_t* const* barres, lv_obj_t* const* valeurs, const flo
             ui_hidden(valeurs[i], true);
             continue;
         }
-        char txt[16];
-        snprintf(txt, sizeof(txt), decimales > 0 && v[i] < 100.0f ? "%.1f" : "%.0f", v[i]);
         ui_text(valeurs[i], txt);
         ui_text_color(valeurs[i], v[i] >= vmax ? UIColor.TEXT_PRIMARY : UIColor.TEXT_SOFT);
         ui_poser(valeurs[i], x + i * pas, y_base - h - haut(valeurs[i]) - 2, pas, LV_SIZE_CONTENT);
@@ -237,9 +251,6 @@ void peindre_colonne(int c, int k, int32_t x0, int32_t w) {
     Colonne& o = s_c[c];
     const TrajetsLu& t = s_t[k];
     ui_poser(o.fond, kCorpsX + x0, kCorpsY, w, kCorpsH);
-    ui_style_couleur(o.fond, LV_STYLE_BG_COLOR, UIColor.GLASS_HI);
-    ui_style_couleur(o.fond, LV_STYLE_BG_GRAD_COLOR, UIColor.GLASS_LO);
-    ui_style_couleur(o.fond, LV_STYLE_BORDER_COLOR, UIColor.GLASS_RIM);
 
     const int32_t col = std::min(w - 2 * kPad, kColonneMax);
     const int32_t x = (w - col) / 2;
@@ -262,15 +273,19 @@ void peindre_colonne(int c, int k, int32_t x0, int32_t w) {
     const int32_t h_sous = haut(o.km_sous);
     const int32_t h_titre = haut(o.titre_km);
     const int32_t h_val = haut(o.val_km[0]);
-    const int32_t h_jour = haut(o.jour[0]);
+    const int32_t h_jours = 2 * haut(o.jour[0]);   // le jour de la semaine, puis son numéro : deux lignes
+    // « kWh / 100 km · estimé » à droite des kilomètres : une ligne si elle tient, sinon deux.
+    char sous_c[64];
+    int32_t l_sous_c = 0;
+    const int lignes_sous_c = sous_conso(o.conso_sous, sous_c, sizeof(sous_c), col / 2, l_sous_c);
     // Le « grand » nombre a de l'air sous ses chiffres : sa ligne et celle de dessous se recouvrent un peu.
     const int32_t recouvre = 4;
 
     // --- La pile verticale, centrée dans la carte ---------------------------------------------
     int32_t total = h_ligne;
     if (releves) {
-        total += kEcartNom + h_grand + h_sous - recouvre + kEcartBloc;
-        total += h_titre + kEcartTitre + h_val + kBarresKmH + kEcartJour + h_jour;
+        total += kEcartNom + h_grand + lignes_sous_c * h_sous - recouvre + kEcartBloc;
+        total += h_titre + kEcartTitre + h_val + kBarresKmH + kEcartJour + h_jours;
         if (kAvecKwh) total += kEcartBloc + h_titre + kEcartTitre + h_val + kBarresKwhH;
     } else {
         total += kEcartBloc + haut(o.vide);
@@ -308,7 +323,6 @@ void peindre_colonne(int c, int k, int32_t x0, int32_t w) {
 
     // --- Les kilomètres du mois et le kWh / 100 km estimé, côte à côte ------------------------------
     y += kEcartNom;
-    const int32_t demi = col / 2;
     if (std::isfinite(t.km_mois)) milliers(num, sizeof(num), t.km_mois);
     else snprintf(num, sizeof(num), "--");
     ui_text(o.km, num);
@@ -331,12 +345,15 @@ void peindre_colonne(int c, int k, int32_t x0, int32_t w) {
     else snprintf(num, sizeof(num), "--");
     ui_text(o.conso, num);
     ui_text_color(o.conso, UIColor.TEXT_PRIMARY);
-    ui_poser(o.conso, x + demi, y, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    // Le bloc du kWh / 100 km est calé sur le bord droit de la colonne (comme le compteur au-dessus), à la
+    // largeur de son texte : il n'est jamais coupé, et laisse aux kilomètres tout le reste de la ligne.
+    const int32_t x_conso = std::max(x, x + col - std::max(ui_largeur_texte(o.conso, num), l_sous_c));
+    ui_poser(o.conso, x_conso, y, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     // « estimé » : l'énergie chargée divisée par les kilomètres, pas une consommation mesurée.
-    texte_ha_coupe(o.conso_sous, tr("kWh / 100 km · estimé"), col - demi);
+    ui_text(o.conso_sous, sous_c);
     ui_text_color(o.conso_sous, UIColor.TEXT_DIM);
-    ui_poser(o.conso_sous, x + demi, y + h_grand - recouvre, col - demi, LV_SIZE_CONTENT);
-    y += h_grand + h_sous - recouvre + kEcartBloc;
+    ui_poser(o.conso_sous, x_conso, y + h_grand - recouvre, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    y += h_grand + lignes_sous_c * h_sous - recouvre + kEcartBloc;
 
     // --- Les kilomètres des sept derniers jours -----------------------------------------------
     ui_text(o.titre_km, tr("Km par jour"));
@@ -353,12 +370,12 @@ void peindre_colonne(int c, int k, int32_t x0, int32_t w) {
             ui_hidden(o.jour[i], true);
             continue;
         }
-        snprintf(txt, sizeof(txt), "%s %d", day_short_utf8(sjour), mjour);
+        snprintf(txt, sizeof(txt), "%s\n%d", day_short_utf8(sjour), mjour);   // le jour, puis son numéro
         ui_text(o.jour[i], txt);
         ui_text_color(o.jour[i], mjour == aujourdhui ? UIColor.INFO : UIColor.TEXT_DIM);
         ui_poser(o.jour[i], x + i * pas, y, pas, LV_SIZE_CONTENT);
     }
-    y += h_jour;
+    y += h_jours;
 
     // --- Les kWh reçus par la voiture ces jours-là (le Tab5 seulement) ------------------------------
     if (!kAvecKwh) {

@@ -53,6 +53,9 @@ struct VoituresUI {
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture) : demande à
     // Home Assistant de pousser les voitures quand le popup s'ouvre sans en avoir reçu.
     void (*demander)() = nullptr;
+    // style_glass_card (tab5-styles.yaml) : les cartes que les pages créent en C++ le prennent, pour suivre
+    // les formes et les couleurs du thème comme les cartes de l'Aperçu.
+    lv_style_t* style_carte = nullptr;
 };
 extern VoituresUI g_voitures_ui;
 
