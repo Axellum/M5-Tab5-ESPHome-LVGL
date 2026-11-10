@@ -1615,7 +1615,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
 # « evin » (génitif) : « 54 % evin » = part de la maison ; « kat edilen km » = km parcourus.
 "de la maison": "evin"
-"chargés par les voitures ce mois-ci": "bu ay araçlarla şarj edildi"
+"chargés par les voitures ce mois": "bu ay araçlarla şarj edildi"
 "Part du soleil": "Güneş payı"
 "chargés ce mois-ci": "bu ay şarj edildi"
 "km parcourus": "kat edilen km"

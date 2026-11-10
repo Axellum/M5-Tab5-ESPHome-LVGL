@@ -1646,7 +1646,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Elígelos en el blueprint, sección «Énergie : voitures · Energy: cars»."
 # --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
 "de la maison": "de la casa"
-"chargés par les voitures ce mois-ci": "cargados por los coches este mes"
+"chargés par les voitures ce mois": "cargados por los coches este mes"
 "Part du soleil": "Parte del sol"
 "chargés ce mois-ci": "cargados este mes"
 "km parcourus": "km recorridos"

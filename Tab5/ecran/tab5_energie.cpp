@@ -2387,7 +2387,7 @@ void peindre_voitures_bilan() {
     ui_text(o.anneau_texte, tr("de la maison"));
     kwh(x, sizeof(x), tot.kwh);
     ui_text(o.total, x);
-    ui_text(o.total_texte, tr("chargés par les voitures ce mois-ci"));
+    ui_text(o.total_texte, tr("chargés par les voitures ce mois"));
     texte_ha_coupe(o.soleil_titre, tr("Part du soleil"), kBvGL);
     pourcent(x, sizeof(x), tot.soleil);
     ui_text(o.soleil_valeur, x);

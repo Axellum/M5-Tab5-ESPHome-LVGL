@@ -2540,7 +2540,7 @@ static const char* const kI18nKeys[] = {
     "b = billes jouées, MB = multiball déclenché.",
     "capteur muet",
     "chargés ce mois-ci",
-    "chargés par les voitures ce mois-ci",
+    "chargés par les voitures ce mois",
     "coup de chaud",
     "cumul",
     "cumul de l'année",
@@ -3878,7 +3878,7 @@ static const char* const kI18n_en[] = {
     "b = balls played, MB = multiball triggered.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor silent",  // "capteur muet"
     "charged this month",  // "chargés ce mois-ci"
-    "charged by the cars this month",  // "chargés par les voitures ce mois-ci"
+    "charged by the cars this month",  // "chargés par les voitures ce mois"
     "heat spike",  // "coup de chaud"
     "total",  // "cumul"
     "year's total",  // "cumul de l'année"
@@ -5216,7 +5216,7 @@ static const char* const kI18n_de[] = {
     "b = gespielte Bälle, MB = Multiball ausgelöst.",  // "b = billes jouées, MB = multiball déclenché."
     "Sensor stumm",  // "capteur muet"
     "geladen diesen Monat",  // "chargés ce mois-ci"
-    "von den Autos geladen diesen Monat",  // "chargés par les voitures ce mois-ci"
+    "von den Autos geladen diesen Monat",  // "chargés par les voitures ce mois"
     "Hitzespitze",  // "coup de chaud"
     "Summe",  // "cumul"
     "Jahressumme",  // "cumul de l'année"
@@ -6554,7 +6554,7 @@ static const char* const kI18n_nl[] = {
     "b = gespeelde ballen, MB = multiball gestart.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor stil",  // "capteur muet"
     "geladen deze maand",  // "chargés ce mois-ci"
-    "geladen door auto's deze maand",  // "chargés par les voitures ce mois-ci"
+    "geladen door auto's deze maand",  // "chargés par les voitures ce mois"
     "hitte-piek",  // "coup de chaud"
     "totaal",  // "cumul"
     "jaartotaal",  // "cumul de l'année"
@@ -7892,7 +7892,7 @@ static const char* const kI18n_es[] = {
     "b = bolas jugadas, MB = multiball activado.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor mudo",  // "capteur muet"
     "cargados este mes",  // "chargés ce mois-ci"
-    "cargados por los coches este mes",  // "chargés par les voitures ce mois-ci"
+    "cargados por los coches este mes",  // "chargés par les voitures ce mois"
     "pico de calor",  // "coup de chaud"
     "acumulado",  // "cumul"
     "acumulado año",  // "cumul de l'année"
@@ -9230,7 +9230,7 @@ static const char* const kI18n_it[] = {
     "b = palle giocate, MB = multiball attivato.",  // "b = billes jouées, MB = multiball déclenché."
     "sensore muto",  // "capteur muet"
     "caricati questo mese",  // "chargés ce mois-ci"
-    "caricati dalle auto questo mese",  // "chargés par les voitures ce mois-ci"
+    "caricati dalle auto questo mese",  // "chargés par les voitures ce mois"
     "picco di caldo",  // "coup de chaud"
     "cumulato",  // "cumul"
     "cumulato anno",  // "cumul de l'année"
@@ -10568,7 +10568,7 @@ static const char* const kI18n_tr[] = {
     "b = oynanan bilye, MB = multiball tetiklendi.",  // "b = billes jouées, MB = multiball déclenché."
     "sensör sessiz",  // "capteur muet"
     "bu ay şarj edildi",  // "chargés ce mois-ci"
-    "bu ay araçlarla şarj edildi",  // "chargés par les voitures ce mois-ci"
+    "bu ay araçlarla şarj edildi",  // "chargés par les voitures ce mois"
     "sıcaklık artışı",  // "coup de chaud"
     "toplam",  // "cumul"
     "yıllık toplam",  // "cumul de l'année"

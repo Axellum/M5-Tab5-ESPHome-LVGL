@@ -1617,7 +1617,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Scegli le auto nel blueprint, sezione «Énergie : voitures · Energy: cars»."
 # --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
 "de la maison": "della casa"
-"chargés par les voitures ce mois-ci": "caricati dalle auto questo mese"
+"chargés par les voitures ce mois": "caricati dalle auto questo mese"
 "Part du soleil": "Quota del sole"
 "chargés ce mois-ci": "caricati questo mese"
 "km parcourus": "km percorsi"
