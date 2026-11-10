@@ -1,8 +1,0 @@
-### Ajouté
-
-- **Tableau de bord Tab5 à jour en un clic** ([ADR-0075](docs/decisions/0075-dashboard-update-one-click.md)) : la macro `tab5_dashboard` écrit maintenant, à la racine du tableau, un marqueur `tab5_dashboard` (macro, arguments de l'appel, version des fichiers HA). Quand les fichiers actifs sont plus récents que ce marqueur, l'intégration « Tab5 » de HACS propose dans *Paramètres → Système → Corrections* « Mettre à jour le tableau de bord » : une confirmation, puis le tableau est réécrit avec le modèle à jour (mêmes adresse, langue et tablette), l'ancien étant gardé dans `config/tab5_sauvegardes/tableaux/` (du texte à recoller tel quel dans l'éditeur de configuration brute). Jamais en silence ; ce que vous aviez ajouté à la main dans ce tableau est remplacé (la confirmation le dit). Un tableau collé avant cette version n'a pas de marqueur : refaites les points 2 et 3 de [dashboard.md](docs/installation/dashboard.md) une fois, il sera suivi ensuite. Aucun changement du firmware ni du contrat HA ↔ firmware.
-- **Banc de CI sur Home Assistant 2026.10.4 et 2026.11.0** (en plus de 2026.9.4 et du plancher 2026.8.3 de `hacs.json`) pour l'intégration et pour l'installation dans un HA neuf ; l'intégration est éprouvée de bout en bout (tableaux créés par le websocket, réparation validée, tableau relu) dans `tools/installation_ha/verifier_integration.py`.
-
-### Corrigé
-
-- **Documentation** : le HA de l'auteur a l'intégration installée depuis le 25/10/2026 (ses fichiers viennent pourtant du dépôt par Samba : le capteur dit « dépôt »), alors que l'ADR-0035, les ADR-0052 et 0053 et la cartographie disaient le contraire.
