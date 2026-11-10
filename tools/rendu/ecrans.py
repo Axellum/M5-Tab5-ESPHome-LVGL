@@ -34,8 +34,9 @@ from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_
                        build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
-                       build_charges_payload, build_conso_jour, build_trajets_payload, build_voiture_payload,
-                       build_zones_absentes, code_pluie, CONSO_JOUR_RANGS, TRAJETS)
+                       build_charges_payload, build_conso_jour, build_energie_soleil, build_trajets_payload,
+                       build_voiture_payload, build_zones_absentes, code_pluie,
+                       CONSO_JOUR_RANGS, TRAJETS)
 
 
 @dataclass(frozen=True)
@@ -689,6 +690,11 @@ def _conso(rang: str, valeurs: tuple | None = None) -> Service:
 CONSO_DEUX_VOITURES = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS)
 CONSO_UNE_VOITURE = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS[:2])
 CONSO_AUCUNE = tuple(_conso(rang, ()) for rang in CONSO_JOUR_RANGS)
+# La prévision du soleil de la démo (la scène la pousse déjà), puis sa disparition (payload vide) : la page
+# Charge du popup Voitures (ADR-0082) dit alors qu'aucune prévision n'est arrivée. Chaque écran qui la
+# retire la repousse à la fin.
+SOLEIL_DE_LA_DEMO = Service("tab5_maj_energie_soleil", (("payload", build_energie_soleil()),), apres=0.3)
+SOLEIL_AUCUN = Service("tab5_maj_energie_soleil", (("payload", ""),), apres=0.3)
 
 
 # Les trajets des voitures (ADR-0083), datés du jour figé des captures : la fenêtre de sept jours finit au
@@ -1737,6 +1743,19 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("voitures-2", (VOITURE_1, VOITURE_2, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-1", (VOITURE_1, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-aucune", (Aller("Cars"),)),
+    # Page Charge (ADR-0082, 2e onglet) : un glissement vers la gauche depuis l'Aperçu. Les heures du jour
+    # des voitures de la démo (CONSO_JOUR : la 2 a chargé de 1 h à 3 h, la 1 charge depuis 6 h) et la
+    # prévision du soleil de la scène, à 7 h 45 : deux voitures, une seule, puis la prévision absente.
+    # Chaque écran revient à l'Aperçu (glissement inverse) et retire séries et voitures.
+    Ecran("voitures-charge-2",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + (Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    Ecran("voitures-charge-1",
+          (VOITURE_1,) + CONSO_UNE_VOITURE + (Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    Ecran("voitures-charge-sans-soleil",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + (SOLEIL_AUCUN, Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE + (SOLEIL_DE_LA_DEMO,)),
     # Page Trajets du popup (ADR-0083) : deux voitures côte à côte, une seule en pleine largeur, une voiture
     # dont l'odomètre est choisi mais sans relevé (le message), puis des voitures sans trajets (aucune
     # page ni onglet : l'Aperçu seul, comme voitures-2). Les trajets et les voitures sont retirés à la fin.
@@ -1747,6 +1766,12 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("voitures-trajets-sans-releve", (VOITURE_1,) + TRAJETS_SANS_RELEVE + (Aller("Cars"), VOITURES_PAGE_SUIVANTE),
           TRAJETS_AUCUN + FLUX_SANS_VOITURE),
     Ecran("voitures-trajets-aucun", (VOITURE_1, VOITURE_2, Aller("Cars"), VOITURES_PAGE_SUIVANTE), FLUX_SANS_VOITURE),
+    # Les trois pages ensemble (Aperçu, Charge, Trajets) : la rangée d'onglets au plus large, deux glissements
+    # vers la gauche. Sur la 7B la page Charge n'existe pas (kChargePage) : le second glissement ramène à l'Aperçu.
+    Ecran("voitures-trajets-3-onglets",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + TRAJETS_DEUX_VOITURES
+          + (Aller("Cars"), VOITURES_PAGE_SUIVANTE, VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE + CONSO_AUCUNE),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée

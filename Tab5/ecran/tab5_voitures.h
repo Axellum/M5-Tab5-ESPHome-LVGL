@@ -13,6 +13,7 @@
 #pragma once
 #include "esphome.h"
 #include "tab5_parse.h"
+#include <ctime>
 #include <string>
 
 // =============================================================================
@@ -50,6 +51,9 @@ struct VoituresUI {
     lv_obj_t* etat[kVoituresCartes] = {};            // voitures_etat_N : « En charge · 7.20 kW »
     lv_obj_t* detail[kVoituresCartes] = {};          // voitures_detail_N : énergie ajoutée, fin de charge
     lv_obj_t* limite[kVoituresCartes] = {};          // voitures_limite_N : « Limite 80 % »
+    // Le style de la carte de verre des thèmes (style_glass_card) : une carte faite en C++ le prend, elle
+    // suit ainsi le rayon, le bord et le fond de chaque thème.
+    lv_style_t* style_carte = nullptr;
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture) : demande à
     // Home Assistant de pousser les voitures quand le popup s'ouvre sans en avoir reçu.
     void (*demander)() = nullptr;
@@ -69,9 +73,22 @@ struct VoitureRecue {
     char unite[kVoitureUniteMax] = {};
     VoitureEtat etat = VoitureEtat::INCONNUE;
     float batterie = NAN, autonomie = NAN, puissance = NAN, energie = NAN, limite = NAN, minutes = NAN;
+    // L'instant de la poussée (0 : horloge pas réglée) : `minutes` valait ce nombre à cet instant, une page
+    // qui en tire une heure d'arrivée compte le temps passé depuis.
+    time_t recue_le = 0;
 };
 // La voiture de rang k + 1 (k = 0 ou 1) ; une voiture absente a presente = faux. k hors de 0..1 : la première.
 const VoitureRecue& voiture_recue(int k);
+
+// L'état d'une voiture, le même sur toutes les pages : sa couleur (charge en vert, câble branché en
+// bleu, le reste en retrait) et son texte court (« En charge · 7.20 kW », « Branchée », « Débranchée »,
+// « Hors ligne »).
+uint32_t voiture_couleur_etat(VoitureEtat e);
+void voiture_texte_etat(char* out, size_t n, const VoitureRecue& v);
+
+// Repeint le popup s'il est ouvert : appelé par une page quand ses données arrivent (sans quoi elles
+// attendraient la poussée suivante d'une voiture).
+void voitures_repeindre();
 
 // Le conteneur des pages : la carte modale du popup, où chaque page crée ses widgets en C++ (aucun
 // id YAML de plus). nullptr tant que le popup n'est pas lié.

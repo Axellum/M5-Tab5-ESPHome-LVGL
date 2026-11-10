@@ -1569,3 +1569,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Km par jour": "Km per day"
 "kWh chargés par jour": "kWh charged per day"
 "Pas encore de relevé du compteur": "No odometer reading yet"
+
+# --- Popup Voitures, page Charge (ADR-0082) ---
+"Aujourd'hui, heure par heure": "Today, hour by hour"
+"Fin prévue": "Expected end"
+"Créneau conseillé": "Suggested slot"
+"%d h": "%d:00"
+"Créneau conseillé : %d h – %d h": "Suggested slot: %d:00 – %d:00"
+"Créneau conseillé : jusqu'à %d h": "Suggested slot: until %d:00"
+"Pas de créneau conseillé aujourd'hui": "No suggested slot today"
+"Pas de prévision du soleil reçue": "No solar forecast received"
+"Suggestion d'après la prévision du soleil": "Suggestion from the solar forecast"
+"Pas de charge en cours": "Not charging"
+"Prête à %d h %02d": "Ready at %d:%02d"

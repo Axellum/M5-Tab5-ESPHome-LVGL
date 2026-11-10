@@ -54,6 +54,7 @@
 #include "tab5_froid.h"
 #include "tab5_serveur_ia.h"
 #include "tab5_voitures.h"
+#include "tab5_voitures_charge.h"
 #include "tab5_voitures_trajets.h"
 #include "tab5_telecommande.h"
 #include "tab5_alertes.h"
