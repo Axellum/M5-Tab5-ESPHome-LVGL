@@ -1624,3 +1624,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "À mettre à jour": "Güncelleme var"
 "Pneus corrects": "Lastikler normal"
 "Pression basse": "Düşük basınç"
+"Aperçu": "Özet"

@@ -16,8 +16,8 @@
 #       APRÈS tab5_lvgl et tab5_energie : il référence des widgets et le script d'événement.
 #       Aucun lv_* ici.
 # @ai_instruction Un widget de plus = son champ dans VoituresUI (tab5_voitures.h), son id dans
-#       voitures_carte.yaml et sa ligne ici. Une page de plus (ADR-0081) = son conteneur dans
-#       voitures_popup.yaml, son onglet (voitures_onglet_N), `u.page[kPage…]` ici.
+#       voitures_carte.yaml et sa ligne ici. Une page qui a des widgets YAML (« État », ADR-0081) :
+#       son conteneur dans voitures_popup.yaml et son `…_lier(id(…))` ici.
 # ============================================================================
 
 script:
@@ -28,6 +28,10 @@ script:
           if (u.popup != nullptr) return;
           u.message = id(voitures_message);
           u.conseil = id(voitures_conseil);
+          u.onglet[0] = id(voitures_onglet_0);
+          u.onglet[1] = id(voitures_onglet_1);
+          u.onglet[2] = id(voitures_onglet_2);
+          u.onglet[3] = id(voitures_onglet_3);
           u.carte[0] = id(voitures_carte_0);
           u.carte[1] = id(voitures_carte_1);
           u.nom[0] = id(voitures_nom_0);
@@ -52,12 +56,7 @@ script:
           u.detail[1] = id(voitures_detail_1);
           u.limite[0] = id(voitures_limite_0);
           u.limite[1] = id(voitures_limite_1);
-          // Pages (ADR-0081) : les noms des onglets et le conteneur de la page « État ».
-          u.onglet[0] = id(voitures_onglet_0);
-          u.onglet[1] = id(voitures_onglet_1);
-          u.onglet[2] = id(voitures_onglet_2);
-          u.onglet[3] = id(voitures_onglet_3);
-          u.page[kPageEtat] = id(voitures_page_etat);
+          // Le conteneur de la page « État » (ADR-0081) : ses widgets YAML sont liés par son fichier C++.
           voitures_etat_lier(id(voitures_page_etat));
           u.demander = []() { id(tab5_energie_demande).execute(std::string("heures")); };
           // En dernier : peindre() ne fait rien tant que popup est nul.

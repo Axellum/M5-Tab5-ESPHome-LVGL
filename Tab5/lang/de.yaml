@@ -1593,3 +1593,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "À mettre à jour": "Update fällig"
 "Pneus corrects": "Reifen OK"
 "Pression basse": "Druck niedrig"   # « Reifendruck niedrig » (19) dépasserait les 16 caractères
+"Aperçu": "Überblick"

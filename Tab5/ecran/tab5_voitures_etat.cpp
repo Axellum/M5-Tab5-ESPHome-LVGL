@@ -37,11 +37,11 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <strings.h>
 
 namespace {
 
 constexpr const char* kTag = "tab5.voitures_etat";
-constexpr size_t kNomMax = 48;
 constexpr size_t kUniteMax = 8;
 constexpr int kPneus = kVoiturePneus;
 
@@ -73,10 +73,10 @@ const char* const kLibelles[kLignes] = {tr_noop("Cabine"), tr_noop("Extérieur")
 constexpr int kEnfantsHaut = 3 + kPneus;
 constexpr int kEnfantsLigne = 3;
 
-// Une voiture reçue : ce que voiture_lire() a lu, les textes copiés (le payload ne vit pas plus loin).
+// L'état d'une voiture : ce que voiture_lire() a lu, les textes copiés (le payload ne vit pas plus loin).
+// Le nom n'y est pas : il est dans voiture_recue() (tab5_voitures.h), la copie du popup.
 struct Voit {
     bool presente = false;
-    char nom[kNomMax] = {};
     char unite_pression[kUniteMax] = {};
     char unite_temperature[kUniteMax] = {};
     float pneu[kPneus] = {NAN, NAN, NAN, NAN};
@@ -156,7 +156,7 @@ void texte_pression(char* out, size_t n, const Voit& v, int pneu) {
         return;
     }
     const char* u = v.unite_pression[0] != '\0' ? v.unite_pression : "bar";
-    const bool bar = strcmp(u, "bar") == 0;
+    const bool bar = strcasecmp(u, "bar") == 0;
     snprintf(out, n, bar ? "%.1f %s" : "%.0f %s", static_cast<double>(v.pneu[pneu]), u);
 }
 
@@ -306,12 +306,13 @@ void construire() {
 // largeur `w` et de hauteur `h`.
 void peindre_haut(int c, const Voit& v, int rang, int32_t w, int32_t h) {
     const Carte& k = s_c[c];
-    const int32_t col = std::min(w - 2 * kPad, kColonneMax);
+    const int32_t col = std::min<int32_t>(w - 2 * kPad, kColonneMax);
     const int32_t x = (w - col) / 2;
 
     // --- En-tête : le nom à gauche, le verdict des pneus à droite --------------------------
     char nom[96];
-    if (v.nom[0] != '\0') snprintf(nom, sizeof(nom), "%s", v.nom);
+    const char* nom_recu = voiture_recue(rang - 1).nom;
+    if (nom_recu[0] != '\0') snprintf(nom, sizeof(nom), "%s", nom_recu);
     else snprintf(nom, sizeof(nom), tr("Voiture %d"), rang);
     const int32_t h_nom = haut(k.nom);
     const PneusVerdict verdict = voiture_pneus_verdict(v.pneu_bar);
@@ -324,7 +325,7 @@ void peindre_haut(int c, const Voit& v, int rang, int32_t w, int32_t h) {
         const uint32_t couleur = verdict == PneusVerdict::BAS ? UIColor.WARNING : UIColor.SUCCESS;
         const char* ico = glyphe_puce(verdict);
         const int32_t w_ico = ui_largeur_texte(k.puce_icone, ico);
-        const int32_t w_txt = std::min(ui_largeur_texte(k.puce, mot), col * 6 / 10);
+        const int32_t w_txt = std::min<int32_t>(ui_largeur_texte(k.puce, mot), col * 6 / 10);
         const int32_t h_ico = haut(k.puce_icone);
         const int32_t h_txt = haut(k.puce);
         ui_text(k.puce_icone, ico);
@@ -343,16 +344,16 @@ void peindre_haut(int c, const Voit& v, int rang, int32_t w, int32_t h) {
     int32_t lw = 0;
     for (int p = 0; p < kPneus; p++) {
         texte_pression(txt[p], sizeof(txt[p]), v, p);
-        lw = std::max(lw, ui_largeur_texte(k.pression[p], txt[p]));
+        lw = std::max<int32_t>(lw, ui_largeur_texte(k.pression[p], txt[p]));
     }
     // --- La voiture : centrée dans ce qui reste, longueur d'abord bornée par les pressions ---
     const int32_t y0 = kHautCarte + h_nom + kEcartTitre;
     const int32_t dh = h - y0 - kHautCarte;                       // la hauteur du dessin, pneus compris
     const int32_t cote = lw + kEcartLibelle;                      // de chaque côté de la voiture
-    int32_t vl = std::max(col - 2 * cote, kVoitureLMin);          // longueur de la voiture
-    int32_t vh = std::min(dh - kRoueEp, vl * 10 / 24);            // sa largeur : un peu plus de deux fois moins
-    vh = std::max(vh, 40);
-    vl = std::min(vl, vh * 24 / 10 + 40);                         // sur un corps très bas, pas plus de 2,4 + marge
+    int32_t vl = std::max<int32_t>(col - 2 * cote, kVoitureLMin);          // longueur de la voiture
+    int32_t vh = std::min<int32_t>(dh - kRoueEp, vl * 10 / 24);            // sa largeur : un peu plus de deux fois moins
+    vh = std::max<int32_t>(vh, 40);
+    vl = std::min<int32_t>(vl, vh * 24 / 10 + 40);                         // sur un corps très bas, pas plus de 2,4 + marge
     const int32_t vx = x + (col - vl) / 2;
     const int32_t vy = y0 + (dh - vh) / 2;
     const int32_t roue_l = vl * 22 / 100;
@@ -392,10 +393,10 @@ void peindre_haut(int c, const Voit& v, int rang, int32_t w, int32_t h) {
 // La carte du bas : cinq lignes (icône, libellé, valeur), centrées en hauteur.
 void peindre_bas(int c, const Voit& v, int32_t w, int32_t h) {
     const Carte& k = s_c[c];
-    const int32_t col = std::min(w - 2 * kPad, kColonneMax);
+    const int32_t col = std::min<int32_t>(w - 2 * kPad, kColonneMax);
     const int32_t x = (w - col) / 2;
     int32_t pas = kPasLigne;
-    for (int l = 0; l < kLignes; l++) pas = std::max(pas, haut(k.valeur[l]) + 4);
+    for (int l = 0; l < kLignes; l++) pas = std::max<int32_t>(pas, haut(k.valeur[l]) + 4);
     const int32_t y0 = std::max<int32_t>(0, (h - pas * kLignes) / 2);
     char buf[kLignes][40];
     for (int l = 0; l < kLignes; l++) {
@@ -424,7 +425,9 @@ void peindre_bas(int c, const Voit& v, int32_t w, int32_t h) {
 
 void voitures_etat_lier(lv_obj_t* page) {
     if (s_lie) return;
-    if (page == nullptr || static_cast<int>(lv_obj_get_child_count(page)) != 2 * kVoituresMax) {
+    // Le conteneur est un enfant du corps de la carte modale, comme les cartes de l'Aperçu.
+    if (page == nullptr || lv_obj_get_parent(page) != voitures_corps() ||
+        static_cast<int>(lv_obj_get_child_count(page)) != 2 * kVoituresMax) {
         ESP_LOGW(kTag, "page État inattendue");
         return;
     }
@@ -439,7 +442,6 @@ void voitures_etat_recu(int k, const VoitureLue* lu) {
     Voit v;
     if (lu != nullptr) {
         v.presente = true;
-        texte_ha_copier(v.nom, sizeof(v.nom), lu->nom.p, lu->nom.n);
         texte_ha_copier(v.unite_pression, sizeof(v.unite_pression), lu->unite_pression.p, lu->unite_pression.n);
         texte_ha_copier(v.unite_temperature, sizeof(v.unite_temperature), lu->unite_temperature.p,
                         lu->unite_temperature.n);
@@ -457,9 +459,14 @@ void voitures_etat_recu(int k, const VoitureLue* lu) {
 }
 
 bool voitures_etat_a_donnees() {
+    if (!s_lie) return false;   // gabarit refusé : pas d'onglet devant une page vide
     for (const Voit& v : s_v)
         if (v.presente && a_une_donnee(v)) return true;
     return false;
+}
+
+void voitures_etat_montrer(bool visible) {
+    if (s_lie) ui_hidden(s_page, !visible);
 }
 
 void voitures_etat_peindre() {
@@ -475,7 +482,7 @@ void voitures_etat_peindre() {
     const int32_t w = n == 1 ? kCarteSeuleL : kCarteDeuxL;
     // Carte du bas : le nombre de lignes à la hauteur de la ligne ; carte du haut : le reste de la hauteur.
     int32_t pas = kPasLigne;
-    for (int l = 0; l < kLignes; l++) pas = std::max(pas, haut(s_c[0].valeur[l]) + 4);
+    for (int l = 0; l < kLignes; l++) pas = std::max<int32_t>(pas, haut(s_c[0].valeur[l]) + 4);
     const int32_t h_bas = std::min<int32_t>(pas * kLignes + 2 * kHautCarte, kCorpsH / 2);
     const int32_t h_haut = kCorpsH - kCartesEcart - h_bas;
     for (int c = 0; c < kVoituresMax; c++) {

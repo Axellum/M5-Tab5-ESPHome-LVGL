@@ -1572,3 +1572,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "À mettre à jour": "Update due"
 "Pneus corrects": "Tires OK"
 "Pression basse": "Low pressure"
+"Aperçu": "Overview"

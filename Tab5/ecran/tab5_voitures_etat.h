@@ -7,8 +7,8 @@
  *       et de l'extérieur, les portes verrouillées ou non, la Sentinelle, le logiciel à jour ou
  *       non. Les données sont les onze derniers champs de tab5_maj_voiture (voiture_lire,
  *       Tab5/socle/tab5_parse.h) ; une valeur que Home Assistant ne donne pas s'écrit « -- ».
- * @architecture_constraint tab5_voitures.h l'inclut : le popup Voitures (tab5_voitures.cpp) appelle
- *       ces quatre fonctions, une table de pages (kPages) les relie à l'onglet « État ». Le code de
+ * @architecture_constraint tab5_custom.h l'inclut : le popup Voitures (tab5_voitures.cpp) appelle
+ *       ces fonctions, la table de pages (kPages) les relie à l'onglet « État ». Le code de
  *       la page est ici, jamais dans tab5_voitures.cpp (trois lots y ajoutent chacun une page).
  *       Une fonction déclarée ici a un appelant hors de son fichier (règle 12 de
  *       tools/check_tab5_code_rules.py).
@@ -36,6 +36,10 @@ void voitures_etat_recu(int k, const VoitureLue* lu);
 // le verrou, la Sentinelle ou le logiciel) : sans, la page n'existe pas (pas d'onglet, ADR-0046).
 bool voitures_etat_a_donnees();
 
-// Peint la page (le popup la montre et cache l'Aperçu) : une colonne par voiture reçue, deux cartes
+// Montre ou cache le conteneur de la page (le popup n'en montre qu'une à la fois) ; sans effet tant
+// que le gabarit n'est pas lié.
+void voitures_etat_montrer(bool visible);
+
+// Peint la page (le popup l'a montrée avant, voitures_etat_montrer) : une colonne par voiture reçue, deux cartes
 // l'une sous l'autre ; une seule voiture : les cartes pleine largeur, contenu centré.
 void voitures_etat_peindre();
