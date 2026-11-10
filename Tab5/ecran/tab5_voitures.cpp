@@ -133,13 +133,6 @@ void construire() {
     s_construit = true;
 }
 
-// Les trois cas de l'état de charge : la couleur de l'icône, de la silhouette et du texte (les
-// mêmes que les cercles de la page Flux : charge, câble branché, le reste en retrait).
-uint32_t couleur_etat(VoitureEtat e) {
-    return e == VoitureEtat::EN_CHARGE ? UIColor.SUCCESS : e == VoitureEtat::BRANCHEE ? UIColor.INFO
-                                                                                      : UIColor.TEXT_DIM;
-}
-
 // Icône de l'état (mdi_font_45) : l'éclair en charge, la prise branchée ou débranchée, le sommeil
 // d'une voiture sans état. MDI_CODE_TARGETS (tools/check_tab5_code_rules.py) : voitures_etat_icone_*.
 const char* glyphe_etat(VoitureEtat e) {
@@ -201,7 +194,7 @@ void peindre_carte(int c, const VoitureRecue& v, int rang, int32_t x0, int32_t w
     char t[96], a[48], b[48];
     if (v.nom[0] != '\0') snprintf(t, sizeof(t), "%s", v.nom);
     else snprintf(t, sizeof(t), tr("Voiture %d"), rang);
-    const uint32_t c_etat = couleur_etat(v.etat);
+    const uint32_t c_etat = voiture_couleur_etat(v.etat);
 
     // Autonomie : « 326 » en grand, l'unité (« km », « mi ») à côté ; « -- » sans valeur.
     char auto_txt[16];
@@ -212,16 +205,7 @@ void peindre_carte(int c, const VoitureRecue& v, int rang, int32_t x0, int32_t w
     // État : « En charge · 7.20 kW » (la puissance quand on la connaît), « Branchée », « Débranchée »,
     // « Hors ligne » (une voiture endormie ou sans état : le dernier état connu, D6).
     char etat[64];
-    switch (v.etat) {
-        case VoitureEtat::EN_CHARGE:
-            if (std::isfinite(v.puissance) && energie_formater(a, sizeof(a), v.puissance, "W"))
-                snprintf(etat, sizeof(etat), "%s \xC2\xB7 %s", tr("En charge"), a);
-            else snprintf(etat, sizeof(etat), "%s", tr("En charge"));
-            break;
-        case VoitureEtat::BRANCHEE: snprintf(etat, sizeof(etat), "%s", tr("Branchée")); break;
-        case VoitureEtat::DEBRANCHEE: snprintf(etat, sizeof(etat), "%s", tr("Débranchée")); break;
-        default: snprintf(etat, sizeof(etat), "%s", tr("Hors ligne")); break;
-    }
+    voiture_texte_etat(etat, sizeof(etat), v);
     // Détail : en charge, l'énergie déjà ajoutée et ce qui reste ; branchée, « Pas en charge ».
     char detail[96] = "";
     if (v.etat == VoitureEtat::EN_CHARGE) {
@@ -400,6 +384,10 @@ void apercu_peindre() {
 // en-tête dans tab5_custom.h et ses fichiers dans les includes: de tab5-ha-hmi.yaml).
 const Page kPages[] = {
     {tr_noop("Aperçu"), apercu_a_donnees, apercu_montrer, apercu_peindre},
+    // Des lambdas sans capture, pas les fonctions nues : la règle 12 (CPP-4) ne compte comme appel que
+    // `nom(`, une adresse prise dans la table n'en est pas un.
+    {tr_noop("Charge"), [] { return voitures_charge_a_donnees(); }, [](bool v) { voitures_charge_montrer(v); },
+     [] { voitures_charge_peindre(); }},
 };
 constexpr int kNbPages = static_cast<int>(sizeof(kPages) / sizeof(kPages[0]));
 static_assert(kNbPages <= kVoituresPages, "un onglet YAML par page (voitures_popup.yaml)");
@@ -487,8 +475,37 @@ void voitures_recu(const std::string& rang, const std::string& payload) {
         v.energie = lu.energie;
         v.limite = lu.limite;
         v.minutes = lu.minutes;
+        const time_t now = tab5_time_source(nullptr);
+        v.recue_le = tab5_heure_valide(now) ? now : 0;
     }
     s_v[k] = v;
+    if (popup_ouvert()) peindre();
+}
+
+// Les trois cas de l'état de charge : la couleur de l'icône, de la silhouette et du texte (les
+// mêmes que les cercles de la page Flux : charge, câble branché, le reste en retrait).
+uint32_t voiture_couleur_etat(VoitureEtat e) {
+    return e == VoitureEtat::EN_CHARGE ? UIColor.SUCCESS : e == VoitureEtat::BRANCHEE ? UIColor.INFO
+                                                                                      : UIColor.TEXT_DIM;
+}
+
+// « En charge · 7.20 kW » (la puissance quand on la connaît), « Branchée », « Débranchée », « Hors
+// ligne » (une voiture endormie ou sans état : le dernier état connu, jamais de réveil, D6).
+void voiture_texte_etat(char* out, size_t n, const VoitureRecue& v) {
+    char p[48];
+    switch (v.etat) {
+        case VoitureEtat::EN_CHARGE:
+            if (std::isfinite(v.puissance) && energie_formater(p, sizeof(p), v.puissance, "W"))
+                snprintf(out, n, "%s \xC2\xB7 %s", tr("En charge"), p);
+            else snprintf(out, n, "%s", tr("En charge"));
+            break;
+        case VoitureEtat::BRANCHEE: snprintf(out, n, "%s", tr("Branchée")); break;
+        case VoitureEtat::DEBRANCHEE: snprintf(out, n, "%s", tr("Débranchée")); break;
+        default: snprintf(out, n, "%s", tr("Hors ligne")); break;
+    }
+}
+
+void voitures_repeindre() {
     if (popup_ouvert()) peindre();
 }
 

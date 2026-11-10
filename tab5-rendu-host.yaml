@@ -108,6 +108,7 @@ esphome:
     - Tab5/ecran/tab5_froid.h
     - Tab5/ecran/tab5_serveur_ia.h
     - Tab5/ecran/tab5_voitures.h
+    - Tab5/ecran/tab5_voitures_charge.h
     - Tab5/ecran/tab5_telecommande.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_barre_demarrage.h
@@ -161,6 +162,7 @@ esphome:
     - Tab5/ecran/tab5_froid.cpp
     - Tab5/ecran/tab5_serveur_ia.cpp
     - Tab5/ecran/tab5_voitures.cpp
+    - Tab5/ecran/tab5_voitures_charge.cpp
     - Tab5/ecran/tab5_telecommande.cpp
     - Tab5/ecran/tab5_registry.h
     - Tab5/ecran/tab5_registry.cpp

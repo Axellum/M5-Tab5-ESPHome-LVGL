@@ -8,9 +8,20 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1329;
+static const uint16_t kI18nKeyCount = 1340;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1360,6 +1371,7 @@ static const char* const kI18nKeys[] = {
     "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo",
     "%d demi-coups joués",
     "%d erreurs",
+    "%d h",
     "%d h %02d",
     "%d h – %d h",
     "%d heures",
@@ -1571,6 +1583,7 @@ static const char* const kI18nKeys[] = {
     "Auj.",
     "Aujourd'hui",
     "Aujourd'hui {heure}",
+    "Aujourd'hui, heure par heure",
     "Auto",
     "Autres",
     "Avancer",
@@ -1715,6 +1728,9 @@ static const char* const kI18nKeys[] = {
     "Craie et ardoise",
     "Crème",
     "Créneau",
+    "Créneau conseillé",
+    "Créneau conseillé : %d h – %d h",
+    "Créneau conseillé : jusqu'à %d h",
     "Cuivre",
     "Cumul carrière : %lu points",
     "Cœur de braise",
@@ -1812,6 +1828,7 @@ static const char* const kI18nKeys[] = {
     "Fin de partie : 16 coups chacun",
     "Fin de partie : 5 coups chacun",
     "Fin du mois (rythme %d j)",
+    "Fin prévue",
     "Finale manquée — il faudra revenir au centre.",
     "Finesse",
     "Fixe",
@@ -2129,7 +2146,10 @@ static const char* const kI18nKeys[] = {
     "Pas après",
     "Pas avant",
     "Pas de batterie détectée",
+    "Pas de charge en cours",
+    "Pas de créneau conseillé aujourd'hui",
     "Pas de données",
+    "Pas de prévision du soleil reçue",
     "Pas de velours",
     "Pas en charge",
     "Passe",
@@ -2201,6 +2221,7 @@ static const char* const kI18nKeys[] = {
     "Prévu demain",
     "Prêt",
     "Prête dans %s",
+    "Prête à %d h %02d",
     "Puissance",
     "Purement cosmétique",
     "Pyramide",
@@ -2372,6 +2393,7 @@ static const char* const kI18nKeys[] = {
     "Sports & Loisirs",
     "Statistiques",
     "Stop",
+    "Suggestion d'après la prévision du soleil",
     "Suite",
     "Suivant",
     "Suivi",
@@ -2693,6 +2715,7 @@ static const char* const kI18n_en[] = {
     "%d half-moves  ·  level %s  ·  local rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d half-moves played",  // "%d demi-coups joués"
     "%d errors",  // "%d erreurs"
+    "%d:00",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d:00 – %d:00",  // "%d h – %d h"
     "%d:00",  // "%d heures"
@@ -2904,6 +2927,7 @@ static const char* const kI18n_en[] = {
     "Today",  // "Auj."
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
+    "Today, hour by hour",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Other",  // "Autres"
     "Forward",  // "Avancer"
@@ -3048,6 +3072,9 @@ static const char* const kI18n_en[] = {
     "Chalk and slate",  // "Craie et ardoise"
     "Cream",  // "Crème"
     "Window",  // "Créneau"
+    "Suggested slot",  // "Créneau conseillé"
+    "Suggested slot: %d:00 – %d:00",  // "Créneau conseillé : %d h – %d h"
+    "Suggested slot: until %d:00",  // "Créneau conseillé : jusqu'à %d h"
     "Copper",  // "Cuivre"
     "Career total: %lu points",  // "Cumul carrière : %lu points"
     "Ember Heart",  // "Cœur de braise"
@@ -3145,6 +3172,7 @@ static const char* const kI18n_en[] = {
     "Endgame: 16 moves each",  // "Fin de partie : 16 coups chacun"
     "Endgame: 5 moves each",  // "Fin de partie : 5 coups chacun"
     "End of month (%d-day pace)",  // "Fin du mois (rythme %d j)"
+    "Expected end",  // "Fin prévue"
     "Final missed — head back to the hub.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fixed",  // "Fixe"
@@ -3462,7 +3490,10 @@ static const char* const kI18n_en[] = {
     "Not after",  // "Pas après"
     "Not before",  // "Pas avant"
     "No battery detected",  // "Pas de batterie détectée"
+    "Not charging",  // "Pas de charge en cours"
+    "No suggested slot today",  // "Pas de créneau conseillé aujourd'hui"
     "No data",  // "Pas de données"
+    "No solar forecast received",  // "Pas de prévision du soleil reçue"
     "Velvet Step",  // "Pas de velours"
     "Not charging",  // "Pas en charge"
     "Pass",  // "Passe"
@@ -3534,6 +3565,7 @@ static const char* const kI18n_en[] = {
     "Forecast tomorrow",  // "Prévu demain"
     "Ready",  // "Prêt"
     "Ready in %s",  // "Prête dans %s"
+    "Ready at %d:%02d",  // "Prête à %d h %02d"
     "Power",  // "Puissance"
     "Purely cosmetic",  // "Purement cosmétique"
     "Pyramid",  // "Pyramide"
@@ -3705,6 +3737,7 @@ static const char* const kI18n_en[] = {
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
     "Stop",  // "Stop"
+    "Suggestion from the solar forecast",  // "Suggestion d'après la prévision du soleil"
     "More",  // "Suite"
     "Next",  // "Suivant"
     "Tracking",  // "Suivi"
@@ -4026,6 +4059,7 @@ static const char* const kI18n_de[] = {
     "%d Halbzüge  ·  Stufe %s  ·  lokale Wertung: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d Halbzüge gespielt",  // "%d demi-coups joués"
     "%d Fehler",  // "%d erreurs"
+    "%d Uhr",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d – %d Uhr",  // "%d h – %d h"
     "%d Uhr",  // "%d heures"
@@ -4237,6 +4271,7 @@ static const char* const kI18n_de[] = {
     "Heute",  // "Auj."
     "Heute",  // "Aujourd'hui"
     "Heute {heure}",  // "Aujourd'hui {heure}"
+    "Heute, Stunde für Stunde",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Andere",  // "Autres"
     "Vorwärts",  // "Avancer"
@@ -4381,6 +4416,9 @@ static const char* const kI18n_de[] = {
     "Kreide und Schiefer",  // "Craie et ardoise"
     "Creme",  // "Crème"
     "Zeitfenster",  // "Créneau"
+    "Zeitfenster-Tipp",  // "Créneau conseillé"
+    "Empfohlen: %d – %d Uhr",  // "Créneau conseillé : %d h – %d h"
+    "Empfohlen: bis %d Uhr",  // "Créneau conseillé : jusqu'à %d h"
     "Kupfer",  // "Cuivre"
     "Karriere gesamt: %lu Punkte",  // "Cumul carrière : %lu points"
     "Glutherz",  // "Cœur de braise"
@@ -4478,6 +4516,7 @@ static const char* const kI18n_de[] = {
     "Endspiel: je 16 Züge",  // "Fin de partie : 16 coups chacun"
     "Endspiel: je 5 Züge",  // "Fin de partie : 5 coups chacun"
     "Monatsende (Tempo %d T.)",  // "Fin du mois (rythme %d j)"
+    "Geplantes Ende",  // "Fin prévue"
     "Finale verpasst — zurück zur Mitte.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fest",  // "Fixe"
@@ -4795,7 +4834,10 @@ static const char* const kI18n_de[] = {
     "Nicht nach",  // "Pas après"
     "Nicht vor",  // "Pas avant"
     "Kein Akku erkannt",  // "Pas de batterie détectée"
+    "Lädt nicht",  // "Pas de charge en cours"
+    "Heute kein Zeitfenster empfohlen",  // "Pas de créneau conseillé aujourd'hui"
     "Keine Daten",  // "Pas de données"
+    "Keine Sonnenprognose empfangen",  // "Pas de prévision du soleil reçue"
     "Samtschritt",  // "Pas de velours"
     "Lädt nicht",  // "Pas en charge"
     "Passen",  // "Passe"
@@ -4867,6 +4909,7 @@ static const char* const kI18n_de[] = {
     "Prognose morgen",  // "Prévu demain"
     "Bereit",  // "Prêt"
     "Fertig in %s",  // "Prête dans %s"
+    "Fertig um %d:%02d",  // "Prête à %d h %02d"
     "Leistung",  // "Puissance"
     "Rein kosmetisch",  // "Purement cosmétique"
     "Pyramide",  // "Pyramide"
@@ -5038,6 +5081,7 @@ static const char* const kI18n_de[] = {
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
     "Stopp",  // "Stop"
+    "Vorschlag laut Sonnenprognose",  // "Suggestion d'après la prévision du soleil"
     "Weiter",  // "Suite"
     "Nächster",  // "Suivant"
     "Verlauf",  // "Suivi"
@@ -5359,6 +5403,7 @@ static const char* const kI18n_nl[] = {
     "%d halve zetten  ·  niveau %s  ·  lokale rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d halve zetten gespeeld",  // "%d demi-coups joués"
     "%d fouten",  // "%d erreurs"
+    "%d uur",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d – %d uur",  // "%d h – %d h"
     "%d uur",  // "%d heures"
@@ -5570,6 +5615,7 @@ static const char* const kI18n_nl[] = {
     "Vand.",  // "Auj."
     "Vandaag",  // "Aujourd'hui"
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
+    "Vandaag, uur per uur",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Overige",  // "Autres"
     "Vooruit",  // "Avancer"
@@ -5714,6 +5760,9 @@ static const char* const kI18n_nl[] = {
     "Krijt en leisteen",  // "Craie et ardoise"
     "Crème",  // "Crème"
     "Periode",  // "Créneau"
+    "Aanbevolen tijdvak",  // "Créneau conseillé"
+    "Aanbevolen: %d – %d uur",  // "Créneau conseillé : %d h – %d h"
+    "Aanbevolen: tot %d uur",  // "Créneau conseillé : jusqu'à %d h"
     "Koper",  // "Cuivre"
     "Carrièretotaal: %lu punten",  // "Cumul carrière : %lu points"
     "Gloeiend hart",  // "Cœur de braise"
@@ -5811,6 +5860,7 @@ static const char* const kI18n_nl[] = {
     "Eindspel: elk 16 zetten",  // "Fin de partie : 16 coups chacun"
     "Eindspel: elk 5 zetten",  // "Fin de partie : 5 coups chacun"
     "Einde maand (tempo %d d)",  // "Fin du mois (rythme %d j)"
+    "Verwacht einde",  // "Fin prévue"
     "Finale gemist — terug naar het midden.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Vast",  // "Fixe"
@@ -6128,7 +6178,10 @@ static const char* const kI18n_nl[] = {
     "Niet na",  // "Pas après"
     "Niet vóór",  // "Pas avant"
     "Geen batterij gevonden",  // "Pas de batterie détectée"
+    "Laadt niet",  // "Pas de charge en cours"
+    "Vandaag geen aanbevolen tijdvak",  // "Pas de créneau conseillé aujourd'hui"
     "Geen gegevens",  // "Pas de données"
+    "Geen zonneprognose ontvangen",  // "Pas de prévision du soleil reçue"
     "Fluwelen tred",  // "Pas de velours"
     "Laadt niet",  // "Pas en charge"
     "Pas",  // "Passe"
@@ -6200,6 +6253,7 @@ static const char* const kI18n_nl[] = {
     "Verwacht morgen",  // "Prévu demain"
     "Klaar",  // "Prêt"
     "Klaar over %s",  // "Prête dans %s"
+    "Klaar om %d:%02d",  // "Prête à %d h %02d"
     "Vermogen",  // "Puissance"
     "Puur cosmetisch",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -6371,6 +6425,7 @@ static const char* const kI18n_nl[] = {
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
     "Stop",  // "Stop"
+    "Suggestie o.b.v. zonneprognose",  // "Suggestion d'après la prévision du soleil"
     "Meer",  // "Suite"
     "Volgende",  // "Suivant"
     "Volgen",  // "Suivi"
@@ -6692,6 +6747,7 @@ static const char* const kI18n_es[] = {
     "%d medias jugadas  ·  nivel %s  ·  clasificación local: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d medias jugadas",  // "%d demi-coups joués"
     "%d errores",  // "%d erreurs"
+    "%d h",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d h – %d h",  // "%d h – %d h"
     "%d horas",  // "%d heures"
@@ -6903,6 +6959,7 @@ static const char* const kI18n_es[] = {
     "Hoy",  // "Auj."
     "Hoy",  // "Aujourd'hui"
     "Hoy {heure}",  // "Aujourd'hui {heure}"
+    "Hoy, hora por hora",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Otras",  // "Autres"
     "Adelantar",  // "Avancer"
@@ -7047,6 +7104,9 @@ static const char* const kI18n_es[] = {
     "Tiza y pizarra",  // "Craie et ardoise"
     "Crema",  // "Crème"
     "Franja",  // "Créneau"
+    "Franja sugerida",  // "Créneau conseillé"
+    "Franja sugerida: %d h – %d h",  // "Créneau conseillé : %d h – %d h"
+    "Franja sugerida: hasta las %d h",  // "Créneau conseillé : jusqu'à %d h"
     "Cobre",  // "Cuivre"
     "Total de carrera: %lu puntos",  // "Cumul carrière : %lu points"
     "Corazón de brasa",  // "Cœur de braise"
@@ -7144,6 +7204,7 @@ static const char* const kI18n_es[] = {
     "Final: 16 jugadas cada uno",  // "Fin de partie : 16 coups chacun"
     "Final: 5 jugadas cada uno",  // "Fin de partie : 5 coups chacun"
     "Fin de mes (ritmo de %d d)",  // "Fin du mois (rythme %d j)"
+    "Fin prevista",  // "Fin prévue"
     "Final fallada — hay que volver al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Sutileza",  // "Finesse"
     "Fija",  // "Fixe"
@@ -7461,7 +7522,10 @@ static const char* const kI18n_es[] = {
     "No después",  // "Pas après"
     "No antes",  // "Pas avant"
     "No se detecta batería",  // "Pas de batterie détectée"
+    "Sin carga en curso",  // "Pas de charge en cours"
+    "Hoy no hay franja sugerida",  // "Pas de créneau conseillé aujourd'hui"
     "Sin datos",  // "Pas de données"
+    "Sin previsión solar recibida",  // "Pas de prévision du soleil reçue"
     "Paso de seda",  // "Pas de velours"
     "No está cargando",  // "Pas en charge"
     "Pasa",  // "Passe"
@@ -7533,6 +7597,7 @@ static const char* const kI18n_es[] = {
     "Previsto mañana",  // "Prévu demain"
     "Listo",  // "Prêt"
     "Listo en %s",  // "Prête dans %s"
+    "Listo a las %d:%02d",  // "Prête à %d h %02d"
     "Potencia",  // "Puissance"
     "Puramente estético",  // "Purement cosmétique"
     "Pirámide",  // "Pyramide"
@@ -7704,6 +7769,7 @@ static const char* const kI18n_es[] = {
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
     "Parar",  // "Stop"
+    "Sugerencia según la previsión solar",  // "Suggestion d'après la prévision du soleil"
     "Más",  // "Suite"
     "Siguiente",  // "Suivant"
     "Seguimiento",  // "Suivi"
@@ -8025,6 +8091,7 @@ static const char* const kI18n_it[] = {
     "%d semimosse  ·  livello %s  ·  punteggio locale: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d semimosse giocate",  // "%d demi-coups joués"
     "%d errori",  // "%d erreurs"
+    "%d",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d – %d",  // "%d h – %d h"
     "%d",  // "%d heures"
@@ -8236,6 +8303,7 @@ static const char* const kI18n_it[] = {
     "Oggi",  // "Auj."
     "Oggi",  // "Aujourd'hui"
     "Oggi {heure}",  // "Aujourd'hui {heure}"
+    "Oggi, ora per ora",  // "Aujourd'hui, heure par heure"
     "Auto",  // "Auto"
     "Altre",  // "Autres"
     "Avanti",  // "Avancer"
@@ -8380,6 +8448,9 @@ static const char* const kI18n_it[] = {
     "Gesso e ardesia",  // "Craie et ardoise"
     "Crema",  // "Crème"
     "Fascia",  // "Créneau"
+    "Fascia consigliata",  // "Créneau conseillé"
+    "Fascia consigliata: %d – %d",  // "Créneau conseillé : %d h – %d h"
+    "Fascia consigliata: fino alle %d",  // "Créneau conseillé : jusqu'à %d h"
     "Rame",  // "Cuivre"
     "Totale carriera: %lu punti",  // "Cumul carrière : %lu points"
     "Cuore di brace",  // "Cœur de braise"
@@ -8477,6 +8548,7 @@ static const char* const kI18n_it[] = {
     "Finale: 16 mosse a testa",  // "Fin de partie : 16 coups chacun"
     "Finale: 5 mosse a testa",  // "Fin de partie : 5 coups chacun"
     "Fine mese (ritmo su %d g)",  // "Fin du mois (rythme %d j)"
+    "Fine prevista",  // "Fin prévue"
     "Finale mancata — torna al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Finezza",  // "Finesse"
     "Fissa",  // "Fixe"
@@ -8794,7 +8866,10 @@ static const char* const kI18n_it[] = {
     "Non dopo",  // "Pas après"
     "Non prima",  // "Pas avant"
     "Nessuna batteria rilevata",  // "Pas de batterie détectée"
+    "Non in carica",  // "Pas de charge en cours"
+    "Nessuna fascia consigliata oggi",  // "Pas de créneau conseillé aujourd'hui"
     "Nessun dato",  // "Pas de données"
+    "Nessuna previsione solare ricevuta",  // "Pas de prévision du soleil reçue"
     "Passo di velluto",  // "Pas de velours"
     "Non in carica",  // "Pas en charge"
     "Passo",  // "Passe"
@@ -8866,6 +8941,7 @@ static const char* const kI18n_it[] = {
     "Previsto domani",  // "Prévu demain"
     "Pronto",  // "Prêt"
     "Pronta in %s",  // "Prête dans %s"
+    "Pronta alle %d:%02d",  // "Prête à %d h %02d"
     "Potenza",  // "Puissance"
     "Puramente estetico",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -9037,6 +9113,7 @@ static const char* const kI18n_it[] = {
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
     "Stop",  // "Stop"
+    "Suggerimento dalla previsione solare",  // "Suggestion d'après la prévision du soleil"
     "Altre",  // "Suite"
     "Successivo",  // "Suivant"
     "Monitoraggio",  // "Suivi"
@@ -9358,6 +9435,7 @@ static const char* const kI18n_tr[] = {
     "%d yarım hamle  ·  seviye %s  ·  yerel derece: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d yarım hamle oynandı",  // "%d demi-coups joués"
     "%d hata",  // "%d erreurs"
+    "%d:00",  // "%d h"
     "%d:%02d",  // "%d h %02d"
     "%d:00 – %d:00",  // "%d h – %d h"
     "%d:00",  // "%d heures"
@@ -9569,6 +9647,7 @@ static const char* const kI18n_tr[] = {
     "Bugün",  // "Auj."
     "Bugün",  // "Aujourd'hui"
     "Bugün {heure}",  // "Aujourd'hui {heure}"
+    "Bugün, saat saat",  // "Aujourd'hui, heure par heure"
     "Otomatik",  // "Auto"
     "Diğer",  // "Autres"
     "İleri",  // "Avancer"
@@ -9713,6 +9792,9 @@ static const char* const kI18n_tr[] = {
     "Tebeşir ve arduvaz",  // "Craie et ardoise"
     "Krem",  // "Crème"
     "Aralık",  // "Créneau"
+    "Önerilen aralık",  // "Créneau conseillé"
+    "Önerilen aralık: %d:00 – %d:00",  // "Créneau conseillé : %d h – %d h"
+    "Önerilen aralık: %d:00'a kadar",  // "Créneau conseillé : jusqu'à %d h"
     "Bakır",  // "Cuivre"
     "Kariyer toplamı: %lu puan",  // "Cumul carrière : %lu points"
     "Kor Yürek",  // "Cœur de braise"
@@ -9810,6 +9892,7 @@ static const char* const kI18n_tr[] = {
     "Oyun sonu: her biri 16 hamle",  // "Fin de partie : 16 coups chacun"
     "Oyun sonu: her biri 5 hamle",  // "Fin de partie : 5 coups chacun"
     "Ay sonu (%d günlük hız)",  // "Fin du mois (rythme %d j)"
+    "Tahmini bitiş",  // "Fin prévue"
     "Final kaçtı — merkeze dönmen gerek.",  // "Finale manquée — il faudra revenir au centre."
     "İncelik",  // "Finesse"
     "Sabit",  // "Fixe"
@@ -10127,7 +10210,10 @@ static const char* const kI18n_tr[] = {
     "En geç",  // "Pas après"
     "En erken",  // "Pas avant"
     "Pil algılanmadı",  // "Pas de batterie détectée"
+    "Şarj olmuyor",  // "Pas de charge en cours"
+    "Bugün önerilen aralık yok",  // "Pas de créneau conseillé aujourd'hui"
     "Veri yok",  // "Pas de données"
+    "Güneş tahmini alınmadı",  // "Pas de prévision du soleil reçue"
     "Kadife Adım",  // "Pas de velours"
     "Şarj olmuyor",  // "Pas en charge"
     "Pas",  // "Passe"
@@ -10199,6 +10285,7 @@ static const char* const kI18n_tr[] = {
     "Yarın beklenen",  // "Prévu demain"
     "Hazır",  // "Prêt"
     "%s içinde hazır",  // "Prête dans %s"
+    "%d:%02d'de hazır",  // "Prête à %d h %02d"
     "Güç",  // "Puissance"
     "Tamamen kozmetik",  // "Purement cosmétique"
     "Piramit",  // "Pyramide"
@@ -10370,6 +10457,7 @@ static const char* const kI18n_tr[] = {
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
     "Dur",  // "Stop"
+    "Güneş tahminine göre öneri",  // "Suggestion d'après la prévision du soleil"
     "Devam",  // "Suite"
     "Sonraki",  // "Suivant"
     "Takip",  // "Suivi"

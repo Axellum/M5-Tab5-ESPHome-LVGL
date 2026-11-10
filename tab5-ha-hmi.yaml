@@ -175,6 +175,7 @@ esphome:
     - Tab5/ecran/tab5_froid.h
     - Tab5/ecran/tab5_serveur_ia.h
     - Tab5/ecran/tab5_voitures.h
+    - Tab5/ecran/tab5_voitures_charge.h
     - Tab5/ecran/tab5_telecommande.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_barre_demarrage.h
@@ -271,6 +272,8 @@ esphome:
     - Tab5/ecran/tab5_serveur_ia.cpp
     # Voitures : popup « Voitures », une grande carte par voiture électrique (ADR-0079).
     - Tab5/ecran/tab5_voitures.cpp
+    # Voitures, page « Charge » : la frise des 24 h et le créneau conseillé (ADR-0082).
+    - Tab5/ecran/tab5_voitures_charge.cpp
     # Télécommandes : une page par télécommande du blueprint (ADR-0056).
     - Tab5/ecran/tab5_telecommande.cpp
     # Registre unique des consoles (GameRegistry) et des fenêtres modales
