@@ -673,6 +673,20 @@ api:
             energie_voiture_jour(rang, debut, valeurs);
             voitures_charge_jour(rang, debut, valeurs);
 
+    - service: tab5_maj_voiture_trajets
+      description: "Popup Voitures, page Trajets : les kilomètres des sept derniers jours d'une voiture, ceux du mois et son kWh / 100 km estimé (l'énergie chargée divisée par les kilomètres, pas une consommation mesurée) (ADR-0083), poussés avec les charges."
+      variables:
+        rang:
+          type: string
+          description: "1 ou 2 : la voiture (celle de tab5_maj_voiture)"
+          example: "1"
+        payload:
+          type: string
+          description: "debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours — debut AAAA-MM-JJ : le premier des sept jours, le dernier est aujourd'hui ; km_jours et kwh_jours : sept nombres séparés par « ; », du plus ancien à aujourd'hui, un jour sans relevé reste vide (ce n'est pas 0) ; un champ vide = inconnu. Vide = la voiture n'a pas d'odomètre choisi : elle disparaît de la page, qui n'existe plus sans voiture. On ajoute des champs à la fin seulement."
+          example: "2026-11-03|41280|600|18.6|41.2;0;112.4;56.8;23;5.6;88|0;0;0;0;0;7.4;0"
+      then:
+        - lambda: 'voitures_trajets_recu(rang, payload);'
+
     - service: tab5_maj_energie_historique
       description: "Popup Énergie : la production d'une vue en barres (heures du jour, 30 derniers jours, 12 derniers mois)."
       variables:

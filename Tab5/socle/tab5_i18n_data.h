@@ -8,9 +8,16 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1340;
+static const uint16_t kI18nKeyCount = 1347;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1692,6 +1699,7 @@ static const char* const kI18nKeys[] = {
     "Complètes",
     "Composez les équipes, puis réglez les questions",
     "Comptabilise uniquement le mode Joueur contre Tab.",
+    "Compteur %s km",
     "Confirmation du coup : ACTIVÉE",
     "Confirmation du coup : DÉSACTIVÉE",
     "Confirmation, coordonnées, secousse",
@@ -1928,6 +1936,7 @@ static const char* const kI18nKeys[] = {
     "Jours de repos",
     "Juil",
     "Juin",
+    "Km par jour",
     "Komi 0,5 pour Blanc",
     "Komi 6,5 pour Blanc",
     "L'adversaire gagne",
@@ -2152,6 +2161,7 @@ static const char* const kI18nKeys[] = {
     "Pas de prévision du soleil reçue",
     "Pas de velours",
     "Pas en charge",
+    "Pas encore de relevé du compteur",
     "Passe",
     "Passe — fin de partie",
     "Passer",
@@ -2471,6 +2481,7 @@ static const char* const kI18nKeys[] = {
     "Toutes les parties et les réglages sont conservés dans le Tab.",
     "Trait : %s",
     "Trait aux %s",
+    "Trajets",
     "Travail",
     "Travail (horaire inconnu)",
     "Triple répétition de la position",
@@ -2556,6 +2567,7 @@ static const char* const kI18nKeys[] = {
     "avril",
     "b = billes jouées, MB = multiball déclenché.",
     "capteur muet",
+    "ce mois-ci",
     "coup de chaud",
     "cumul",
     "cumul de l'année",
@@ -2583,9 +2595,11 @@ static const char* const kI18nKeys[] = {
     "jeudi",
     "juillet",
     "juin",
+    "kWh / 100 km · estimé",
     "kWh / heure",
     "kWh / jour",
     "kWh / mois",
+    "kWh chargés par jour",
     "le début du rendez-vous",
     "lue %s",
     "lundi",
@@ -3036,6 +3050,7 @@ static const char* const kI18n_en[] = {
     "Full",  // "Complètes"
     "Pick the teams, then set up the questions",  // "Composez les équipes, puis réglez les questions"
     "Only Player vs Tab games are counted.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Odometer %s km",  // "Compteur %s km"
     "Move confirmation: ON",  // "Confirmation du coup : ACTIVÉE"
     "Move confirmation: OFF",  // "Confirmation du coup : DÉSACTIVÉE"
     "Confirmation, coordinates, shake",  // "Confirmation, coordonnées, secousse"
@@ -3272,6 +3287,7 @@ static const char* const kI18n_en[] = {
     "Days off",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km per day",  // "Km par jour"
     "Komi 0.5 for White",  // "Komi 0,5 pour Blanc"
     "Komi 6.5 for White",  // "Komi 6,5 pour Blanc"
     "The opponent wins",  // "L'adversaire gagne"
@@ -3496,6 +3512,7 @@ static const char* const kI18n_en[] = {
     "No solar forecast received",  // "Pas de prévision du soleil reçue"
     "Velvet Step",  // "Pas de velours"
     "Not charging",  // "Pas en charge"
+    "No odometer reading yet",  // "Pas encore de relevé du compteur"
     "Pass",  // "Passe"
     "Pass — game over",  // "Passe — fin de partie"
     "Pass",  // "Passer"
@@ -3815,6 +3832,7 @@ static const char* const kI18n_en[] = {
     "All games and settings are kept on the Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turn: %s",  // "Trait : %s"
     "%s to move",  // "Trait aux %s"
+    "Trips",  // "Trajets"
     "Work",  // "Travail"
     "Work (unknown hours)",  // "Travail (horaire inconnu)"
     "Threefold repetition",  // "Triple répétition de la position"
@@ -3900,6 +3918,7 @@ static const char* const kI18n_en[] = {
     "April",  // "avril"
     "b = balls played, MB = multiball triggered.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor silent",  // "capteur muet"
+    "this month",  // "ce mois-ci"
     "heat spike",  // "coup de chaud"
     "total",  // "cumul"
     "year's total",  // "cumul de l'année"
@@ -3927,9 +3946,11 @@ static const char* const kI18n_en[] = {
     "Thursday",  // "jeudi"
     "July",  // "juillet"
     "June",  // "juin"
+    "kWh / 100 km · estimated",  // "kWh / 100 km · estimé"
     "kWh / hour",  // "kWh / heure"
     "kWh / day",  // "kWh / jour"
     "kWh / month",  // "kWh / mois"
+    "kWh charged per day",  // "kWh chargés par jour"
     "before the appointment",  // "le début du rendez-vous"
     "read %s",  // "lue %s"
     "Monday",  // "lundi"
@@ -4380,6 +4401,7 @@ static const char* const kI18n_de[] = {
     "Alle",  // "Complètes"
     "Teams bilden, dann die Fragen einstellen",  // "Composez les équipes, puis réglez les questions"
     "Nur der Modus Spieler gegen Tab wird gezählt.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Kilometerstand %s km",  // "Compteur %s km"
     "Zugbestätigung: AN",  // "Confirmation du coup : ACTIVÉE"
     "Zugbestätigung: AUS",  // "Confirmation du coup : DÉSACTIVÉE"
     "Bestätigung, Koordinaten, Schütteln",  // "Confirmation, coordonnées, secousse"
@@ -4616,6 +4638,7 @@ static const char* const kI18n_de[] = {
     "Freie Tage",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km pro Tag",  // "Km par jour"
     "Komi 0,5 für Weiß",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 für Weiß",  // "Komi 6,5 pour Blanc"
     "Der Gegner gewinnt",  // "L'adversaire gagne"
@@ -4840,6 +4863,7 @@ static const char* const kI18n_de[] = {
     "Keine Sonnenprognose empfangen",  // "Pas de prévision du soleil reçue"
     "Samtschritt",  // "Pas de velours"
     "Lädt nicht",  // "Pas en charge"
+    "Noch kein Kilometerstand erfasst",  // "Pas encore de relevé du compteur"
     "Passen",  // "Passe"
     "Passen — Spielende",  // "Passe — fin de partie"
     "Passen",  // "Passer"
@@ -5159,6 +5183,7 @@ static const char* const kI18n_de[] = {
     "Alle Partien und Einstellungen bleiben im Tab gespeichert.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Am Zug: %s",  // "Trait : %s"
     "%s am Zug",  // "Trait aux %s"
+    "Fahrten",  // "Trajets"
     "Arbeit",  // "Travail"
     "Arbeit (Zeit unbekannt)",  // "Travail (horaire inconnu)"
     "Dreifache Stellungswiederholung",  // "Triple répétition de la position"
@@ -5244,6 +5269,7 @@ static const char* const kI18n_de[] = {
     "April",  // "avril"
     "b = gespielte Bälle, MB = Multiball ausgelöst.",  // "b = billes jouées, MB = multiball déclenché."
     "Sensor stumm",  // "capteur muet"
+    "diesen Monat",  // "ce mois-ci"
     "Hitzespitze",  // "coup de chaud"
     "Summe",  // "cumul"
     "Jahressumme",  // "cumul de l'année"
@@ -5271,9 +5297,11 @@ static const char* const kI18n_de[] = {
     "Donnerstag",  // "jeudi"
     "Juli",  // "juillet"
     "Juni",  // "juin"
+    "kWh / 100 km · geschätzt",  // "kWh / 100 km · estimé"
     "kWh / Stunde",  // "kWh / heure"
     "kWh / Tag",  // "kWh / jour"
     "kWh / Monat",  // "kWh / mois"
+    "Geladene kWh pro Tag",  // "kWh chargés par jour"
     "vor dem Termin",  // "le début du rendez-vous"
     "gelesen %s",  // "lue %s"
     "Montag",  // "lundi"
@@ -5724,6 +5752,7 @@ static const char* const kI18n_nl[] = {
     "Volledig",  // "Complètes"
     "Stel de teams samen en kies de vragen",  // "Composez les équipes, puis réglez les questions"
     "Telt alleen partijen Speler tegen Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Tellerstand %s km",  // "Compteur %s km"
     "Zetbevestiging: AAN",  // "Confirmation du coup : ACTIVÉE"
     "Zetbevestiging: UIT",  // "Confirmation du coup : DÉSACTIVÉE"
     "Bevestiging, coördinaten, schudden",  // "Confirmation, coordonnées, secousse"
@@ -5960,6 +5989,7 @@ static const char* const kI18n_nl[] = {
     "Vrije dagen",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km per dag",  // "Km par jour"
     "Komi 0,5 voor Wit",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 voor Wit",  // "Komi 6,5 pour Blanc"
     "De tegenstander wint",  // "L'adversaire gagne"
@@ -6184,6 +6214,7 @@ static const char* const kI18n_nl[] = {
     "Geen zonneprognose ontvangen",  // "Pas de prévision du soleil reçue"
     "Fluwelen tred",  // "Pas de velours"
     "Laadt niet",  // "Pas en charge"
+    "Nog geen tellerstand beschikbaar",  // "Pas encore de relevé du compteur"
     "Pas",  // "Passe"
     "Pas — einde partij",  // "Passe — fin de partie"
     "Passen",  // "Passer"
@@ -6503,6 +6534,7 @@ static const char* const kI18n_nl[] = {
     "Alle partijen en opties blijven bewaard in de Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Aan zet: %s",  // "Trait : %s"
     "%s aan zet",  // "Trait aux %s"
+    "Ritten",  // "Trajets"
     "Werk",  // "Travail"
     "Werk (tijden onbekend)",  // "Travail (horaire inconnu)"
     "Drievoudige stellingherhaling",  // "Triple répétition de la position"
@@ -6588,6 +6620,7 @@ static const char* const kI18n_nl[] = {
     "april",  // "avril"
     "b = gespeelde ballen, MB = multiball gestart.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor stil",  // "capteur muet"
+    "deze maand",  // "ce mois-ci"
     "hitte-piek",  // "coup de chaud"
     "totaal",  // "cumul"
     "jaartotaal",  // "cumul de l'année"
@@ -6615,9 +6648,11 @@ static const char* const kI18n_nl[] = {
     "donderdag",  // "jeudi"
     "juli",  // "juillet"
     "juni",  // "juin"
+    "kWh / 100 km · geschat",  // "kWh / 100 km · estimé"
     "kWh / uur",  // "kWh / heure"
     "kWh / dag",  // "kWh / jour"
     "kWh / maand",  // "kWh / mois"
+    "Geladen kWh per dag",  // "kWh chargés par jour"
     "vóór de afspraak",  // "le début du rendez-vous"
     "gelezen %s",  // "lue %s"
     "maandag",  // "lundi"
@@ -7068,6 +7103,7 @@ static const char* const kI18n_es[] = {
     "Completas",  // "Complètes"
     "Forma los equipos y luego ajusta las preguntas",  // "Composez les équipes, puis réglez les questions"
     "Solo cuenta el modo Jugador contra Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Odómetro %s km",  // "Compteur %s km"
     "Confirmar jugada: SÍ",  // "Confirmation du coup : ACTIVÉE"
     "Confirmar jugada: NO",  // "Confirmation du coup : DÉSACTIVÉE"
     "Confirmación, coordenadas, sacudida",  // "Confirmation, coordonnées, secousse"
@@ -7304,6 +7340,7 @@ static const char* const kI18n_es[] = {
     "Días libres",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
+    "Km por día",  // "Km par jour"
     "Komi 0,5 para Blanco",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 para Blanco",  // "Komi 6,5 pour Blanc"
     "Gana el rival",  // "L'adversaire gagne"
@@ -7528,6 +7565,7 @@ static const char* const kI18n_es[] = {
     "Sin previsión solar recibida",  // "Pas de prévision du soleil reçue"
     "Paso de seda",  // "Pas de velours"
     "No está cargando",  // "Pas en charge"
+    "Aún no hay lectura del cuentakilómetros",  // "Pas encore de relevé du compteur"
     "Pasa",  // "Passe"
     "Pasa — fin de la partida",  // "Passe — fin de partie"
     "Pasar",  // "Passer"
@@ -7847,6 +7885,7 @@ static const char* const kI18n_es[] = {
     "Todas las partidas y ajustes se guardan en el Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Juegan %s",  // "Trait aux %s"
+    "Viajes",  // "Trajets"
     "Trabajo",  // "Travail"
     "Trabajo (sin horario)",  // "Travail (horaire inconnu)"
     "Triple repetición de la posición",  // "Triple répétition de la position"
@@ -7932,6 +7971,7 @@ static const char* const kI18n_es[] = {
     "abril",  // "avril"
     "b = bolas jugadas, MB = multiball activado.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor mudo",  // "capteur muet"
+    "este mes",  // "ce mois-ci"
     "pico de calor",  // "coup de chaud"
     "acumulado",  // "cumul"
     "acumulado año",  // "cumul de l'année"
@@ -7959,9 +7999,11 @@ static const char* const kI18n_es[] = {
     "jueves",  // "jeudi"
     "julio",  // "juillet"
     "junio",  // "juin"
+    "kWh / 100 km · estimado",  // "kWh / 100 km · estimé"
     "kWh / hora",  // "kWh / heure"
     "kWh / día",  // "kWh / jour"
     "kWh / mes",  // "kWh / mois"
+    "kWh cargados por día",  // "kWh chargés par jour"
     "antes de la cita",  // "le début du rendez-vous"
     "leída %s",  // "lue %s"
     "lunes",  // "lundi"
@@ -8412,6 +8454,7 @@ static const char* const kI18n_it[] = {
     "Complete",  // "Complètes"
     "Forma le squadre, poi imposta le domande",  // "Composez les équipes, puis réglez les questions"
     "Conta solo la modalità Giocatore vs Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Contachilometri %s km",  // "Compteur %s km"
     "Conferma mossa: ATTIVA",  // "Confirmation du coup : ACTIVÉE"
     "Conferma mossa: DISATTIVATA",  // "Confirmation du coup : DÉSACTIVÉE"
     "Conferma, coordinate, scossa",  // "Confirmation, coordonnées, secousse"
@@ -8648,6 +8691,7 @@ static const char* const kI18n_it[] = {
     "Giorni liberi",  // "Jours de repos"
     "Lug",  // "Juil"
     "Giu",  // "Juin"
+    "Km al giorno",  // "Km par jour"
     "Komi 0,5 al Bianco",  // "Komi 0,5 pour Blanc"
     "Komi 6,5 al Bianco",  // "Komi 6,5 pour Blanc"
     "Vince l'avversario",  // "L'adversaire gagne"
@@ -8872,6 +8916,7 @@ static const char* const kI18n_it[] = {
     "Nessuna previsione solare ricevuta",  // "Pas de prévision du soleil reçue"
     "Passo di velluto",  // "Pas de velours"
     "Non in carica",  // "Pas en charge"
+    "Nessuna lettura del contachilometri",  // "Pas encore de relevé du compteur"
     "Passo",  // "Passe"
     "Passo — fine partita",  // "Passe — fin de partie"
     "Passa",  // "Passer"
@@ -9191,6 +9236,7 @@ static const char* const kI18n_it[] = {
     "Partite e opzioni restano salvate nel Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Muove il %s",  // "Trait aux %s"
+    "Viaggi",  // "Trajets"
     "Lavoro",  // "Travail"
     "Lavoro (orario ignoto)",  // "Travail (horaire inconnu)"
     "Triplice ripetizione della posizione",  // "Triple répétition de la position"
@@ -9276,6 +9322,7 @@ static const char* const kI18n_it[] = {
     "aprile",  // "avril"
     "b = palle giocate, MB = multiball attivato.",  // "b = billes jouées, MB = multiball déclenché."
     "sensore muto",  // "capteur muet"
+    "questo mese",  // "ce mois-ci"
     "picco di caldo",  // "coup de chaud"
     "cumulato",  // "cumul"
     "cumulato anno",  // "cumul de l'année"
@@ -9303,9 +9350,11 @@ static const char* const kI18n_it[] = {
     "giovedì",  // "jeudi"
     "luglio",  // "juillet"
     "giugno",  // "juin"
+    "kWh / 100 km · stimato",  // "kWh / 100 km · estimé"
     "kWh / ora",  // "kWh / heure"
     "kWh / giorno",  // "kWh / jour"
     "kWh / mese",  // "kWh / mois"
+    "kWh caricati al giorno",  // "kWh chargés par jour"
     "prima dell'appuntamento",  // "le début du rendez-vous"
     "letto %s",  // "lue %s"
     "lunedì",  // "lundi"
@@ -9756,6 +9805,7 @@ static const char* const kI18n_tr[] = {
     "Tümü",  // "Complètes"
     "Takımları kur, sonra soruları ayarla",  // "Composez les équipes, puis réglez les questions"
     "Yalnız Oyuncu - Tab modu sayılır.",  // "Comptabilise uniquement le mode Joueur contre Tab."
+    "Sayaç %s km",  // "Compteur %s km"
     "Hamle onayı: AÇIK",  // "Confirmation du coup : ACTIVÉE"
     "Hamle onayı: KAPALI",  // "Confirmation du coup : DÉSACTIVÉE"
     "Onay, koordinatlar, sallama",  // "Confirmation, coordonnées, secousse"
@@ -9992,6 +10042,7 @@ static const char* const kI18n_tr[] = {
     "İzin günleri",  // "Jours de repos"
     "Tem",  // "Juil"
     "Haz",  // "Juin"
+    "Günlük km",  // "Km par jour"
     "Beyaz için komi 0,5",  // "Komi 0,5 pour Blanc"
     "Beyaz için komi 6,5",  // "Komi 6,5 pour Blanc"
     "Rakip kazanır",  // "L'adversaire gagne"
@@ -10216,6 +10267,7 @@ static const char* const kI18n_tr[] = {
     "Güneş tahmini alınmadı",  // "Pas de prévision du soleil reçue"
     "Kadife Adım",  // "Pas de velours"
     "Şarj olmuyor",  // "Pas en charge"
+    "Henüz sayaç okuması yok",  // "Pas encore de relevé du compteur"
     "Pas",  // "Passe"
     "Pas — oyun bitti",  // "Passe — fin de partie"
     "Pas",  // "Passer"
@@ -10535,6 +10587,7 @@ static const char* const kI18n_tr[] = {
     "Tüm oyunlar ve ayarlar Tab'da saklanır.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Sıra: %s",  // "Trait : %s"
     "Sıra: %s",  // "Trait aux %s"
+    "Yolculuk",  // "Trajets"
     "İş",  // "Travail"
     "İş (saat bilinmiyor)",  // "Travail (horaire inconnu)"
     "Konumun üç kez tekrarı",  // "Triple répétition de la position"
@@ -10620,6 +10673,7 @@ static const char* const kI18n_tr[] = {
     "Nisan",  // "avril"
     "b = oynanan bilye, MB = multiball tetiklendi.",  // "b = billes jouées, MB = multiball déclenché."
     "sensör sessiz",  // "capteur muet"
+    "bu ay",  // "ce mois-ci"
     "sıcaklık artışı",  // "coup de chaud"
     "toplam",  // "cumul"
     "yıllık toplam",  // "cumul de l'année"
@@ -10647,9 +10701,11 @@ static const char* const kI18n_tr[] = {
     "Perşembe",  // "jeudi"
     "Temmuz",  // "juillet"
     "Haziran",  // "juin"
+    "kWh / 100 km · tahmini",  // "kWh / 100 km · estimé"
     "kWh / saat",  // "kWh / heure"
     "kWh / gün",  // "kWh / jour"
     "kWh / ay",  // "kWh / mois"
+    "Günlük şarj edilen kWh",  // "kWh chargés par jour"
     "randevudan önce",  // "le début du rendez-vous"
     "okundu %s",  // "lue %s"
     "Pazartesi",  // "lundi"

@@ -2397,6 +2397,82 @@ static void test_voiture_lire() {
            "voiture : nom vide, le reste est montré");
 }
 
+// Page « Trajets » du popup Voitures (tab5_maj_voiture_trajets, ADR-0083) :
+// « debut|compteur_km|km_mois|kwh_100km|km_jours|kwh_jours ».
+static void test_trajets_lire() {
+    TrajetsLu t;
+    expect(trajets_lire(ch("2026-06-10|41280|600|18.6|62;81;47;112;74;38;5|0;0;19.8;11;0;0;12.4"), t) && t.presente &&
+               t.annee == 2026 && t.mois == 6 && t.jour == 10 && proche(t.compteur, 41280.0f) &&
+               proche(t.km_mois, 600.0f) && proche(t.kwh_100km, 18.6f) && proche(t.km[0], 62.0f) &&
+               proche(t.km[3], 112.0f) && proche(t.km[6], 5.0f) && proche(t.kwh[2], 19.8f) &&
+               proche(t.kwh[3], 11.0f) && proche(t.kwh[6], 12.4f),
+           "trajets : un payload complet");
+    // Les sept jours : le premier, le dernier, et rien hors de la fenêtre.
+    int jm = 0, js = 0;
+    expect(trajets_jour(t, 0, jm, js) && jm == 10 && js == 3 && trajets_jour(t, 6, jm, js) && jm == 16 && js == 2 &&
+               !trajets_jour(t, -1, jm, js) && !trajets_jour(t, kTrajetsJours, jm, js),
+           "trajets : le 10 juin 2026 est un mercredi, le 16 un mardi ; hors fenêtre refusé");
+    // La fenêtre traverse un mois, une année, un 29 février : jour du mois et jour de la semaine suivent.
+    TrajetsLu m;
+    trajets_lire(ch("2026-06-28|||||"), m);
+    expect(trajets_jour(m, 3, jm, js) && jm == 1 && js == 3 && trajets_jour(m, 6, jm, js) && jm == 4 && js == 6,
+           "trajets : de juin à juillet");
+    trajets_lire(ch("2026-12-29|||||"), m);
+    expect(trajets_jour(m, 3, jm, js) && jm == 1 && js == 5, "trajets : de décembre à janvier");
+    trajets_lire(ch("2028-02-27|||||"), m);
+    expect(trajets_jour(m, 2, jm, js) && jm == 29 && js == 2 && trajets_jour(m, 3, jm, js) && jm == 1 && js == 3,
+           "trajets : 2028 est bissextile");
+
+    // Rien reçu, ou rien que des blancs : pas de voiture (sa colonne disparaît).
+    TrajetsLu v;
+    expect(!trajets_lire(ch(""), v) && !v.presente && !trajets_lire(Champ{nullptr, 5}, v) && !v.presente &&
+               !trajets_lire(ch("|||||"), v) && !trajets_lire(ch("  | \t|||| "), v) && !v.presente,
+           "trajets : payload vide ou blanc = la voiture n'a pas d'odomètre");
+    // Un odomètre choisi sans aucun relevé : la voiture est là, ses sept valeurs sont inconnues (jamais 0).
+    expect(trajets_lire(ch("2026-06-10||||;;;;;;|;;;;;;"), v) && v.presente && std::isnan(v.compteur) &&
+               std::isnan(v.km_mois) && std::isnan(v.kwh_100km) && std::isnan(v.km[0]) && std::isnan(v.km[6]) &&
+               std::isnan(v.kwh[0]) && std::isnan(v.kwh[6]),
+           "trajets : l'odomètre sans relevé est présent, tout est inconnu");
+    // Un jour sans ligne reste vide : inconnu, ce n'est pas 0 km ; un 0 connu reste 0.
+    expect(trajets_lire(ch("2026-06-10|100|0||30;;;0;12.5;0;7.2|6;0;0;0;0;0;0"), v) && proche(v.km[0], 30.0f) &&
+               std::isnan(v.km[1]) && std::isnan(v.km[2]) && proche(v.km[3], 0.0f) && proche(v.km[6], 7.2f) &&
+               proche(v.km_mois, 0.0f) && std::isnan(v.kwh_100km) && proche(v.kwh[0], 6.0f) && proche(v.kwh[1], 0.0f),
+           "trajets : un champ vide est inconnu, un zéro est un zéro");
+    // Une date illisible : la voiture est lue, mais les jours n'ont pas de nom (trajets_jour refuse).
+    expect(trajets_lire(ch("2026-02-30|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v) && v.annee == 0 && v.presente &&
+               proche(v.km[6], 7.0f) && !trajets_jour(v, 0, jm, js) &&
+               trajets_lire(ch("demain|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v) && v.annee == 0 && !trajets_jour(v, 3, jm, js) &&
+               trajets_lire(ch("2026-6-10|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v) && v.annee == 0,
+           "trajets : une date impossible ou mal écrite = jours sans nom");
+    // Chaque nombre a son plafond (inclus) ; au-delà, négatif, illisible ou non fini : inconnu.
+    expect(trajets_lire(ch("2026-06-10|3000000|90000|1000|3000;3000;3000;3000;3000;3000;3000|5000;5000;5000;5000;5000;5000;5000"), v) &&
+               proche(v.compteur, 3000000.0f) && proche(v.km_mois, 90000.0f) && proche(v.kwh_100km, 1000.0f) &&
+               proche(v.km[0], 3000.0f) && proche(v.kwh[0], 5000.0f),
+           "trajets : les plafonds sont inclus");
+    expect(trajets_lire(ch("2026-06-10|3000001|90001|1001|3001;-1;abc;inf;nan;1e99;4|5001;-2;x;inf;nan;1e99;5"), v) &&
+               std::isnan(v.compteur) && std::isnan(v.km_mois) && std::isnan(v.kwh_100km) && std::isnan(v.km[0]) &&
+               std::isnan(v.km[1]) && std::isnan(v.km[2]) && std::isnan(v.km[3]) && std::isnan(v.km[4]) &&
+               std::isnan(v.km[5]) && proche(v.km[6], 4.0f) && std::isnan(v.kwh[0]) && std::isnan(v.kwh[1]) &&
+               std::isnan(v.kwh[2]) && std::isnan(v.kwh[3]) && std::isnan(v.kwh[4]) && std::isnan(v.kwh[5]) &&
+               proche(v.kwh[6], 5.0f),
+           "trajets : au-delà du plafond, négatif, illisible ou non fini = inconnu");
+    // Moins de sept valeurs : la fin est inconnue ; plus de sept : le reste est ignoré ; un champ de trop aussi.
+    expect(trajets_lire(ch("2026-06-10|1|2|3|5;6|7"), v) && proche(v.km[0], 5.0f) && proche(v.km[1], 6.0f) &&
+               std::isnan(v.km[2]) && std::isnan(v.km[6]) && proche(v.kwh[0], 7.0f) && std::isnan(v.kwh[1]),
+           "trajets : moins de sept valeurs, la fin est inconnue");
+    expect(trajets_lire(ch("2026-06-10|1|2|3|1;2;3;4;5;6;7;8;9|1;2;3;4;5;6;7;8;9|trop|encore"), v) &&
+               proche(v.km[6], 7.0f) && proche(v.kwh[6], 7.0f),
+           "trajets : au plus sept valeurs, un champ de trop est ignoré");
+    // Un payload court : les champs absents sont inconnus ; un payload suivant efface le précédent.
+    expect(trajets_lire(ch("2026-06-10|500"), v) && proche(v.compteur, 500.0f) && std::isnan(v.km_mois) &&
+               std::isnan(v.km[0]) && std::isnan(v.kwh[0]),
+           "trajets : un payload court n'invente rien");
+    trajets_lire(ch("2026-06-10|41280|600|18.6|1;2;3;4;5;6;7|1;2;3;4;5;6;7"), v);
+    expect(trajets_lire(ch("2026-06-11|7"), v) && v.jour == 11 && proche(v.compteur, 7.0f) && std::isnan(v.km_mois) &&
+               std::isnan(v.km[0]) && std::isnan(v.kwh[3]),
+           "trajets : une lecture repart d'un état neuf");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -2458,6 +2534,7 @@ int main() {
     test_voiture_lire();
     test_charges_lire();
     test_conso_jour();
+    test_trajets_lire();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

@@ -452,6 +452,24 @@ void voiture_jour(const std::string& p) {
     (void) conso_jour_totaux(c, nullptr, 0);
 }
 
+// Trajets des voitures (tab5_maj_voiture_trajets) : rang et payload séparés par un saut de ligne ; le rang est
+// lu par l'écran (tab5_voitures_trajets.cpp), pas par le socle. Le texte lu, puis les jours qu'il porte (la
+// date, ses jours de la semaine, y compris hors de la fenêtre) et ce que l'écran en tire.
+void voiture_trajets(const std::string& p) {
+    const size_t s = p.find('\n');
+    const std::string payload = s == std::string::npos ? std::string() : p.substr(s + 1);
+    TrajetsLu t;
+    trajets_lire(Champ{payload.data(), payload.size()}, t);
+    int jour = 0, semaine = 0;
+    for (int i = -1; i <= kTrajetsJours; i++) (void) trajets_jour(t, i, jour, semaine);
+    float total = 0.0f;
+    for (int i = 0; i < kTrajetsJours; i++) {
+        if (std::isfinite(t.km[i])) total += t.km[i];
+        if (std::isfinite(t.kwh[i])) total += t.kwh[i];
+    }
+    (void) total;
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -484,6 +502,7 @@ constexpr Parseur kParseurs[] = {
     voiture,          // 'D' tab5_maj_voiture
     charges,          // 'E' tab5_maj_voiture_charges
     voiture_jour,     // 'F' tab5_maj_voiture_jour
+    voiture_trajets,  // 'G' tab5_maj_voiture_trajets
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

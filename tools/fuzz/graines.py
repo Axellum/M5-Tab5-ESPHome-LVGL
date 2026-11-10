@@ -45,6 +45,7 @@ FAMILLES = [
     ("D", "tab5_maj_voiture", ("rang", "payload")),
     ("E", "tab5_maj_voiture_charges", "payload"),
     ("F", "tab5_maj_voiture_jour", ("rang", "debut", "valeurs")),
+    ("G", "tab5_maj_voiture_trajets", ("rang", "payload")),
 ]
 
 
@@ -104,6 +105,13 @@ LIMITES = [
     ("D", "voiture_bornes", "9\nX|150|-5|mi|9|-1|-2|101|1e99|7|trop"),
     ("D", "voiture_illisible", "1\nX|abc|nan|km|x|inf||unknown|"),
     ("D", "voiture_vide", "2\n||||||||"),
+    # Page « Trajets » du popup Voitures (ADR-0083) : une date impossible, des nombres hors bornes ou
+    # illisibles, un odomètre sans relevé, plus de sept valeurs, un payload court et un blanc.
+    ("G", "trajets_date_impossible", "1\n2026-02-30|1|2|3|1;2;3;4;5;6;7|1;2;3;4;5;6;7"),
+    ("G", "trajets_bornes", "2\n2028-02-27|3000001|-5|1e99|3001;-1;abc;inf;nan;1e99;4;9;9|1000000;x;;;;;5|trop"),
+    ("G", "trajets_sans_releve", "1\n2026-12-29||||;;;;;;|;;;;;;"),
+    ("G", "trajets_court", "2\n2026-06-10|500"),
+    ("G", "trajets_blanc", "1\n  | \t||||"),
     ("D", "voiture_sans_rang", "|||"),
     # Serveur IA (ADR-0059) : nombres négatifs, non finis, hors bornes, champs de trop, un
     # second serveur ignoré.

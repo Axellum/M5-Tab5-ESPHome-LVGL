@@ -2770,6 +2770,28 @@ blueprint:
                 - domain: sensor
                 - domain: number
                 - domain: input_number
+        voiture_1_odometre:
+          name: Voiture 1, compteur kilométrique · Car 1, odometer
+          description: >-
+            Facultatif : le compteur kilométrique. C'est lui qui fait apparaître la page
+            « Trajets » du popup Voitures : les kilomètres de chacun des sept derniers jours et
+            ceux du mois, lus dans l'historique de Home Assistant (le capteur doit avoir des
+            statistiques à long terme). Il faut aussi la puissance de charge ci-dessus. Chez
+            Tesla (Fleet, Teslemetry), ce capteur est désactivé par défaut : à activer dans
+            l'intégration (page de l'appareil, entités désactivées).
+
+
+            Optional: the odometer. It is what makes the « Trajets » (trips) page of the Cars
+            popup appear: the kilometres of each of the last seven days and of the month, read
+            from Home Assistant's history (the sensor needs long-term statistics). The charging
+            power above is needed too. With Tesla (Fleet, Teslemetry) this sensor is disabled
+            by default: enable it in the integration (the device page, disabled entities).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: distance
         voiture_1_fin:
           name: Voiture 1, fin de charge · Car 1, charge end
           description: >-
@@ -2888,6 +2910,21 @@ blueprint:
                 - domain: sensor
                 - domain: number
                 - domain: input_number
+        voiture_2_odometre:
+          name: Voiture 2, compteur kilométrique · Car 2, odometer
+          description: >-
+            Facultatif : le compteur kilométrique (voir la voiture 1). Chez Tesla, désactivé par
+            défaut dans l'intégration.
+
+
+            Optional: the odometer (see car 1). With Tesla, disabled by default in the
+            integration.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: distance
         voiture_2_fin:
           name: Voiture 2, fin de charge · Car 2, charge end
           description: >-
@@ -4172,6 +4209,7 @@ variables:
       puissance: !input voiture_1_puissance
       energie: !input voiture_1_energie
       limite: !input voiture_1_limite
+      odometre: !input voiture_1_odometre
       fin: !input voiture_1_fin
     - nom: !input voiture_2_nom
       batterie: !input voiture_2_batterie
@@ -4181,6 +4219,7 @@ variables:
       puissance: !input voiture_2_puissance
       energie: !input voiture_2_energie
       limite: !input voiture_2_limite
+      odometre: !input voiture_2_odometre
       fin: !input voiture_2_fin
   voitures_compteur_separe: !input energie_voitures_compteur_separe
   voitures: >-
