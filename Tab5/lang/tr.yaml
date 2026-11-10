@@ -1646,3 +1646,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Suggestion d'après la prévision du soleil": "Güneş tahminine göre öneri"
 "Pas de charge en cours": "Şarj olmuyor"
 "Prête à %d h %02d": "%d:%02d'de hazır"
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+# « evin » (génitif) : « 54 % evin » = part de la maison ; « kat edilen km » = km parcourus.
+"de la maison": "evin"
+"chargés par les voitures ce mois": "bu ay araçlarla şarj edildi"
+"Part du soleil": "Güneş payı"
+"chargés ce mois-ci": "bu ay şarj edildi"
+"km parcourus": "kat edilen km"
+"kWh/100 km estimés : énergie chargée / km parcourus": "Tahmini kWh/100 km: şarj edilen enerji / kat edilen km"

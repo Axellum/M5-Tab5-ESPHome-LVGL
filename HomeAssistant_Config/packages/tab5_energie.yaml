@@ -60,6 +60,12 @@
 #       popup puis au plus toutes les 5 minutes) : trois appels, un par rang, tous les rangs à chaque
 #       fois (une série vide retire la voiture de la page « Aujourd'hui »). Un firmware plus ancien
 #       n'a pas l'action : continue_on_error.
+#       tab5_maj_voiture_bilan (ADR-0080, 10/11/2026) : vue « mois_civil », debut (le 1er du mois,
+#       AAAA-MM-JJ : `bilan_debut` de la réponse) et payload « kwh|part_soleil|km|kwh_100km|reseau »
+#       de chaque voiture puis la part de la maison (`bilan`), de la MÊME réponse de script.tab5_voitures_analyse,
+#       aux mêmes moments (ouverture du popup puis au plus toutes les 5 minutes) : un appel, poussé tel quel.
+#       Page « Bilan », bouton « Voitures ». Un payload vide retire le bouton ; un firmware plus ancien
+#       n'a pas l'action : continue_on_error.
 #       tab5_maj_voiture_trajets (ADR-0083, 10/11/2026) : rang « 1 » ou « 2 » et payload « debut|
 #       compteur_km|km_mois|kwh_100km|km_jours|kwh_jours » : les chaînes `trajets_1` et `trajets_2` de
 #       la MÊME réponse de script.tab5_voitures_analyse, aux mêmes moments (les deux rangs à chaque
@@ -697,6 +703,17 @@ script:
                               valeurs: >-
                                 {{ analyse_voitures.get('jour_maison' if repeat.item == '0' else 'jour_' ~ repeat.item, '') | string }}
                             continue_on_error: true
+                    # La même réponse encore, le bilan du mois civil (ADR-0080, page « Bilan », bouton
+                    # « Voitures ») : `bilan_debut` (le 1er du mois) et `bilan` (kWh, part du soleil, km,
+                    # kWh/100 km et kWh du réseau de chaque voiture, puis la part de la maison), poussés
+                    # tels quels. Un payload vide retire le bouton. Un firmware sans l'action :
+                    # continue_on_error, le script continue.
+                    - action: "esphome.{{ tablette }}_tab5_maj_voiture_bilan"
+                      data:
+                        vue: mois_civil
+                        debut: "{{ analyse_voitures.get('bilan_debut', '') | string }}"
+                        payload: "{{ analyse_voitures.get('bilan', '') | string }}"
+                      continue_on_error: true
                     # Les trajets (ADR-0083, page « Trajets » du popup Voitures, action
                     # tab5_maj_voiture_trajets : rang et payload « debut|compteur_km|km_mois|kwh_100km|
                     # km_jours|kwh_jours ») : `trajets_1` et `trajets_2` de la MÊME réponse, une

@@ -51,6 +51,15 @@
  *           heures du jour, jours du mois civil, mois de l'année civile), le net de chaque
  *           créneau en barres (surplus en haut, déficit en bas), le cumul en courbe
  *           lissée, le dernier créneau connu pointé, la fin du mois projetée en points.
+ *           Avec des voitures (ADR-0080, tab5_maj_voiture_bilan, voiture_bilan_lire) : un quatrième
+ *           bouton « Voitures » à côté de ceux-là (les quatre à 110 px) remplace le graphique par le
+ *           mois des voitures : à gauche un anneau « x % de la maison » (la part de chaque voiture à
+ *           sa couleur), l'énergie chargée, la part du soleil et le réseau ; à droite une carte par
+ *           voiture (énergie, part du soleil en barre, réseau, km, kWh/100 km, ces deux-là seulement
+ *           avec l'odomètre : « -- » sinon, « ~ » devant le second, une estimation). La carte de gauche
+ *           de la page ne change pas. Sans bilan reçu, le bouton n'existe pas et la page est celle
+ *           d'avant au pixel près ; sur la 7B (kBilanVoitures : corps moins haut) rien de tout cela
+ *           n'est créé.
  *       Home Assistant n'envoie rien tant que le popup est fermé : l'ouverture et chaque
  *       changement de vue émettent esphome.tab5_energie (vue), auquel le blueprint répond
  *       en lançant script.tab5_energie (packages/tab5_energie.yaml), qui pousse
@@ -443,6 +452,60 @@ constexpr int32_t kBilVueL = kBilVueLMax < 150 ? kBilVueLMax : 150;
 constexpr int32_t kBilTitreL = kBilCarteL - 18 - 3 * kBilVueL - 2 * 10 - 22 - 10;
 constexpr int kGrille = 8;                  // graduations de chaque axe, au plus
 
+// Bilan du mois des voitures (ADR-0080), à la place du graphique de la carte de droite : la zone
+// (kBilZoneL × kBilZoneH, 764 × 530 sur le Tab5) porte à gauche le bloc des voitures ensemble, à droite une
+// carte par voiture, la note des kWh/100 km dessous (au même endroit que celle du graphique). Seulement sur
+// un corps aussi haut que celui du Tab5, comme les voitures du Flux : sur la 7B (508 × 423) il n'y a pas la
+// place, le bouton « Voitures » ne se montre jamais. Mesures en Roboto 700 (roboto_22 est le 700) : « 214 kWh »
+// 130 px en 32, « 123 » 100 px en 55, « Part du soleil » 150 px, « chargés ce mois-ci » 190 px en 22.
+constexpr bool kBilanVoitures = kCorpsH >= kCorpsHTab5;
+constexpr int kVueVoitures = 3;             // energie_bilan_vue_3 : après heures, jours, mois
+static_assert(kVueVoitures == NB_VUES, "le bouton « Voitures » vient juste après les vues du graphique");
+static_assert(kVueVoitures < 4, "EnergieUI::bilan_vue_btn a quatre places (tab5_energie.h)");
+// Les quatre boutons de vue, de 110 px, 10 px entre eux, le dernier à 18 px du bord (vue_btn.yaml) : avec
+// les trois d'avant (3 × 150 + 2 × 10 + 18) 488 px de la droite ; avec quatre (4 × 110 + 3 × 10 + 18) 488 aussi :
+// le titre du graphique garde ses 248 px.
+constexpr int32_t kBvBtnL = 110;
+constexpr int32_t kBvBtnEcart = 10;
+constexpr int32_t kBvBtnBord = 18;
+constexpr int32_t kBvMarge = 20;
+constexpr int32_t kBvHaut = 6;
+constexpr int32_t kBvBas = kBilNoteY - 10;                  // 478 : 10 px au-dessus de la note
+constexpr int32_t kBvH = kBvBas - kBvHaut;                  // 472
+constexpr int32_t kBvGaucheL = 212;                         // le bloc des voitures ensemble
+constexpr int32_t kBvCartesX = kBvMarge + kBvGaucheL + 12;  // 244
+constexpr int32_t kBvCartesL = kBilZoneL - kBvMarge - kBvCartesX;   // 500 : une carte, ou deux de 244
+constexpr int32_t kBvCartesEcart = 12;
+constexpr int32_t kBvLarge = 400;           // une carte au moins aussi large met km et kWh/100 km côte à côte
+constexpr int32_t kBvPad = 14;              // dans une carte
+// Bloc de gauche (212 px, 16 de marge) : l'anneau, puis trois rangées « titre / valeur ».
+constexpr int32_t kBvAnneauD = 168;
+constexpr int32_t kBvAnneauL = 16;
+constexpr int32_t kBvAnneauY = 12;
+constexpr int32_t kBvGPad = 16;
+constexpr int32_t kBvGL = kBvGaucheL - 2 * kBvGPad;       // 180 : la largeur des textes du bloc
+constexpr int32_t kBvGTotalY = 192;
+constexpr int32_t kBvGTexteY = 230;         // trois lignes de 26 px au plus
+constexpr int32_t kBvGFiletY = 318;
+constexpr int32_t kBvGSoleilY = 328;        // le titre, sa valeur 26 px dessous
+constexpr int32_t kBvGReseauY = 402;
+// Une carte : icône et nom, le grand nombre de kWh, sa légende, la part du soleil et sa barre, le réseau,
+// un filet, puis km et kWh/100 km (chacun : sa valeur et sa légende dessous).
+constexpr int32_t kBvIconeL = 52;
+constexpr int32_t kBvNomY = 18;
+constexpr int32_t kBvGrandY = 62;
+constexpr int32_t kBvLegendeY = 128;
+constexpr int32_t kBvSoleilY = 174;
+constexpr int32_t kBvBarreY = 206;
+constexpr int32_t kBvBarreH = 16;
+constexpr int32_t kBvReseauY = 238;
+constexpr int32_t kBvFiletY = 276;
+constexpr int32_t kBvKmY = 290;
+constexpr int32_t kBvConsoY = 368;          // sous km ; à côté de lui sur une carte large (kBvLarge)
+constexpr int32_t kBvValeurH = 38;          // la hauteur d'une ligne de roboto_32_b : la légende dessous
+constexpr int32_t kBvPctL = 70;
+constexpr int32_t kBvReseauL = 120;
+
 struct Mesure {
     bool choisi = false;
     float v = NAN;
@@ -484,8 +547,19 @@ struct Voiture {
     float batterie = NAN, autonomie = NAN, puissance = NAN, energie = NAN, limite = NAN, minutes = NAN;
 };
 
+// Le mois des voitures (tab5_maj_voiture_bilan, ADR-0080) : ce que voiture_bilan_lire a lu, et le mois du
+// 1er reçu (0 : illisible, le titre reste vide).
+struct BilanVoitures {
+    bool recu = false;
+    int annee = 0, mois = 0;
+    VoitureBilanLu lu;
+};
+
 Instant s_i;
 Voiture s_voitures[kVoituresMax];
+BilanVoitures s_bv;                 // recu faux : aucun bilan des voitures, pas de bouton « Voitures »
+bool s_bil_voitures = false;        // le bouton « Voitures » a été touché : la carte de droite montre les voitures
+bool s_bil_boutons_voitures = false;   // les quatre boutons de vue sont à 110 px (sinon les trois d'avant)
 ChargeLue s_charges[kChargesMax];   // tab5_maj_voiture_charges (ADR-0077) : la plus récente d'abord
 int s_charges_n = 0;                // 0 : aucune reçue, la page Charges n'existe pas
 bool s_compteur_compte = true;   // le compteur de la maison compte la charge des voitures
@@ -634,6 +708,49 @@ struct BilanUI {
     lv_obj_t* note = nullptr;             // « achat / vente estimés heure par heure »
 };
 BilanUI s_bil;
+
+// Bilan du mois des voitures (ADR-0080) : un conteneur sur toute la zone du graphique, montré à la place
+// de lui ; dedans le bloc de gauche (l'anneau, l'énergie, la part du soleil, le réseau), une carte par
+// voiture (rang 1, rang 2, posées dans l'ordre de celles reçues) et la note. Créé une fois, seulement où
+// kBilanVoitures.
+struct BilanVoituresUI {
+    struct Carte {
+        lv_obj_t* fond = nullptr;
+        lv_obj_t* icone = nullptr;
+        lv_obj_t* nom = nullptr;
+        lv_obj_t* grand = nullptr;        // « 123 » : l'énergie chargée ce mois-ci
+        lv_obj_t* grand_unite = nullptr;  // « kWh », après le nombre
+        lv_obj_t* legende = nullptr;      // « chargés ce mois-ci »
+        lv_obj_t* soleil_titre = nullptr;
+        lv_obj_t* soleil_pct = nullptr;
+        lv_obj_t* piste = nullptr;        // la barre : le réseau en fond…
+        lv_obj_t* soleil = nullptr;       // … et le soleil devant
+        lv_obj_t* reseau_titre = nullptr;
+        lv_obj_t* reseau_valeur = nullptr;
+        lv_obj_t* filet = nullptr;
+        lv_obj_t* km = nullptr;
+        lv_obj_t* km_legende = nullptr;
+        lv_obj_t* conso = nullptr;
+        lv_obj_t* conso_legende = nullptr;
+    };
+    lv_obj_t* cont = nullptr;
+    lv_obj_t* gauche = nullptr;
+    lv_obj_t* anneau_piste = nullptr;
+    lv_obj_t* anneau[kVoituresMax] = {};   // la part de chaque voiture dans la maison
+    lv_obj_t* anneau_pct = nullptr;
+    lv_obj_t* anneau_texte = nullptr;
+    lv_obj_t* total = nullptr;
+    lv_obj_t* total_texte = nullptr;
+    lv_obj_t* filet = nullptr;
+    lv_obj_t* soleil_titre = nullptr;
+    lv_obj_t* soleil_valeur = nullptr;
+    lv_obj_t* soleil_kwh = nullptr;
+    lv_obj_t* reseau_titre = nullptr;
+    lv_obj_t* reseau_valeur = nullptr;
+    Carte carte[kVoituresMax];
+    lv_obj_t* note = nullptr;
+};
+BilanVoituresUI s_bvu;
 // Points de la courbe du cumul (lv_line_set_points ne copie pas : [AI-WARNING] de l'en-tête),
 // le point de départ à 0 compris ; repassés à LVGL seulement s'ils changent.
 constexpr int kCumulPoints = (kCourbeLissePoints - 1) * kLisse + 1;
@@ -2189,12 +2306,228 @@ void peindre_graphique_bilan() {
     if (b.lu.estime) texte_ha_coupe(o.note, tr("achat / vente estimés heure par heure"), kBilNoteL);
 }
 
+// --- Bilan du mois des voitures (ADR-0080) -------------------------------------------------
+
+// Le bilan des voitures est-il reçu (et dessinable ici) ? Sinon la page Bilan est celle d'avant.
+bool bilan_voitures_recu() { return kBilanVoitures && s_bv.recu; }
+
+// Le nom d'une voiture (rang 0 ou 1) : celui de tab5_maj_voiture, sinon « Voiture 1 » / « Voiture 2 ».
+void nom_voiture_bilan(int k, char* out, size_t n) {
+    const Voiture& v = s_voitures[k];
+    if (v.presente && v.nom[0] != '\0') snprintf(out, n, "%s", v.nom);
+    else snprintf(out, n, tr("Voiture %d"), k + 1);
+}
+
+// Un nombre de kWh sans son unité (le grand chiffre d'une carte) : « 12.4 » sous 100, « 123 » au-delà.
+void nombre_kwh(char* out, size_t n, float v) {
+    if (!std::isfinite(v)) snprintf(out, n, "--");
+    else if (v < 100.0f) snprintf(out, n, "%.1f", static_cast<double>(v));
+    else snprintf(out, n, "%.0f", static_cast<double>(v));
+}
+
+// Un nombre entier suivi de « % » ; « -- » s'il est inconnu.
+void pourcent(char* out, size_t n, float v) {
+    if (!std::isfinite(v)) snprintf(out, n, "--");
+    else snprintf(out, n, "%d %%", static_cast<int>(std::lround(v)));
+}
+
+// Un libellé posé dans `parent` à (x, y), montré avec lui ; `l` > 0 : largeur fixe (texte coupé, aligné).
+lv_obj_t* texte_bv(lv_obj_t* parent, const esphome::font::Font* police, int32_t x, int32_t y, int32_t l,
+                   lv_text_align_t align = LV_TEXT_ALIGN_LEFT) {
+    lv_obj_t* t = libelle(parent, police, l, align);
+    lv_obj_set_pos(t, x, y);
+    lv_obj_remove_flag(t, LV_OBJ_FLAG_HIDDEN);
+    return t;
+}
+
+// Les boutons de vue du Bilan : les trois d'avant (kBilVueL de large, x de vue_btn.yaml), ou les quatre de
+// 110 px quand le bilan des voitures est reçu (le quatrième, « Voitures », à 18 px du bord).
+void bilan_boutons(bool voitures) {
+    const EnergieUI& u = g_energie_ui;
+    const int n = voitures ? NB_VUES + 1 : NB_VUES;
+    const int32_t l = voitures ? kBvBtnL : kBilVueL;
+    for (int v = 0; v < n; v++) {
+        lv_obj_t* b = u.bilan_vue_btn[v];
+        if (b == nullptr) continue;
+        if (lv_obj_get_style_width(b, LV_PART_MAIN) != l) lv_obj_set_width(b, l);
+        ui_x(b, -(kBvBtnBord + (n - 1 - v) * (l + kBvBtnEcart)));
+    }
+}
+
+// La carte de droite avec les voitures : titre (le mois), bloc de gauche, cartes, note.
+void peindre_voitures_bilan() {
+    BilanVoituresUI& o = s_bvu;
+    if (o.cont == nullptr) return;
+    const EnergieUI& u = g_energie_ui;
+    const VoitureBilanLu& b = s_bv.lu;
+    char t[96], x[48];
+    ui_hidden(o.cont, false);
+    if (s_bv.mois >= 1) snprintf(t, sizeof(t), "%s", fr_capitalized(month_long_utf8(s_bv.mois)).c_str());
+    else t[0] = '\0';
+    texte_ha_coupe(u.bilan_titre, t, kBilTitreL);
+
+    // Bloc de gauche : les voitures ensemble. L'anneau est la part des voitures dans la consommation de la
+    // maison (celle de la voiture 1 de son angle 0, celle de la voiture 2 à la suite, le reste est la piste).
+    const VoitureBilanTotal tot = voiture_bilan_total(b);
+    float parts[kVoituresMax];
+    voiture_bilan_parts(b, parts);
+    arc_couleur(o.anneau_piste, LV_PART_MAIN, UIColor.ARC_TRACK);
+    ui_hidden(o.anneau_piste, false);
+    int32_t fin = 0;
+    for (int r = 0; r < kVoituresMax; r++) {
+        const int32_t debut = fin;
+        if (std::isfinite(parts[r])) {
+            fin += static_cast<int32_t>(std::lround(360.0f * parts[r] / 100.0f));
+            if (fin > 360) fin = 360;
+        }
+        peindre_part(o.anneau[r], debut, fin, r == 0 ? UIColor.ACCENT : UIColor.ACCENT_ALT);
+    }
+    pourcent(x, sizeof(x), b.part);
+    ui_text(o.anneau_pct, x);
+    ui_text(o.anneau_texte, tr("de la maison"));
+    kwh(x, sizeof(x), tot.kwh);
+    ui_text(o.total, x);
+    ui_text(o.total_texte, tr("chargés par les voitures ce mois"));
+    texte_ha_coupe(o.soleil_titre, tr("Part du soleil"), kBvGL);
+    pourcent(x, sizeof(x), tot.soleil);
+    ui_text(o.soleil_valeur, x);
+    const bool soleil_kwh = std::isfinite(tot.soleil_kwh);
+    ui_hidden(o.soleil_kwh, !soleil_kwh);
+    if (soleil_kwh) {
+        kwh(t, sizeof(t), tot.soleil_kwh);
+        ui_text(o.soleil_kwh, t);
+        ui_x(o.soleil_kwh, kBvGPad + largeur_texte(o.soleil_valeur, x) + 10);
+    }
+    texte_ha_coupe(o.reseau_titre, tr_ctx("energie", "Réseau"), kBvGL);
+    kwh(x, sizeof(x), tot.reseau);
+    ui_text(o.reseau_valeur, x);
+
+    // Une carte par voiture reçue, côte à côte ; une seule prend toute la place et met km et kWh/100 km
+    // sur la même ligne.
+    int n = 0;
+    for (const VoitureBilanVoiture& v : b.voiture) n += v.presente ? 1 : 0;
+    const int32_t cw = n >= 2 ? (kBvCartesL - kBvCartesEcart) / 2 : kBvCartesL;
+    const int32_t bw = cw - 2 * kBvPad;
+    const bool large = cw >= kBvLarge;
+    const int32_t lc = large ? cw / 2 - kBvPad - kBvPad / 2 : bw;   // la colonne d'une légende de km
+    int place = 0;
+    for (int r = 0; r < kVoituresMax; r++) {
+        BilanVoituresUI::Carte& c = o.carte[r];
+        const VoitureBilanVoiture& v = b.voiture[r];
+        if (!v.presente) {
+            ui_hidden(c.fond, true);
+            continue;
+        }
+        ui_poser(c.fond, kBvCartesX + place * (cw + kBvCartesEcart), kBvHaut, cw, kBvH);
+        place++;
+        ui_text(c.icone, glyphe_carte(r == 0 ? VOITURE_1 : VOITURE_2, 0));
+        ui_text_color(c.icone, r == 0 ? UIColor.ACCENT : UIColor.ACCENT_ALT);
+        ui_text_color(c.nom, r == 0 ? UIColor.ACCENT : UIColor.ACCENT_ALT);
+        nom_voiture_bilan(r, t, sizeof(t));
+        texte_majuscules(t);
+        texte_ha_coupe(c.nom, t, cw - kBvIconeL - 2 * kBvPad);
+        nombre_kwh(x, sizeof(x), v.kwh);
+        ui_text(c.grand, x);
+        ui_x(c.grand_unite, kBvPad + largeur_texte(c.grand, x) + 10);
+        texte_ha_coupe(c.legende, tr("chargés ce mois-ci"), bw);
+        const bool soleil = std::isfinite(v.soleil);
+        pourcent(x, sizeof(x), v.soleil);
+        ui_text(c.soleil_pct, x);
+        // Le titre prend ce que le pourcentage laisse (« 26 % » est plus étroit que « 100 % ») : une largeur fixe
+        // coupait « Part du soleil » dès qu'elle passait sous ses 150 px.
+        texte_ha_coupe(c.soleil_titre, tr("Part du soleil"), bw - largeur_texte(c.soleil_pct, x) - 6);
+        ui_text_color(c.soleil_pct, soleil ? UIColor.GOLD : UIColor.TEXT_DIM);
+        // Le réseau en fond, le soleil devant, comme la page Charges ; sans part connue, une piste vide.
+        ui_poser(c.piste, kBvPad, kBvBarreY, bw, kBvBarreH);
+        ui_style_couleur(c.piste, LV_STYLE_BG_COLOR, soleil ? UIColor.POWER_GRID : UIColor.ARC_TRACK);
+        const int32_t w = soleil ? static_cast<int32_t>(std::lround(bw * v.soleil / 100.0f)) : 0;
+        ui_hidden(c.soleil, w < 1);
+        if (w >= 1) ui_poser(c.soleil, kBvPad, kBvBarreY, w, kBvBarreH);
+        texte_ha_coupe(c.reseau_titre, tr_ctx("energie", "Réseau"), bw - kBvReseauL);
+        kwh(x, sizeof(x), v.reseau);
+        ui_text(c.reseau_valeur, x);
+        ui_poser(c.filet, kBvPad, kBvFiletY, bw, 1);
+        // Kilomètres et kWh/100 km : seulement avec l'odomètre (« -- » sinon). Le second est une estimation
+        // (énergie chargée divisée par les km) : « ~ » devant, jamais une consommation mesurée.
+        if (std::isfinite(v.km)) snprintf(x, sizeof(x), "%.0f", static_cast<double>(v.km));
+        else snprintf(x, sizeof(x), "--");
+        ui_text(c.km, x);
+        ui_text_color(c.km, std::isfinite(v.km) ? UIColor.TEXT_PRIMARY : UIColor.TEXT_DIM);
+        texte_ha_coupe(c.km_legende, tr("km parcourus"), lc);
+        if (std::isfinite(v.conso)) snprintf(x, sizeof(x), "~ %.1f", static_cast<double>(v.conso));
+        else snprintf(x, sizeof(x), "--");
+        ui_text(c.conso, x);
+        ui_text_color(c.conso, std::isfinite(v.conso) ? UIColor.TEXT_PRIMARY : UIColor.TEXT_DIM);
+        ui_text(c.conso_legende, "kWh/100 km");
+        const int32_t cx = large ? cw / 2 + kBvPad / 2 : kBvPad;
+        const int32_t cy = large ? kBvKmY : kBvConsoY;
+        ui_x(c.conso, cx);
+        ui_y(c.conso, cy);
+        ui_x(c.conso_legende, cx);
+        ui_y(c.conso_legende, cy + kBvValeurH);
+    }
+    // La note des kWh/100 km, au bas de la zone comme celle du graphique.
+    texte_ha_coupe(o.note, tr("kWh/100 km estimés : énergie chargée / km parcourus"), kBilNoteL);
+}
+
+// Couleurs du bilan des voitures qui ne changent qu'avec le thème (le reste suit les valeurs à chaque
+// peinture : la couleur de l'icône, de la part du soleil, de la piste, de km et de kWh/100 km).
+void couleurs_voitures_bilan() {
+    BilanVoituresUI& o = s_bvu;
+    if (o.cont == nullptr) return;
+    for (lv_obj_t* f : {o.gauche, o.carte[0].fond, o.carte[1].fond}) {
+        ui_style_couleur(f, LV_STYLE_BG_COLOR, UIColor.BG);
+        contour(f, UIColor.GLASS_RIM, 2, LV_OPA_60);
+    }
+    ui_text_color(o.anneau_pct, UIColor.TEXT_PRIMARY);
+    ui_text_color(o.anneau_texte, UIColor.TEXT_DIM);
+    ui_text_color(o.total, UIColor.TEXT_PRIMARY);
+    ui_text_color(o.total_texte, UIColor.TEXT_DIM);
+    ui_style_couleur(o.filet, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
+    ui_text_color(o.soleil_titre, UIColor.TEXT_SOFT);
+    ui_text_color(o.soleil_valeur, UIColor.GOLD);
+    ui_text_color(o.soleil_kwh, UIColor.TEXT_DIM);
+    ui_text_color(o.reseau_titre, UIColor.TEXT_SOFT);
+    ui_text_color(o.reseau_valeur, UIColor.POWER_GRID);
+    ui_text_color(o.note, UIColor.TEXT_DIM);
+    for (BilanVoituresUI::Carte& c : o.carte) {
+        ui_text_color(c.grand, UIColor.TEXT_PRIMARY);
+        ui_text_color(c.grand_unite, UIColor.TEXT_DIM);
+        ui_text_color(c.legende, UIColor.TEXT_DIM);
+        ui_text_color(c.soleil_titre, UIColor.TEXT_SOFT);
+        ui_style_couleur(c.soleil, LV_STYLE_BG_COLOR, UIColor.GOLD);
+        ui_text_color(c.reseau_titre, UIColor.TEXT_SOFT);
+        ui_text_color(c.reseau_valeur, UIColor.TEXT_PRIMARY);
+        ui_style_couleur(c.filet, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
+        ui_text_color(c.km_legende, UIColor.TEXT_DIM);
+        ui_text_color(c.conso_legende, UIColor.TEXT_DIM);
+    }
+}
+
 void peindre_bilan() {
     const EnergieUI& u = g_energie_ui;
-    for (int v = 0; v < NB_VUES; v++) highlight_button_border(u.bilan_vue_btn[v], v == s_vue, UIColor.ACCENT);
+    // Le bilan des voitures reçu : un quatrième bouton, les quatre à 110 px ; la carte de droite montre alors
+    // le graphique ou les voitures selon le dernier bouton touché. Sans bilan reçu, rien de tout cela : ni
+    // bouton, ni largeur changée (les trois d'avant, à leur place d'avant).
+    const bool avec = bilan_voitures_recu();
+    const bool face = avec && s_bil_voitures;
+    if (avec != s_bil_boutons_voitures) {
+        bilan_boutons(avec);
+        s_bil_boutons_voitures = avec;
+    }
+    ui_hidden(u.bilan_vue_btn[kVueVoitures], !avec);
+    for (int v = 0; v < NB_VUES; v++) highlight_button_border(u.bilan_vue_btn[v], !face && v == s_vue, UIColor.ACCENT);
+    if (avec) highlight_button_border(u.bilan_vue_btn[kVueVoitures], face, UIColor.ACCENT);
     if (s_bil.courbe == nullptr) return;
     peindre_heros();
-    peindre_graphique_bilan();
+    if (face) {
+        masquer_graphique_bilan();
+        ui_hidden(s_bil.vide, true);
+        peindre_voitures_bilan();
+    } else {
+        ui_hidden(s_bvu.cont, true);
+        peindre_graphique_bilan();
+    }
 }
 
 // --- Ensemble -----------------------------------------------------------------------------
@@ -2357,6 +2690,7 @@ void couleurs() {
         ui_style_couleur(b.marque[i], LV_STYLE_BG_COLOR, legendes[i]);
         ui_text_color(b.legende[i], UIColor.TEXT_SOFT);
     }
+    couleurs_voitures_bilan();
 }
 
 // Production : noms des cartes, barres, repère et libellés de l'axe.
@@ -2553,6 +2887,83 @@ void construire_charges() {
     lv_obj_set_x(o.pied, kChBord);
 }
 
+// Bilan du mois des voitures (ADR-0080) : un conteneur transparent sur toute la zone du graphique, montré à
+// sa place ; dedans, dans l'ordre de dessin, le bloc de gauche (fond, anneau, textes), une carte par voiture
+// (un fond, ses textes et sa barre sont ses enfants) et la note. x, y, tailles : les kBv* ; ce qui dépend du
+// nombre de voitures (largeur des cartes, place de kWh/100 km) est posé à chaque peinture.
+void construire_voitures_bilan() {
+    const EnergieUI& u = g_energie_ui;
+    lv_obj_t* z = u.bilan_zone;
+    if (!kBilanVoitures || z == nullptr) return;
+    BilanVoituresUI& o = s_bvu;
+    const esphome::font::Font* grande = u.police_grande != nullptr ? u.police_grande : u.police_grasse;
+    const esphome::font::Font* icone = u.police_icone != nullptr ? u.police_icone : u.police_grasse;
+    o.cont = ui_rectangle(z, LV_OPA_TRANSP, 0);
+    ui_poser(o.cont, 0, 0, kBilZoneL, kBilZoneH);
+    ui_hidden(o.cont, true);
+    lv_obj_t* c = o.cont;
+
+    // Bloc de gauche.
+    o.gauche = ui_rectangle(c, LV_OPA_50, 16);
+    ui_poser(o.gauche, kBvMarge, kBvHaut, kBvGaucheL, kBvH);
+    lv_obj_t* g = o.gauche;
+    const int32_t ax = (kBvGaucheL - kBvAnneauD) / 2;
+    o.anneau_piste = arc_dessin(g, true, kBvAnneauD, kBvAnneauL);
+    lv_obj_set_pos(o.anneau_piste, ax, kBvAnneauY);
+    for (lv_obj_t*& a : o.anneau) {
+        a = arc_dessin(g, false, kBvAnneauD, kBvAnneauL);
+        lv_obj_set_pos(a, ax, kBvAnneauY);
+    }
+    // Le pourcentage, puis « de la maison » sur une ou deux lignes (le dedans de l'anneau fait 136 px).
+    const int32_t acy = kBvAnneauY + kBvAnneauD / 2;
+    const int32_t dedans = kBvAnneauD - 2 * kBvAnneauL - 12;
+    o.anneau_pct = texte_bv(g, u.police_grasse, ax + (kBvAnneauD - dedans) / 2, acy - 46, dedans, LV_TEXT_ALIGN_CENTER);
+    o.anneau_texte = texte_bv(g, u.police, ax + (kBvAnneauD - dedans) / 2, acy - 8, dedans, LV_TEXT_ALIGN_CENTER);
+    lv_label_set_long_mode(o.anneau_texte, LV_LABEL_LONG_MODE_WRAP);
+    const int32_t gl = kBvGL;
+    o.total = texte_bv(g, u.police_grasse, kBvGPad, kBvGTotalY, gl);
+    o.total_texte = texte_bv(g, u.police, kBvGPad, kBvGTexteY, gl);
+    lv_label_set_long_mode(o.total_texte, LV_LABEL_LONG_MODE_WRAP);
+    o.filet = ui_rectangle(g, LV_OPA_40, 0);
+    ui_poser(o.filet, kBvGPad, kBvGFiletY, gl, 1);
+    o.soleil_titre = texte_bv(g, u.police, kBvGPad, kBvGSoleilY, gl);
+    o.soleil_valeur = texte_bv(g, u.police_grasse, kBvGPad, kBvGSoleilY + 26, 0);
+    o.soleil_kwh = texte_bv(g, u.police, kBvGPad, kBvGSoleilY + 26 + kHerosUniteDy, 0);
+    o.reseau_titre = texte_bv(g, u.police, kBvGPad, kBvGReseauY, gl);
+    o.reseau_valeur = texte_bv(g, u.police_grasse, kBvGPad, kBvGReseauY + 26, gl);
+
+    // Une carte par voiture : fond, puis ses textes, enfants du fond (x depuis son bord gauche, ou la droite
+    // pour ce qui s'aligne à droite : la largeur de la carte ne compte pas).
+    for (BilanVoituresUI::Carte& k : o.carte) {
+        k.fond = ui_rectangle(c, LV_OPA_50, 16);
+        ui_hidden(k.fond, true);
+        lv_obj_t* f = k.fond;
+        const int32_t pleine = kBvCartesL - 2 * kBvPad;   // au plus ; la largeur réelle est posée à la peinture
+        k.icone = texte_bv(f, icone, 12, 10, kBvIconeL);
+        k.nom = texte_bv(f, u.police, kBvIconeL + kBvPad, kBvNomY, pleine - kBvIconeL);
+        k.grand = texte_bv(f, grande, kBvPad, kBvGrandY, 0);
+        k.grand_unite = texte_bv(f, u.police_grasse, kBvPad, kBvGrandY + kHerosUniteDy, 0);
+        ui_text(k.grand_unite, "kWh");
+        k.legende = texte_bv(f, u.police, kBvPad, kBvLegendeY, pleine);
+        k.soleil_titre = texte_bv(f, u.police, kBvPad, kBvSoleilY, pleine - kBvPctL);
+        k.soleil_pct = texte_bv(f, u.police, 0, kBvSoleilY, kBvPctL, LV_TEXT_ALIGN_RIGHT);
+        lv_obj_align(k.soleil_pct, LV_ALIGN_TOP_RIGHT, -kBvPad, kBvSoleilY);
+        k.piste = ui_rectangle(f, LV_OPA_COVER, kBvBarreH / 2);
+        k.soleil = ui_rectangle(f, LV_OPA_COVER, kBvBarreH / 2);
+        k.reseau_titre = texte_bv(f, u.police, kBvPad, kBvReseauY, pleine - kBvReseauL);
+        k.reseau_valeur = texte_bv(f, u.police, 0, kBvReseauY, kBvReseauL, LV_TEXT_ALIGN_RIGHT);
+        lv_obj_align(k.reseau_valeur, LV_ALIGN_TOP_RIGHT, -kBvPad, kBvReseauY);
+        k.filet = ui_rectangle(f, LV_OPA_40, 0);
+        k.km = texte_bv(f, u.police_grasse, kBvPad, kBvKmY, pleine / 2);
+        k.km_legende = texte_bv(f, u.police, kBvPad, kBvKmY + kBvValeurH, pleine);
+        k.conso = texte_bv(f, u.police_grasse, kBvPad, kBvConsoY, pleine / 2);
+        k.conso_legende = texte_bv(f, u.police, kBvPad, kBvConsoY + kBvValeurH, pleine);
+    }
+    o.note = libelle(c, u.police, kBilNoteL, LV_TEXT_ALIGN_RIGHT);
+    lv_obj_set_pos(o.note, kBilZoneL - kBilLegendeX - kBilNoteL, kBilNoteY);
+    lv_obj_remove_flag(o.note, LV_OBJ_FLAG_HIDDEN);
+}
+
 // Bilan : la carte de gauche (textes, jauge, lignes, anneau), puis le graphique (graduations,
 // zéro, barres, courbe, projection, point, bulle, axe, légende, note), dans l'ordre de dessin.
 void construire_bilan() {
@@ -2647,6 +3058,9 @@ void construire_bilan() {
     }
     o.note = libelle(z, u.police, kBilNoteL, LV_TEXT_ALIGN_RIGHT);
     lv_obj_set_pos(o.note, kBilZoneL - kBilLegendeX - kBilNoteL, kBilNoteY);
+    // Le bilan des voitures (ADR-0080) : créé en dernier, au-dessus du graphique, caché. Son bouton aussi.
+    ui_hidden(u.bilan_vue_btn[kVueVoitures], true);
+    construire_voitures_bilan();
 }
 
 // Tout ce que dessine ce fichier : une fois, à la première ouverture.
@@ -2812,6 +3226,30 @@ void energie_voiture_jour(const std::string& rang, const std::string& debut, con
     peindre();
 }
 
+// ADR-0080 : le mois des voitures, onze champs (lecture : voiture_bilan_lire, tab5_parse.h). Seule la vue
+// « mois_civil » est lue ; une autre est refusée. Un payload vide, ou sans aucune voiture lisible, retire le
+// bilan : le bouton « Voitures » disparaît et la carte de droite redevient le graphique. Rien n'est gardé
+// ni dessiné sur une carte trop basse (la 7B).
+void energie_voiture_bilan(const std::string& vue, const std::string& debut, const std::string& payload) {
+    if (vue != "mois_civil") {
+        payload_refuse("tab5.energie", "voiture_bilan : vue inconnue", vue.size());
+        return;
+    }
+    if (payload_trop_long("tab5.energie", payload.size())) return;
+    if (!kBilanVoitures) return;
+    BilanVoitures bv;
+    bv.recu = voiture_bilan_lire(Champ{payload.data(), payload.size()}, bv.lu);
+    int jour = 0;
+    if (std::sscanf(debut.c_str(), "%d-%d-%d", &bv.annee, &bv.mois, &jour) != 3 || bv.annee < 1970 || bv.annee > 2200 ||
+        bv.mois < 1 || bv.mois > 12) {
+        bv.annee = 0;
+        bv.mois = 0;
+    }
+    s_bv = bv;
+    if (!bv.recu) s_bil_voitures = false;
+    peindre();
+}
+
 // ADR-0058 : page « Aujourd'hui » (lecture : energie_soleil_lire, tab5_parse.h).
 void energie_soleil(const std::string& payload) {
     if (payload_trop_long("tab5.energie", payload.size())) return;
@@ -2859,6 +3297,7 @@ void energie_ouvrir() {
     if (u.popup == nullptr) return;
     construire();
     s_vue = HEURES;
+    s_bil_voitures = false;   // le Bilan s'ouvre sur le graphique
     s_page_choisie = false;
     s_page = premiere_page();
     animate_popup_open(u.popup);
@@ -2876,7 +3315,23 @@ void energie_choisir_vue(int vue) {
     demander();
 }
 
-void energie_bilan_choisir_vue(int vue) { energie_choisir_vue(vue); }
+// Les boutons de la carte de droite du Bilan : une vue (heures, jours, mois : le graphique, et sa demande à
+// HA) ou « Voitures » (ADR-0080 : les données sont déjà là, rien à demander).
+void energie_bilan_choisir_vue(int vue) {
+    if (vue == kVueVoitures) {
+        if (!bilan_voitures_recu() || s_bil_voitures) return;
+        s_bil_voitures = true;
+        peindre();
+        return;
+    }
+    if (vue < 0 || vue >= NB_VUES) return;
+    // Un seul peindre() : en revenant du panneau des voitures, ou en changeant de vue.
+    const bool change = s_bil_voitures || vue != s_vue;
+    s_bil_voitures = false;
+    s_vue = vue;
+    if (change) peindre();
+    demander();
+}
 
 void energie_page(int rang) { afficher_page(rang); }
 

@@ -2173,3 +2173,59 @@ bool trajets_jour(const TrajetsLu& t, int i, int& jour_du_mois, int& jour_semain
     jour_semaine = static_cast<int>((jour_civil(a, m, j) + 4) % 7);   // le 01/01/1970 était un jeudi
     return true;
 }
+
+// ─── 21. Bilan du mois des voitures (ADR-0080) ───
+bool voiture_bilan_lire(const Champ& payload, VoitureBilanLu& out) {
+    out = VoitureBilanLu{};
+    if (payload.p == nullptr || payload.n == 0) return false;
+    Champ f[kVoitureBilanChamps];
+    const int k = champs_decouper(payload.p, payload.n, '|', f, kVoitureBilanChamps);
+    for (int i = k; i < kVoitureBilanChamps; i++) f[i] = Champ{payload.p + payload.n, 0};
+    bool une = false;
+    for (int r = 0; r < kVoituresMax; r++) {
+        const Champ* c = f + 5 * r;
+        VoitureBilanVoiture& v = out.voiture[r];
+        v.kwh = energie_kwh(c[0]);
+        // Sans énergie lisible, la voiture n'existe pas : ses autres champs ne servent à rien seuls.
+        v.presente = std::isfinite(v.kwh);
+        if (!v.presente) continue;
+        une = true;
+        v.soleil = voiture_pct(c[1]);
+        v.km = voiture_borne(c[2], kVoitureKmMax);
+        v.conso = voiture_borne(c[3], kVoitureConsoMax);
+        v.reseau = energie_kwh(c[4]);
+    }
+    out.part = voiture_pct(f[5 * kVoituresMax]);
+    return une;
+}
+
+VoitureBilanTotal voiture_bilan_total(const VoitureBilanLu& b) {
+    VoitureBilanTotal t;
+    float kwh_part = 0.0f, soleil_kwh = 0.0f;
+    bool une_part = false;
+    for (const VoitureBilanVoiture& v : b.voiture) {
+        if (!v.presente) continue;
+        t.kwh = somme_si(t.kwh, v.kwh);
+        t.reseau = somme_si(t.reseau, v.reseau);
+        if (std::isfinite(v.soleil)) {
+            une_part = true;
+            kwh_part += v.kwh;
+            soleil_kwh += v.kwh * v.soleil / 100.0f;
+        }
+    }
+    if (une_part && kwh_part >= 0.05f) {
+        t.soleil_kwh = soleil_kwh;
+        t.soleil = std::min(std::max(100.0f * soleil_kwh / kwh_part, 0.0f), 100.0f);
+    }
+    return t;
+}
+
+void voiture_bilan_parts(const VoitureBilanLu& b, float parts[kVoituresMax]) {
+    float somme = 0.0f;
+    for (const VoitureBilanVoiture& v : b.voiture)
+        if (v.presente) somme += v.kwh;
+    for (int r = 0; r < kVoituresMax; r++) {
+        const VoitureBilanVoiture& v = b.voiture[r];
+        parts[r] = v.presente && std::isfinite(b.part) && somme > 0.0f ? b.part * v.kwh / somme : NAN;
+    }
+}

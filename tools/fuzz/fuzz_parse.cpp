@@ -477,6 +477,21 @@ void voiture_trajets(const std::string& p) {
     (void) total;
 }
 
+// Bilan du mois des voitures (tab5_maj_voiture_bilan) : vue, début et payload séparés par des sauts de ligne ;
+// seul le payload est lu par le socle (la vue et le début sont lus par l'écran, tab5_energie.cpp). Lu, puis
+// ses totaux et la répartition que l'écran en tire.
+void voiture_bilan(const std::string& p) {
+    const size_t s1 = p.find('\n');
+    const std::string reste = s1 == std::string::npos ? std::string() : p.substr(s1 + 1);
+    const size_t s2 = reste.find('\n');
+    const std::string payload = s2 == std::string::npos ? std::string() : reste.substr(s2 + 1);
+    VoitureBilanLu b;
+    if (!voiture_bilan_lire(Champ{payload.data(), payload.size()}, b)) return;
+    (void) voiture_bilan_total(b);
+    float parts[kVoituresMax];
+    voiture_bilan_parts(b, parts);
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -510,6 +525,7 @@ constexpr Parseur kParseurs[] = {
     charges,          // 'E' tab5_maj_voiture_charges
     voiture_jour,     // 'F' tab5_maj_voiture_jour
     voiture_trajets,  // 'G' tab5_maj_voiture_trajets
+    voiture_bilan,    // 'H' tab5_maj_voiture_bilan
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

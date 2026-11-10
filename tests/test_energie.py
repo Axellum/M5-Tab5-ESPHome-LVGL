@@ -2808,3 +2808,72 @@ def test_charges_la_demo_suit_le_format_du_contrat():
         scenarios.build_charges_payload(jour, ((3, 0, "06:02", 103, "12.4", "76"),))
     with pytest.raises(AssertionError):
         scenarios.build_charges_payload(jour, ((1, 0, "6:02", 103, "12.4", "76"),))
+
+
+def test_bilan_voitures_pousse_le_bilan_du_mois():
+    """ADR-0080 : la même réponse de l'analyse alimente le bouton « Voitures » de la page « Bilan » : un seul
+    appel, avec exactement les variables du service du firmware, en continue_on_error (un firmware d'avant n'a
+    pas l'action) ; `bilan` est poussé tel quel, `bilan_debut` donne le 1er du mois, la vue est « mois_civil »
+    (la seule que lit la tablette). Une analyse d'avant, sans `bilan`, pousse un payload vide (le bouton disparaît)."""
+    pousse = _etape_charges()["then"][2]
+    action = pousse["then"][2]
+    assert action["action"] == "esphome.{{ tablette }}_tab5_maj_voiture_bilan" and action["continue_on_error"] is True
+    assert set(action["data"]) == set(demo_pusher.lire_contrat()[demo_pusher.SERVICE_VOITURE_BILAN]) == {
+        "vue", "debut", "payload"}
+    p = _passe_charges([MODEL_Y, SANS_VOITURE])
+    bilan = "28.4|26|246|11.6|21.0|6.0|87|||0.8|10"
+    p.ctx["analyse_voitures"] = {"bilan_debut": "2026-06-01", "bilan": bilan, "charges": "x"}
+    donnees = {cle: _rendre(p.env, valeur, p.ctx) for cle, valeur in action["data"].items()}
+    assert donnees == {"vue": "mois_civil", "debut": "2026-06-01", "payload": bilan}
+    ancienne = dict(p.ctx, analyse_voitures={"charges": "", "jour_debut": "2026-06-16"})
+    donnees = {cle: _rendre(p.env, valeur, ancienne) for cle, valeur in action["data"].items()}
+    assert donnees == {"vue": "mois_civil", "debut": "", "payload": ""}
+
+
+def test_bilan_voitures_la_demo_suit_le_format_du_contrat():
+    """Le payload de la démo est celui de la sortie `bilan` du script d'analyse : onze champs, cinq par voiture
+    (kWh, part du soleil, km, kWh/100 km, réseau) puis la part de la maison ; les km et les kWh/100 km vont
+    ensemble (un seul odomètre) ; l'énergie chargée ne dépasse pas le réseau + le soleil."""
+    jour = dt.date(2026, 6, 16)
+    v = scenarios.build_voiture_bilan(jour)
+    assert v["vue"] == "mois_civil" and v["debut"] == "2026-06-01"
+    champs = v["payload"].split("|")
+    assert len(champs) == 11
+    for debut in (0, 5):
+        kwh, soleil, km, conso, reseau = champs[debut:debut + 5]
+        assert float(kwh) > 0 and 0 <= float(soleil) <= 100
+        assert abs(float(reseau) - float(kwh) * (1 - float(soleil) / 100)) < 0.1, "réseau = énergie hors soleil"
+        if km:   # kWh/100 km = énergie chargée / km parcourus, jamais une consommation mesurée
+            assert abs(float(conso) - float(kwh) / float(km) * 100) < 0.06
+        else:
+            assert conso == ""
+    assert 0 <= float(champs[10]) <= 100
+    # La démo montre un odomètre sur la première voiture seulement : la seconde se lit « -- ».
+    assert champs[2] and not champs[7]
+    # Une voiture : les cinq champs de l'autre sont vides. Aucune : payload vide, le bouton disparaît.
+    une = scenarios.build_voiture_bilan(jour, scenarios.VOITURE_BILAN[:1], "30")["payload"].split("|")
+    assert len(une) == 11 and une[5:10] == [""] * 5 and une[10] == "30"
+    assert scenarios.build_voiture_bilan(jour, ())["payload"] == ""
+    with pytest.raises(AssertionError):
+        scenarios.build_voiture_bilan(jour, scenarios.VOITURE_BILAN + scenarios.VOITURE_BILAN[:1])
+    with pytest.raises(AssertionError):
+        scenarios.build_voiture_bilan(jour, (("10", "150", "", "", ""),))
+    with pytest.raises(AssertionError):
+        scenarios.build_voiture_bilan(jour, (("10", "50", "100", "", ""),))
+
+
+def test_bilan_voitures_le_quatrieme_bouton_et_la_place_des_boutons():
+    """Le popup porte un quatrième bouton de vue (« Voitures ») que le firmware range avec les trois autres, et
+    quatre boutons de 110 px tiennent là où les trois de 150 px tenaient : même bord gauche, donc le titre (coupé
+    à kBilTitreL) garde la place qu'il avait et la page sans voiture ne change pas d'un pixel."""
+    popup = _lire(os.path.join(REPO, "Tab5", "ui_components", "energie_popup.yaml"))
+    assert re.search(r'vue_btn\.yaml, vars: \{ prefixe: energie_bilan, n: "3", l: "110", x_pos: "-18", '
+                     r'label_text: "Voitures" \}', popup)
+    assert "u.bilan_vue_btn[3] = id(energie_bilan_vue_3);" in _lire(
+        os.path.join(REPO, "Tab5", "paquets", "tab5-energie.yaml"))
+    k = constantes_cpp(_lire(ENERGIE_CPP), "tab5")
+    assert (k["kBvBtnL"], k["kBvBtnEcart"], k["kBvBtnBord"]) == (110, 10, 18)
+    trois = k["kBilCarteL"] - 18 - (3 * k["kBilVueL"] + 2 * 10)
+    quatre = k["kBilCarteL"] - k["kBvBtnBord"] - (4 * k["kBvBtnL"] + 3 * k["kBvBtnEcart"])
+    assert quatre == trois, "les quatre boutons commencent là où commençaient les trois"
+    assert quatre >= 22 + k["kBilTitreL"], "le titre du mois ne passe pas sous les boutons"

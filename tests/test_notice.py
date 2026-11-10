@@ -95,6 +95,14 @@ NON_MONTREES = {
     # décrite dans energy.md, comme les pages ci-dessus ; à faire avec les images du rendu validé par Axel.
     "energie-aujourdhui-1-voiture": "page Aujourd'hui avec une voiture ; à décrire dans energy.md, image à tirer du rendu",
     "energie-aujourdhui-2-voitures": "page Aujourd'hui avec deux voitures ; à décrire dans energy.md, image à tirer du rendu",
+    # Bilan du mois des voitures (ADR-0080, lot 5 des voitures) : pas encore décrit dans energy.md, comme les
+    # pages ci-dessus ; à faire avec les images du rendu validé par Axel.
+    "energie-bilan-voitures-boutons": "page Bilan avec le bouton Voitures ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-bilan-1-voiture": "Bilan, bouton Voitures, une voiture ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-bilan-2-voitures": "Bilan, bouton Voitures, deux voitures ; à décrire dans energy.md, image à tirer du rendu",
+    "energie-bilan-2-voitures-km": "energie-bilan-2-voitures avec un odomètre sur chaque voiture",
+    "energie-bilan-voitures-energie-seule": "energie-bilan-1-voiture avec l'énergie pour seule donnée connue",
+    "energie-bilan-voitures-absent": "sans bilan des voitures, le Bilan garde ses trois boutons : la page d'avant, déjà décrite",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",

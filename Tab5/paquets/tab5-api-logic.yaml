@@ -673,6 +673,24 @@ api:
             energie_voiture_jour(rang, debut, valeurs);
             voitures_charge_jour(rang, debut, valeurs);
 
+    - service: tab5_maj_voiture_bilan
+      description: "Popup Énergie, page Bilan : le mois en cours des voitures (énergie, part du soleil, km, kWh/100 km, réseau, part de la maison) (ADR-0080), poussé avec les charges."
+      variables:
+        vue:
+          type: string
+          description: "mois_civil : le mois du bilan (seule vue lue pour l'instant ; une autre est refusée)"
+          example: "mois_civil"
+        debut:
+          type: string
+          description: "AAAA-MM-JJ : le 1er du mois (le nom du mois à l'écran)"
+          example: "2026-11-01"
+        payload:
+          type: string
+          description: "kwh|part_soleil_pct|km|kwh_100km|reseau_kwh pour la voiture 1, les mêmes cinq champs pour la voiture 2, puis la part des voitures dans la maison en % ; champ vide = inconnu (km et kWh/100 km n'existent qu'avec l'odomètre choisi), les cinq champs d'une voiture vides = pas de voiture ; vide = aucun bilan (la vue Voitures disparaît). C'est la chaîne `bilan` de script.tab5_voitures_analyse. Toujours ajouter à la fin."
+          example: "28.4|26|246|11.6|21.0|6.0|87|||0.8|10"
+      then:
+        - lambda: 'energie_voiture_bilan(vue, debut, payload);'
+
     - service: tab5_maj_voiture_trajets
       description: "Popup Voitures, page Trajets : les kilomètres des sept derniers jours d'une voiture, ceux du mois et son kWh / 100 km estimé (l'énergie chargée divisée par les kilomètres, pas une consommation mesurée) (ADR-0083), poussés avec les charges."
       variables:

@@ -861,6 +861,56 @@ def build_conso_jour(rang: str, aujourd_hui: _dt.date, valeurs: tuple[str, ...] 
 
 
 # ---------------------------------------------------------------------------
+# Bilan du mois des voitures, bouton « Voitures » de la page « Bilan » (ADR-0080) —
+# tab5_maj_voiture_bilan(vue, debut, payload) : vue « mois_civil » (la seule lue), debut = le 1er du mois
+# (AAAA-MM-JJ), payload = « kwh|part_soleil|km|kwh_100km|reseau » de la voiture 1, des mêmes cinq champs de
+# la voiture 2, puis la part de la maison (la chaîne `bilan` de script.tab5_voitures_analyse, ADR-0074 ;
+# `bilan_debut` pour debut). kWh chargés ce mois-ci, part du soleil et part de la maison en %, km parcourus
+# (vide : pas d'odomètre choisi), kWh/100 km (énergie chargée / km, vide sans km : une approximation, pas une
+# consommation mesurée) et kWh venus du réseau. Champ vide = inconnu ; les cinq champs d'une voiture tous vides
+# = voiture absente ; payload vide = aucun bilan (le bouton disparaît). La démo montre deux voitures sur les
+# douze premiers jours du mois (celui des captures) : la première avec un odomètre, la seconde sans (« -- »).
+# Les kWh des deux voitures sont de l'ordre de ceux des six charges de CHARGES (les charges des cinq derniers
+# jours : 43,2 kWh pour la voiture 1, 51,9 pour la 2).
+# ---------------------------------------------------------------------------
+
+VOITURE_BILAN_CHAMPS = ("kwh", "part_soleil", "km", "kwh_100km", "reseau")
+VOITURE_BILAN_VUE = "mois_civil"
+# Les cinq champs de chaque voiture, puis la part de la maison.
+VOITURE_BILAN = (
+    ("86.4", "68", "410", "21.1", "27.6"),
+    ("71.2", "52", "", "", "34.2"),
+)
+VOITURE_BILAN_PART_MAISON = "54"
+
+
+def build_voiture_bilan(aujourd_hui: _dt.date, voitures=VOITURE_BILAN,
+                        part_maison: str = VOITURE_BILAN_PART_MAISON) -> dict[str, str]:
+    """Les variables de tab5_maj_voiture_bilan : vue, debut (le 1er du mois de `aujourd_hui`) et payload (les
+    cinq champs de chaque voiture de `voitures` — deux au plus, une voiture absente = cinq champs vides —, puis
+    `part_maison`). () = payload vide : aucun bilan, le bouton « Voitures » disparaît."""
+    assert len(voitures) <= 2, "deux voitures au plus"
+    if not voitures:
+        return {"vue": VOITURE_BILAN_VUE, "debut": aujourd_hui.replace(day=1).isoformat(), "payload": ""}
+    champs: list[str] = []
+    for voiture in list(voitures) + [("",) * len(VOITURE_BILAN_CHAMPS)] * (2 - len(voitures)):
+        assert len(voiture) == len(VOITURE_BILAN_CHAMPS), f"{len(VOITURE_BILAN_CHAMPS)} champs par voiture"
+        kwh, soleil, km, conso, reseau = voiture
+        assert not kwh or (_nombre(kwh) is not None and float(kwh) >= 0), f"kwh : {kwh!r}"
+        assert soleil in ("", "nan") or 0 <= float(soleil) <= 100, f"part du soleil : {soleil!r}"
+        assert km == "" or (_nombre(km) is not None and float(km) >= 0), f"km : {km!r}"
+        assert conso == "" or (_nombre(conso) is not None and float(conso) >= 0), f"kwh_100km : {conso!r}"
+        assert reseau == "" or (_nombre(reseau) is not None and float(reseau) >= 0), f"reseau : {reseau!r}"
+        assert (km == "") == (conso == ""), "les km et les kWh/100 km vont ensemble (même odomètre)"
+        champs.extend(voiture)
+    assert part_maison == "" or 0 <= float(part_maison) <= 100, f"part de la maison : {part_maison!r}"
+    champs.append(part_maison)
+    for x in champs:
+        assert "|" not in x and ";" not in x, f"séparateur dans {x!r}"
+    return {"vue": VOITURE_BILAN_VUE, "debut": aujourd_hui.replace(day=1).isoformat(), "payload": "|".join(champs)}
+
+
+# ---------------------------------------------------------------------------
 # Trajets des voitures, page « Trajets » du popup Voitures (ADR-0083) —
 # tab5_maj_voiture_trajets(rang, payload), payload d'une voiture (les chaînes trajets_1 et trajets_2 de
 # script.tab5_voitures_analyse, ADR-0074 et ADR-0083) :

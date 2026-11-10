@@ -14,7 +14,9 @@
 #           (jour, heure, durée, énergie, part du soleil), dessinées par tab5_energie.cpp dans une
 #           carte de verre pleine largeur ; absente tant que HA n'a envoyé aucune charge ;
 #         - « Bilan » (en kWh, ADR-0062) : la « batterie réseau » du mois civil à gauche,
-#           le net par heure, jour ou mois en barres et son cumul en courbe à droite.
+#           le net par heure, jour ou mois en barres et son cumul en courbe à droite ; avec des
+#           voitures (ADR-0080), un quatrième bouton « Voitures » met à la place du graphique le
+#           bilan du mois des voitures (anneau « x % de la maison » et une carte par voiture).
 #       Ouvert par une tuile cap à l'option e (capteur de la section « Énergie » du
 #       blueprint, tuile_appui → tab5_energie_ouvrir) ou par « Aller à l'écran → Énergie ».
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
@@ -285,6 +287,10 @@ obj:
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "0", l: "${bil_vue_l}", x_pos: "${ 0 - 38 - 2 * (bil_vue_l | int) }", label_text: "Heures" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "1", l: "${bil_vue_l}", x_pos: "${ 0 - 28 - (bil_vue_l | int) }", label_text: "Jours" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "2", l: "${bil_vue_l}", x_pos: "-18", label_text: "Mois" } }
+                      # « Voitures » (ADR-0080) : le bilan du mois des voitures à la place du graphique. Caché tant que
+                      # HA n'a rien envoyé (tab5_maj_voiture_bilan) : tab5_energie.cpp le pose et le montre, et rapproche
+                      # alors les trois autres (110 px chacun) pour lui faire place ; toujours caché sur une carte basse.
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "3", l: "110", x_pos: "-18", label_text: "Voitures" } }
                       # Graduations, barres, courbe, bulle, axe, légende : tab5_energie.cpp.
                       - obj:
                           id: energie_bilan_zone

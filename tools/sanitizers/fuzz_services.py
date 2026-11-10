@@ -97,6 +97,10 @@ GRAINES: dict[str, dict[str, str]] = {
     # 1 et 2 les voitures), le jour, puis 24 kWh par heure locale (vides : heures sans ligne).
     "tab5_maj_voiture_jour": {"rang": "1", "debut": "2026-11-09",
                               "valeurs": "0;0;3.1;3.2;0;0;0;0;0.4;1.9;2.6;3;3.1;;;;;;;;;;;"},
+    # Le bilan du mois des voitures de la page Bilan (ADR-0080) : la vue, le 1er du mois, puis onze champs (cinq par
+    # voiture : kWh, part du soleil, km, kWh/100 km, kWh du réseau ; la part de la maison).
+    "tab5_maj_voiture_bilan": {"vue": "mois_civil", "debut": "2026-11-01",
+                               "payload": "28.4|26|246|11.6|21.0|6.0|87|||0.8|10"},
     # Les trajets d'une voiture (page Trajets, ADR-0083) : rang, puis début de la fenêtre, compteur, km du mois,
     # kWh / 100 km estimé, sept km par jour et sept kWh par jour (vide : un jour sans relevé).
     "tab5_maj_voiture_trajets": {"rang": "1",

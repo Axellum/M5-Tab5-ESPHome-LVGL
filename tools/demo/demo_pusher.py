@@ -77,6 +77,7 @@ from scenarios import (
     build_charges_payload,
     CONSO_JOUR_RANGS,
     build_conso_jour,
+    build_voiture_bilan,
     TRAJETS,
     build_trajets_payload,
 )
@@ -129,6 +130,10 @@ SERVICE_VOITURE_CHARGES = "tab5_maj_voiture_charges"
 # les voitures, puis chaque voiture), poussée avec elles (--voitures) ; absente d'un firmware plus ancien
 # (la page est alors celle d'avant, sans consommation).
 SERVICE_VOITURE_JOUR = "tab5_maj_voiture_jour"
+# Page « Bilan » du popup Énergie (ADR-0080) : le bilan du mois civil des deux voitures (kWh, part du soleil, km,
+# kWh/100 km, réseau, part de la maison), poussé avec elles (--voitures) ; absent d'un firmware plus ancien (le
+# bouton « Voitures » de la page n'existe alors pas).
+SERVICE_VOITURE_BILAN = "tab5_maj_voiture_bilan"
 # Page « Trajets » du popup Voitures (ADR-0083) : les kilomètres des sept derniers jours et le kWh / 100 km
 # estimé de chaque voiture, poussés avec elles (--voitures) ; absente d'un firmware plus ancien (le popup
 # n'a alors pas de page Trajets).
@@ -361,9 +366,10 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
     voitures tirent (ENERGIE_INSTANTANE_VOITURES) et, juste après, ces deux voitures
     (tab5_maj_voiture, ADR-0076, avec leur état : pneus, températures, verrou, Sentinelle, logiciel,
     ADR-0081), leurs six dernières charges (tab5_maj_voiture_charges,
-    ADR-0077, datées de `aujourd_hui`) et leur consommation du jour heure par heure avec celle de la
-    maison (tab5_maj_voiture_jour, ADR-0078), puis leurs trajets des sept derniers jours
-    (tab5_maj_voiture_trajets, ADR-0083) ; absentes d'un firmware qui n'a pas l'action."""
+    ADR-0077, datées de `aujourd_hui`), leur consommation du jour heure par heure avec celle de la
+    maison (tab5_maj_voiture_jour, ADR-0078), leur bilan du mois (tab5_maj_voiture_bilan, ADR-0080) et
+    leurs trajets des sept derniers jours (tab5_maj_voiture_trajets, ADR-0083) ; absentes d'un firmware
+    qui n'a pas l'action."""
     if SERVICE_ENERGIE not in services_par_nom:
         return
     jour = aujourd_hui or _dt.date.today()
@@ -379,6 +385,8 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
         if SERVICE_VOITURE_JOUR in services_par_nom:
             for rang in CONSO_JOUR_RANGS:
                 await _appeler(client, services_par_nom, SERVICE_VOITURE_JOUR, **build_conso_jour(rang, jour))
+        if SERVICE_VOITURE_BILAN in services_par_nom:
+            await _appeler(client, services_par_nom, SERVICE_VOITURE_BILAN, **build_voiture_bilan(jour))
         if SERVICE_VOITURE_TRAJETS in services_par_nom:
             for rang, trajets in TRAJETS.items():
                 await _appeler(client, services_par_nom, SERVICE_VOITURE_TRAJETS, rang=rang,

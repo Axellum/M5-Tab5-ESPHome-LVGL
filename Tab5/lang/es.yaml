@@ -1678,3 +1678,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Suggestion d'après la prévision du soleil": "Sugerencia según la previsión solar"
 "Pas de charge en cours": "Sin carga en curso"
 "Prête à %d h %02d": "Listo a las %d:%02d"
+# --- Bilan du mois des voitures (tab5_energie.cpp, ADR-0080) ---
+"de la maison": "de la casa"
+"chargés par les voitures ce mois": "cargados por los coches este mes"
+"Part du soleil": "Parte del sol"
+"chargés ce mois-ci": "cargados este mes"
+"km parcourus": "km recorridos"
+"kWh/100 km estimés : énergie chargée / km parcourus": "kWh/100 km estimados: energía cargada / km recorridos"
