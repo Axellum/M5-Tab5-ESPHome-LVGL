@@ -229,6 +229,12 @@ NON_MONTREES = {
     "voitures-2": "popup Voitures, deux voitures, décrit dans screens.md ; notice avec les pages suivantes",
     "voitures-1": "voitures-2 montre la même fenêtre ; une seule voiture en pleine largeur, décrit dans screens.md",
     "voitures-aucune": "voitures-2 montre la même fenêtre ; sans voiture, le message est décrit dans screens.md",
+    # Page Trajets du popup Voitures (ADR-0083) : décrite dans screens.md ; images à tirer du rendu de la PR.
+    "voitures-trajets-2": "page Trajets du popup Voitures, deux voitures, décrite dans screens.md ; image à tirer du rendu",
+    "voitures-trajets-1": "voitures-trajets-2 montre la même page ; une seule voiture en pleine largeur",
+    "voitures-trajets-sans-releve": "voitures-trajets-2 montre la même page ; « Pas encore de relevé du compteur » "
+                                    "est décrit dans screens.md",
+    "voitures-trajets-aucun": "voitures-2 montre la même fenêtre ; sans trajets reçus, la page et son onglet n'existent pas",
 }
 
 
