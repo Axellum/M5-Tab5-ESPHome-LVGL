@@ -1644,3 +1644,17 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "de autonomía"
 "Aucune voiture reçue": "Ningún coche recibido"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Elígelos en el blueprint, sección «Énergie : voitures · Energy: cars»."
+"Aperçu": "Resumen"
+
+# --- Popup Voitures, page Charge (ADR-0082) ---
+"Aujourd'hui, heure par heure": "Hoy, hora por hora"
+"Fin prévue": "Fin prevista"
+"Créneau conseillé": "Franja sugerida"
+"%d h": "%d h"
+"Créneau conseillé : %d h – %d h": "Franja sugerida: %d h – %d h"
+"Créneau conseillé : jusqu'à %d h": "Franja sugerida: hasta las %d h"
+"Pas de créneau conseillé aujourd'hui": "Hoy no hay franja sugerida"
+"Pas de prévision du soleil reçue": "Sin previsión solar recibida"
+"Suggestion d'après la prévision du soleil": "Sugerencia según la previsión solar"
+"Pas de charge en cours": "Sin carga en curso"
+"Prête à %d h %02d": "Listo a las %d:%02d"

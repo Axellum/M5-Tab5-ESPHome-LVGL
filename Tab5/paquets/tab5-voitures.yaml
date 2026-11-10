@@ -27,6 +27,10 @@ script:
           if (u.popup != nullptr) return;
           u.message = id(voitures_message);
           u.conseil = id(voitures_conseil);
+          u.onglet[0] = id(voitures_onglet_0);
+          u.onglet[1] = id(voitures_onglet_1);
+          u.onglet[2] = id(voitures_onglet_2);
+          u.onglet[3] = id(voitures_onglet_3);
           u.carte[0] = id(voitures_carte_0);
           u.carte[1] = id(voitures_carte_1);
           u.nom[0] = id(voitures_nom_0);
@@ -51,6 +55,7 @@ script:
           u.detail[1] = id(voitures_detail_1);
           u.limite[0] = id(voitures_limite_0);
           u.limite[1] = id(voitures_limite_1);
+          u.style_carte = id(style_glass_card);
           u.demander = []() { id(tab5_energie_demande).execute(std::string("heures")); };
           // En dernier : peindre() ne fait rien tant que popup est nul.
           u.popup = id(voitures_popup);
