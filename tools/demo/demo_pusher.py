@@ -72,7 +72,7 @@ from scenarios import (
     SERVEUR_IA_SCENES,
     build_serveur_ia_payload,
     ENERGIE_INSTANTANE_VOITURES,
-    VOITURES,
+    VOITURES_COMPLETES,
     build_voiture_payload,
     build_charges_payload,
     CONSO_JOUR_RANGS,
@@ -359,7 +359,8 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
     popup Énergie ; les deux actions de l'ADR-0058 manquent seules sur un firmware qui ne les
     a pas encore. `voitures` (--voitures) : l'instantané d'une maison sans batterie dont deux
     voitures tirent (ENERGIE_INSTANTANE_VOITURES) et, juste après, ces deux voitures
-    (tab5_maj_voiture, ADR-0076), leurs six dernières charges (tab5_maj_voiture_charges,
+    (tab5_maj_voiture, ADR-0076, avec leur état : pneus, températures, verrou, Sentinelle, logiciel,
+    ADR-0081), leurs six dernières charges (tab5_maj_voiture_charges,
     ADR-0077, datées de `aujourd_hui`) et leur consommation du jour heure par heure avec celle de la
     maison (tab5_maj_voiture_jour, ADR-0078), puis leurs trajets des sept derniers jours
     (tab5_maj_voiture_trajets, ADR-0083) ; absentes d'un firmware qui n'a pas l'action."""
@@ -369,7 +370,7 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
     await _appeler(client, services_par_nom, SERVICE_ENERGIE,
                    payload=build_energie_payload(ENERGIE_INSTANTANE_VOITURES if voitures else None))
     if voitures and SERVICE_VOITURE in services_par_nom:
-        for rang, voiture in enumerate(VOITURES, start=1):
+        for rang, voiture in enumerate(VOITURES_COMPLETES, start=1):
             await _appeler(client, services_par_nom, SERVICE_VOITURE, rang=str(rang),
                            payload=build_voiture_payload(voiture))
         if SERVICE_VOITURE_CHARGES in services_par_nom:

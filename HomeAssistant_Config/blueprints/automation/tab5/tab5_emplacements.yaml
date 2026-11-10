@@ -2628,7 +2628,9 @@ blueprint:
         sa puissance de charge et son état, relié au solaire et au réseau. Il suffit de la
         batterie pour qu'elle apparaisse ; le reste précise ce qu'elle fait. À remplir en
         plus des sections « Énergie » précédentes (la fenêtre Énergie en a besoin). Une
-        voiture sans nom s'appelle « Voiture 1 » ou « Voiture 2 ».
+        voiture sans nom s'appelle « Voiture 1 » ou « Voiture 2 ». Les capteurs de la fin de
+        la liste (pneus, températures, verrou, Sentinelle, logiciel) servent à la page
+        « État » de la fenêtre Voitures : tous facultatifs, un capteur vide s'écrit « -- ».
 
 
         Optional: up to two electric cars, on the « Flux » page of the Energy window (the
@@ -2636,7 +2638,9 @@ blueprint:
         state, linked to the solar and the grid. The battery alone is enough to make it
         appear; the rest says what it is doing. To fill in on top of the previous « Énergie
         · Energy » sections (the Energy window needs them). A car without a name is called
-        « Car 1 » or « Car 2 ».
+        « Car 1 » or « Car 2 ». The sensors at the end of the list (tires, temperatures,
+        lock, Sentry, software) feed the « État » page of the Cars window: all optional,
+        an empty one reads « -- ».
       input:
         energie_voitures_compteur_separe:
           name: Le compteur de la maison est séparé des voitures · The home meter is separate from the cars
@@ -2806,6 +2810,134 @@ blueprint:
             entity:
               filter:
                 - domain: sensor
+        voiture_1_pneu_av_g:
+          name: Voiture 1, pneu avant gauche · Car 1, front left tire
+          description: >-
+            Sa pression, pour la page « État » de la fenêtre Voitures. Facultatif. L'unité
+            du capteur (bar, psi, kPa…) est reprise telle quelle. Chez Tesla (Fleet,
+            Teslemetry), les pressions des pneus sont désactivées par défaut dans
+            l'intégration : à activer sur la page de l'appareil (entités désactivées),
+            sans quoi la tablette écrit « -- ».
+
+
+            Its pressure, for the « État » page of the Cars window. Optional. The sensor's
+            unit (bar, psi, kPa…) is used as it is. With Tesla (Fleet, Teslemetry) the
+            tire pressures are disabled by default in the integration: enable them on the
+            device page (disabled entities), otherwise the tablet writes « -- ».
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_1_pneu_av_d:
+          name: Voiture 1, pneu avant droit · Car 1, front right tire
+          description: >-
+            Sa pression (voir le pneu avant gauche). Facultatif.
+
+
+            Its pressure (see the front left tire). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_1_pneu_ar_g:
+          name: Voiture 1, pneu arrière gauche · Car 1, rear left tire
+          description: >-
+            Sa pression (voir le pneu avant gauche). Facultatif.
+
+
+            Its pressure (see the front left tire). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_1_pneu_ar_d:
+          name: Voiture 1, pneu arrière droit · Car 1, rear right tire
+          description: >-
+            Sa pression (voir le pneu avant gauche). Facultatif.
+
+
+            Its pressure (see the front left tire). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_1_temp_int:
+          name: Voiture 1, température de la cabine · Car 1, cabin temperature
+          description: >-
+            La température à l'intérieur, en °C ou °F (celle du capteur). Facultatif.
+
+
+            The temperature inside, in °C or °F (the sensor's). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        voiture_1_temp_ext:
+          name: Voiture 1, température extérieure · Car 1, outside temperature
+          description: >-
+            La température dehors, vue par la voiture, en °C ou °F. Facultatif.
+
+
+            The temperature outside, as the car sees it, in °C or °F. Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        voiture_1_verrou:
+          name: Voiture 1, verrouillage · Car 1, lock
+          description: >-
+            Sa serrure (une entité « lock », ou un capteur de classe « verrou » : éteint =
+            verrouillée). La tablette écrit « Verrouillées » ou « Déverrouillées ». Facultatif.
+
+
+            Its lock (a « lock » entity, or a sensor of the « lock » class: off = locked).
+            The tablet writes « Verrouillées » or « Déverrouillées ». Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: lock
+                - domain: binary_sensor
+                  device_class: lock
+        voiture_1_sentinelle:
+          name: Voiture 1, mode Sentinelle · Car 1, Sentry mode
+          description: >-
+            L'interrupteur du mode Sentinelle (allumé = activée). Facultatif.
+
+
+            The Sentry mode switch (on = active). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: switch
+                - domain: binary_sensor
+        voiture_1_logiciel:
+          name: Voiture 1, mise à jour du logiciel · Car 1, software update
+          description: >-
+            L'entité de mise à jour du logiciel (allumée = une mise à jour attend). La
+            tablette écrit « À jour » ou « À mettre à jour ». Facultatif.
+
+
+            The software update entity (on = an update is waiting). The tablet writes
+            « À jour » or « À mettre à jour ». Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: update
         voiture_2_nom:
           name: Voiture 2, son nom · Car 2, its name
           description: >-
@@ -2939,6 +3071,134 @@ blueprint:
             entity:
               filter:
                 - domain: sensor
+        voiture_2_pneu_av_g:
+          name: Voiture 2, pneu avant gauche · Car 2, front left tire
+          description: >-
+            Sa pression, pour la page « État » de la fenêtre Voitures. Facultatif. L'unité
+            du capteur (bar, psi, kPa…) est reprise telle quelle. Chez Tesla (Fleet,
+            Teslemetry), les pressions des pneus sont désactivées par défaut dans
+            l'intégration : à activer sur la page de l'appareil (entités désactivées),
+            sans quoi la tablette écrit « -- ».
+
+
+            Its pressure, for the « État » page of the Cars window. Optional. The sensor's
+            unit (bar, psi, kPa…) is used as it is. With Tesla (Fleet, Teslemetry) the
+            tire pressures are disabled by default in the integration: enable them on the
+            device page (disabled entities), otherwise the tablet writes « -- ».
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_2_pneu_av_d:
+          name: Voiture 2, pneu avant droit · Car 2, front right tire
+          description: >-
+            Sa pression (voir le pneu avant gauche). Facultatif.
+
+
+            Its pressure (see the front left tire). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_2_pneu_ar_g:
+          name: Voiture 2, pneu arrière gauche · Car 2, rear left tire
+          description: >-
+            Sa pression (voir le pneu avant gauche). Facultatif.
+
+
+            Its pressure (see the front left tire). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_2_pneu_ar_d:
+          name: Voiture 2, pneu arrière droit · Car 2, rear right tire
+          description: >-
+            Sa pression (voir le pneu avant gauche). Facultatif.
+
+
+            Its pressure (see the front left tire). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: pressure
+        voiture_2_temp_int:
+          name: Voiture 2, température de la cabine · Car 2, cabin temperature
+          description: >-
+            La température à l'intérieur, en °C ou °F (celle du capteur). Facultatif.
+
+
+            The temperature inside, in °C or °F (the sensor's). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        voiture_2_temp_ext:
+          name: Voiture 2, température extérieure · Car 2, outside temperature
+          description: >-
+            La température dehors, vue par la voiture, en °C ou °F. Facultatif.
+
+
+            The temperature outside, as the car sees it, in °C or °F. Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        voiture_2_verrou:
+          name: Voiture 2, verrouillage · Car 2, lock
+          description: >-
+            Sa serrure (une entité « lock », ou un capteur de classe « verrou » : éteint =
+            verrouillée). La tablette écrit « Verrouillées » ou « Déverrouillées ». Facultatif.
+
+
+            Its lock (a « lock » entity, or a sensor of the « lock » class: off = locked).
+            The tablet writes « Verrouillées » or « Déverrouillées ». Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: lock
+                - domain: binary_sensor
+                  device_class: lock
+        voiture_2_sentinelle:
+          name: Voiture 2, mode Sentinelle · Car 2, Sentry mode
+          description: >-
+            L'interrupteur du mode Sentinelle (allumé = activée). Facultatif.
+
+
+            The Sentry mode switch (on = active). Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: switch
+                - domain: binary_sensor
+        voiture_2_logiciel:
+          name: Voiture 2, mise à jour du logiciel · Car 2, software update
+          description: >-
+            L'entité de mise à jour du logiciel (allumée = une mise à jour attend). La
+            tablette écrit « À jour » ou « À mettre à jour ». Facultatif.
+
+
+            The software update entity (on = an update is waiting). The tablet writes
+            « À jour » or « À mettre à jour ». Optional.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: update
     # Caméras (ADR-0049, 09/10/2026, discussion #278) : le popup Caméras de la tablette,
     # une image fixe par caméra, rafraîchie tant qu'il est ouvert. Vide : le popup le dit.
     cameras:
@@ -4195,7 +4455,7 @@ variables:
   energie_prix_achat: !input energie_prix_achat
   energie_prix_revente: !input energie_prix_revente
   energie_devise: !input energie_devise
-  # Voitures de la page Flux (ADR-0076) : jusqu'à deux, chacune avec ses capteurs (texte
+  # Voitures de la page Flux (ADR-0076, page État ADR-0081) : jusqu'à deux, chacune avec ses capteurs (texte
   # vide = non choisi). Envoyées au script dans `capteurs.voitures` (liste de deux
   # entrées, dans l'ordre), avec l'option « le compteur de la maison compte les voitures ».
   # Hors de `energie` : une voiture ne rend pas de tuile « e ». Un package plus ancien
@@ -4211,6 +4471,15 @@ variables:
       limite: !input voiture_1_limite
       odometre: !input voiture_1_odometre
       fin: !input voiture_1_fin
+      pneu_av_g: !input voiture_1_pneu_av_g
+      pneu_av_d: !input voiture_1_pneu_av_d
+      pneu_ar_g: !input voiture_1_pneu_ar_g
+      pneu_ar_d: !input voiture_1_pneu_ar_d
+      temp_int: !input voiture_1_temp_int
+      temp_ext: !input voiture_1_temp_ext
+      verrou: !input voiture_1_verrou
+      sentinelle: !input voiture_1_sentinelle
+      logiciel: !input voiture_1_logiciel
     - nom: !input voiture_2_nom
       batterie: !input voiture_2_batterie
       autonomie: !input voiture_2_autonomie
@@ -4221,6 +4490,15 @@ variables:
       limite: !input voiture_2_limite
       odometre: !input voiture_2_odometre
       fin: !input voiture_2_fin
+      pneu_av_g: !input voiture_2_pneu_av_g
+      pneu_av_d: !input voiture_2_pneu_av_d
+      pneu_ar_g: !input voiture_2_pneu_ar_g
+      pneu_ar_d: !input voiture_2_pneu_ar_d
+      temp_int: !input voiture_2_temp_int
+      temp_ext: !input voiture_2_temp_ext
+      verrou: !input voiture_2_verrou
+      sentinelle: !input voiture_2_sentinelle
+      logiciel: !input voiture_2_logiciel
   voitures_compteur_separe: !input energie_voitures_compteur_separe
   voitures: >-
     {%- set ns = namespace(l=[]) -%}

@@ -391,6 +391,8 @@ const Page kPages[] = {
     // Même raison (CPP-4) : des lambdas sans capture.
     {tr_noop("Trajets"), [] { return voitures_trajets_a_donnees(); }, [](bool visible) { voitures_trajets_montrer(visible); },
      [] { voitures_trajets_peindre(); }},
+    {tr_noop("État"), [] { return voitures_etat_a_donnees(); }, [](bool visible) { voitures_etat_montrer(visible); },
+     [] { voitures_etat_peindre(); }},
 };
 constexpr int kNbPages = static_cast<int>(sizeof(kPages) / sizeof(kPages[0]));
 static_assert(kNbPages <= kVoituresPages, "un onglet YAML par page (voitures_popup.yaml)");
@@ -482,6 +484,7 @@ void voitures_recu(const std::string& rang, const std::string& payload) {
         v.recue_le = tab5_heure_valide(now) ? now : 0;
     }
     s_v[k] = v;
+    voitures_etat_recu(k, v.presente ? &lu : nullptr);   // la page « État » (ADR-0081)
     if (popup_ouvert()) peindre();
 }
 

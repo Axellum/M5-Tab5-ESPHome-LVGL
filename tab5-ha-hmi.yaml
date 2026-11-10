@@ -177,6 +177,7 @@ esphome:
     - Tab5/ecran/tab5_voitures.h
     - Tab5/ecran/tab5_voitures_charge.h
     - Tab5/ecran/tab5_voitures_trajets.h
+    - Tab5/ecran/tab5_voitures_etat.h
     - Tab5/ecran/tab5_telecommande.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_barre_demarrage.h
@@ -277,6 +278,7 @@ esphome:
     - Tab5/ecran/tab5_voitures_charge.cpp
     # Page « Trajets » du popup Voitures : kilomètres par jour, kWh / 100 km estimé (ADR-0083).
     - Tab5/ecran/tab5_voitures_trajets.cpp
+    - Tab5/ecran/tab5_voitures_etat.cpp
     # Télécommandes : une page par télécommande du blueprint (ADR-0056).
     - Tab5/ecran/tab5_telecommande.cpp
     # Registre unique des consoles (GameRegistry) et des fenêtres modales

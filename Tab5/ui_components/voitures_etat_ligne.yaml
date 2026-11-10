@@ -1,0 +1,24 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Une ligne de la carte du bas de la page « État » du popup Voitures (ADR-0081),
+# réutilisée 5 fois par voitures_etat_bas.yaml : un conteneur transparent de la largeur de la
+# colonne qui porte l'icône (à gauche), le libellé (« Cabine ») et la valeur (« 19 °C », « À jour »,
+# calée à droite). Ne rien assigner ici : tab5_voitures_etat.cpp pose, écrit et colorie.
+# vars : n (0-1, la voiture), ligne (0-4 : cabine, extérieur, portes, sentinelle, logiciel).
+# @architecture_constraint ORDRE des enfants lu par tab5_voitures_etat.cpp : icône, libellé, valeur.
+# @ai_instruction L'icône change avec la valeur : elle est posée par glyphe_ligne
+#       (MDI_CODE_TARGETS : voitures_etat_ligne_icone_*), ses glyphes sont dans mdi_font_32 (règle 9).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "voitures_etat_ligne_${n}_${ligne}"
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 400
+  height: 44
+  hidden: true
+  styles: style_transparent
+  scrollable: false
+  widgets:
+    - label: { id: "voitures_etat_ligne_icone_${n}_${ligne}", text: "", align: TOP_LEFT, text_font: mdi_font_32, styles: style_text_dim }
+    - label: { id: "voitures_etat_ligne_libelle_${n}_${ligne}", text: "", align: TOP_LEFT, text_font: roboto_22, styles: style_text_dim }
+    - label: { id: "voitures_etat_ligne_valeur_${n}_${ligne}", text: "", align: TOP_LEFT, text_font: roboto_32_b, text_align: RIGHT }

@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
 from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_BATTERIE, JOURS_FR, NABU,  # noqa: E402
                        NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,
                        CHARGES, PIECES, PIECES_HUIT, PIECES_HUIT_NOMBRE, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES,
-                       VOITURES,
+                       VOITURES, VOITURES_COMPLETES,
                        HeureForecast, JourForecast, Piece,
                        Tuile, build_alerte_payload, build_climat_pieces, build_energie_bilan, build_energie_payload,
                        build_etats_tuiles,
@@ -663,6 +663,20 @@ FLUX_AVEC_BATTERIE = _instantane(ENERGIE_INSTANTANE_VOITURES_BATTERIE)
 FLUX_DE_LA_DEMO = _instantane()
 VOITURE_1, VOITURE_2 = _voiture(1, VOITURES[0]), _voiture(2, VOITURES[1])
 FLUX_SANS_VOITURE = (_voiture(1, None), _voiture(2, None), FLUX_DE_LA_DEMO)
+# Page « État » du popup Voitures (ADR-0081) : les deux voitures de la démo avec leurs pneus, leurs
+# températures, le verrou, la Sentinelle et le logiciel (la seconde a un pneu trop mou), et trois
+# variantes : en psi et en °F (un pneu à 30 psi = 2,07 bar : pression basse), partielle (la première
+# n'a que la température de la cabine et le verrou, la seconde rien : « -- » partout).
+VOITURE_1_ETAT, VOITURE_2_ETAT = _voiture(1, VOITURES_COMPLETES[0]), _voiture(2, VOITURES_COMPLETES[1])
+VOITURE_1_PSI = _voiture(1, {**VOITURES[0], "pneu_av_g": "42", "pneu_av_d": "42", "pneu_ar_g": "41",
+                             "pneu_ar_d": "30", "unite_pression": "psi", "temp_int": "67", "temp_ext": "54",
+                             "unite_temperature": "°F", "verrouillee": "1", "sentinelle": "1",
+                             "logiciel_a_jour": "1"})
+VOITURE_1_PARTIELLE = _voiture(1, {**VOITURES[0], "temp_int": "21", "unite_temperature": "°C",
+                                   "verrouillee": "1"})
+# Le nom de la page « État » dans l'en-tête : la seconde de deux pages, 200 px calés à gauche de la
+# croix (la dernière page des Réglages, de la Température : x 1048, y 41).
+ONGLET_ETAT_VOITURES = (1048, 41)
 
 
 # Les dernières charges des voitures (ADR-0077), datées du jour figé des captures : les six de la
@@ -1772,6 +1786,21 @@ ECRANS: tuple[Ecran, ...] = (
           (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + TRAJETS_DEUX_VOITURES
           + (Aller("Cars"), VOITURES_PAGE_SUIVANTE, VOITURES_PAGE_SUIVANTE),
           TRAJETS_AUCUN + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    # Page État (ADR-0081, lot 7) : l'Aperçu avec le nom de ses deux pages dès qu'une voiture a un état
+    # (celui-là d'abord : le popup garde sa page), puis la page État avec deux voitures, une seule, en psi
+    # et en °F, et à moitié renseignée. Les voitures sont retirées à la fin de chaque écran (leur état avec).
+    Ecran("voitures-apercu-onglets", (VOITURE_1_ETAT, VOITURE_2_ETAT, Aller("Cars")), FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-2", (VOITURE_1_ETAT, VOITURE_2_ETAT, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
+          FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-1", (VOITURE_1_ETAT, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-1-psi", (VOITURE_1_PSI, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
+    Ecran("voitures-etat-incomplet",
+          (VOITURE_1_PARTIELLE, VOITURE_2, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
+    # Les trois pages ensemble (Aperçu, Charge, État : la Charge dès que les heures du jour sont reçues) :
+    # trois noms en haut, le dernier calé contre la croix, comme avec deux.
+    Ecran("voitures-etat-3-onglets",
+          (VOITURE_1_ETAT, VOITURE_2_ETAT) + CONSO_DEUX_VOITURES + (Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
+          FLUX_SANS_VOITURE + CONSO_AUCUNE),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée

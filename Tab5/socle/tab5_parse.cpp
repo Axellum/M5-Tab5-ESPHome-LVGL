@@ -1862,7 +1862,34 @@ int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]) {
 // (section 15), la lecture du payload ci-dessous.
 
 namespace {
-constexpr int kVoitureChamps = 10;   // nom, batterie, autonomie, unité, état, W, kWh, limite, minutes, compteur
+// nom, batterie, autonomie, unité, état, W, kWh, limite, minutes, compteur, puis (lot 7, page « État »)
+// quatre pneus, unité de pression, température intérieure, extérieure, unité, verrou, sentinelle, logiciel
+constexpr int kVoitureChamps = 21;
+constexpr int kVoitureChampPneu = 10;   // rang du premier pneu ; l'unité de pression suit les quatre
+
+// Vrai si le champ vaut `mot` sans tenir compte de la casse (ASCII).
+bool voiture_unite_est(const Champ& c, const char* mot) {
+    size_t i = 0;
+    for (; i < c.n && mot[i] != '\0'; i++) {
+        char a = c.p[i], b = mot[i];
+        if (a >= 'A' && a <= 'Z') a = static_cast<char>(a - 'A' + 'a');
+        if (b >= 'A' && b <= 'Z') b = static_cast<char>(b - 'A' + 'a');
+        if (a != b) return false;
+    }
+    return i == c.n && mot[i] == '\0';
+}
+
+// « 1 » = OUI, « 0 » = NON, tout autre texte (vide, « unknown », « 2 »…) = INCONNU.
+VoitureOuiNon voiture_oui_non(const Champ& c) {
+    if (c.p == nullptr || c.n != 1) return VoitureOuiNon::INCONNU;
+    return c.p[0] == '1' ? VoitureOuiNon::OUI : (c.p[0] == '0' ? VoitureOuiNon::NON : VoitureOuiNon::INCONNU);
+}
+
+// Température entre kVoitureTempMin et kVoitureTempMax (unité quelconque) : NAN sinon.
+float voiture_temp(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && v >= kVoitureTempMin && v <= kVoitureTempMax ? v : NAN;
+}
 
 // Pourcentage d'un champ : NAN s'il est vide, illisible ou hors de 0 à 100.
 float voiture_pct(const Champ& c) {
@@ -1907,7 +1934,47 @@ bool voiture_lire(const Champ& payload, VoitureLue& out) {
     out.limite = voiture_pct(f[7]);
     out.minutes = voiture_borne(f[8], kVoitureMinutesMax);
     out.compteur_compte = champ_entier(f[9], 1, 1) != 0;   // « 0 » seul dit non
+    // Lot 7 : la page « État ». Chaque pneu : strictement positif et d'au plus 10 bar convertis ;
+    // une unité inconnue rend les quatre inconnus (une valeur sans son unité ne se montre pas).
+    out.unite_pression = f[kVoitureChampPneu + kVoiturePneus];
+    for (int i = 0; i < kVoiturePneus; i++) {
+        const float v = champ_nombre(f[kVoitureChampPneu + i], NAN);
+        const float bar = pression_en_bar(v, out.unite_pression);
+        if (std::isfinite(bar) && bar > 0.0f && bar <= kVoiturePressionMaxBar) {
+            out.pneu[i] = v;
+            out.pneu_bar[i] = bar;
+        }
+    }
+    out.temp_int = voiture_temp(f[kVoitureChampPneu + kVoiturePneus + 1]);
+    out.temp_ext = voiture_temp(f[kVoitureChampPneu + kVoiturePneus + 2]);
+    out.unite_temperature = f[kVoitureChampPneu + kVoiturePneus + 3];
+    out.verrouillee = voiture_oui_non(f[kVoitureChampPneu + kVoiturePneus + 4]);
+    out.sentinelle = voiture_oui_non(f[kVoitureChampPneu + kVoiturePneus + 5]);
+    out.logiciel_a_jour = voiture_oui_non(f[kVoitureChampPneu + kVoiturePneus + 6]);
     return true;
+}
+
+float pression_en_bar(float valeur, const Champ& unite) {
+    if (!std::isfinite(valeur)) return NAN;
+    struct Unite {
+        const char* nom;
+        float bar;   // combien de bar vaut une de ces unités
+    };
+    static const Unite kUnites[] = {{"bar", 1.0f}, {"cbar", 0.01f}, {"mbar", 0.001f}, {"hpa", 0.001f}, {"kpa", 0.01f}, {"pa", 0.00001f}, {"psi", 0.0689476f}};
+    if (unite.n == 0) return valeur;
+    for (const Unite& u : kUnites)
+        if (voiture_unite_est(unite, u.nom)) return valeur * u.bar;
+    return NAN;
+}
+
+PneusVerdict voiture_pneus_verdict(const float pneu_bar[kVoiturePneus]) {
+    int connus = 0;
+    for (int i = 0; i < kVoiturePneus; i++) {
+        if (!std::isfinite(pneu_bar[i])) continue;
+        connus++;
+        if (pneu_bar[i] < kVoiturePneuBasBar) return PneusVerdict::BAS;
+    }
+    return connus == kVoiturePneus ? PneusVerdict::CORRECTS : PneusVerdict::INCONNU;
 }
 
 // ─── 18. Charges des voitures (page « Charges » du popup Énergie, tab5_maj_voiture_charges) ───

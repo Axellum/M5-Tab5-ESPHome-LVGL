@@ -1245,13 +1245,41 @@ int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]);
 //                      consommation montrée est la mesure telle quelle) ; « 1 », vide ou
 //                      illisible : il les compte (la charge des voitures en est retranchée).
 //                      Réglage global du blueprint, répété dans le payload de chaque voiture.
+// Ajoutés à la fin au lot 7 (page « État » du popup Voitures, ADR-0081) : « …|pneu_av_g|pneu_av_d|
+// pneu_ar_g|pneu_ar_d|unite_pression|temp_int|temp_ext|unite_temperature|verrouillee|sentinelle|
+// logiciel_a_jour ». Un payload d'avant (dix champs) les lit tous « inconnus ».
+//   pneu_*             pression de chaque pneu (avant gauche, avant droit, arrière gauche, arrière
+//                      droit) dans `unite_pression` (« bar », « psi », « kPa », « hPa », « mbar »,
+//                      « Pa », « cbar » ; vide = « bar »). Strictement positive et d'au plus 10 bar
+//                      une fois convertie, sinon inconnue ; unité inconnue : les quatre inconnues ;
+//   temp_int, temp_ext température de l'habitacle et de l'extérieur dans `unite_temperature`
+//                      (« °C », « °F », texte tel quel, vide = « °C »), de -100 à 200, sinon inconnue ;
+//   verrouillee        « 1 » portes verrouillées, « 0 » déverrouillées, autre chose : inconnu ;
+//   sentinelle         « 1 » mode Sentinelle activé, « 0 » désactivé, autre chose : inconnu ;
+//   logiciel_a_jour    « 1 » logiciel à jour, « 0 » une mise à jour attend, autre chose : inconnu.
 // Vide, ou tous les champs vides : voiture absente (son nœud disparaît).
 constexpr float kVoitureAutonomieMax = 10000.0f;
 constexpr float kVoitureMinutesMax = 7.0f * 24.0f * 60.0f;   // une semaine
+constexpr float kVoiturePressionMaxBar = 10.0f;
+constexpr float kVoitureTempMin = -100.0f;
+constexpr float kVoitureTempMax = 200.0f;
+constexpr int kVoiturePneus = 4;
+// Un pneu en dessous de ce seuil (en bar : 2,2 bar = 220 kPa = 32 psi) est « bas ». Choix de
+// l'auteur, pas une règle de Tesla : à juger sur de vraies pressions (ADR-0081).
+constexpr float kVoiturePneuBasBar = 2.2f;
 enum class VoitureEtat : uint8_t { INCONNUE = 0,
                                    DEBRANCHEE = 1,
                                    BRANCHEE = 2,
                                    EN_CHARGE = 3 };
+// Un état à deux valeurs que HA peut ne pas connaître (voiture endormie, capteur absent).
+enum class VoitureOuiNon : int8_t { INCONNU = -1,
+                                    NON = 0,
+                                    OUI = 1 };
+// Verdict des quatre pneus : CORRECTS seulement quand les quatre sont connus et au-dessus du seuil ;
+// BAS dès qu'un pneu connu est en dessous ; INCONNU sinon (rien, ou des pneus manquants).
+enum class PneusVerdict : uint8_t { INCONNU = 0,
+                                    CORRECTS = 1,
+                                    BAS = 2 };
 struct VoitureLue {
     bool presente = false;
     Champ nom = {nullptr, 0};             // pointe dans le payload (copié par l'écran)
@@ -1264,10 +1292,25 @@ struct VoitureLue {
     float limite = NAN;
     float minutes = NAN;
     bool compteur_compte = true;
+    // Lot 7 : la page « État ».
+    float pneu[kVoiturePneus] = {NAN, NAN, NAN, NAN};       // dans `unite_pression` ; av. g., av. d., ar. g., ar. d.
+    float pneu_bar[kVoiturePneus] = {NAN, NAN, NAN, NAN};   // les mêmes, en bar (pour juger)
+    Champ unite_pression = {nullptr, 0};   // pointe dans le payload (copié par l'écran)
+    float temp_int = NAN;
+    float temp_ext = NAN;
+    Champ unite_temperature = {nullptr, 0};   // idem
+    VoitureOuiNon verrouillee = VoitureOuiNon::INCONNU;
+    VoitureOuiNon sentinelle = VoitureOuiNon::INCONNU;
+    VoitureOuiNon logiciel_a_jour = VoitureOuiNon::INCONNU;
 };
 // Lit un payload ; vrai si une voiture est présente (out.presente). Aucune écriture dans
-// le payload ; out ne le survit pas (nom et unité y pointent).
+// le payload ; out ne le survit pas (nom et unités y pointent).
 bool voiture_lire(const Champ& payload, VoitureLue& out);
+// Une pression en bar d'après son unité (« bar », « psi », « kPa »… ; vide = « bar », comparaison
+// sans casse) ; NAN si l'unité est inconnue ou la valeur non finie. Sert au verdict des pneus.
+float pression_en_bar(float valeur, const Champ& unite);
+// Le verdict des quatre pneus (en bar) : voir PneusVerdict.
+PneusVerdict voiture_pneus_verdict(const float pneu_bar[kVoiturePneus]);
 
 // ─── 18. Charges des voitures (page « Charges » du popup Énergie, tab5_maj_voiture_charges) ───
 // Jusqu'à kChargesMax lignes séparées par « ; », la plus récente d'abord, chacune

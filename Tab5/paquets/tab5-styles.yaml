@@ -538,6 +538,12 @@ font:
       - "\U000F033A"  # link-variant-off (popup Musique, page Pièces / Bibliothèque, ADR-0067)
       - "\U000F04E1"  # swap-horizontal (popup Musique, page Pièces / Bibliothèque, ADR-0067)
       - "\U000F004D"  # arrow-left (popup Musique, page Pièces / Bibliothèque, ADR-0067)
+      # Popup Voitures, page État (ADR-0081) : verdict des pneus, Sentinelle, logiciel.
+      - "\U000F05D6"  # alert-circle-outline (pression basse)
+      - "\U000F05E1"  # check-circle-outline (pneus corrects, logiciel à jour)
+      - "\U000F06B0"  # update (logiciel à mettre à jour)
+      - "\U000F06D0"  # eye-outline (Sentinelle activée)
+      - "\U000F06D1"  # eye-off-outline (Sentinelle désactivée)
       # >>> tuiles
       # Palette des tuiles de pièce (ADR-0023), sauf les glyphes déjà listés au-dessus.
       - "\U000F001B"  # air-conditioner (clim)

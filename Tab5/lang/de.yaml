@@ -1581,6 +1581,18 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "Reichweite"
 "Aucune voiture reçue": "Keine Autos empfangen"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Wähle sie im Blueprint, Bereich „Énergie : voitures · Energy: cars“."
+# --- Popup Voitures, page État (tab5_voitures_etat.cpp, ADR-0081) ---------------
+# Libellés de lignes : colonne ~400 px, 12 caractères au plus. Valeurs : Roboto 32 gras, 16 au plus.
+"Cabine": "Innenraum"
+"Portes": "Türen"
+"Sentinelle": "Sentry"   # nom officiel Tesla (Sentry-Modus), gardé tel quel
+"Logiciel": "Software"
+"Verrouillées": "Verriegelt"
+"Déverrouillées": "Entriegelt"
+"À jour": "Aktuell"
+"À mettre à jour": "Update fällig"
+"Pneus corrects": "Reifen OK"
+"Pression basse": "Druck niedrig"   # « Reifendruck niedrig » (19) dépasserait les 16 caractères
 "Aperçu": "Überblick"
 # --- Page Trajets du popup Voitures (tab5_voitures_trajets.cpp, ADR-0083) ---
 "Trajets": "Fahrten"

@@ -53,6 +53,9 @@ obj:
           - !include { file: voitures_carte.yaml, vars: { n: "0" } }
           - !include { file: voitures_carte.yaml, vars: { n: "1" } }
 
+          # ═══ PAGE « ÉTAT » (ADR-0081) : pneus, températures, verrou, Sentinelle, logiciel ═══
+          - !include voitures_page_etat.yaml
+
           # ═══ AUCUNE VOITURE REÇUE : un message court et où les choisir ═══
           - label: { id: voitures_message, text: "", align: TOP_LEFT, x: 24, y: 300, width: "${corps_w}", hidden: true, text_font: roboto_32_b, text_align: CENTER }
           - label: { id: voitures_conseil, text: "", align: TOP_LEFT, x: 24, y: 350, width: "${corps_w}", hidden: true, text_font: roboto_22, text_align: CENTER, styles: style_text_dim }
