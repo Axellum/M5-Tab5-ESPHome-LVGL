@@ -34,7 +34,8 @@ from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_
                        build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
-                       build_charges_payload, build_conso_jour, build_voiture_payload, build_zones_absentes, code_pluie,
+                       build_charges_payload, build_conso_jour, build_energie_soleil, build_voiture_payload,
+                       build_zones_absentes, code_pluie,
                        CONSO_JOUR_RANGS)
 
 
@@ -703,6 +704,11 @@ def _conso(rang: str, valeurs: tuple | None = None) -> Service:
 CONSO_DEUX_VOITURES = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS)
 CONSO_UNE_VOITURE = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS[:2])
 CONSO_AUCUNE = tuple(_conso(rang, ()) for rang in CONSO_JOUR_RANGS)
+# La prévision du soleil de la démo (la scène la pousse déjà), puis sa disparition (payload vide) : la page
+# Charge du popup Voitures (ADR-0082) dit alors qu'aucune prévision n'est arrivée. Chaque écran qui la
+# retire la repousse à la fin.
+SOLEIL_DE_LA_DEMO = Service("tab5_maj_energie_soleil", (("payload", build_energie_soleil()),), apres=0.3)
+SOLEIL_AUCUN = Service("tab5_maj_energie_soleil", (("payload", ""),), apres=0.3)
 # Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
 # la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
 # droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
@@ -1732,6 +1738,19 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("voitures-2", (VOITURE_1, VOITURE_2, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-1", (VOITURE_1, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-aucune", (Aller("Cars"),)),
+    # Page Charge (ADR-0082, 2e onglet) : un glissement vers la gauche depuis l'Aperçu. Les heures du jour
+    # des voitures de la démo (CONSO_JOUR : la 2 a chargé de 1 h à 3 h, la 1 charge depuis 6 h) et la
+    # prévision du soleil de la scène, à 7 h 45 : deux voitures, une seule, puis la prévision absente.
+    # Chaque écran revient à l'Aperçu (glissement inverse) et retire séries et voitures.
+    Ecran("voitures-charge-2",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + (Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    Ecran("voitures-charge-1",
+          (VOITURE_1,) + CONSO_UNE_VOITURE + (Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE),
+    Ecran("voitures-charge-sans-soleil",
+          (VOITURE_1, VOITURE_2) + CONSO_DEUX_VOITURES + (SOLEIL_AUCUN, Aller("Cars"), ENERGIE_PAGE_SUIVANTE),
+          (ENERGIE_PAGE_PRECEDENTE,) + FLUX_SANS_VOITURE + CONSO_AUCUNE + (SOLEIL_DE_LA_DEMO,)),
     # Page État (ADR-0081, lot 7) : l'Aperçu avec le nom de ses deux pages dès qu'une voiture a un état
     # (celui-là d'abord : le popup garde sa page), puis la page État avec deux voitures, une seule, en psi
     # et en °F, et à moitié renseignée. Les voitures sont retirées à la fin de chaque écran (leur état avec).
@@ -1742,6 +1761,11 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("voitures-etat-1-psi", (VOITURE_1_PSI, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
     Ecran("voitures-etat-incomplet",
           (VOITURE_1_PARTIELLE, VOITURE_2, Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)), FLUX_SANS_VOITURE),
+    # Les trois pages ensemble (Aperçu, Charge, État : la Charge dès que les heures du jour sont reçues) :
+    # trois noms en haut, le dernier calé contre la croix, comme avec deux.
+    Ecran("voitures-etat-3-onglets",
+          (VOITURE_1_ETAT, VOITURE_2_ETAT) + CONSO_DEUX_VOITURES + (Aller("Cars"), Toucher(*ONGLET_ETAT_VOITURES)),
+          FLUX_SANS_VOITURE + CONSO_AUCUNE),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée

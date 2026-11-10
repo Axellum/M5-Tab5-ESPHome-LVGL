@@ -229,6 +229,10 @@ NON_MONTREES = {
     "voitures-2": "popup Voitures, deux voitures, décrit dans screens.md ; notice avec les pages suivantes",
     "voitures-1": "voitures-2 montre la même fenêtre ; une seule voiture en pleine largeur, décrit dans screens.md",
     "voitures-aucune": "voitures-2 montre la même fenêtre ; sans voiture, le message est décrit dans screens.md",
+    # Page Charge du popup Voitures (ADR-0082) : décrite dans screens.md ; image à tirer du rendu.
+    "voitures-charge-2": "page Charge du popup Voitures, deux voitures, décrite dans screens.md ; image à tirer du rendu",
+    "voitures-charge-1": "voitures-charge-2 montre la même page ; une seule voiture en pleine largeur",
+    "voitures-charge-sans-soleil": "voitures-charge-2 montre la même page ; sans prévision du soleil, la bande du bas le dit",
     # Page « État » du popup Voitures (ADR-0081, lot 7) : décrite dans screens.md ; la page de notice
     # viendra avec les autres pages du popup, images à tirer du rendu validé par Axel.
     "voitures-apercu-onglets": "l'Aperçu avec ses onglets (Aperçu, État) ; décrit dans screens.md, image à tirer du rendu",
@@ -236,6 +240,7 @@ NON_MONTREES = {
     "voitures-etat-1": "voitures-etat-2 montre la même page ; une seule voiture en pleine largeur",
     "voitures-etat-1-psi": "voitures-etat-2 montre la même page ; pressions en psi et températures en °F",
     "voitures-etat-incomplet": "voitures-etat-2 montre la même page ; une voiture à moitié renseignée, des « -- »",
+    "voitures-etat-3-onglets": "voitures-etat-2 montre la même page ; trois onglets en haut (Aperçu, Charge, État)",
 }
 
 

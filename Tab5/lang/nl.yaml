@@ -1575,3 +1575,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Pneus corrects": "Banden OK"
 "Pression basse": "Lage druk"
 "Aperçu": "Overzicht"
+
+# --- Popup Voitures, page Charge (ADR-0082) ---
+"Aujourd'hui, heure par heure": "Vandaag, uur per uur"
+"Fin prévue": "Verwacht einde"
+"Créneau conseillé": "Aanbevolen tijdvak"
+"%d h": "%d uur"
+"Créneau conseillé : %d h – %d h": "Aanbevolen: %d – %d uur"
+"Créneau conseillé : jusqu'à %d h": "Aanbevolen: tot %d uur"
+"Pas de créneau conseillé aujourd'hui": "Vandaag geen aanbevolen tijdvak"
+"Pas de prévision du soleil reçue": "Geen zonneprognose ontvangen"
+"Suggestion d'après la prévision du soleil": "Suggestie o.b.v. zonneprognose"
+"Pas de charge en cours": "Laadt niet"
+"Prête à %d h %02d": "Klaar om %d:%02d"

@@ -1625,3 +1625,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Pneus corrects": "Lastikler normal"
 "Pression basse": "Düşük basınç"
 "Aperçu": "Özet"
+
+# --- Popup Voitures, page Charge (ADR-0082) ---
+"Aujourd'hui, heure par heure": "Bugün, saat saat"
+"Fin prévue": "Tahmini bitiş"
+"Créneau conseillé": "Önerilen aralık"
+"%d h": "%d:00"
+"Créneau conseillé : %d h – %d h": "Önerilen aralık: %d:00 – %d:00"
+"Créneau conseillé : jusqu'à %d h": "Önerilen aralık: %d:00'a kadar"
+"Pas de créneau conseillé aujourd'hui": "Bugün önerilen aralık yok"
+"Pas de prévision du soleil reçue": "Güneş tahmini alınmadı"
+"Suggestion d'après la prévision du soleil": "Güneş tahminine göre öneri"
+"Pas de charge en cours": "Şarj olmuyor"
+"Prête à %d h %02d": "%d:%02d'de hazır"
