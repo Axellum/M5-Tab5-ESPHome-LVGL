@@ -8,9 +8,17 @@
  *         - les pages et leurs noms sur la ligne du titre : la brique des popups à pages
  *           (tab5_pages.cpp, ADR-0046 : un seul glissement, pages_brancher), chaque page
  *           seulement quand elle a quelque chose à montrer — Lecture toujours ; Playlists
- *           dès une playlist favorite (ADR-0068, la grille peinte par tab5_lecteur.cpp, le
- *           retour à Lecture 600 ms après un appui) ; Pièces dès deux pièces ; Bibliothèque avec Music Assistant (ou,
- *           sans lui, le temps d'y choisir une source : « Sources ») ;
+ *           avec Music Assistant ou dès une playlist du blueprint (ADR-0068) ; Pièces dès
+ *           deux pièces ; Bibliothèque avec Music Assistant (ou, sans lui, le temps d'y
+ *           choisir une source : « Sources ») ;
+ *         - Playlists (10/11/2026, décision d'Axel) : LA MÊME grille de pochettes que la
+ *           Bibliothèque (s_grille dit à quelle page elle est) — avec Music Assistant ses
+ *           playlists favorites (« parcourir » pl|f|page, vue plf ; un toucher les joue sur
+ *           le lecteur montré comme dans la Bibliothèque, un appui long ouvre la roue sans
+ *           « Ouvrir ») ; sans lui les noms du blueprint (tab5_lecteur.cpp), icône
+ *           playlist, un toucher envoie le rang (lecteur_playlist). La pochette touchée reste
+ *           en accent kPlaylistEnCoursMs, la page Lecture revient kRetourMs après. Un nom
+ *           trop long pour une ligne y en prend deux, sans 2e ligne ;
  *         - Pièces : une carte par lecteur (8 au plus, 4 × 2), volume (envoyé au relâcher),
  *           grouper au lecteur montré / l'en séparer, marche, « y envoyer la musique » ;
  *           un toucher montre la pièce sur la page Lecture, un appui long ouvre sa roue
@@ -23,6 +31,8 @@
  *           « Chargement… » puis, sans réponse en kAttenteMs, une phrase courte ;
  *         - les pochettes : dix online_image (musique_pochette.yaml), une à la fois depuis
  *           le premier élément, seulement page montrée ; un échec garde l'icône du genre ;
+ *           passer de Playlists à Bibliothèque (ou l'inverse) redemande la liste, une
+ *           pochette dont l'URL ne change pas reste ;
  *         - sur la page Lecture : « À suivre · titre — artiste » et « n titres » sous
  *           l'album (le morceau remonte un peu pour lui faire place), la puce « + n »
  *           après le nom du lecteur quand il mène un groupe.
@@ -115,12 +125,14 @@ constexpr int32_t kElementPasY = kElementH + 8;
 constexpr int32_t kElementsY = 124;
 constexpr int kElementsParLigne = 5;
 constexpr int32_t kElementTexteL = 160;
+constexpr int32_t kElementNomY = 146;  // musique_element.yaml : le nom sous la pochette de 144
 static_assert(kElementsY + kElementPasY + kElementH <= kLecteurCarteH - 8, "deux rangées dans la carte");
 static_assert(kGrilleY + 2 * kPieceH + kPieceEcart <= kLecteurCarteH - 8, "deux rangées de cartes dans la carte");
 
 // ─── Temps ───
 constexpr uint32_t kAttenteMs = 8000;      // « Chargement… » au-delà : la phrase d'erreur
 constexpr uint32_t kRetourMs = 600;        // l'élément touché vu en accent, puis la page suivante
+constexpr uint32_t kPlaylistEnCoursMs = 30u * 1000u;  // la playlist touchée en accent (ADR-0068)
 constexpr int kPileMax = 4;                // catégorie, puis trois niveaux ouverts (artiste → album)
 constexpr size_t kUrlMax = 384;            // pochette (proxy de MA, googleusercontent…)
 
@@ -196,7 +208,6 @@ bool s_attente = false;
 uint32_t s_attente_ms = 0;
 MusiqueVue s_attendu = MusiqueVue::INCONNUE;
 bool s_sans_reponse = false;  // kAttenteMs passées sans réponse
-bool s_biblio_a_jour = false;  // demandée depuis l'ouverture du popup
 int s_lance = -1;              // élément touché, en accent jusqu'au retour
 lv_timer_t* s_retour = nullptr;
 Page s_retour_depuis = Page::BIBLIOTHEQUE;  // la page qui doit encore être montrée
@@ -209,6 +220,16 @@ bool s_img_echec[kMusiqueElementsMax] = {};
 int s_dl = -1;
 
 Page s_page = Page::LECTURE;
+// Une grille pour deux pages (règle 5 : une seule tuile, une seule file de pochettes) : s_l
+// et les pochettes sont ceux de la page Bibliothèque (ou des sources d'une pièce) ou de la
+// page Playlists ; passer de l'une à l'autre redemande la liste.
+Page s_grille = Page::BIBLIOTHEQUE;
+bool s_grille_a_jour = false;  // demandée depuis l'ouverture du popup
+bool s_grille_ma = false;      // Playlists : par Music Assistant (sinon les noms du blueprint)
+int s_pl_page = 0;             // page des playlists favorites de Music Assistant
+// La playlist touchée (sa ref, « #rang » pour le blueprint), en accent kPlaylistEnCoursMs.
+char s_pl_touchee[kMusiqueRefMax + 1] = "";
+uint32_t s_pl_touchee_ms = 0;
 int s_roue_piece = -1;    // rang dans la grille de la pièce dont la roue est ouverte
 int s_roue_element = -1;  // élément dont la roue est ouverte
 
@@ -298,12 +319,16 @@ void envoyer(const char* action, int piece, const char* valeur = "") {
 bool page_disponible(Page p) {
     switch (p) {
         case Page::LECTURE: return true;
-        case Page::PLAYLISTS: return lecteur_playlists_nb() > 0;  // ADR-0068
+        // ADR-0068 : les favorites de Music Assistant, sinon celles du blueprint.
+        case Page::PLAYLISTS: return s_p.ma || lecteur_playlists_nb() > 0;
         case Page::PIECES: return s_p.n >= 2;
         case Page::BIBLIOTHEQUE: return s_p.ma || s_sources;
         default: return false;
     }
 }
+
+// Les pages qui montrent la grille de pochettes (musique_biblio).
+bool page_grille(Page p) { return p == Page::BIBLIOTHEQUE || p == Page::PLAYLISTS; }
 
 int pages_visibles(Page out[kPagesNb]) {
     int n = 0;
@@ -538,6 +563,20 @@ void peindre_rangee() {
     // Place des flèches montrées : « précédente » (x 812) prend les deux places, « suivante »
     // seule (x 868, la première page) une seule.
     const int32_t fleches = fleches_avant ? kFlechesL + kCategorieEcart : (fleches_apres ? kFlecheL + kCategorieEcart : 0);
+    // Page Playlists : ni catégories ni retour ; à leur place, ce que fait un toucher (en
+    // couleur atténuée, comme le conseil de la page Pièces).
+    if (s_page == Page::PLAYLISTS) {
+        for (lv_obj_t* b : u.categorie) ui_hidden(b, true);
+        ui_hidden(u.retour, true);
+        ui_hidden(u.titre, false);
+        ui_x(u.titre, kMarge);
+        ui_text_color(u.titre, UIColor.TEXT_DIM);
+        texte_ha_coupe(u.titre, s_grille_ma ? tr("Toucher : lire · Appui long : plus de choix") : tr("Toucher : lancer la playlist"),
+                       kLecteurCarteL - kMarge - fleches - kMarge);
+        return;
+    }
+    // Le titre d'un niveau ouvert reprend la couleur de son style.
+    if (u.titre != nullptr) lv_obj_remove_local_style_prop(u.titre, LV_STYLE_TEXT_COLOR, LV_PART_MAIN);
     // Catégories.
     if (cats) {
         int32_t largeurs[kMusiqueCategories];
@@ -585,6 +624,25 @@ void cadre_accent(lv_obj_t* cadre, bool on) {
     }
 }
 
+// La playlist de la case k est-elle celle touchée il y a moins de kPlaylistEnCoursMs ?
+// (musique_tic efface s_pl_touchee passé ce délai.)
+bool playlist_touchee(int k) {
+    return s_page == Page::PLAYLISTS && s_grille == Page::PLAYLISTS && s_pl_touchee[0] != '\0' && k < s_l.n &&
+           std::strcmp(s_l.e[k].ref, s_pl_touchee) == 0;
+}
+
+// Nom d'une case sur une ligne (CLIP, coupé par texte_ha_coupe, y 146 de musique_element.yaml)
+// ou sur deux (« … » posé par LVGL à hauteur fixe, calé en bas de la case).
+void nom_lignes(lv_obj_t* lbl, bool deux) {
+    if (lbl == nullptr) return;
+    const lv_label_long_mode_t mode = deux ? LV_LABEL_LONG_MODE_DOTS : LV_LABEL_LONG_MODE_CLIP;
+    if (lv_label_get_long_mode(lbl) != mode) lv_label_set_long_mode(lbl, mode);
+    const lv_font_t* f = lv_obj_get_style_text_font(lbl, LV_PART_MAIN);
+    const int32_t h = deux && f != nullptr ? 2 * lv_font_get_line_height(f) : LV_SIZE_CONTENT;
+    lv_obj_set_height(lbl, h);  // LVGL 9.5.0 compare lui-même (lv_obj_pos.c)
+    ui_y(lbl, deux && f != nullptr ? std::min(kElementNomY, kElementH - h) : kElementNomY);
+}
+
 void peindre_element(int k) {
     const MusiqueUI& u = ui();
     lv_obj_t* const b = u.element[k];
@@ -598,16 +656,24 @@ void peindre_element(int k) {
     ui_hidden(u.element_img[k], !img);
     ui_hidden(u.element_icone[k], img);
     ui_text(u.element_icone[k], glyphe_element(e.genre));
-    texte_ha_coupe(u.element_nom[k], e.nom, kElementTexteL);
-    ui_hidden(u.element_sous[k], e.sous[0] == '\0');
-    texte_ha_coupe(u.element_sous[k], e.sous, kElementTexteL);
-    cadre_accent(u.element_cadre[k], k == s_lance);
+    // Page Playlists (10/11/2026) : un nom qui ne tient pas sur une ligne en prend deux, sans
+    // 2e ligne ; celle-ci dit « Playlist » quand HA n'en donne pas. La Bibliothèque garde
+    // une ligne de nom (sa 2e ligne, l'artiste, compte plus).
+    const bool pl = s_page == Page::PLAYLISTS;
+    const bool deux = pl && ui_largeur_texte(u.element_nom[k], e.nom) > kElementTexteL;
+    nom_lignes(u.element_nom[k], deux);
+    if (deux) ui_text(u.element_nom[k], e.nom);
+    else texte_ha_coupe(u.element_nom[k], e.nom, kElementTexteL);
+    const char* sous = e.sous[0] != '\0' || !pl ? e.sous : tr("Playlist");
+    ui_hidden(u.element_sous[k], deux || sous[0] == '\0');
+    if (!deux) texte_ha_coupe(u.element_sous[k], sous, kElementTexteL);
+    cadre_accent(u.element_cadre[k], k == s_lance || playlist_touchee(k));
 }
 
 void peindre_biblio() {
     const MusiqueUI& u = ui();
     if (!lie()) return;
-    const bool page = s_page == Page::BIBLIOTHEQUE && popup_ouvert();
+    const bool page = page_grille(s_page) && popup_ouvert();
     ui_hidden(u.biblio, !page);
     if (!page) return;
     peindre_rangee();
@@ -616,6 +682,7 @@ void peindre_biblio() {
     if (s_attente || !s_liste_recue) msg = tr("Chargement...");
     else if (s_sans_reponse) msg = s_p.ma ? tr("Music Assistant ne répond pas") : tr("Home Assistant ne répond pas");
     else if (s_l.vue == MusiqueVue::ERREUR) msg = s_l.titre[0] != '\0' ? erreur_ha(s_l.titre) : tr("Music Assistant ne répond pas");
+    else if (s_l.n == 0 && s_page == Page::PLAYLISTS) msg = tr("Aucune playlist favorite dans Music Assistant");
     else if (s_l.n == 0) msg = s_l.vue == MusiqueVue::FAVORIS ? tr("Aucun favori pour l'instant") : tr("Rien à montrer ici");
     ui_hidden(u.message, msg[0] == '\0');
     if (msg[0] != '\0') ui_text(u.message, msg);
@@ -625,7 +692,7 @@ void peindre_biblio() {
 // ─── Pochettes : une à la fois, page montrée ───
 
 void telecharger_suivante() {
-    if (s_dl >= 0 || ui().telecharger == nullptr || s_page != Page::BIBLIOTHEQUE || !popup_ouvert()) return;
+    if (s_dl >= 0 || ui().telecharger == nullptr || !page_grille(s_page) || s_grille != s_page || !popup_ouvert()) return;
     if (s_attente || !s_liste_recue) return;
     for (int k = 0; k < s_l.n && k < kMusiqueElementsMax; k++) {
         const Element& e = s_l.e[k];
@@ -658,6 +725,7 @@ void pochettes_nouvelle_liste() {
 
 void demander() {
     char v[kMusiqueRefMax + 16];
+    s_grille = Page::BIBLIOTHEQUE;
     s_sans_reponse = false;
     s_attente = true;
     s_attente_ms = esphome::millis();
@@ -676,25 +744,94 @@ void demander() {
         }
         s_attendu = n.vue;
     }
-    s_biblio_a_jour = true;
+    s_grille_a_jour = true;
     peindre_biblio();
 }
 
 // Une réponse attendue ? Une catégorie doit être celle demandée (deux touchers rapides :
-// la première réponse est jetée), une ref ouverte un « det », des sources un « src ». Rien
-// hors d'une demande (en attente, ou après son délai : une réponse lente s'affiche encore) ;
-// « err » répond à toute demande, un contexte illisible (INCONNUE) à aucune.
+// la première réponse est jetée), une ref ouverte un « det », des sources un « src », les
+// playlists favorites un « plf » (ou un « pl » : un HA d'avant ignore le « f » de la
+// demande et répond par toutes ses playlists). Rien hors d'une demande (en attente, ou
+// après son délai : une réponse lente s'affiche encore) ; « err » répond à toute demande,
+// un contexte illisible (INCONNUE) à aucune.
 bool reponse_attendue(MusiqueVue vue) {
     if (!s_attente && !s_sans_reponse) return false;
     if (vue == MusiqueVue::ERREUR) return true;
+    if (s_attendu == MusiqueVue::PLAYLISTS_FAVORITES && vue == MusiqueVue::PLAYLISTS) return true;
     return vue != MusiqueVue::INCONNUE && vue == s_attendu;
 }
 
-// Plus rien d'attendu (les sources quittées) : une réponse tardive sera jetée.
+// Plus rien d'attendu (les sources quittées, l'autre page de la grille) : une réponse
+// tardive sera jetée.
 void attente_oublier() {
     s_attente = false;
     s_sans_reponse = false;
     s_attendu = MusiqueVue::INCONNUE;
+}
+
+// ─── Playlists : la même grille ───
+
+void rejouer_roue_element();  // plus bas, avec les roues
+
+// Sans Music Assistant : les noms du blueprint (tab5_lecteur.cpp), tout de suite ; un nom
+// vide garde sa place (« Playlist N », jamais un lien). Ref « #rang » : la clé de l'accent,
+// jamais envoyée (un toucher envoie le rang, lecteur_playlist).
+void playlists_blueprint() {
+    s_l.vue = MusiqueVue::PLAYLISTS_FAVORITES;
+    s_l.titre[0] = '\0';
+    s_l.page = 0;
+    s_l.suite = false;
+    s_l.retour = false;
+    s_l.n = std::min(lecteur_playlists_nb(), kMusiqueElementsMax);
+    for (int k = 0; k < s_l.n; k++) {
+        Element& e = s_l.e[k];
+        const char* nom = lecteur_playlist_nom(k);
+        if (nom[0] != '\0') {
+            texte_ha_copier(e.nom, sizeof(e.nom), nom, std::strlen(nom));
+        } else {
+            char n[4];
+            std::snprintf(n, sizeof(n), "%d", k + 1);
+            const std::string t = tr_fill("Playlist {n}", {{"n", n}});
+            texte_ha_copier(e.nom, sizeof(e.nom), t.data(), t.size());
+        }
+        e.sous[0] = '\0';  // « Playlist », écrit à la peinture
+        e.genre = MusiqueElementGenre::PLAYLIST;
+        std::snprintf(e.ref, sizeof(e.ref), "#%d", k);
+        e.url[0] = '\0';
+    }
+    s_liste_recue = true;
+    s_lance = -1;
+    if (s_roue_element >= s_l.n) s_roue_element = -1;
+    if (roue_ouverte_par(rejouer_roue_element)) roue_actions_fermer();
+    pochettes_nouvelle_liste();
+}
+
+// La page Playlists remplit la grille : avec Music Assistant, ses playlists favorites
+// (« parcourir » pl|f|page, vue plf en réponse), sinon les noms du blueprint.
+void playlists_charger() {
+    s_grille = Page::PLAYLISTS;
+    s_grille_a_jour = true;
+    s_grille_ma = s_p.ma;
+    if (s_grille_ma) {
+        char v[24];
+        std::snprintf(v, sizeof(v), "%s|f|%d", musique_vue_code(MusiqueVue::PLAYLISTS), s_pl_page);
+        s_sans_reponse = false;
+        s_attente = true;
+        s_attente_ms = esphome::millis();
+        s_attendu = MusiqueVue::PLAYLISTS_FAVORITES;
+        envoyer("parcourir", -1, v);
+    } else {
+        attente_oublier();
+        s_pl_page = 0;
+        playlists_blueprint();
+    }
+    peindre_biblio();
+}
+
+// La playlist de la case k vient d'être lancée : en accent kPlaylistEnCoursMs.
+void playlist_lancee(int k) {
+    std::snprintf(s_pl_touchee, sizeof(s_pl_touchee), "%s", s_l.e[k].ref);
+    s_pl_touchee_ms = esphome::millis();
 }
 
 // ─── Roues (ADR-0036) ───
@@ -816,7 +953,8 @@ bool peindre_roue_element(bool garder) {
     ajouter(Geste::SUIVANT, RoueIcone::A_LA_SUITE, tr("À la suite"));
     ajouter(Geste::FIN, RoueIcone::EN_FIN, tr("En fin de file"));
     ajouter(Geste::RADIO, RoueIcone::RADIO, tr("Radio"));
-    if (conteneur) ajouter(Geste::OUVRIR, RoueIcone::LISTE, tr("Ouvrir"));
+    // Page Playlists : jouer seulement (son contenu s'ouvre depuis la Bibliothèque).
+    if (conteneur && s_page != Page::PLAYLISTS) ajouter(Geste::OUVRIR, RoueIcone::LISTE, tr("Ouvrir"));
     RoueTete tete;
     tete.icone = glyphe_element(e.genre);
     tete.valeur = "";
@@ -839,8 +977,8 @@ void retour_arreter() {
     s_retour = nullptr;
 }
 
-// Après un élément joué ou une source choisie : l'élément en accent a été vu, la page
-// suivante (Lecture, ou Pièces pour une source) ; après une playlist (ADR-0068) : Lecture.
+// Après un élément joué, une playlist lancée (ADR-0068) ou une source choisie : l'élément en
+// accent a été vu, la page suivante (Lecture, ou Pièces pour une source).
 void retour_fin(lv_timer_t*) {
     s_retour = nullptr;  // un seul tour : LVGL supprime le timer après ce rappel
     s_lance = -1;
@@ -862,8 +1000,9 @@ void retour_programmer(Page depuis, Page vers) {
 
 void lancer_retour(int k, Page vers) {
     s_lance = k;
+    if (s_page == Page::PLAYLISTS) playlist_lancee(k);
     peindre_biblio();
-    retour_programmer(Page::BIBLIOTHEQUE, vers);
+    retour_programmer(s_page, vers);
 }
 
 void jouer(int k, char mode) {
@@ -909,7 +1048,7 @@ void afficher(Page p) {
         s_sources = false;
         if (s_attendu == MusiqueVue::SOURCES) attente_oublier();
         s_liste_recue = false;  // la grille montrait les sources
-        s_biblio_a_jour = false;
+        s_grille_a_jour = false;
     }
     s_page = p;
     retour_arreter();
@@ -917,14 +1056,24 @@ void afficher(Page p) {
     roue_actions_fermer();
     lecteur_popup_repeindre();  // l'en-tête (onglets) et le corps de la page Lecture
     peindre_pieces();
-    if (p == Page::BIBLIOTHEQUE && !s_biblio_a_jour && !s_sources && s_p.ma) demander();
+    if (page_grille(p)) {
+        // La grille tenait l'autre page : sa liste n'est plus la bonne, sa demande non plus.
+        if (s_grille != p) {
+            s_grille = p;
+            s_grille_a_jour = false;
+            s_liste_recue = false;
+            attente_oublier();
+        }
+        if (p == Page::PLAYLISTS && (!s_grille_a_jour || s_grille_ma != s_p.ma)) playlists_charger();
+        else if (p == Page::BIBLIOTHEQUE && !s_grille_a_jour && !s_sources && s_p.ma) demander();
+    }
     peindre_biblio();
     telecharger_suivante();
     ui_mark_activity();
 }
 
-// Une page qui n'a plus rien à montrer (Playlists sans playlist, Pièces sous deux pièces,
-// Bibliothèque sans MA) : retour à la page Lecture.
+// Une page qui n'a plus rien à montrer (Playlists sans playlist ni MA, Pièces sous deux
+// pièces, Bibliothèque sans MA) : retour à la page Lecture.
 void pages_revoir() {
     if (page_disponible(s_page)) return;
     if (popup_ouvert()) afficher(Page::LECTURE);
@@ -940,7 +1089,8 @@ void musique_ouvrir() {
     retour_arreter();
     s_lance = -1;
     s_page = Page::LECTURE;
-    s_biblio_a_jour = false;
+    s_grille_a_jour = false;
+    s_pl_page = 0;
     if (s_sources) {
         s_sources = false;
         s_liste_recue = false;
@@ -958,11 +1108,16 @@ void musique_ouvrir() {
 
 bool musique_page_lecture() { return s_page == Page::LECTURE; }
 
-bool musique_page_playlists() { return s_page == Page::PLAYLISTS; }
-
-void musique_pages_revoir() { pages_revoir(); }
-
-void musique_retour_lecture() { retour_programmer(Page::PLAYLISTS, Page::LECTURE); }
+void musique_playlists_revoir() {
+    pages_revoir();
+    // Montrée sans Music Assistant : les noms du blueprint ont changé, la grille les reprend.
+    if (s_grille != Page::PLAYLISTS || s_grille_ma) return;
+    s_grille_a_jour = false;
+    if (s_page == Page::PLAYLISTS && popup_ouvert()) {
+        playlists_charger();
+        telecharger_suivante();
+    }
+}
 
 int32_t musique_onglets_peindre() {
     const MusiqueUI& u = ui();
@@ -1066,6 +1221,11 @@ void musique_pieces_recu(const std::string& pieces, const std::string& contexte)
     pages_revoir();
     if (s_roue_piece >= s_p.n) s_roue_piece = -1;
     if (!lie()) return;
+    // Music Assistant arrivé ou parti, page Playlists montrée : sa grille change de source.
+    if (s_page == Page::PLAYLISTS && s_grille == Page::PLAYLISTS && s_grille_ma != s_p.ma && popup_ouvert()) {
+        playlists_charger();
+        telecharger_suivante();
+    }
     peindre_pieces();
     repeindre_lecteur();
     // La roue d'une carte après les cartes (son ancre, mesurée à l'ouverture, est à sa
@@ -1103,7 +1263,8 @@ void musique_liste_recue(const std::string& contexte, const std::string& element
             payload_refuse(kTag, "pochette illisible", l.image.n);
     }
     // La page lue devient celle du niveau (sa flèche suivante part de là).
-    if (s_sources) s_src_page = lu.page;
+    if (s_grille == Page::PLAYLISTS) s_pl_page = lu.page;
+    else if (s_sources) s_src_page = lu.page;
     else s_pile[s_pile_n - 1].page = lu.page;
     s_liste_recue = true;
     s_lance = -1;
@@ -1154,6 +1315,11 @@ void musique_tic() {
         s_attente = false;
         s_sans_reponse = true;
         ESP_LOGW(kTag, "pas de réponse en %u s", static_cast<unsigned>(kAttenteMs / 1000));
+        peindre_biblio();
+    }
+    // La playlist lancée quitte l'accent après kPlaylistEnCoursMs.
+    if (s_pl_touchee[0] != '\0' && esphome::millis() - s_pl_touchee_ms >= kPlaylistEnCoursMs) {
+        s_pl_touchee[0] = '\0';
         peindre_biblio();
     }
 }
@@ -1264,6 +1430,11 @@ void musique_bouton(int bouton) {
         case MUSIQUE_BTN_SUIVANTS: {
             const int pas = bouton == MUSIQUE_BTN_SUIVANTS ? 1 : -1;
             if (pas > 0 && !s_l.suite) return;
+            if (s_page == Page::PLAYLISTS) {
+                s_pl_page = std::max(0, s_l.page + pas);
+                playlists_charger();
+                break;
+            }
             if (s_sources) {
                 s_src_page = std::max(0, s_l.page + pas);
             } else {
@@ -1292,6 +1463,18 @@ void musique_element_appui(int i) {
     if (ui_appui_glisse() || i < 0 || i >= s_l.n || s_attente) return;
     const Element& e = s_l.e[i];
     if (e.ref[0] == '\0') return;
+    // Page Playlists (ADR-0068) : jouer, jamais ouvrir. Avec Music Assistant comme dans la
+    // Bibliothèque (sur le lecteur montré) ; sans, le rang du blueprint (il garde le lien).
+    if (s_page == Page::PLAYLISTS) {
+        if (s_grille_ma) {
+            jouer(i, 'm');
+        } else {
+            lecteur_playlist(i);
+            lancer_retour(i, Page::LECTURE);
+        }
+        ui_mark_activity();
+        return;
+    }
     if (e.genre == MusiqueElementGenre::SOURCE) {
         envoyer("source", s_src_piece, e.ref);
         lancer_retour(i, Page::PIECES);
@@ -1308,6 +1491,7 @@ void musique_element_appui(int i) {
 void musique_element_long(int i) {
     if (ui_appui_glisse() || i < 0 || i >= s_l.n || s_attente) return;
     if (s_l.e[i].genre == MusiqueElementGenre::SOURCE) return;  // une source : son toucher suffit
+    if (s_page == Page::PLAYLISTS && !s_grille_ma) return;      // le blueprint ne sait que lancer
     s_roue_element = i;
     peindre_roue_element(false);
 }

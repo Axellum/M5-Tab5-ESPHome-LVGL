@@ -2,10 +2,11 @@
  * [AI-CONTEXT]
  * @file tab5_musique.h
  * @role Musique de toute la maison (tab5_musique.cpp, ADR-0067) : les quatre pages du popup
- *       Musique (ADR-0050) sur une seule brique — Lecture, Playlists (ADR-0068, grille peinte
- *       par tab5_lecteur.cpp), Pièces et Bibliothèque, ces deux-là poussées par Home
- *       Assistant (tab5_maj_musique_pieces, tab5_maj_musique_liste) d'après Music Assistant
- *       ou la liste « Tab5 · lecteurs de musique ».
+ *       Musique (ADR-0050) sur une seule brique — Lecture, Playlists (ADR-0068 : la grille de
+ *       pochettes de la Bibliothèque depuis le 10/11/2026, les favorites de Music Assistant
+ *       ou les noms du blueprint), Pièces et Bibliothèque, poussées par Home Assistant
+ *       (tab5_maj_musique_pieces, tab5_maj_musique_liste) d'après Music Assistant ou la
+ *       liste « Tab5 · lecteurs de musique ».
  * @architecture_constraint tab5_custom.h l'inclut : les lambdas YAML et les unités
  *       `tab5_*.cpp` le voient. Une fonction déclarée ici a un appelant hors de son fichier
  *       (règle 12 de tools/check_tab5_code_rules.py). Ce que le lecteur (tab5_lecteur.cpp)

@@ -44,9 +44,9 @@ def test_nombre_et_cle_egaux_au_firmware():
     assert "ns.l | count < 8" in tb._blueprint()["variables"]["playlists"]
     assert 'constexpr char kClePlaylists[] = "playlists";' in lire(source("tab5_zones.cpp"))
     assert tb._blueprint()["variables"]["playlists_pousse"].startswith("playlists|")
-    popup = lire(*POPUP)
-    assert [int(n) for n in re.findall(r'file: lecteur_playlist\.yaml, vars: \{ n: "(\d)" \}', popup)] == list(range(8))
-    assert "constexpr int kLecteurPlaylists = 8;" in lire(source("tab5_lecteur.h"))
+    # Toutes dans la grille de la page Playlists (10/11/2026) : dix cases, huit playlists.
+    assert "s_l.n = std::min(lecteur_playlists_nb(), kMusiqueElementsMax);" in lire(source("tab5_musique.cpp"))
+    assert int(re.search(r"constexpr int kMusiqueElementsMax = (\d+);", h).group(1)) >= 8
 
 
 def test_l_ecran_envoie_le_rang_jamais_un_lien():
@@ -59,19 +59,24 @@ def test_l_ecran_envoie_le_rang_jamais_un_lien():
 
 def test_pages_par_la_brique_commune():
     """Une seule brique de pages pour le popup Musique (ADR-0067) : Lecture, Playlists,
-    Pièces, Bibliothèque. La page Playlists existe dès une playlist ; le lecteur n'a ni
-    glissement ni noms de pages à lui, il peint la grille et demande le retour à Lecture."""
+    Pièces, Bibliothèque. La page Playlists existe avec Music Assistant ou dès une playlist
+    du blueprint ; depuis le 10/11/2026 c'est la grille de pochettes de la Bibliothèque
+    (tab5_musique.cpp) : le lecteur n'a plus de grille, il garde les noms et envoie le rang ;
+    la case touchée reste en accent 30 s, la page Lecture revient 600 ms après."""
     musique = lire(source("tab5_musique.cpp"))
-    assert "case Page::PLAYLISTS: return lecteur_playlists_nb() > 0;" in musique
+    assert "case Page::PLAYLISTS: return s_p.ma || lecteur_playlists_nb() > 0;" in musique
     assert musique.count("pages_brancher(&s_pages);") == 1
     assert "constexpr uint32_t kRetourMs = 600;" in musique
-    assert "void musique_retour_lecture() { retour_programmer(Page::PLAYLISTS, Page::LECTURE); }" in musique
+    assert "constexpr uint32_t kPlaylistEnCoursMs = 30u * 1000u;" in musique
+    appui = musique[musique.index("void musique_element_appui(int i)"):]
+    appui = appui[:appui.index("\n}\n")]
+    assert "lecteur_playlist(i);" in appui and "lancer_retour(i, Page::LECTURE);" in appui
+    assert "jouer(i, 'm');" in appui
+    assert "retour_programmer(s_page, vers);" in musique
     cpp = lire(source("tab5_lecteur.cpp"))
     assert "pages_brancher(" not in cpp and "PagesPopup" not in cpp
     assert "LV_EVENT_GESTURE" not in cpp and "lv_anim" not in cpp
-    assert "constexpr uint32_t kPlaylistEnCoursMs = 30u * 1000u;" in cpp
-    playlist = cpp[cpp.index("void lecteur_playlist(int i)"):]
-    assert "musique_retour_lecture();" in playlist[:playlist.index("\n}\n")]
+    assert "peindre_playlists" not in cpp and "lecteur_playlist.yaml" not in lire(*POPUP)
     assert "lecteur_onglet" not in lire(*POPUP)
     calques = lire("Tab5", "ui_components", "musique_calques.yaml")
     for i in range(4):

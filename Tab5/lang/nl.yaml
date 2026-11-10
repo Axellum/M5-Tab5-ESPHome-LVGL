@@ -1415,6 +1415,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "lecteur|Lecture": "Nu speelt"
 "Playlists": "Afspeellijsten"
 "Playlist {n}": "Afspeellijst {n}"
+# Page Playlists en grille de pochettes (ADR-0068, 10/11/2026).
+"Playlist": "Afspeellijst"
+"Aucune playlist favorite dans Music Assistant": "Geen favoriete afspeellijst in Music Assistant"
+"Toucher : lire · Appui long : plus de choix": "Tik: afspelen · Lang drukken: meer"
+"Toucher : lancer la playlist": "Tik: afspeellijst starten"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Camera's"
 "Aucune caméra choisie": "Geen camera gekozen"

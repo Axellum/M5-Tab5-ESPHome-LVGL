@@ -657,13 +657,15 @@ enum class MusiqueVue : uint8_t {
     DETAIL,     // det : le contenu d'un artiste, d'un album, d'une playlist, d'un podcast
     SOURCES,    // src : les sources d'une pièce
     RECHERCHE,  // rech (lot suivant)
+    PLAYLISTS_FAVORITES,  // plf : les playlists favorites de Music Assistant, page Playlists
+                          // (ADR-0068, 10/11/2026 ; demandée par « parcourir » pl|f|page)
     ERREUR,     // err : titre = la phrase à montrer
     NB
 };
 // Codes de l'événement (« parcourir » : vue|page) et de la poussée, lus par HA : jamais
 // traduits.
 constexpr const char* kMusiqueVueCodes[static_cast<int>(MusiqueVue::NB)] = {
-    "", "fav", "pl", "alb", "art", "rad", "pod", "rec", "det", "src", "rech", "err"};
+    "", "fav", "pl", "alb", "art", "rad", "pod", "rec", "det", "src", "rech", "plf", "err"};
 MusiqueVue musique_vue_lire(const Champ& c);
 const char* musique_vue_code(MusiqueVue v);
 // Les sept catégories de la bibliothèque (FAVORIS à RECENTS) : celles qu'on parcourt.

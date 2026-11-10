@@ -8,9 +8,13 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1363;
+static const uint16_t kI18nKeyCount = 1367;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1596,6 +1600,7 @@ static const char* const kI18nKeys[] = {
     "Aucune caméra choisie",
     "Aucune partie en cours",
     "Aucune partie sauvegardée",
+    "Aucune playlist favorite dans Music Assistant",
     "Aucune production ni prévision",
     "Aucune question jouée",
     "Aucune question jouée pour le moment",
@@ -2201,6 +2206,7 @@ static const char* const kI18nKeys[] = {
     "Pièces %d à %d",
     "Plantes",
     "Platine et or",
+    "Playlist",
     "Playlist {n}",
     "Playlists",
     "Pluie",
@@ -2473,6 +2479,8 @@ static const char* const kI18nKeys[] = {
     "Top 10 local - conservé en NVS, survit aux reboots et aux OTA.",
     "Total : %s",
     "Total : %s, dont %d %% par le soleil",
+    "Toucher : lancer la playlist",
+    "Toucher : lire · Appui long : plus de choix",
     "Toucher : sa lecture · Appui long : plus de choix",
     "Toucher le bandeau du haut pendant la partie ouvre le menu de pause.",
     "Toucher pour changer",
@@ -2963,6 +2971,7 @@ static const char* const kI18n_en[] = {
     "No camera chosen",  // "Aucune caméra choisie"
     "No game in progress",  // "Aucune partie en cours"
     "No saved game",  // "Aucune partie sauvegardée"
+    "No favorite playlist in Music Assistant",  // "Aucune playlist favorite dans Music Assistant"
     "No production or forecast",  // "Aucune production ni prévision"
     "No questions played",  // "Aucune question jouée"
     "No questions played yet",  // "Aucune question jouée pour le moment"
@@ -3568,6 +3577,7 @@ static const char* const kI18n_en[] = {
     "Rooms %d to %d",  // "Pièces %d à %d"
     "Plants",  // "Plantes"
     "Platinum and gold",  // "Platine et or"
+    "Playlist",  // "Playlist"
     "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Rain",  // "Pluie"
@@ -3840,6 +3850,8 @@ static const char* const kI18n_en[] = {
     "Local top 10 - kept in NVS, survives reboots and OTA updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
     "Total: %s",  // "Total : %s"
     "Total: %s, of which %d %% solar",  // "Total : %s, dont %d %% par le soleil"
+    "Tap: start the playlist",  // "Toucher : lancer la playlist"
+    "Tap: play · Long press: more",  // "Toucher : lire · Appui long : plus de choix"
     "Tap: see what's playing · Long press: more",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tap the top bar during a game to open the pause menu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tap to change",  // "Toucher pour changer"
@@ -4330,6 +4342,7 @@ static const char* const kI18n_de[] = {
     "Keine Kamera gewählt",  // "Aucune caméra choisie"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
+    "Keine Lieblings-Playlist in Music Assistant",  // "Aucune playlist favorite dans Music Assistant"
     "Keine Produktion, keine Prognose",  // "Aucune production ni prévision"
     "Keine Fragen gespielt",  // "Aucune question jouée"
     "Noch keine Fragen gespielt",  // "Aucune question jouée pour le moment"
@@ -4935,6 +4948,7 @@ static const char* const kI18n_de[] = {
     "Räume %d–%d",  // "Pièces %d à %d"
     "Pflanzen",  // "Plantes"
     "Platin und Gold",  // "Platine et or"
+    "Playlist",  // "Playlist"
     "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Regen",  // "Pluie"
@@ -5207,6 +5221,8 @@ static const char* const kI18n_de[] = {
     "Lokale Top 10 - in NVS gespeichert, übersteht Neustarts und OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
     "Gesamt: %s",  // "Total : %s"
     "Gesamt: %s, davon %d %% Sonne",  // "Total : %s, dont %d %% par le soleil"
+    "Tippen: Playlist starten",  // "Toucher : lancer la playlist"
+    "Tippen: abspielen · Lang drücken: mehr",  // "Toucher : lire · Appui long : plus de choix"
     "Tippen: Wiedergabe · Lang drücken: mehr",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Obere Leiste im Spiel antippen öffnet das Pausenmenü.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Antippen zum Ändern",  // "Toucher pour changer"
@@ -5697,6 +5713,7 @@ static const char* const kI18n_nl[] = {
     "Geen camera gekozen",  // "Aucune caméra choisie"
     "Geen spel bezig",  // "Aucune partie en cours"
     "Geen opgeslagen spel",  // "Aucune partie sauvegardée"
+    "Geen favoriete afspeellijst in Music Assistant",  // "Aucune playlist favorite dans Music Assistant"
     "Geen productie of voorspelling",  // "Aucune production ni prévision"
     "Geen vragen gespeeld",  // "Aucune question jouée"
     "Nog geen vragen gespeeld",  // "Aucune question jouée pour le moment"
@@ -6302,6 +6319,7 @@ static const char* const kI18n_nl[] = {
     "Kamers %d–%d",  // "Pièces %d à %d"
     "Planten",  // "Plantes"
     "Platina en goud",  // "Platine et or"
+    "Afspeellijst",  // "Playlist"
     "Afspeellijst {n}",  // "Playlist {n}"
     "Afspeellijsten",  // "Playlists"
     "Regen",  // "Pluie"
@@ -6574,6 +6592,8 @@ static const char* const kI18n_nl[] = {
     "Lokale top 10 - bewaard in NVS, overleeft herstarts en OTA-updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
     "Totaal: %s",  // "Total : %s"
     "Totaal: %s, waarvan %d %% zon",  // "Total : %s, dont %d %% par le soleil"
+    "Tik: afspeellijst starten",  // "Toucher : lancer la playlist"
+    "Tik: afspelen · Lang drukken: meer",  // "Toucher : lire · Appui long : plus de choix"
     "Tik: weergave bekijken · Lang drukken: meer",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tik tijdens de partij op de bovenbalk voor het pauzemenu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tik om te wijzigen",  // "Toucher pour changer"
@@ -7064,6 +7084,7 @@ static const char* const kI18n_es[] = {
     "Ninguna cámara elegida",  // "Aucune caméra choisie"
     "Ninguna partida en curso",  // "Aucune partie en cours"
     "Ninguna partida guardada",  // "Aucune partie sauvegardée"
+    "Ninguna playlist favorita en Music Assistant",  // "Aucune playlist favorite dans Music Assistant"
     "Sin producción ni previsión",  // "Aucune production ni prévision"
     "Sin preguntas jugadas",  // "Aucune question jouée"
     "Aún no hay preguntas jugadas",  // "Aucune question jouée pour le moment"
@@ -7669,6 +7690,7 @@ static const char* const kI18n_es[] = {
     "Estancias %d–%d",  // "Pièces %d à %d"
     "Plantas",  // "Plantes"
     "Platino y oro",  // "Platine et or"
+    "Playlist",  // "Playlist"
     "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Lluvia",  // "Pluie"
@@ -7941,6 +7963,8 @@ static const char* const kI18n_es[] = {
     "Top 10 local - guardado en NVS, sobrevive a reinicios y OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
     "Total: %s",  // "Total : %s"
     "Total: %s, de ello %d %% del sol",  // "Total : %s, dont %d %% par le soleil"
+    "Tocar: iniciar la playlist",  // "Toucher : lancer la playlist"
+    "Tocar: reproducir · Pulsación larga: más",  // "Toucher : lire · Appui long : plus de choix"
     "Tocar: ver reproducción · Pulsación larga: más",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tocar la barra superior durante la partida abre el menú de pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Toca para cambiar",  // "Toucher pour changer"
@@ -8431,6 +8455,7 @@ static const char* const kI18n_it[] = {
     "Nessuna telecamera scelta",  // "Aucune caméra choisie"
     "Nessuna partita in corso",  // "Aucune partie en cours"
     "Nessuna partita salvata",  // "Aucune partie sauvegardée"
+    "Nessuna playlist preferita in Music Assistant",  // "Aucune playlist favorite dans Music Assistant"
     "Nessuna produzione né previsione",  // "Aucune production ni prévision"
     "Nessuna domanda giocata",  // "Aucune question jouée"
     "Ancora nessuna domanda giocata",  // "Aucune question jouée pour le moment"
@@ -9036,6 +9061,7 @@ static const char* const kI18n_it[] = {
     "Stanze %d–%d",  // "Pièces %d à %d"
     "Piante",  // "Plantes"
     "Platino e oro",  // "Platine et or"
+    "Playlist",  // "Playlist"
     "Playlist {n}",  // "Playlist {n}"
     "Playlist",  // "Playlists"
     "Pioggia",  // "Pluie"
@@ -9308,6 +9334,8 @@ static const char* const kI18n_it[] = {
     "Top 10 locale - salvata in NVS, resiste a riavvii e OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
     "Totale: %s",  // "Total : %s"
     "Totale: %s, di cui %d %% dal sole",  // "Total : %s, dont %d %% par le soleil"
+    "Tocca: avvia la playlist",  // "Toucher : lancer la playlist"
+    "Tocca: riproduci · Tieni premuto: altro",  // "Toucher : lire · Appui long : plus de choix"
     "Tocca: riproduzione · Tieni premuto: altro",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tocca la barra in alto durante la partita per il menu di pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tocca per cambiare",  // "Toucher pour changer"
@@ -9798,6 +9826,7 @@ static const char* const kI18n_tr[] = {
     "Kamera seçilmedi",  // "Aucune caméra choisie"
     "Devam eden oyun yok",  // "Aucune partie en cours"
     "Kayıtlı oyun yok",  // "Aucune partie sauvegardée"
+    "Music Assistant'ta favori çalma listesi yok",  // "Aucune playlist favorite dans Music Assistant"
     "Üretim ve tahmin yok",  // "Aucune production ni prévision"
     "Oynanan soru yok",  // "Aucune question jouée"
     "Henüz oynanan soru yok",  // "Aucune question jouée pour le moment"
@@ -10403,6 +10432,7 @@ static const char* const kI18n_tr[] = {
     "Odalar %d–%d",  // "Pièces %d à %d"
     "Bitkiler",  // "Plantes"
     "Platin ve altın",  // "Platine et or"
+    "Çalma listesi",  // "Playlist"
     "Çalma listesi {n}",  // "Playlist {n}"
     "Çalma listeleri",  // "Playlists"
     "Yağmur",  // "Pluie"
@@ -10675,6 +10705,8 @@ static const char* const kI18n_tr[] = {
     "Yerel ilk 10 - NVS'de saklanır, yeniden başlatma ve OTA'da korunur.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
     "Toplam: %s",  // "Total : %s"
     "Toplam: %s, bunun %d %% güneşten",  // "Total : %s, dont %d %% par le soleil"
+    "Dokun: çalma listesini başlat",  // "Toucher : lancer la playlist"
+    "Dokun: çal · Uzun bas: daha fazla",  // "Toucher : lire · Appui long : plus de choix"
     "Dokun: çalanı gör · Uzun bas: daha fazla",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Oyun sırasında üst banda dokunmak duraklatma menüsünü açar.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Değiştirmek için dokun",  // "Toucher pour changer"
