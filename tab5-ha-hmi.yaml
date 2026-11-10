@@ -127,6 +127,7 @@ esphome:
     # Images d'un flux MJPEG de HA (popup Caméras en vidéo, ADR-0073) : en-tête seul et pur,
     # testé sur PC par tools/test_tab5_socle.cpp.
     - Tab5/socle/tab5_flux_mjpeg.h
+    - Tab5/socle/tab5_creneau.h
     # Géométrie partagée des popups construits en C++ (écran, carte modale, pièces) :
     # en-tête seul, inclus par les .cpp qui s'en servent (lot L5).
     - Tab5/socle/tab5_geometrie.h

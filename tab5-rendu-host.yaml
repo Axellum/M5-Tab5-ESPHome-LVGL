@@ -68,6 +68,7 @@ esphome:
     - Tab5/socle/tab5_parse.h
     - Tab5/socle/tab5_parse.cpp
     - Tab5/socle/tab5_flux_mjpeg.h
+    - Tab5/socle/tab5_creneau.h
     - Tab5/socle/tab5_geometrie.h
     - Tab5/socle/tab5_decoupe.h
     - Tab5/socle/tab5_disposition.h

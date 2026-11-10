@@ -22,7 +22,10 @@
  *     météo, rectangles des cases ;
  *   - l'extraction des images d'un flux MJPEG en morceaux (Tab5/socle/tab5_flux_mjpeg.h,
  *     ADR-0073, 09/11/2026) : formats de HA et de ffmpeg, avec et sans Content-Length, lecture
- *     par morceaux de toute taille, flux abîmés.
+ *     par morceaux de toute taille, flux abîmés ;
+ *   - le créneau conseillé pour charger les voitures au soleil et les plages d'heures de charge
+ *     (Tab5/socle/tab5_creneau.h, ADR-0082, 10/11/2026) : le pic du jour, la part retenue, l'heure
+ *     courante, un nuage au milieu, une prévision absente ou trop faible, l'horloge non réglée.
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
@@ -35,6 +38,7 @@
 #include "tab5_batterie.h"
 #include "tab5_champs.h"
 #include "tab5_core.h"
+#include "tab5_creneau.h"
 #include "tab5_decoupe.h"
 #include "tab5_demarrage.h"
 #include "tab5_disposition.h"
@@ -994,6 +998,146 @@ static void test_flux_mjpeg() {
     }
 }
 
+// ── Le créneau conseillé pour charger au soleil (tab5_creneau.h, ADR-0082) ───
+// La courbe de démonstration du contrat (tab5_maj_energie_soleil) : pic 2,6 kWh à 12 h, donc un seuil à
+// 1,82 kWh (70 %) : 11 h 2,2 · 12 h 2,6 · 13 h 2,5 · 14 h 2,0 y sont, 10 h 1,4 et 15 h 1,3 n'y sont pas.
+static const float kPrevuDemo[24] = {0, 0, 0, 0, 0, 0, 0, 0, 0.1f, 0.6f, 1.4f, 2.2f, 2.6f, 2.5f,
+                                     2.0f, 1.3f, 0.8f, 0.3f, 0.05f, 0, 0, 0, 0, 0};
+
+static void test_creneau() {
+    CreneauSolaire c = creneau_solaire(kPrevuDemo, 24, 10 * 60 + 45);
+    expect(c.valide() && c.debut == 11 && c.fin == 15 && !c.en_cours,
+           "créneau : 10 h 45, la courbe de démonstration donne 11 h – 15 h, pas encore commencé");
+    c = creneau_solaire(kPrevuDemo, 24, 12 * 60 + 10);
+    expect(c.valide() && c.debut == 12 && c.fin == 15 && c.en_cours,
+           "créneau : 12 h 10, l'heure courante en fait partie (moins de la moitié passée) : 12 h – 15 h en cours");
+    c = creneau_solaire(kPrevuDemo, 24, 12 * 60 + 40);
+    expect(c.valide() && c.debut == 13 && c.fin == 15 && !c.en_cours,
+           "créneau : 12 h 40, plus de la moitié de l'heure est passée : 13 h – 15 h, pas en cours");
+    c = creneau_solaire(kPrevuDemo, 24, 14 * 60 + 29);
+    expect(c.valide() && c.debut == 14 && c.fin == 15 && c.en_cours,
+           "créneau : 14 h 29 : la dernière heure du créneau compte encore (14 h – 15 h)");
+    c = creneau_solaire(kPrevuDemo, 24, 14 * 60 + 30);
+    expect(!c.valide(), "créneau : 14 h 30, il ne reste que 15 h (1,3 < 1,82) : aucun créneau");
+    c = creneau_solaire(kPrevuDemo, 24, 20 * 60);
+    expect(!c.valide() && c.debut == -1 && c.fin == -1 && !c.en_cours,
+           "créneau : le soir, après le pic, aucun créneau (le pic reste celui du jour entier)");
+    c = creneau_solaire(kPrevuDemo, 24, 0);
+    expect(c.valide() && c.debut == 11 && c.fin == 15, "créneau : à minuit, le meilleur du jour : 11 h – 15 h");
+    c = creneau_solaire(kPrevuDemo, 24, -1);
+    expect(c.valide() && c.debut == 11 && c.fin == 15 && !c.en_cours,
+           "créneau : horloge non réglée (maintenant < 0) : tout le jour compte, jamais « en cours »");
+    c = creneau_solaire(kPrevuDemo, 24, 24 * 60);
+    expect(!c.valide(), "créneau : une heure absurde (24 h 00 et plus) : aucun créneau plutôt qu'un faux");
+    c = creneau_solaire(kPrevuDemo, 24, 99999);
+    expect(!c.valide(), "créneau : une heure absurde (99 999 min) : aucun créneau");
+
+    // Pas de prévision, ou trop faible : aucun conseil.
+    expect(!creneau_solaire(nullptr, 24, 0).valide(), "créneau : pas de tableau : aucun");
+    expect(!creneau_solaire(kPrevuDemo, 0, 0).valide(), "créneau : zéro valeur : aucun");
+    float nan24[24];
+    for (float& v : nan24) v = NAN;
+    expect(!creneau_solaire(nan24, 24, 0).valide(), "créneau : vingt-quatre heures sans valeur : aucun");
+    float faible[24] = {};
+    faible[12] = 0.4f;
+    faible[13] = 0.3f;
+    expect(!creneau_solaire(faible, 24, 0).valide(), "créneau : un pic de 0,4 kWh (sous 0,5) ne vaut pas un conseil");
+    faible[12] = 0.5f;
+    expect(creneau_solaire(faible, 24, 0).valide(), "créneau : un pic de 0,5 kWh suffit (le minimum est inclus)");
+    float nuit[24] = {};
+    expect(!creneau_solaire(nuit, 24, 0).valide(), "créneau : une prévision de zéro partout : aucun");
+
+    // Un nuage au milieu : deux suites, la plus forte l'emporte ; à somme égale, la plus tôt.
+    float nuage[24] = {};
+    nuage[9] = 8;
+    nuage[10] = 9;
+    nuage[11] = 10;   // 27
+    nuage[12] = 1;    // le nuage : sous 7 (70 % de 10)
+    nuage[13] = 8;
+    nuage[14] = 9;
+    nuage[15] = 9;    // 26
+    CreneauSolaire n = creneau_solaire(nuage, 24, 0);
+    expect(n.valide() && n.debut == 9 && n.fin == 12, "créneau : deux suites (27 contre 26), la plus forte : 9 h – 12 h");
+    nuage[15] = 10;   // 27 aussi : à égalité la plus tôt
+    n = creneau_solaire(nuage, 24, 0);
+    expect(n.valide() && n.debut == 9 && n.fin == 12, "créneau : égalité (27 et 27) : la plus tôt reste");
+    nuage[15] = 12;   // le pic passe à 12, seuil 8,4 : 8 n'y est plus ; 9 + 12 = 21 contre 9 + 10 = 19
+    n = creneau_solaire(nuage, 24, 0);
+    expect(n.valide() && n.debut == 14 && n.fin == 16,
+           "créneau : le pic monte à 12 (seuil 8,4) : 8 n'y est plus, la suite de l'après-midi devient 14 h – 16 h");
+    nuage[15] = 11;   // 28, pic 11, seuil 7,7 : 8 y est, 13 h – 16 h (8 + 9 + 11) contre 9 h – 12 h (8 + 9 + 10 = 27)
+    n = creneau_solaire(nuage, 24, 0);
+    expect(n.valide() && n.debut == 13 && n.fin == 16, "créneau : la seconde suite devient la plus forte : 13 h – 16 h");
+    // La suite du matin est passée : seule reste celle de l'après-midi.
+    n = creneau_solaire(nuage, 24, 12 * 60 + 40);
+    expect(n.valide() && n.debut == 13 && n.fin == 16 && !n.en_cours, "créneau : à 12 h 40, la suite de l'après-midi");
+    // Une heure sans valeur coupe une suite : elle n'est jamais dans un créneau.
+    float trou[24] = {};
+    trou[10] = 10;
+    trou[11] = NAN;
+    trou[12] = 10;
+    trou[13] = 10;
+    n = creneau_solaire(trou, 24, 0);
+    expect(n.valide() && n.debut == 12 && n.fin == 14,
+           "créneau : une heure sans valeur coupe la suite (10 h seule vaut 10, 12 h – 14 h vaut 20)");
+    // Au-delà de vingt-quatre valeurs : ignoré.
+    float trente[30] = {};
+    trente[12] = 5;
+    trente[25] = 50;   // hors du jour : ni pic ni créneau
+    n = creneau_solaire(trente, 30, 0);
+    expect(n.valide() && n.debut == 12 && n.fin == 13, "créneau : au-delà de 24 valeurs, le reste est ignoré");
+    // Le seuil de 70 % : 8 sur un pic de 10 y est, 6 n'y est pas.
+    float seuil[24] = {};
+    seuil[8] = 6;
+    seuil[9] = 8;
+    seuil[10] = 10;
+    seuil[11] = 8;
+    seuil[12] = 6;
+    n = creneau_solaire(seuil, 24, 0);
+    expect(n.valide() && n.debut == 9 && n.fin == 12,
+           "créneau : 70 % du pic (7) : 8 et 10 y sont, 6 n'y est pas (9 h – 12 h)");
+}
+
+// ── Les plages d'heures de charge d'une voiture (tab5_creneau.h) ─────────────
+static void test_plages_charge() {
+    Plage p[kPlagesMax];
+    float v[24];
+    for (float& x : v) x = NAN;
+    expect(plages_charge(v, 24, p, kPlagesMax) == 0, "plages : aucune valeur : aucune plage");
+    for (float& x : v) x = 0.0f;
+    expect(plages_charge(v, 24, p, kPlagesMax) == 0, "plages : zéro partout : aucune plage");
+    v[1] = 3.1f;
+    v[2] = 3.2f;
+    v[3] = 0.4f;    // une plage de 1 h à 4 h
+    v[9] = 1.9f;
+    v[10] = 2.6f;   // une seconde, 9 h à 11 h
+    v[11] = 0.09f;  // sous le seuil de 0,1 : coupe
+    v[12] = 0.1f;   // le seuil est inclus
+    v[13] = NAN;    // l'heure à venir : coupe
+    int n = plages_charge(v, 24, p, kPlagesMax);
+    expect(n == 3 && p[0].debut == 1 && p[0].fin == 4 && p[1].debut == 9 && p[1].fin == 11 && p[2].debut == 12 &&
+               p[2].fin == 13,
+           "plages : 1 h – 4 h, 9 h – 11 h, puis 12 h – 13 h (seuil inclus), dans l'ordre du temps");
+    expect(plages_charge(v, 24, p, 2) == 2 && p[1].fin == 11, "plages : `max` borne le nombre écrit");
+    expect(plages_charge(v, 24, p, 0) == 0 && plages_charge(v, 24, nullptr, 3) == 0 &&
+               plages_charge(nullptr, 24, p, 3) == 0,
+           "plages : max nul, sortie ou tableau absents : 0, rien d'écrit");
+    // Toute la journée : une seule plage, de 0 h à 24 h.
+    for (float& x : v) x = 1.0f;
+    n = plages_charge(v, 24, p, kPlagesMax);
+    expect(n == 1 && p[0].debut == 0 && p[0].fin == 24, "plages : une charge tout le jour : 0 h – 24 h");
+    // Une heure sur deux : douze plages, le plafond de kPlagesMax.
+    for (int h = 0; h < 24; h++) v[h] = (h % 2 == 0) ? 1.0f : 0.0f;
+    n = plages_charge(v, 24, p, kPlagesMax);
+    expect(n == kPlagesMax && p[kPlagesMax - 1].debut == 22 && p[kPlagesMax - 1].fin == 23,
+           "plages : une heure sur deux : douze plages, la dernière 22 h – 23 h");
+    // Plus de 24 valeurs : ignoré.
+    float t[30];
+    for (float& x : t) x = 1.0f;
+    n = plages_charge(t, 30, p, kPlagesMax);
+    expect(n == 1 && p[0].fin == 24, "plages : au-delà de 24 valeurs, le reste est ignoré");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -1017,6 +1161,8 @@ int main() {
     test_decoupe_carte();
     test_disposition();
     test_flux_mjpeg();
+    test_creneau();
+    test_plages_charge();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;
