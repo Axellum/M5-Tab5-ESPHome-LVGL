@@ -1612,3 +1612,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "menzil"
 "Aucune voiture reçue": "Hiç araç alınmadı"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Bunları blueprint'te “Énergie : voitures · Energy: cars” bölümünden seçin."
+"Aperçu": "Özet"

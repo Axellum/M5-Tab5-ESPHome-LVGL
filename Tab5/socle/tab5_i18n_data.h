@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1328;
+static const uint16_t kI18nKeyCount = 1329;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1510,6 +1511,7 @@ static const char* const kI18nKeys[] = {
     "Annuler",
     "Annuler le dernier coup",
     "Août",
+    "Aperçu",
     "Aperçu du territoire : ACTIVÉ",
     "Aperçu du territoire : DÉSACTIVÉ",
     "Appareil",
@@ -2842,6 +2844,7 @@ static const char* const kI18n_en[] = {
     "Cancel",  // "Annuler"
     "Undo last move",  // "Annuler le dernier coup"
     "Aug",  // "Août"
+    "Overview",  // "Aperçu"
     "Territory preview: ON",  // "Aperçu du territoire : ACTIVÉ"
     "Territory preview: OFF",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Device",  // "Appareil"
@@ -4174,6 +4177,7 @@ static const char* const kI18n_de[] = {
     "Abbrechen",  // "Annuler"
     "Letzten Zug zurücknehmen",  // "Annuler le dernier coup"
     "Aug",  // "Août"
+    "Überblick",  // "Aperçu"
     "Gebietsvorschau: AN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebietsvorschau: AUS",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Gerät",  // "Appareil"
@@ -5506,6 +5510,7 @@ static const char* const kI18n_nl[] = {
     "Annuleren",  // "Annuler"
     "Laatste zet terugnemen",  // "Annuler le dernier coup"
     "Aug",  // "Août"
+    "Overzicht",  // "Aperçu"
     "Gebiedsweergave: AAN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebiedsweergave: UIT",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Apparaat",  // "Appareil"
@@ -6838,6 +6843,7 @@ static const char* const kI18n_es[] = {
     "Cancelar",  // "Annuler"
     "Deshacer la última jugada",  // "Annuler le dernier coup"
     "Ago",  // "Août"
+    "Resumen",  // "Aperçu"
     "Vista del territorio: SÍ",  // "Aperçu du territoire : ACTIVÉ"
     "Vista del territorio: NO",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
@@ -8170,6 +8176,7 @@ static const char* const kI18n_it[] = {
     "Annulla",  // "Annuler"
     "Annulla l'ultima mossa",  // "Annuler le dernier coup"
     "Ago",  // "Août"
+    "Panoramica",  // "Aperçu"
     "Anteprima territorio: ATTIVA",  // "Aperçu du territoire : ACTIVÉ"
     "Anteprima territorio: DISATTIVATA",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
@@ -9502,6 +9509,7 @@ static const char* const kI18n_tr[] = {
     "İptal",  // "Annuler"
     "Son hamleyi geri al",  // "Annuler le dernier coup"
     "Ağu",  // "Août"
+    "Özet",  // "Aperçu"
     "Alan önizlemesi: AÇIK",  // "Aperçu du territoire : ACTIVÉ"
     "Alan önizlemesi: KAPALI",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Cihaz",  // "Appareil"

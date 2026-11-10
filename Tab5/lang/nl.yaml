@@ -1562,3 +1562,4 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "actieradius"
 "Aucune voiture reçue": "Geen auto ontvangen"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Kies ze in de blueprint, sectie „Énergie : voitures · Energy: cars”."
+"Aperçu": "Overzicht"
