@@ -428,9 +428,9 @@ void peindre_carte(int c, const Ligne& li, int32_t x, int32_t w) {
     const bool a_limite = std::isfinite(v.limite);
     const float lim_f = a_limite ? std::min(100.0f, std::max(0.0f, v.limite)) : 0.0f;
     const int32_t xl = static_cast<int32_t>(std::lround(col * lim_f / 100.0f));
-    const bool reste = a_limite && a_batterie && v.etat == VoitureEtat::EN_CHARGE && lim_f > pct_f;
-    ui_hidden(k.prevu, !reste);
-    if (reste) {
+    const bool a_charger = a_limite && a_batterie && v.etat == VoitureEtat::EN_CHARGE && lim_f > pct_f;
+    ui_hidden(k.prevu, !a_charger);
+    if (a_charger) {
         ui_style_couleur(k.prevu, LV_STYLE_BG_COLOR, UIColor.SUCCESS);
         ui_poser(k.prevu, kPad, yb, xl, kBarreH);
     }
