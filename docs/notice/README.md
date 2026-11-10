@@ -50,6 +50,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Alarm clock | long press on the time | [Alarm clock](alarm.md) |
 | Voice assistant | long press on the microphone | [Voice](voice.md) |
 | Energy | a solar or energy card, or a long press on the Home Assistant button | [Energy](energy.md) |
+| Cars | a short tap on a car's circle on the Flow page of Energy, or « Go to screen » (Home Assistant) | [Energy, electric cars](energy.md#electric-cars) |
 | Temperature | long press on one of the two temperatures | [Temperature](temperature.md) |
 | Plants | long press on the plants line, under the clock | [Plants](plants.md) |
 | Alerts | long press on the central card | [Alerts](alerts.md) |
@@ -119,6 +120,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Réveil | appui long sur l'heure | [Réveil](alarm.md#version-française) |
 | Assistant vocal | appui long sur le micro | [Voix](voice.md#version-française) |
 | Énergie | une carte solaire ou énergie, ou un appui long sur le bouton Home Assistant | [Énergie](energy.md#version-française) |
+| Voitures | un appui court sur le cercle d'une voiture de la page Flux de l'Énergie, ou « Go to screen » (Home Assistant) | [Énergie, voitures électriques](energy.md#voitures-électriques) |
 | Température | appui long sur l'une des deux températures | [Température](temperature.md#version-française) |
 | Plantes | appui long sur la ligne des plantes, sous l'horloge | [Plantes](plants.md#version-française) |
 | Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |

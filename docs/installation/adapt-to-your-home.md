@@ -34,6 +34,15 @@ A solar installation gets its own popup ([ADR-0028](../decisions/0028-solar-ener
 
 Section left empty: nothing changes on the screen.
 
+## Electric cars (optional)
+
+Up to two electric cars ([ADR-0076](../decisions/0076-cars-on-the-flux-page.md)) show on the pages of the energy popup and in a **Cars** window of their own ([what the screens show](../notice/energy.md#electric-cars)). Nothing is picked: nothing changes on the screen. Not drawn in full on the Waveshare 7B (its Flow page has no car circle, see the notice).
+
+1. In the « Tab5 — emplacements » automation, open the folded section **« Énergie : voitures · Energy: cars »**, on top of the three « Énergie » sections above (the energy popup needs them). For each car, pick **the battery level**: it is the sensor that makes the car appear. The rest is optional and says more: its name, the range, the charging state (in words: charging, plugged in, unplugged; Tesla's words and other brands' are understood, and so is a true / false sensor), the charging power, the energy added, the charge limit, the end of charge, the odometer, the four tyre pressures, the cabin and outside temperatures, the lock, the Sentry switch and the software update. A sensor left empty reads « -- » on the screen. Tick **« The home meter is separate from the cars »** only if your home sensor does not count the cars (a charger with its own meter); unticked, the cars' power is subtracted from the home so that it is not counted twice.
+2. The `tab5_voitures.yaml` package (in the archive of [step 1](home-assistant-files.md), next to `tab5_energie.yaml`) computes what Home Assistant does not give: the last charges, the share of the sun in each, the kWh per hour of the day, the month's balance and the trips. It reads the recorder's statistics of the sensors picked above (the charging power, the odometer for the trips, the home and solar power for the share of the sun), **never calls the car**, so it never wakes it. Without it, the Overview and State pages work, but not the Charges page, the Charge page, the Trips page, the stacked consumption of the Today page nor the cars balance.
+3. **Tesla** (Fleet, Teslemetry, Tessie): some sensors are **disabled by default** in the integration: the tyre pressures, the odometer and, with Teslemetry, the range. Enable them on the device page of the integration (« disabled entities »), or the State and Trips pages stay empty.
+4. Update the tablet before the Home Assistant files: an older firmware does not know the new actions the energy script calls. They are called with `continue_on_error`, so nothing breaks, but the new pages stay empty.
+
 ## Temperature history
 
 A long press on one of the two home-screen temperatures opens its history ([ADR-0032](../decisions/0032-temperature-history-popup.md)): 24 hours, 7 days or 30 days, from Home Assistant's long-term statistics, and the weather forecast for the second temperature.
@@ -114,6 +123,15 @@ Une installation solaire a son propre popup ([ADR-0028](../decisions/0028-solar-
 ![Popup Énergie du Tab5, vue Jours : solaire, maison, réseau et batterie en direct, et la production des 30 derniers jours (rendu de la CI, données de démonstration)](../images/tab5_energie.png)
 
 Section laissée vide : rien ne change à l'écran.
+
+## Voitures électriques (facultatif)
+
+Deux voitures électriques au plus ([ADR-0076](../decisions/0076-cars-on-the-flux-page.md)) apparaissent sur les pages du popup Énergie et dans une fenêtre **Voitures** à part ([ce que montrent les écrans](../notice/energy.md#voitures-électriques)). Rien n'est choisi : rien ne change à l'écran. Pas dessinées en entier sur la Waveshare 7B (sa page Flux n'a pas de cercle de voiture, voir la notice).
+
+1. Dans l'automatisation « Tab5 — emplacements », ouvrez la section repliée **« Énergie : voitures · Energy: cars »**, au-dessus des trois sections « Énergie » ci-dessus (le popup Énergie en a besoin). Pour chaque voiture, choisissez **le niveau de la batterie** : c'est le capteur qui fait apparaître la voiture. Le reste est facultatif et en dit plus : son nom, l'autonomie, l'état de la charge (en mots : en charge, branchée, débranchée ; les mots de Tesla et ceux d'autres marques sont compris, ainsi qu'un capteur vrai / faux), la puissance de charge, l'énergie ajoutée, la limite de charge, la fin de charge, le compteur kilométrique, les pressions des quatre pneus, les températures de la cabine et de l'extérieur, le verrou, l'interrupteur de la Sentinelle et la mise à jour du logiciel. Un capteur laissé vide s'écrit « -- » à l'écran. Cochez **« Le compteur de la maison est séparé des voitures »** seulement si votre capteur de maison ne compte pas les voitures (une borne avec son propre compteur) ; décochée, la puissance des voitures est retranchée de la maison pour qu'elle ne soit pas comptée deux fois.
+2. Le package `tab5_voitures.yaml` (dans l'archive de l'[étape 1](home-assistant-files.md#version-française), à côté de `tab5_energie.yaml`) calcule ce que Home Assistant ne donne pas : les dernières charges, la part du soleil de chacune, les kWh par heure du jour, le bilan du mois et les trajets. Il lit les statistiques du recorder des capteurs choisis ci-dessus (la puissance de charge, le compteur kilométrique pour les trajets, la puissance de la maison et du solaire pour la part du soleil) et **n'appelle jamais la voiture**, donc ne la réveille jamais. Sans lui, les pages Aperçu et État marchent, mais pas la page Charges, la page Charge, la page Trajets, la consommation empilée de la page Aujourd'hui ni le bilan des voitures.
+3. **Tesla** (Fleet, Teslemetry, Tessie) : certains capteurs sont **désactivés par défaut** dans l'intégration : les pressions des pneus, le compteur kilométrique et, avec Teslemetry, l'autonomie. Activez-les sur la page de l'appareil de l'intégration (« entités désactivées »), sinon les pages État et Trajets restent vides.
+4. Mettez la tablette à jour avant les fichiers de Home Assistant : un firmware plus ancien ne connaît pas les nouvelles actions que le script de l'énergie appelle. Elles sont appelées avec `continue_on_error`, donc rien ne casse, mais les nouvelles pages restent vides.
 
 ## Historique des températures
 
