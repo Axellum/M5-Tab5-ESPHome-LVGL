@@ -498,9 +498,11 @@ def test_editeur_lisible():
                                                                "energie_devise"]
     assert list(sections["energie_stockage"]["input"]) == ["energie_batterie", "energie_batterie_puissance",
                                                            "energie_batterie_inverse", "energie_batterie_temperature"]
-    # Voitures (ADR-0076) : l'option du compteur, puis neuf entrées par voiture, dans l'ordre
-    # des champs du payload de tab5_maj_voiture ; toutes facultatives (test ci-dessous).
-    par_voiture = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "fin"]
+    # Voitures (ADR-0076) : l'option du compteur, puis dix entrées par voiture, dans l'ordre
+    # des champs du payload de tab5_maj_voiture (le compteur kilométrique de la page Trajets,
+    # ADR-0083, n'en fait pas partie : il est entre la limite et la fin) ; toutes facultatives
+    # (test ci-dessous).
+    par_voiture = ["nom", "batterie", "autonomie", "etat", "cable", "puissance", "energie", "limite", "odometre", "fin"]
     assert list(sections["energie_voitures"]["input"]) == (
         ["energie_voitures_compteur_separe"]
         + [f"voiture_{v}_{c}" for v in (1, 2) for c in par_voiture])

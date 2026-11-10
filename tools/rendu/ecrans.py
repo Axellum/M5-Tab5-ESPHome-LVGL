@@ -34,8 +34,8 @@ from scenarios import (ENERGIE_INSTANTANE_VOITURES, ENERGIE_INSTANTANE_VOITURES_
                        build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
-                       build_charges_payload, build_conso_jour, build_voiture_payload, build_zones_absentes, code_pluie,
-                       CONSO_JOUR_RANGS)
+                       build_charges_payload, build_conso_jour, build_trajets_payload, build_voiture_payload,
+                       build_zones_absentes, code_pluie, CONSO_JOUR_RANGS, TRAJETS)
 
 
 @dataclass(frozen=True)
@@ -689,6 +689,25 @@ def _conso(rang: str, valeurs: tuple | None = None) -> Service:
 CONSO_DEUX_VOITURES = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS)
 CONSO_UNE_VOITURE = tuple(_conso(rang) for rang in CONSO_JOUR_RANGS[:2])
 CONSO_AUCUNE = tuple(_conso(rang, ()) for rang in CONSO_JOUR_RANGS)
+
+
+# Les trajets des voitures (ADR-0083), datés du jour figé des captures : la fenêtre de sept jours finit au
+# 16 juin. Les deux voitures de la démo, la voiture 1 seule, une voiture dont l'odomètre est choisi mais sans
+# aucun relevé (tous les champs vides), aucune (payload vide : la page Trajets disparaît). La tablette garde
+# ce qu'elle a reçu : chaque écran qui en pousse finit par TRAJETS_AUCUN.
+def _trajets(rang: str, trajets: dict | None) -> Service:
+    return Service("tab5_maj_voiture_trajets",
+                   (("rang", rang), ("payload", build_trajets_payload(MOMENT_DES_CAPTURES.date(), trajets))),
+                   apres=0.3)
+
+
+TRAJETS_DEUX_VOITURES = tuple(_trajets(rang, t) for rang, t in TRAJETS.items())
+TRAJETS_UNE_VOITURE = (_trajets("1", TRAJETS["1"]),)
+TRAJETS_SANS_RELEVE = (_trajets("1", {}),)
+TRAJETS_AUCUN = tuple(_trajets(rang, None) for rang in TRAJETS)
+# Un glissement vers la gauche dans le popup Voitures : de l'Aperçu à la page suivante (Trajets quand c'est
+# la seule autre page ; sans autre page, le geste ne fait rien).
+VOITURES_PAGE_SUIVANTE = Glisser(1015, 520, 265, 520, dans_popup=True)
 # Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
 # la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
 # droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
@@ -1718,6 +1737,16 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("voitures-2", (VOITURE_1, VOITURE_2, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-1", (VOITURE_1, Aller("Cars")), FLUX_SANS_VOITURE),
     Ecran("voitures-aucune", (Aller("Cars"),)),
+    # Page Trajets du popup (ADR-0083) : deux voitures côte à côte, une seule en pleine largeur, une voiture
+    # dont l'odomètre est choisi mais sans relevé (le message), puis des voitures sans trajets (aucune
+    # page ni onglet : l'Aperçu seul, comme voitures-2). Les trajets et les voitures sont retirés à la fin.
+    Ecran("voitures-trajets-2", (VOITURE_1, VOITURE_2) + TRAJETS_DEUX_VOITURES + (Aller("Cars"), VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE),
+    Ecran("voitures-trajets-1", (VOITURE_1,) + TRAJETS_UNE_VOITURE + (Aller("Cars"), VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE),
+    Ecran("voitures-trajets-sans-releve", (VOITURE_1,) + TRAJETS_SANS_RELEVE + (Aller("Cars"), VOITURES_PAGE_SUIVANTE),
+          TRAJETS_AUCUN + FLUX_SANS_VOITURE),
+    Ecran("voitures-trajets-aucun", (VOITURE_1, VOITURE_2, Aller("Cars"), VOITURES_PAGE_SUIVANTE), FLUX_SANS_VOITURE),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée
