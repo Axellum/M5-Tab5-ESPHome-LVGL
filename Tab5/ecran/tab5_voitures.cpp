@@ -9,15 +9,18 @@
  *       « En charge · 7.20 kW ») et le détail dessous (énergie ajoutée, fin de la charge, limite).
  *       Deux voitures : deux cartes de même forme côte à côte ; une seule : une carte pleine
  *       largeur ; aucune : un message court et la raison (voitures_message, voitures_conseil).
+ *       Des pages (ADR-0046, ADR-0082) : la table kPages (nom, a_donnees, montrer, peindre) ;
+ *       Aperçu est ici, les autres sont dans tab5_voitures_<page>.cpp ; une page sans donnée n'a
+ *       pas d'onglet, un popup à moins de deux pages n'en montre aucun (pages_onglets).
  * @architecture_constraint Push-only et events-only (ADR-0001, ADR-0025) : la tablette ne nomme
  *       aucune entité. Le popup lit le MÊME service que la page Flux, tab5_maj_voiture, que
  *       tab5-api-logic.yaml donne aux deux modules : il garde sa propre copie des voitures
- *       (struct Voit, la même lecture voiture_lire), sans toucher tab5_energie.cpp, où un autre
+ *       (struct VoitureRecue, la même lecture voiture_lire), sans toucher tab5_energie.cpp, où un autre
  *       lot travaille. Une seule copie des voitures (Voiture de tab5_energie.cpp passée dans un
  *       en-tête, comme le disait l'ADR-0076) reste à faire quand ce fichier est libre.
  *       Rien n'est inventé : ce que la voiture ne porte pas (verrou, sentinelle, câble, bande
  *       « Aujourd'hui », pages Charge / Trajets / État) n'est pas dessiné ; ces blocs viennent
- *       avec leurs données (lots 4 et 7 à 9). Voiture endormie ou hors ligne (état 0) : le dernier
+ *       avec leurs données (pages Charge, Trajets, État). Voiture endormie ou hors ligne (état 0) : le dernier
  *       état connu, marqué « Hors ligne » (décision D6, jamais de réveil de la voiture).
  *       Popup fermé : une poussée garde la voiture et ne repeint RIEN ; peint à l'ouverture.
  *       Couleurs par les rôles de la palette (ADR-0029), repeintes par voitures_rejouer_theme() ;
@@ -45,20 +48,10 @@ VoituresUI g_voitures_ui;
 namespace {
 
 constexpr const char* kTag = "tab5.voitures";
-constexpr size_t kNomMax = 48;
-constexpr size_t kUniteMax = 8;
 constexpr uint32_t kGlypheSilhouette = 0xF07AB;   // car-side (mdi_font_voiture)
 
-// Une voiture reçue : ce que voiture_lire() a lu, le nom et l'unité copiés (le payload ne vit
-// pas plus loin). Même contenu que Voiture de tab5_energie.cpp (ADR-0076), sans le compteur.
-struct Voit {
-    bool presente = false;
-    char nom[kNomMax] = {};
-    char unite[kUniteMax] = {};
-    VoitureEtat etat = VoitureEtat::INCONNUE;
-    float batterie = NAN, autonomie = NAN, puissance = NAN, energie = NAN, limite = NAN, minutes = NAN;
-};
-Voit s_v[kVoituresCartes];
+// Les voitures reçues (struct VoitureRecue, tab5_voitures.h) : ce que voiture_lire() a lu.
+VoitureRecue s_v[kVoituresCartes];
 static_assert(kVoituresCartes == kVoituresMax, "autant de cartes que de voitures lues (tab5_parse.h)");
 
 // --- Géométrie ----------------------------------------------------------------------------
@@ -140,13 +133,6 @@ void construire() {
     s_construit = true;
 }
 
-// Les trois cas de l'état de charge : la couleur de l'icône, de la silhouette et du texte (les
-// mêmes que les cercles de la page Flux : charge, câble branché, le reste en retrait).
-uint32_t couleur_etat(VoitureEtat e) {
-    return e == VoitureEtat::EN_CHARGE ? UIColor.SUCCESS : e == VoitureEtat::BRANCHEE ? UIColor.INFO
-                                                                                      : UIColor.TEXT_DIM;
-}
-
 // Icône de l'état (mdi_font_45) : l'éclair en charge, la prise branchée ou débranchée, le sommeil
 // d'une voiture sans état. MDI_CODE_TARGETS (tools/check_tab5_code_rules.py) : voitures_etat_icone_*.
 const char* glyphe_etat(VoitureEtat e) {
@@ -195,7 +181,7 @@ Silhouette mesurer_silhouette(lv_obj_t* lbl) {
 
 // Une carte : la voiture `v` (nom, silhouette, anneau, autonomie, état, détail), posée dans
 // la largeur `w`, à la colonne x de la carte x0. `rang` : 1 ou 2, la couleur du nom.
-void peindre_carte(int c, const Voit& v, int rang, int32_t x0, int32_t w) {
+void peindre_carte(int c, const VoitureRecue& v, int rang, int32_t x0, int32_t w) {
     const VoituresUI& u = g_voitures_ui;
     lv_obj_t* carte = u.carte[c];
     ui_poser(carte, kCorpsX + x0, kCorpsY, w, kCorpsH);
@@ -208,7 +194,7 @@ void peindre_carte(int c, const Voit& v, int rang, int32_t x0, int32_t w) {
     char t[96], a[48], b[48];
     if (v.nom[0] != '\0') snprintf(t, sizeof(t), "%s", v.nom);
     else snprintf(t, sizeof(t), tr("Voiture %d"), rang);
-    const uint32_t c_etat = couleur_etat(v.etat);
+    const uint32_t c_etat = voiture_couleur_etat(v.etat);
 
     // Autonomie : « 326 » en grand, l'unité (« km », « mi ») à côté ; « -- » sans valeur.
     char auto_txt[16];
@@ -219,16 +205,7 @@ void peindre_carte(int c, const Voit& v, int rang, int32_t x0, int32_t w) {
     // État : « En charge · 7.20 kW » (la puissance quand on la connaît), « Branchée », « Débranchée »,
     // « Hors ligne » (une voiture endormie ou sans état : le dernier état connu, D6).
     char etat[64];
-    switch (v.etat) {
-        case VoitureEtat::EN_CHARGE:
-            if (std::isfinite(v.puissance) && energie_formater(a, sizeof(a), v.puissance, "W"))
-                snprintf(etat, sizeof(etat), "%s \xC2\xB7 %s", tr("En charge"), a);
-            else snprintf(etat, sizeof(etat), "%s", tr("En charge"));
-            break;
-        case VoitureEtat::BRANCHEE: snprintf(etat, sizeof(etat), "%s", tr("Branchée")); break;
-        case VoitureEtat::DEBRANCHEE: snprintf(etat, sizeof(etat), "%s", tr("Débranchée")); break;
-        default: snprintf(etat, sizeof(etat), "%s", tr("Hors ligne")); break;
-    }
+    voiture_texte_etat(etat, sizeof(etat), v);
     // Détail : en charge, l'énergie déjà ajoutée et ce qui reste ; branchée, « Pas en charge ».
     char detail[96] = "";
     if (v.etat == VoitureEtat::EN_CHARGE) {
@@ -361,15 +338,38 @@ void peindre_vide(bool vide) {
     ui_poser(u.conseil, kCorpsX, y + hm + 10, kCorpsW, LV_SIZE_CONTENT);
 }
 
-void peindre() {
+// --- Pages (ADR-0046, ADR-0082) ----------------------------------------------------------
+// Une page = un nom (l'onglet), « a-t-elle des données ? » (sans, ni onglet ni page), « montre ou
+// cache ses widgets » (une page crée les siens en C++ à sa première montre, sur voitures_corps()) et
+// « repeins-toi » (popup ouvert, page affichée). Aperçu est ici (les cartes du YAML) ; Charge,
+// Trajets et État ont leurs fichiers tab5_voitures_<page>.{h,cpp}.
+struct Page {
+    const char* nom;                // tr_noop : traduit à l'affichage
+    bool (*a_donnees)();
+    void (*montrer)(bool visible);
+    void (*peindre)();
+};
+
+// Une voiture reçue au moins : l'Aperçu a de quoi se montrer. Sans voiture, le popup dit pourquoi
+// (message et conseil) et n'a aucune page.
+bool apercu_a_donnees() {
+    for (const VoitureRecue& v : s_v)
+        if (v.presente) return true;
+    return false;
+}
+
+void apercu_montrer(bool visible) {
+    if (!visible)
+        for (lv_obj_t* c : g_voitures_ui.carte) ui_hidden(c, true);
+}
+
+// Les voitures reçues dans l'ordre des rangs : la seconde seule prend la première carte.
+void apercu_peindre() {
     const VoituresUI& u = g_voitures_ui;
-    if (!s_construit || u.popup == nullptr) return;
-    // Les voitures reçues dans l'ordre des rangs : la seconde seule prend la première carte.
     int rang[kVoituresCartes] = {};
     int n = 0;
     for (int r = 0; r < kVoituresCartes; r++)
         if (s_v[r].presente) rang[n++] = r;
-    peindre_vide(n == 0);
     const int32_t w = n == 1 ? kCarteSeuleL : kCarteDeuxL;
     for (int c = 0; c < kVoituresCartes; c++) {
         if (c >= n) {
@@ -379,6 +379,77 @@ void peindre() {
         peindre_carte(c, s_v[rang[c]], rang[c] + 1, c * (kCarteDeuxL + kCartesEcart), w);
     }
 }
+
+// L'ordre est celui des onglets : Aperçu, Charge, Trajets, État (une page de plus : sa ligne ici, son
+// en-tête dans tab5_custom.h et ses fichiers dans les includes: de tab5-ha-hmi.yaml).
+const Page kPages[] = {
+    {tr_noop("Aperçu"), apercu_a_donnees, apercu_montrer, apercu_peindre},
+    // Des lambdas sans capture, pas les fonctions nues : la règle 12 (CPP-4) ne compte comme appel que
+    // `nom(`, une adresse prise dans la table n'en est pas un.
+    {tr_noop("Charge"), [] { return voitures_charge_a_donnees(); }, [](bool v) { voitures_charge_montrer(v); },
+     [] { voitures_charge_peindre(); }},
+};
+constexpr int kNbPages = static_cast<int>(sizeof(kPages) / sizeof(kPages[0]));
+static_assert(kNbPages <= kVoituresPages, "un onglet YAML par page (voitures_popup.yaml)");
+
+int s_page = 0;                 // la page affichée : un index de kPages
+bool s_page_choisie = false;    // le doigt a choisi une page (sinon la première qui a des données)
+
+// Les pages qui ont des données, dans l'ordre : `liste` reçoit leurs index de kPages.
+int pages_montrees(int* liste) {
+    int n = 0;
+    for (int p = 0; p < kNbPages; p++)
+        if (kPages[p].a_donnees()) liste[n++] = p;
+    return n;
+}
+
+int nombre_pages() {
+    int liste[kNbPages];
+    return pages_montrees(liste);
+}
+
+// Le rang de la page affichée parmi les pages montrées (0 sans page).
+int page_courante() {
+    int liste[kNbPages];
+    const int n = pages_montrees(liste);
+    for (int i = 0; i < n; i++)
+        if (liste[i] == s_page) return i;
+    return 0;
+}
+
+void peindre() {
+    const VoituresUI& u = g_voitures_ui;
+    if (!s_construit || u.popup == nullptr) return;
+    int liste[kNbPages];
+    const int n = pages_montrees(liste);
+    // Ouvert sur la première page qui a des données, tant que le doigt n'en a pas choisi une ; une
+    // page qui perd ses données rend la main à la première.
+    if (n > 0 && (!s_page_choisie || !kPages[s_page].a_donnees())) s_page = liste[0];
+    const char* noms[kNbPages] = {};
+    int rang = 0;
+    for (int i = 0; i < n; i++) {
+        noms[i] = tr(kPages[liste[i]].nom);
+        if (liste[i] == s_page) rang = i;
+    }
+    pages_onglets(u.onglet, kVoituresPages, noms, n, rang);
+    peindre_vide(n == 0);
+    for (int p = 0; p < kNbPages; p++) kPages[p].montrer(n > 0 && p == s_page);
+    if (n > 0) kPages[s_page].peindre();
+}
+
+void afficher_page(int rang) {
+    int liste[kNbPages];
+    const int n = pages_montrees(liste);
+    if (rang < 0 || rang >= n) rang = 0;
+    if (n == 0) return;
+    s_page = liste[rang];
+    s_page_choisie = true;
+    peindre();
+    ui_mark_activity();
+}
+
+// Geste gauche / droite du popup (tab5_pages.cpp, ADR-0046) ; les onglets suivent.
+PagesPopup s_pages{nullptr, nombre_pages, page_courante, afficher_page};
 
 }  // namespace
 
@@ -391,7 +462,7 @@ void voitures_recu(const std::string& rang, const std::string& payload) {
         payload_refuse(kTag, "voiture : rang inconnu", rang.size());
         return;
     }
-    Voit v;
+    VoitureRecue v;
     VoitureLue lu;
     if (voiture_lire(Champ{payload.data(), payload.size()}, lu)) {
         v.presente = true;
@@ -404,15 +475,56 @@ void voitures_recu(const std::string& rang, const std::string& payload) {
         v.energie = lu.energie;
         v.limite = lu.limite;
         v.minutes = lu.minutes;
+        const time_t now = tab5_time_source(nullptr);
+        v.recue_le = tab5_heure_valide(now) ? now : 0;
     }
     s_v[k] = v;
     if (popup_ouvert()) peindre();
 }
 
+// Les trois cas de l'état de charge : la couleur de l'icône, de la silhouette et du texte (les
+// mêmes que les cercles de la page Flux : charge, câble branché, le reste en retrait).
+uint32_t voiture_couleur_etat(VoitureEtat e) {
+    return e == VoitureEtat::EN_CHARGE ? UIColor.SUCCESS : e == VoitureEtat::BRANCHEE ? UIColor.INFO
+                                                                                      : UIColor.TEXT_DIM;
+}
+
+// « En charge · 7.20 kW » (la puissance quand on la connaît), « Branchée », « Débranchée », « Hors
+// ligne » (une voiture endormie ou sans état : le dernier état connu, jamais de réveil, D6).
+void voiture_texte_etat(char* out, size_t n, const VoitureRecue& v) {
+    char p[48];
+    switch (v.etat) {
+        case VoitureEtat::EN_CHARGE:
+            if (std::isfinite(v.puissance) && energie_formater(p, sizeof(p), v.puissance, "W"))
+                snprintf(out, n, "%s \xC2\xB7 %s", tr("En charge"), p);
+            else snprintf(out, n, "%s", tr("En charge"));
+            break;
+        case VoitureEtat::BRANCHEE: snprintf(out, n, "%s", tr("Branchée")); break;
+        case VoitureEtat::DEBRANCHEE: snprintf(out, n, "%s", tr("Débranchée")); break;
+        default: snprintf(out, n, "%s", tr("Hors ligne")); break;
+    }
+}
+
+void voitures_repeindre() {
+    if (popup_ouvert()) peindre();
+}
+
+const VoitureRecue& voiture_recue(int k) { return s_v[k >= 0 && k < kVoituresCartes ? k : 0]; }
+
+lv_obj_t* voitures_corps() {
+    const VoituresUI& u = g_voitures_ui;
+    return u.carte[0] != nullptr ? lv_obj_get_parent(u.carte[0]) : nullptr;
+}
+
+void voitures_page(int rang) { afficher_page(rang); }
+
 void voitures_ouvrir() {
     const VoituresUI& u = g_voitures_ui;
     if (u.popup == nullptr) return;
     construire();
+    // Le glissement gauche / droite des pages (une fois : rappelé, l'ancien rappel est retiré d'abord).
+    s_pages.popup = u.popup;
+    pages_brancher(&s_pages);
     peindre();
     // À chaque ouverture, comme le popup Énergie : Home Assistant ne pousse que tant que « Écran
     // courant » vaut « Energy » ou « Cars » ; ouvert par « Aller à l'écran » après une longue absence,

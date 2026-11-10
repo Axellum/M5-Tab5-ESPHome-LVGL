@@ -355,6 +355,9 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_energie.cpp", "glyphe_carte"): ("energie_icone_*", "energie_flux_icone_*"),
     # Popup Voitures (ADR-0079) : l'icône d'état de chaque carte (voitures_carte.yaml, mdi_font_45).
     ("tab5_voitures.cpp", "glyphe_etat"): ("voitures_etat_icone_*",),
+    # Page Charge du popup Voitures (ADR-0082) : le soleil de la bande du créneau conseillé, un label
+    # créé en C++ avec la police de l'icône d'état (mdi_font_45).
+    ("tab5_voitures_charge.cpp", "glyphe_conseil"): ("voitures_etat_icone_*",),
     # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches
     # de l'accueil), ampoule et flèche du volet sur les épaules droites de toutes les tuiles.
     # Le popup Maison (ADR-0037) montre la carte de chaque tuile, héritage compris (maison_icone_*, mdi_font_32),

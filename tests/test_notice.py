@@ -237,6 +237,10 @@ NON_MONTREES = {
     "voitures-2": "popup Voitures, deux voitures, décrit dans screens.md ; notice avec les pages suivantes",
     "voitures-1": "voitures-2 montre la même fenêtre ; une seule voiture en pleine largeur, décrit dans screens.md",
     "voitures-aucune": "voitures-2 montre la même fenêtre ; sans voiture, le message est décrit dans screens.md",
+    # Page Charge du popup Voitures (ADR-0082) : décrite dans screens.md ; image à tirer du rendu.
+    "voitures-charge-2": "page Charge du popup Voitures, deux voitures, décrite dans screens.md ; image à tirer du rendu",
+    "voitures-charge-1": "voitures-charge-2 montre la même page ; une seule voiture en pleine largeur",
+    "voitures-charge-sans-soleil": "voitures-charge-2 montre la même page ; sans prévision du soleil, la bande du bas le dit",
 }
 
 

@@ -12,6 +12,8 @@
  */
 #pragma once
 #include "esphome.h"
+#include "tab5_parse.h"
+#include <ctime>
 #include <string>
 
 // =============================================================================
@@ -21,10 +23,13 @@
 // seule voiture : une carte pleine largeur). Chaque carte : le nom, la silhouette (un grand glyphe
 // MDI, à la couleur de l'état), l'anneau de la batterie et son pourcentage, l'autonomie, une ligne
 // d'état courte (« En charge · 7.20 kW ») et le détail (énergie ajoutée, fin de la charge, limite).
-// Les pages Charge, Trajets et État viennent aux lots suivants (le popup n'a pas d'onglets tant
-// qu'il n'a qu'une page, ADR-0046). Ouvert en appuyant sur un cercle de voiture de la page Flux du
-// popup Énergie, ou par « Aller à l'écran → Cars ».
+// Les pages Charge, Trajets et État s'y ajoutent (ADR-0046, ADR-0082) : une page sans donnée n'a pas
+// d'onglet, et le popup n'a pas d'onglets tant qu'il n'a qu'une page. Ouvert en appuyant sur un
+// cercle de voiture de la page Flux du popup Énergie, ou par « Aller à l'écran → Cars ».
 constexpr int kVoituresCartes = 2;
+// Pages du popup, dans l'ordre des onglets : Aperçu, Charge, Trajets, État (table kPages de
+// tab5_voitures.cpp ; une page de plus = une ligne là et un onglet de plus dans voitures_popup.yaml).
+constexpr int kVoituresPages = 4;
 
 // Widgets posés par le script tab5_voitures_lier (tab5-voitures.yaml) : id() n'existe que dans
 // une lambda YAML. Un champ [n] = la carte n (voitures_carte.yaml) ; une carte porte la voiture
@@ -33,6 +38,7 @@ struct VoituresUI {
     lv_obj_t* popup = nullptr;                       // voitures_popup
     lv_obj_t* message = nullptr;                     // voitures_message : « Aucune voiture reçue »
     lv_obj_t* conseil = nullptr;                     // voitures_conseil : où la choisir dans Home Assistant
+    lv_obj_t* onglet[kVoituresPages] = {};           // voitures_onglet_N (pages_onglet.yaml : noms des pages)
     lv_obj_t* carte[kVoituresCartes] = {};           // voitures_carte_N (carte de verre)
     lv_obj_t* nom[kVoituresCartes] = {};             // voitures_nom_N
     lv_obj_t* silhouette[kVoituresCartes] = {};      // voitures_silhouette_N (grand glyphe MDI)
@@ -45,11 +51,48 @@ struct VoituresUI {
     lv_obj_t* etat[kVoituresCartes] = {};            // voitures_etat_N : « En charge · 7.20 kW »
     lv_obj_t* detail[kVoituresCartes] = {};          // voitures_detail_N : énergie ajoutée, fin de charge
     lv_obj_t* limite[kVoituresCartes] = {};          // voitures_limite_N : « Limite 80 % »
+    // Le style de la carte de verre des thèmes (style_glass_card) : une carte faite en C++ le prend, elle
+    // suit ainsi le rayon, le bord et le fond de chaque thème.
+    lv_style_t* style_carte = nullptr;
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture) : demande à
     // Home Assistant de pousser les voitures quand le popup s'ouvre sans en avoir reçu.
     void (*demander)() = nullptr;
 };
 extern VoituresUI g_voitures_ui;
+
+// Une voiture reçue : ce que voiture_lire() a lu (tab5_parse.h), le nom et l'unité copiés (le payload
+// ne vit pas plus loin). Gardée par voitures_recu() ; lue par les pages du popup (voiture_recue).
+constexpr size_t kVoitureNomMax = 48;
+constexpr size_t kVoitureUniteMax = 8;
+struct VoitureRecue {
+    bool presente = false;
+    char nom[kVoitureNomMax] = {};
+    char unite[kVoitureUniteMax] = {};
+    VoitureEtat etat = VoitureEtat::INCONNUE;
+    float batterie = NAN, autonomie = NAN, puissance = NAN, energie = NAN, limite = NAN, minutes = NAN;
+    // L'instant de la poussée (0 : horloge pas réglée) : `minutes` valait ce nombre à cet instant, une page
+    // qui en tire une heure d'arrivée compte le temps passé depuis.
+    time_t recue_le = 0;
+};
+// La voiture de rang k + 1 (k = 0 ou 1) ; une voiture absente a presente = faux. k hors de 0..1 : la première.
+const VoitureRecue& voiture_recue(int k);
+
+// L'état d'une voiture, le même sur toutes les pages : sa couleur (charge en vert, câble branché en
+// bleu, le reste en retrait) et son texte court (« En charge · 7.20 kW », « Branchée », « Débranchée »,
+// « Hors ligne »).
+uint32_t voiture_couleur_etat(VoitureEtat e);
+void voiture_texte_etat(char* out, size_t n, const VoitureRecue& v);
+
+// Repeint le popup s'il est ouvert : appelé par une page quand ses données arrivent (sans quoi elles
+// attendraient la poussée suivante d'une voiture).
+void voitures_repeindre();
+
+// Le conteneur des pages : la carte modale du popup, où chaque page crée ses widgets en C++ (aucun
+// id YAML de plus). nullptr tant que le popup n'est pas lié.
+lv_obj_t* voitures_corps();
+
+// Un onglet touché (pages_onglet.yaml, `choisir`) : `rang` parmi les pages qui ont des données.
+void voitures_page(int rang);
 
 // Action tab5_maj_voiture (ADR-0076), aussi lue ici : rang (« 1 » ou « 2 ») et le payload de dix
 // champs (voiture_lire, tab5_parse.h). Garde la voiture ; repeint le popup seulement s'il est
