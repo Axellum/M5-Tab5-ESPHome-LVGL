@@ -805,7 +805,9 @@ def build_charges_payload(aujourd_hui: _dt.date, charges=CHARGES) -> str:
 # heure à venir). Une série vide retire le rang de la page. La démo montre le matin figé des captures
 # (07:45) : la voiture 2 a chargé de 01:00 à 03:00 à 7,2 kW (14,4 kWh, la deuxième charge de CHARGES), la
 # voiture 1 charge depuis 06:02 (6,96 kWh à 6 h, 5,4 kWh à 7 h, 12,4 kWh en tout comme la première charge de
-# CHARGES) ; la maison hors voitures consomme 0,2 à 0,3 kWh par heure.
+# CHARGES) ; la maison hors voitures consomme 0,2 à 0,3 kWh par heure. La page « Charge » du popup
+# Voitures (ADR-0082) lit les mêmes séries (ses plages vertes : 1 h à 3 h pour la voiture 2, 6 h à 8 h
+# pour la 1) et, avec ENERGIE_SOLEIL plus bas, en tire son créneau conseillé (10 h – 16 h le matin des captures).
 # ---------------------------------------------------------------------------
 
 CONSO_JOUR_RANGS = ("0", "1", "2")
