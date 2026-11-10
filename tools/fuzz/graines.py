@@ -105,6 +105,13 @@ LIMITES = [
     ("D", "voiture_illisible", "1\nX|abc|nan|km|x|inf||unknown|"),
     ("D", "voiture_vide", "2\n||||||||"),
     ("D", "voiture_sans_rang", "|||"),
+    # Page « État » du popup Voitures (ADR-0081), onze champs ajoutés à la fin : un payload d'avant (dix
+    # champs), pressions et températures hors bornes ou illisibles, une unité inconnue, des états autres que
+    # « 0 » et « 1 », puis des unités tolérées (casse, °F) et un champ de trop.
+    ("D", "voiture_etat_ancien", "1\nModel Y|78|412|km|3|7200|12.4|90|95|1"),
+    ("D", "voiture_etat_bornes", "2\nX|50|||2|||||1|0|-2.8|10.01|abc|torr|-101|201|°C|2|oui|-1"),
+    ("D", "voiture_etat_unites", "1\nX|50|||2|||||1|290|290|290|290|KPA|-12.5|104|°F|1|0|1|trop"),
+    ("D", "voiture_etat_seul", "2\n||||||||||2.9|nan|1e99||bar|1e9|"),
     # Serveur IA (ADR-0059) : nombres négatifs, non finis, hors bornes, champs de trop, un
     # second serveur ignoré.
     ("?", "serveur_ia_bornes", ";A|x||-1|-1|1e99|-2|inf|101|nan|9|-5|1e9|en trop;B|1|m|1|1|1|1|1|1|1|1|1|1"),

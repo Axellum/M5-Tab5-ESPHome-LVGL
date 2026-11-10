@@ -361,7 +361,8 @@ void peindre_vide(bool vide) {
     ui_poser(u.conseil, kCorpsX, y + hm + 10, kCorpsW, LV_SIZE_CONTENT);
 }
 
-void peindre() {
+// La page « Aperçu » : une carte par voiture reçue, ou le message d'une page vide.
+void peindre_apercu() {
     const VoituresUI& u = g_voitures_ui;
     if (!s_construit || u.popup == nullptr) return;
     // Les voitures reçues dans l'ordre des rangs : la seconde seule prend la première carte.
@@ -379,6 +380,89 @@ void peindre() {
         peindre_carte(c, s_v[rang[c]], rang[c] + 1, c * (kCarteDeuxL + kCartesEcart), w);
     }
 }
+
+// --- Pages (ADR-0081, ADR-0046) -------------------------------------------------------------
+// Une page par numéro (kPage…, tab5_voitures.h), dans l'ordre des onglets. `nom` : l'onglet, marqué
+// tr_noop et traduit à l'affichage (nullptr : la page n'existe pas) ; `a_donnees` : la page n'apparaît
+// que si elle répond vrai (nullptr : toujours là, c'est l'Aperçu) ; `peindre` : la peint, son
+// conteneur étant montré par peindre() ci-dessous. Le code de chaque page est dans son fichier.
+struct PageVoitures {
+    const char* nom = nullptr;
+    bool (*a_donnees)() = nullptr;
+    void (*peindre)() = nullptr;
+};
+const PageVoitures kPages[kVoituresPages] = {
+    /* kPageApercu  */ {tr_noop("Aperçu"), nullptr, peindre_apercu},
+    /* kPageCharge  */ {},
+    /* kPageTrajets */ {},
+    /* kPageEtat    */ {tr_noop("État"), voitures_etat_a_donnees, voitures_etat_peindre},
+};
+int s_page = kPageApercu;   // la page montrée ; gardée d'une ouverture à l'autre tant qu'elle existe
+
+// Les pages montrées, dans l'ordre ; l'Aperçu y est toujours.
+int pages_montrees(int* liste) {
+    int n = 0;
+    for (int p = 0; p < kVoituresPages; p++) {
+        const PageVoitures& pg = kPages[p];
+        if (pg.nom == nullptr || pg.peindre == nullptr) continue;
+        if (pg.a_donnees == nullptr || pg.a_donnees()) liste[n++] = p;
+    }
+    return n;
+}
+
+// Les voitures de l'Aperçu ne se montrent pas sous une autre page.
+void cacher_apercu() {
+    const VoituresUI& u = g_voitures_ui;
+    ui_hidden(u.message, true);
+    ui_hidden(u.conseil, true);
+    for (int c = 0; c < kVoituresCartes; c++) ui_hidden(u.carte[c], true);
+}
+
+void peindre() {
+    const VoituresUI& u = g_voitures_ui;
+    if (!s_construit || u.popup == nullptr) return;
+    int liste[kVoituresPages];
+    const int n = pages_montrees(liste);
+    // La page choisie tant qu'elle existe ; sinon la première (l'Aperçu), et le choix est oublié.
+    int rang = -1;
+    for (int i = 0; i < n; i++)
+        if (liste[i] == s_page) rang = i;
+    if (rang < 0) {
+        s_page = liste[0];
+        rang = 0;
+    }
+    const char* noms[kVoituresPages] = {};
+    for (int i = 0; i < n; i++) noms[i] = tr(kPages[liste[i]].nom);
+    pages_onglets(u.onglet, kVoituresPages, noms, n, rang);
+    for (int p = 0; p < kVoituresPages; p++) ui_hidden(u.page[p], p != s_page);
+    if (s_page != kPageApercu) cacher_apercu();
+    kPages[s_page].peindre();
+}
+
+int nombre_pages() {
+    int liste[kVoituresPages];
+    return pages_montrees(liste);
+}
+
+int page_courante() {
+    int liste[kVoituresPages];
+    const int n = pages_montrees(liste);
+    for (int i = 0; i < n; i++)
+        if (liste[i] == s_page) return i;
+    return 0;
+}
+
+void afficher_page(int rang) {
+    int liste[kVoituresPages];
+    const int n = pages_montrees(liste);
+    if (rang < 0 || rang >= n) rang = 0;
+    s_page = liste[rang];
+    peindre();
+    ui_mark_activity();
+}
+
+// Geste gauche / droite du popup (tab5_pages.cpp, ADR-0046) ; les onglets suivent.
+PagesPopup s_pages{nullptr, nombre_pages, page_courante, afficher_page};
 
 }  // namespace
 
@@ -406,6 +490,7 @@ void voitures_recu(const std::string& rang, const std::string& payload) {
         v.minutes = lu.minutes;
     }
     s_v[k] = v;
+    voitures_etat_recu(k, v.presente ? &lu : nullptr);   // la page « État » (ADR-0081)
     if (popup_ouvert()) peindre();
 }
 
@@ -413,6 +498,8 @@ void voitures_ouvrir() {
     const VoituresUI& u = g_voitures_ui;
     if (u.popup == nullptr) return;
     construire();
+    s_pages.popup = u.popup;
+    pages_brancher(&s_pages);   // le geste gauche / droite des pages (sans effet de plus après la première fois)
     peindre();
     // À chaque ouverture, comme le popup Énergie : Home Assistant ne pousse que tant que « Écran
     // courant » vaut « Energy » ou « Cars » ; ouvert par « Aller à l'écran » après une longue absence,
@@ -420,6 +507,8 @@ void voitures_ouvrir() {
     // `restart` : une demande de plus relance sa boucle, rien ne s'empile.
     if (u.demander != nullptr) u.demander();
 }
+
+void voitures_page(int rang) { afficher_page(rang); }
 
 void voitures_rejouer_theme() {
     if (!s_construit || !popup_ouvert()) return;

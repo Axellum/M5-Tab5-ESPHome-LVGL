@@ -8,9 +8,19 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1328;
+static const uint16_t kI18nKeyCount = 1338;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1617,6 +1627,7 @@ static const char* const kI18nKeys[] = {
     "COULEURS",
     "COUPS",
     "CREUSER",
+    "Cabine",
     "Calcule 3 coups + les prises en chaîne",
     "Calcule 4 coups, tactique correcte",
     "Calendrier",
@@ -1765,6 +1776,7 @@ static const char* const kI18nKeys[] = {
     "Détails",
     "Détection BMI270",
     "Détecté",
+    "Déverrouillées",
     "EFFACER LES STATISTIQUES",
     "Effacer les scores",
     "Effacer les scores ?",
@@ -1979,6 +1991,7 @@ static const char* const kI18nKeys[] = {
     "Limite de charge",
     "Lire",
     "Lode Runner 1983\nCreuse · grimpe · fuis",
+    "Logiciel",
     "Luminosité",
     "Lumière",
     "Lumières",
@@ -2159,11 +2172,13 @@ static const char* const kI18nKeys[] = {
     "Pluie sur %d h",
     "Plume de suie",
     "Plus d'image depuis %02d:%02d:%02d",
+    "Pneus corrects",
     "Podcasts",
     "Points neutres (dame) : %d",
     "Portail ouvert !",
     "Porte mal fermée",
     "Porte ouverte ?",
+    "Portes",
     "Pose la tablette PUIS appuie",
     "Pose la tablette avant d'appuyer",
     "Pose la tablette et appuie",
@@ -2178,6 +2193,7 @@ static const char* const kI18nKeys[] = {
     "Premier filon",
     "Prends. Tu en auras besoin.",
     "Presets",
+    "Pression basse",
     "Prise obligatoire",
     "Prise x%d",
     "Prisonniers de la partie : Noir %u, Blanc %u",
@@ -2342,6 +2358,7 @@ static const char* const kI18nKeys[] = {
     "Sensibilité",
     "Sensibilité IMU : %d/5",
     "Sensibilité du nudge : %s",
+    "Sentinelle",
     "Sept",
     "Serre",
     "Serveur IA",
@@ -2482,6 +2499,7 @@ static const char* const kI18nKeys[] = {
     "Venteux",
     "Ventilation",
     "Verrouillé",
+    "Verrouillées",
     "Vers le réseau",
     "Victoire des Blancs",
     "Victoire des Noirs",
@@ -2606,7 +2624,9 @@ static const char* const kI18nKeys[] = {
     "{n} titres",
     "À %s de lancer le dé",
     "À arroser !",
+    "À jour",
     "À la suite",
+    "À mettre à jour",
     "À suivre · {titre}",
     "À vous",
     "À vérifier",
@@ -2949,6 +2969,7 @@ static const char* const kI18n_en[] = {
     "COLORS",  // "COULEURS"
     "MOVES",  // "COUPS"
     "DIG",  // "CREUSER"
+    "Cabin",  // "Cabine"
     "Calculates 3 moves + capture chains",  // "Calcule 3 coups + les prises en chaîne"
     "Calculates 4 moves, decent tactics",  // "Calcule 4 coups, tactique correcte"
     "Calendar",  // "Calendrier"
@@ -3097,6 +3118,7 @@ static const char* const kI18n_en[] = {
     "Details",  // "Détails"
     "BMI270 detection",  // "Détection BMI270"
     "Detected",  // "Détecté"
+    "Unlocked",  // "Déverrouillées"
     "CLEAR STATISTICS",  // "EFFACER LES STATISTIQUES"
     "Clear scores",  // "Effacer les scores"
     "Clear scores?",  // "Effacer les scores ?"
@@ -3311,6 +3333,7 @@ static const char* const kI18n_en[] = {
     "Charge limit",  // "Limite de charge"
     "Play",  // "Lire"
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Brightness",  // "Luminosité"
     "Light",  // "Lumière"
     "Lights",  // "Lumières"
@@ -3491,11 +3514,13 @@ static const char* const kI18n_en[] = {
     "Rain over %d h",  // "Pluie sur %d h"
     "Soot Feather",  // "Plume de suie"
     "No image since %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Tires OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Neutral points (dame): %d",  // "Points neutres (dame) : %d"
     "Portal open!",  // "Portail ouvert !"
     "Door not closed",  // "Porte mal fermée"
     "Door open?",  // "Porte ouverte ?"
+    "Doors",  // "Portes"
     "Set the tablet down THEN tap",  // "Pose la tablette PUIS appuie"
     "Lay the tablet down, then tap",  // "Pose la tablette avant d'appuyer"
     "Lay the tablet down and tap",  // "Pose la tablette et appuie"
@@ -3510,6 +3535,7 @@ static const char* const kI18n_en[] = {
     "First Lode",  // "Premier filon"
     "Take it. You'll need it.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Low pressure",  // "Pression basse"
     "Must capture",  // "Prise obligatoire"
     "Capture x%d",  // "Prise x%d"
     "Captures: Black %u, White %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -3674,6 +3700,7 @@ static const char* const kI18n_en[] = {
     "Sensitivity",  // "Sensibilité"
     "IMU sensitivity: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudge sensitivity: %s",  // "Sensibilité du nudge : %s"
+    "Sentry",  // "Sentinelle"
     "Sep",  // "Sept"
     "Greenhouse",  // "Serre"
     "AI server",  // "Serveur IA"
@@ -3814,6 +3841,7 @@ static const char* const kI18n_en[] = {
     "Windy",  // "Venteux"
     "Fan",  // "Ventilation"
     "Locked",  // "Verrouillé"
+    "Locked",  // "Verrouillées"
     "To the grid",  // "Vers le réseau"
     "White wins",  // "Victoire des Blancs"
     "Black wins",  // "Victoire des Noirs"
@@ -3938,7 +3966,9 @@ static const char* const kI18n_en[] = {
     "{n} tracks",  // "{n} titres"
     "%s, roll the die",  // "À %s de lancer le dé"
     "Needs water!",  // "À arroser !"
+    "Up to date",  // "À jour"
     "Play next",  // "À la suite"
+    "Update due",  // "À mettre à jour"
     "Up next · {titre}",  // "À suivre · {titre}"
     "Your move",  // "À vous"
     "To check",  // "À vérifier"
@@ -4281,6 +4311,7 @@ static const char* const kI18n_de[] = {
     "FARBEN",  // "COULEURS"
     "ZÜGE",  // "COUPS"
     "GRABEN",  // "CREUSER"
+    "Innenraum",  // "Cabine"
     "Rechnet 3 Züge + Schlagketten",  // "Calcule 3 coups + les prises en chaîne"
     "Rechnet 4 Züge, solide Taktik",  // "Calcule 4 coups, tactique correcte"
     "Kalender",  // "Calendrier"
@@ -4429,6 +4460,7 @@ static const char* const kI18n_de[] = {
     "Details",  // "Détails"
     "BMI270-Erkennung",  // "Détection BMI270"
     "Erkannt",  // "Détecté"
+    "Entriegelt",  // "Déverrouillées"
     "STATISTIK LÖSCHEN",  // "EFFACER LES STATISTIQUES"
     "Scores löschen",  // "Effacer les scores"
     "Scores löschen?",  // "Effacer les scores ?"
@@ -4643,6 +4675,7 @@ static const char* const kI18n_de[] = {
     "Ladegrenze",  // "Limite de charge"
     "Abspielen",  // "Lire"
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Helligkeit",  // "Luminosité"
     "Licht",  // "Lumière"
     "Lichter",  // "Lumières"
@@ -4823,11 +4856,13 @@ static const char* const kI18n_de[] = {
     "Regen in %d Std.",  // "Pluie sur %d h"
     "Rußfeder",  // "Plume de suie"
     "Kein Bild seit %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Reifen OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Neutrale Punkte (Dame): %d",  // "Points neutres (dame) : %d"
     "Portal offen!",  // "Portail ouvert !"
     "Tür nicht richtig zu",  // "Porte mal fermée"
     "Tür offen?",  // "Porte ouverte ?"
+    "Türen",  // "Portes"
     "Tablet hinlegen, DANN tippen",  // "Pose la tablette PUIS appuie"
     "Tablet hinlegen, dann tippen",  // "Pose la tablette avant d'appuyer"
     "Tablet hinlegen und tippen",  // "Pose la tablette et appuie"
@@ -4842,6 +4877,7 @@ static const char* const kI18n_de[] = {
     "Erste Ader",  // "Premier filon"
     "Nimm. Du wirst es brauchen.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Druck niedrig",  // "Pression basse"
     "Schlagzwang",  // "Prise obligatoire"
     "Schlag x%d",  // "Prise x%d"
     "Gefangene: Schwarz %u, Weiß %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -5006,6 +5042,7 @@ static const char* const kI18n_de[] = {
     "Sensitivität",  // "Sensibilité"
     "IMU-Empfindlichkeit: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudge-Empfindlichkeit: %s",  // "Sensibilité du nudge : %s"
+    "Sentry",  // "Sentinelle"
     "Sep",  // "Sept"
     "Gewächshaus",  // "Serre"
     "KI-Server",  // "Serveur IA"
@@ -5146,6 +5183,7 @@ static const char* const kI18n_de[] = {
     "Windig",  // "Venteux"
     "Lüften",  // "Ventilation"
     "Gesperrt",  // "Verrouillé"
+    "Verriegelt",  // "Verrouillées"
     "Ins Netz",  // "Vers le réseau"
     "Weiß gewinnt",  // "Victoire des Blancs"
     "Schwarz gewinnt",  // "Victoire des Noirs"
@@ -5270,7 +5308,9 @@ static const char* const kI18n_de[] = {
     "{n} Titel",  // "{n} titres"
     "%s ist dran: würfeln",  // "À %s de lancer le dé"
     "Gießen!",  // "À arroser !"
+    "Aktuell",  // "À jour"
     "Als Nächstes",  // "À la suite"
+    "Update fällig",  // "À mettre à jour"
     "Als Nächstes · {titre}",  // "À suivre · {titre}"
     "Dein Zug",  // "À vous"
     "Prüfen",  // "À vérifier"
@@ -5613,6 +5653,7 @@ static const char* const kI18n_nl[] = {
     "KLEUREN",  // "COULEURS"
     "ZETTEN",  // "COUPS"
     "GRAAF",  // "CREUSER"
+    "Interieur",  // "Cabine"
     "Rekent 3 zetten + slagreeksen",  // "Calcule 3 coups + les prises en chaîne"
     "Rekent 4 zetten, redelijke tactiek",  // "Calcule 4 coups, tactique correcte"
     "Agenda",  // "Calendrier"
@@ -5761,6 +5802,7 @@ static const char* const kI18n_nl[] = {
     "Details",  // "Détails"
     "BMI270-detectie",  // "Détection BMI270"
     "Gedetecteerd",  // "Détecté"
+    "Ontgrendeld",  // "Déverrouillées"
     "STATISTIEKEN WISSEN",  // "EFFACER LES STATISTIQUES"
     "Scores wissen",  // "Effacer les scores"
     "Scores wissen?",  // "Effacer les scores ?"
@@ -5975,6 +6017,7 @@ static const char* const kI18n_nl[] = {
     "Laadlimiet",  // "Limite de charge"
     "Afspelen",  // "Lire"
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Helderheid",  // "Luminosité"
     "Licht",  // "Lumière"
     "Lampen",  // "Lumières"
@@ -6155,11 +6198,13 @@ static const char* const kI18n_nl[] = {
     "Regen in %d u",  // "Pluie sur %d h"
     "Roetveer",  // "Plume de suie"
     "Geen beeld sinds %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Banden OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Neutrale punten (dame): %d",  // "Points neutres (dame) : %d"
     "Portaal open!",  // "Portail ouvert !"
     "Deur niet goed dicht",  // "Porte mal fermée"
     "Deur open?",  // "Porte ouverte ?"
+    "Deuren",  // "Portes"
     "Leg de tablet neer, tik DAN",  // "Pose la tablette PUIS appuie"
     "Leg de tablet neer, tik dan",  // "Pose la tablette avant d'appuyer"
     "Leg de tablet neer en tik",  // "Pose la tablette et appuie"
@@ -6174,6 +6219,7 @@ static const char* const kI18n_nl[] = {
     "Eerste ader",  // "Premier filon"
     "Pak aan. Je hebt het nodig.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Lage druk",  // "Pression basse"
     "Slagplicht",  // "Prise obligatoire"
     "Slag x%d",  // "Prise x%d"
     "Gevangen stenen: Zwart %u, Wit %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -6338,6 +6384,7 @@ static const char* const kI18n_nl[] = {
     "Gevoeligheid",  // "Sensibilité"
     "IMU-gevoeligheid: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudgegevoeligheid: %s",  // "Sensibilité du nudge : %s"
+    "Sentry",  // "Sentinelle"
     "Sep",  // "Sept"
     "Kas",  // "Serre"
     "AI-server",  // "Serveur IA"
@@ -6478,6 +6525,7 @@ static const char* const kI18n_nl[] = {
     "Winderig",  // "Venteux"
     "Ventilatie",  // "Ventilation"
     "Op slot",  // "Verrouillé"
+    "Vergrendeld",  // "Verrouillées"
     "Naar het net",  // "Vers le réseau"
     "Wit wint",  // "Victoire des Blancs"
     "Zwart wint",  // "Victoire des Noirs"
@@ -6602,7 +6650,9 @@ static const char* const kI18n_nl[] = {
     "{n} nummers",  // "{n} titres"
     "%s mag dobbelen",  // "À %s de lancer le dé"
     "Water geven!",  // "À arroser !"
+    "Actueel",  // "À jour"
     "Hierna",  // "À la suite"
+    "Update nodig",  // "À mettre à jour"
     "Hierna · {titre}",  // "À suivre · {titre}"
     "Jouw zet",  // "À vous"
     "Controleren",  // "À vérifier"
@@ -6945,6 +6995,7 @@ static const char* const kI18n_es[] = {
     "COLORES",  // "COULEURS"
     "JUG.",  // "COUPS"
     "CAVAR",  // "CREUSER"
+    "Cabina",  // "Cabine"
     "Calcula 3 jugadas + capturas en cadena",  // "Calcule 3 coups + les prises en chaîne"
     "Calcula 4 jugadas, táctica correcta",  // "Calcule 4 coups, tactique correcte"
     "Calendario",  // "Calendrier"
@@ -7093,6 +7144,7 @@ static const char* const kI18n_es[] = {
     "Detalles",  // "Détails"
     "Detección BMI270",  // "Détection BMI270"
     "Detectado",  // "Détecté"
+    "Desbloqueadas",  // "Déverrouillées"
     "BORRAR ESTADÍSTICAS",  // "EFFACER LES STATISTIQUES"
     "Borrar puntuaciones",  // "Effacer les scores"
     "¿Borrar puntuaciones?",  // "Effacer les scores ?"
@@ -7307,6 +7359,7 @@ static const char* const kI18n_es[] = {
     "Límite de carga",  // "Limite de charge"
     "Reproducir",  // "Lire"
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Brillo",  // "Luminosité"
     "Luz",  // "Lumière"
     "Luces",  // "Lumières"
@@ -7487,11 +7540,13 @@ static const char* const kI18n_es[] = {
     "Lluvia en %d h",  // "Pluie sur %d h"
     "Pluma de hollín",  // "Plume de suie"
     "Sin imagen desde las %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Neumáticos OK",  // "Pneus corrects"
     "Podcasts",  // "Podcasts"
     "Puntos neutrales (dame): %d",  // "Points neutres (dame) : %d"
     "¡Portal abierto!",  // "Portail ouvert !"
     "Puerta mal cerrada",  // "Porte mal fermée"
     "¿Puerta abierta?",  // "Porte ouverte ?"
+    "Puertas",  // "Portes"
     "Apoya la tableta Y LUEGO toca",  // "Pose la tablette PUIS appuie"
     "Apoya la tableta antes de tocar",  // "Pose la tablette avant d'appuyer"
     "Apoya la tableta y toca",  // "Pose la tablette et appuie"
@@ -7506,6 +7561,7 @@ static const char* const kI18n_es[] = {
     "Primera veta",  // "Premier filon"
     "Toma. Lo necesitarás.",  // "Prends. Tu en auras besoin."
     "Presets",  // "Presets"
+    "Presión baja",  // "Pression basse"
     "Captura obligatoria",  // "Prise obligatoire"
     "Captura x%d",  // "Prise x%d"
     "Prisioneros: Negro %u, Blanco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -7670,6 +7726,7 @@ static const char* const kI18n_es[] = {
     "Sensibilidad",  // "Sensibilité"
     "Sensibilidad IMU: %d/5",  // "Sensibilité IMU : %d/5"
     "Sensibilidad del nudge: %s",  // "Sensibilité du nudge : %s"
+    "Centinela",  // "Sentinelle"
     "Sept",  // "Sept"
     "Invernadero",  // "Serre"
     "Servidor IA",  // "Serveur IA"
@@ -7810,6 +7867,7 @@ static const char* const kI18n_es[] = {
     "Ventoso",  // "Venteux"
     "Ventilación",  // "Ventilation"
     "Bloqueado",  // "Verrouillé"
+    "Bloqueadas",  // "Verrouillées"
     "Hacia la red",  // "Vers le réseau"
     "Ganan las blancas",  // "Victoire des Blancs"
     "Ganan las negras",  // "Victoire des Noirs"
@@ -7934,7 +7992,9 @@ static const char* const kI18n_es[] = {
     "{n} temas",  // "{n} titres"
     "%s, tira el dado",  // "À %s de lancer le dé"
     "¡Regar!",  // "À arroser !"
+    "Al día",  // "À jour"
     "A continuación",  // "À la suite"
+    "Por actualizar",  // "À mettre à jour"
     "A continuación · {titre}",  // "À suivre · {titre}"
     "Tu turno",  // "À vous"
     "Revisar",  // "À vérifier"
@@ -8277,6 +8337,7 @@ static const char* const kI18n_it[] = {
     "COLORI",  // "COULEURS"
     "MOSSE",  // "COUPS"
     "SCAVA",  // "CREUSER"
+    "Abitacolo",  // "Cabine"
     "Calcola 3 mosse + le prese a catena",  // "Calcule 3 coups + les prises en chaîne"
     "Calcola 4 mosse, tattica discreta",  // "Calcule 4 coups, tactique correcte"
     "Calendario",  // "Calendrier"
@@ -8425,6 +8486,7 @@ static const char* const kI18n_it[] = {
     "Dettagli",  // "Détails"
     "Rilevamento BMI270",  // "Détection BMI270"
     "Rilevato",  // "Détecté"
+    "Sbloccate",  // "Déverrouillées"
     "CANCELLA LE STATISTICHE",  // "EFFACER LES STATISTIQUES"
     "Cancella punteggi",  // "Effacer les scores"
     "Cancellare i punteggi?",  // "Effacer les scores ?"
@@ -8639,6 +8701,7 @@ static const char* const kI18n_it[] = {
     "Limite di carica",  // "Limite de charge"
     "Riproduci",  // "Lire"
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Software",  // "Logiciel"
     "Luminosità",  // "Luminosité"
     "Luce",  // "Lumière"
     "Luci",  // "Lumières"
@@ -8819,11 +8882,13 @@ static const char* const kI18n_it[] = {
     "Pioggia in %d h",  // "Pluie sur %d h"
     "Piuma di fuliggine",  // "Plume de suie"
     "Nessuna immagine dalle %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Gomme OK",  // "Pneus corrects"
     "Podcast",  // "Podcasts"
     "Punti neutri (dame): %d",  // "Points neutres (dame) : %d"
     "Portale aperto!",  // "Portail ouvert !"
     "Porta chiusa male",  // "Porte mal fermée"
     "Porta aperta?",  // "Porte ouverte ?"
+    "Porte",  // "Portes"
     "Appoggia il tablet, POI tocca",  // "Pose la tablette PUIS appuie"
     "Appoggia il tablet, poi tocca",  // "Pose la tablette avant d'appuyer"
     "Appoggia il tablet e tocca",  // "Pose la tablette et appuie"
@@ -8838,6 +8903,7 @@ static const char* const kI18n_it[] = {
     "Primo filone",  // "Premier filon"
     "Prendi. Ti servirà.",  // "Prends. Tu en auras besoin."
     "Preset",  // "Presets"
+    "Pressione bassa",  // "Pression basse"
     "Presa obbligatoria",  // "Prise obligatoire"
     "Presa x%d",  // "Prise x%d"
     "Prigionieri: Nero %u, Bianco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -9002,6 +9068,7 @@ static const char* const kI18n_it[] = {
     "Sensibilità",  // "Sensibilité"
     "Sensibilità IMU: %d/5",  // "Sensibilité IMU : %d/5"
     "Sensibilità del nudge: %s",  // "Sensibilité du nudge : %s"
+    "Sentinella",  // "Sentinelle"
     "Set",  // "Sept"
     "Serra",  // "Serre"
     "Server IA",  // "Serveur IA"
@@ -9142,6 +9209,7 @@ static const char* const kI18n_it[] = {
     "Ventoso",  // "Venteux"
     "Ventilazione",  // "Ventilation"
     "Bloccato",  // "Verrouillé"
+    "Bloccate",  // "Verrouillées"
     "Verso la rete",  // "Vers le réseau"
     "Vince il Bianco",  // "Victoire des Blancs"
     "Vince il Nero",  // "Victoire des Noirs"
@@ -9266,7 +9334,9 @@ static const char* const kI18n_it[] = {
     "{n} brani",  // "{n} titres"
     "%s, tira il dado",  // "À %s de lancer le dé"
     "Da annaffiare!",  // "À arroser !"
+    "Aggiornato",  // "À jour"
     "Di seguito",  // "À la suite"
+    "Da aggiornare",  // "À mettre à jour"
     "Di seguito · {titre}",  // "À suivre · {titre}"
     "Tocca a te",  // "À vous"
     "Da controllare",  // "À vérifier"
@@ -9609,6 +9679,7 @@ static const char* const kI18n_tr[] = {
     "RENKLER",  // "COULEURS"
     "HAMLE",  // "COUPS"
     "KAZ",  // "CREUSER"
+    "Kabin",  // "Cabine"
     "3 hamle + zincir almaları hesaplar",  // "Calcule 3 coups + les prises en chaîne"
     "4 hamle hesaplar, düzgün taktik",  // "Calcule 4 coups, tactique correcte"
     "Takvim",  // "Calendrier"
@@ -9757,6 +9828,7 @@ static const char* const kI18n_tr[] = {
     "Ayrıntılar",  // "Détails"
     "BMI270 algılama",  // "Détection BMI270"
     "Algılandı",  // "Détecté"
+    "Kilitsiz",  // "Déverrouillées"
     "İSTATİSTİKLERİ SİL",  // "EFFACER LES STATISTIQUES"
     "Skorları sil",  // "Effacer les scores"
     "Skorlar silinsin mi?",  // "Effacer les scores ?"
@@ -9971,6 +10043,7 @@ static const char* const kI18n_tr[] = {
     "Şarj sınırı",  // "Limite de charge"
     "Çal",  // "Lire"
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Yazılım",  // "Logiciel"
     "Parlaklık",  // "Luminosité"
     "Işık",  // "Lumière"
     "Işıklar",  // "Lumières"
@@ -10151,11 +10224,13 @@ static const char* const kI18n_tr[] = {
     "%d saatte yağmur",  // "Pluie sur %d h"
     "Kurum Tüyü",  // "Plume de suie"
     "Son görsel: %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Lastikler normal",  // "Pneus corrects"
     "Podcast'ler",  // "Podcasts"
     "Nötr noktalar (dame): %d",  // "Points neutres (dame) : %d"
     "Portal açık!",  // "Portail ouvert !"
     "Kapı tam kapanmadı",  // "Porte mal fermée"
     "Kapı açık mı?",  // "Porte ouverte ?"
+    "Kapılar",  // "Portes"
     "Tableti yatır SONRA dokun",  // "Pose la tablette PUIS appuie"
     "Dokunmadan önce tableti yatır",  // "Pose la tablette avant d'appuyer"
     "Tableti yatır ve dokun",  // "Pose la tablette et appuie"
@@ -10170,6 +10245,7 @@ static const char* const kI18n_tr[] = {
     "İlk Damar",  // "Premier filon"
     "Al. İhtiyacın olacak.",  // "Prends. Tu en auras besoin."
     "Hazır ayar",  // "Presets"
+    "Düşük basınç",  // "Pression basse"
     "Alma zorunlu",  // "Prise obligatoire"
     "Alma x%d",  // "Prise x%d"
     "Oyundaki esirler: Siyah %u, Beyaz %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
@@ -10334,6 +10410,7 @@ static const char* const kI18n_tr[] = {
     "Hassasiyet",  // "Sensibilité"
     "IMU hassasiyeti: %d/5",  // "Sensibilité IMU : %d/5"
     "Dürtme hassasiyeti: %s",  // "Sensibilité du nudge : %s"
+    "Nöbetçi",  // "Sentinelle"
     "Eyl",  // "Sept"
     "Sera",  // "Serre"
     "YZ sunucusu",  // "Serveur IA"
@@ -10474,6 +10551,7 @@ static const char* const kI18n_tr[] = {
     "Rüzgârlı",  // "Venteux"
     "Fan",  // "Ventilation"
     "Kilitli",  // "Verrouillé"
+    "Kilitli",  // "Verrouillées"
     "Şebekeye",  // "Vers le réseau"
     "Beyaz kazandı",  // "Victoire des Blancs"
     "Siyah kazandı",  // "Victoire des Noirs"
@@ -10598,7 +10676,9 @@ static const char* const kI18n_tr[] = {
     "{n} parça",  // "{n} titres"
     "Zarı atma sırası: %s",  // "À %s de lancer le dé"
     "Sulanmalı!",  // "À arroser !"
+    "Güncel",  // "À jour"
     "Sıradaki",  // "À la suite"
+    "Güncelleme var",  // "À mettre à jour"
     "Sıradaki · {titre}",  // "À suivre · {titre}"
     "Sıra sende",  // "À vous"
     "Kontrol et",  // "À vérifier"

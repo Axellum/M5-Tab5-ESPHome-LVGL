@@ -17,14 +17,24 @@
 // =============================================================================
 // Voitures : le popup « Voitures » (ADR-0079, lot 6 du plan des voitures) — tab5_voitures.cpp
 // =============================================================================
-// Une page seulement, « Aperçu » : une carte par voiture reçue (deux au plus, côte à côte ; une
-// seule voiture : une carte pleine largeur). Chaque carte : le nom, la silhouette (un grand glyphe
-// MDI, à la couleur de l'état), l'anneau de la batterie et son pourcentage, l'autonomie, une ligne
-// d'état courte (« En charge · 7.20 kW ») et le détail (énergie ajoutée, fin de la charge, limite).
-// Les pages Charge, Trajets et État viennent aux lots suivants (le popup n'a pas d'onglets tant
-// qu'il n'a qu'une page, ADR-0046). Ouvert en appuyant sur un cercle de voiture de la page Flux du
-// popup Énergie, ou par « Aller à l'écran → Cars ».
+// Quatre pages au plus (ADR-0079, ADR-0081), dans l'ordre des onglets ; une page n'apparaît que si elle
+// a des données et le popup n'a pas d'onglets sous deux pages (ADR-0046) :
+//   - « Aperçu » (toujours là : sans voiture, elle dit « Aucune voiture reçue ») : une carte par voiture
+//     reçue (deux au plus, côte à côte ; une seule voiture : une carte pleine largeur). Chaque carte :
+//     le nom, la silhouette (un grand glyphe MDI, à la couleur de l'état), l'anneau de la batterie et
+//     son pourcentage, l'autonomie, une ligne d'état courte (« En charge · 7.20 kW ») et le détail
+//     (énergie ajoutée, fin de la charge, limite) ;
+//   - « Charge » et « Trajets » : lots 8 et 9 du plan des voitures ;
+//   - « État » (tab5_voitures_etat.cpp) : pneus, températures, verrou, Sentinelle, logiciel.
+// Une page de plus = son numéro ici, son conteneur dans voitures_popup.yaml et son entrée dans la table
+// kPages de tab5_voitures.cpp. Ouvert en appuyant sur un cercle de voiture de la page Flux du popup
+// Énergie, ou par « Aller à l'écran → Cars ».
 constexpr int kVoituresCartes = 2;
+constexpr int kVoituresPages = 4;
+constexpr int kPageApercu = 0;
+constexpr int kPageCharge = 1;
+constexpr int kPageTrajets = 2;
+constexpr int kPageEtat = 3;
 
 // Widgets posés par le script tab5_voitures_lier (tab5-voitures.yaml) : id() n'existe que dans
 // une lambda YAML. Un champ [n] = la carte n (voitures_carte.yaml) ; une carte porte la voiture
@@ -45,6 +55,10 @@ struct VoituresUI {
     lv_obj_t* etat[kVoituresCartes] = {};            // voitures_etat_N : « En charge · 7.20 kW »
     lv_obj_t* detail[kVoituresCartes] = {};          // voitures_detail_N : énergie ajoutée, fin de charge
     lv_obj_t* limite[kVoituresCartes] = {};          // voitures_limite_N : « Limite 80 % »
+    // Pages (ADR-0081) : les noms (pages_onglet.yaml, voitures_onglet_N) et le conteneur plein corps de
+    // chaque page ; page[kPageApercu] reste nul (l'Aperçu garde ses cartes, ci-dessus).
+    lv_obj_t* onglet[kVoituresPages] = {};           // voitures_onglet_N
+    lv_obj_t* page[kVoituresPages] = {};             // voitures_page_etat, voitures_page_…
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture) : demande à
     // Home Assistant de pousser les voitures quand le popup s'ouvre sans en avoir reçu.
     void (*demander)() = nullptr;
@@ -61,3 +75,9 @@ void voitures_ouvrir();
 // Thèmes (ADR-0029) : couleurs des cartes, anneaux et silhouettes du popup s'il est ouvert.
 // Appelé par theme_rejouer_ui() (tab5_theme.cpp).
 void voitures_rejouer_theme();
+// Les onglets (pages_onglet.yaml, `choisir: voitures_page`) : montre la page de rang `rang` parmi les
+// pages montrées (comme energie_page).
+void voitures_page(int rang);
+
+// La page « État » (ADR-0081) : son code est dans son fichier.
+#include "tab5_voitures_etat.h"

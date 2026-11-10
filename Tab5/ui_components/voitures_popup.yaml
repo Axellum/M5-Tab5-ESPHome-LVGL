@@ -4,18 +4,21 @@
 # @role Popup « Voitures » (ADR-0079, 09/11/2026, lot 6 « C1 » du plan des voitures) : les voitures
 #       électriques de la maison, une grande carte chacune (voitures_carte.yaml) — nom, silhouette
 #       (grand glyphe MDI), anneau de la batterie, autonomie, état et détail de la charge —, côte à
-#       côte (une seule voiture : une carte pleine largeur). Une seule page, « Aperçu » : pas
-#       d'onglets sous deux pages (ADR-0046) ; les pages Charge, Trajets et État viennent aux
-#       lots suivants. Ouvert en appuyant sur un cercle de voiture de la page Flux du popup Énergie
-#       (energie_flux_noeud.yaml) ou par « Aller à l'écran → Cars ».
+#       côte (une seule voiture : une carte pleine largeur). Plusieurs pages (ADR-0046, ADR-0081) :
+#       « Aperçu » (ces cartes), puis Charge, Trajets et État — chacune a son conteneur plein
+#       corps (voitures_page_*), ses noms d'onglets sont posés par pages_onglets() (tab5_voitures.cpp,
+#       table kPages) et rien ne s'affiche sous deux pages. Ouvert en appuyant sur un cercle de
+#       voiture de la page Flux du popup Énergie (energie_flux_noeud.yaml) ou par « Aller à l'écran
+#       → Cars ».
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header, corps à
 #       y = ${modal_body_y}), registre unique (ADR-0013 : « Cars » dans tab5_modal_registry_init,
 #       ouvert par tab5_voitures_ouvrir). Corps : x 24..1226, y 72..670 ; tab5_voitures.cpp place
 #       les cartes. Sans voiture reçue, voitures_message et voitures_conseil disent pourquoi.
 # @ai_instruction Un widget de plus = son champ dans VoituresUI (tab5_voitures.h) et sa ligne dans
-#       le script tab5_voitures_lier (tab5-voitures.yaml). Câblage des pages prévu, pas activé :
-#       un popup à plusieurs pages donne son PagesPopup à pages_brancher() (tab5_pages.cpp) et ses
-#       onglets à pages_onglet.yaml, comme energie_popup.yaml.
+#       le script tab5_voitures_lier (tab5-voitures.yaml). Une page de plus = son conteneur plein
+#       corps ici (lié par `u.page[kPage…]`), son entrée dans la table kPages (tab5_voitures.cpp) ;
+#       les quatre onglets sont déjà là (voitures_onglet_0 à 3, pages_onglet.yaml, comme
+#       energie_popup.yaml), le PagesPopup est donné à pages_brancher() par tab5_voitures.cpp.
 # ═══════════════════════════════════════════════════════
 obj:
   id: voitures_popup
@@ -40,9 +43,19 @@ obj:
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0B6C", icon_style: "style_text_accent", title: "Voitures", title_id: "voitures_popup_titre", close_btn_id: "btn_voitures_close", popup_id: voitures_popup } }
 
+          # Noms des pages montrées, sur la ligne du titre (pages_onglet.yaml) : posés par pages_onglets()
+          # (tab5_voitures.cpp), aucun sous deux pages. `page` = rang parmi les pages montrées.
+          - !include { file: pages_onglet.yaml, vars: { id: voitures_onglet_0, page: 0, choisir: voitures_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: voitures_onglet_1, page: 1, choisir: voitures_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: voitures_onglet_2, page: 2, choisir: voitures_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: voitures_onglet_3, page: 3, choisir: voitures_page } }
+
           # ═══ UNE CARTE PAR VOITURE (jusqu'à deux) ═══
           - !include { file: voitures_carte.yaml, vars: { n: "0" } }
           - !include { file: voitures_carte.yaml, vars: { n: "1" } }
+
+          # ═══ PAGE « ÉTAT » (ADR-0081) : pneus, températures, verrou, Sentinelle, logiciel ═══
+          - !include voitures_page_etat.yaml
 
           # ═══ AUCUNE VOITURE REÇUE : un message court et où les choisir ═══
           - label: { id: voitures_message, text: "", align: TOP_LEFT, x: 24, y: 300, width: "${corps_w}", hidden: true, text_font: roboto_32_b, text_align: CENTER }

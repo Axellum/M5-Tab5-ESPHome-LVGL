@@ -1612,3 +1612,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "menzil"
 "Aucune voiture reçue": "Hiç araç alınmadı"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Bunları blueprint'te “Énergie : voitures · Energy: cars” bölümünden seçin."
+# --- Popup Voitures, page État (tab5_voitures_etat.cpp, ADR-0081) ---------------
+# Libellés de lignes : colonne ~400 px, 12 caractères au plus. Valeurs : Roboto 32 gras, 16 au plus.
+"Cabine": "Kabin"
+"Portes": "Kapılar"
+"Sentinelle": "Nöbetçi"   # nom officiel Tesla en turc (Nöbetçi Modu)
+"Logiciel": "Yazılım"
+"Verrouillées": "Kilitli"
+"Déverrouillées": "Kilitsiz"
+"À jour": "Güncel"
+"À mettre à jour": "Güncelleme var"
+"Pneus corrects": "Lastikler normal"
+"Pression basse": "Düşük basınç"

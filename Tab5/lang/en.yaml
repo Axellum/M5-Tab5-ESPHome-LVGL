@@ -1560,3 +1560,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "d'autonomie": "of range"
 "Aucune voiture reçue": "No car received"
 "Choisissez-les dans le blueprint, section « Énergie : voitures ».": "Choose them in the blueprint, section “Energy: cars”."
+# --- Popup Voitures, page État (tab5_voitures_etat.cpp, ADR-0081) ---------------
+# Libellés de lignes : colonne ~400 px, 12 caractères au plus. Valeurs : Roboto 32 gras, 16 au plus.
+"Cabine": "Cabin"
+"Portes": "Doors"
+"Sentinelle": "Sentry"   # nom officiel Tesla (Sentry Mode)
+"Logiciel": "Software"
+"Verrouillées": "Locked"
+"Déverrouillées": "Unlocked"
+"À jour": "Up to date"
+"À mettre à jour": "Update due"
+"Pneus corrects": "Tires OK"
+"Pression basse": "Low pressure"
