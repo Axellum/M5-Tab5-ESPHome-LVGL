@@ -188,12 +188,16 @@ def test_popup_musique_au_meme_endroit_de_sa_carte(carte):
     dy = (V.TAB5[1] - V.LECTEUR_CARTE[1]) // 2 - (h - V.LECTEUR_CARTE[1]) // 2
     if carte == "waveshare-7b":
         assert (dx, dy) == (128, 60)
-    (glisser,) = [e for e in V.adapter(_ecran("musique-pieces"), carte)[0] if isinstance(e, E.Glisser)]
+    # Deux glissements depuis le 10/11/2026 : avec Music Assistant, la page Playlists passe
+    # avant Pièces (ADR-0068).
+    glissers = [e for e in V.adapter(_ecran("musique-pieces"), carte)[0] if isinstance(e, E.Glisser)]
+    assert len(glissers) == 2
     s = E.MUSIQUE_PAGE_SUIVANTE
-    assert (glisser.x1, glisser.y1, glisser.x2, glisser.y2) == (s.x1 - dx, s.y1 - dy, s.x2 - dx, s.y2 - dy)
+    for glisser in glissers:
+        assert (glisser.x1, glisser.y1, glisser.x2, glisser.y2) == (s.x1 - dx, s.y1 - dy, s.x2 - dx, s.y2 - dy)
     gestes = [e for e in V.adapter(_ecran("musique-sources"), carte)[0] if isinstance(e, (E.Glisser, E.Toucher))]
-    assert len(gestes) == 3
-    long, roue = gestes[1], gestes[2]
+    assert len(gestes) == 4
+    long, roue = gestes[-2], gestes[-1]
     ancre = (E.MUSIQUE_SALON_ICONE[0] - dx, E.MUSIQUE_SALON_ICONE[1] - dy)
     assert (long.x, long.y, long.duree) == (*ancre, 1200)
     assert (roue.x, roue.y) == E.roue_centres(*ancre, E.MUSIQUE_ROUE_SALON, ecran=(l, h))[0]

@@ -1281,7 +1281,10 @@ static void test_musique_refs() {
     expect(std::strcmp(musique_vue_code(MusiqueVue::ARTISTES), "art") == 0 &&
                musique_vue_lire(ch("rec")) == MusiqueVue::RECENTS && musique_vue_lire(ch("")) == MusiqueVue::INCONNUE &&
                musique_vue_categorie(MusiqueVue::FAVORIS) && musique_vue_categorie(MusiqueVue::RECENTS) &&
-               !musique_vue_categorie(MusiqueVue::DETAIL) && !musique_vue_categorie(MusiqueVue::INCONNUE),
+               !musique_vue_categorie(MusiqueVue::DETAIL) && !musique_vue_categorie(MusiqueVue::INCONNUE) &&
+               musique_vue_lire(ch("plf")) == MusiqueVue::PLAYLISTS_FAVORITES &&
+               std::strcmp(musique_vue_code(MusiqueVue::PLAYLISTS_FAVORITES), "plf") == 0 &&
+               !musique_vue_categorie(MusiqueVue::PLAYLISTS_FAVORITES) && musique_vue_lire(ch("err")) == MusiqueVue::ERREUR,
            "vues : codes de l'événement");
 }
 

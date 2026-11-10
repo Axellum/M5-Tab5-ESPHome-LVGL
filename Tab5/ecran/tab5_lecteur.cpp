@@ -15,17 +15,16 @@
  *         - les commandes partent en événement esphome.tab5_lecteur (ADR-0025) : la tablette
  *           montre tout de suite l'effet attendu (lecture / pause, aléatoire, répétition,
  *           muet, volume, position), HA confirme par sa poussée suivante ;
- *         - playlists favorites (ADR-0068, 18/10/2026) : la page « Playlists » quand le
- *           blueprint en pousse au moins une (clé « playlists » de tab5_maj_emplacements,
- *           les noms seuls) ; la pochette et les pastilles restent, la colonne de droite
- *           devient une grille de boutons (une colonne jusqu'à quatre, deux au-delà). Un
- *           appui envoie l'index (action « playlist ») : le blueprint retrouve le lien, le
- *           bouton reste en accent kPlaylistEnCoursMs et le popup revient à sa page
- *           Lecture (musique_retour_lecture) ;
+ *         - playlists favorites du blueprint (ADR-0068, 18/10/2026) : les noms poussés
+ *           (clé « playlists » de tab5_maj_emplacements, les noms seuls), gardés ici et lus
+ *           par tab5_musique.cpp (lecteur_playlists_nb, lecteur_playlist_nom), qui les peint
+ *           dans la grille de la page « Playlists » sans Music Assistant (10/11/2026) ; un
+ *           appui y envoie le rang (lecteur_playlist, action « playlist ») : le blueprint
+ *           retrouve le lien ;
  *         - les pages du popup (Lecture, Playlists, Pièces, Bibliothèque), leurs noms contre
  *           la croix et leur glissement sont à tab5_musique.cpp (ADR-0067 : une seule
- *           brique des popups à pages, tab5_pages.cpp, ADR-0046) ; ce fichier dit combien de
- *           playlists il a (lecteur_playlists_nb) et peint la page montrée.
+ *           brique des popups à pages, tab5_pages.cpp, ADR-0046) ; ce fichier peint la page
+ *           Lecture et l'en-tête (la pastille de l'application sur la page Lecture seule).
  * @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : aucune entité
  *       nommée ici, la tablette dit « l'index i de la liste » ou « la tuile tRT ». Couleurs
  *       par la palette (UIColor.X) et lecteur_rejouer_theme() (ADR-0029). Glyphes posés
@@ -50,7 +49,6 @@ LecteurUI g_lecteur_ui;
 namespace {
 
 static_assert(kLecteurPuces == kLecteursMax, "une pastille par lecteur de la liste");
-static_assert(kLecteurPlaylists == kPlaylistsMax, "un bouton par playlist poussée");
 
 constexpr const char* kTag = "tab5.lecteur";
 // Largeurs où les textes sont coupés par « … » (lecteur_popup.yaml, lecteur_mini.yaml).
@@ -83,17 +81,6 @@ constexpr int32_t kZoneBtnL = acc_y(52);         // précédent, suivant
 constexpr int32_t kZoneLectureL = acc_y(60);     // lecture / pause
 constexpr int32_t kZoneBtnEcart = acc_x(12);
 constexpr int32_t kZoneRayonMin = 10;     // pochette : rayon du cadre moins la marge, au moins
-// Grille des playlists (ADR-0068) : la colonne de droite (x 408, y 72 de la carte,
-// lecteur_popup.yaml), sur la hauteur de la pochette ; quatre lignes, une colonne jusqu'à quatre playlists,
-// deux au-delà. Dans un bouton : l'icône à 16 px du bord, le nom à 60 (lecteur_playlist.yaml).
-constexpr int32_t kGrilleL = kTexteL;
-constexpr int32_t kGrilleH = 360;
-constexpr int32_t kGrilleEcart = 12;
-constexpr int kGrilleLignes = 4;
-constexpr int32_t kPlNomX = 60;
-constexpr int32_t kPlMargeD = 14;
-static_assert(kLecteurPlaylists <= 2 * kGrilleLignes, "deux colonnes de kGrilleLignes au plus");
-constexpr uint32_t kPlaylistEnCoursMs = 30u * 1000u;  // bouton en accent après l'appui
 
 struct Lecteur {
     char nom[kLecteurNomMax + 1] = "";
@@ -127,19 +114,14 @@ char s_base[64] = "";            // http://hôte:8123, d'après le client API de
 bool s_glisse[2] = {false, false};  // un curseur est tenu : la poussée ne le bouge pas
 bool s_zone_montre = false;      // le lecteur compact est le contenu de la zone gauche
 bool s_zone_sale = true;         // à repeindre à sa prochaine apparition
-// Playlists favorites (ADR-0068) : les noms poussés par le blueprint et la dernière
-// playlist demandée (en accent kPlaylistEnCoursMs).
+// Playlists favorites (ADR-0068) : les noms poussés par le blueprint (la grille de la page
+// Playlists est à tab5_musique.cpp).
 char s_playlists[kPlaylistsMax][kPlaylistNomMax + 1] = {};
 int s_np = 0;
-int s_pl_lancee = -1;
-uint32_t s_pl_lancee_ms = 0;
 
 const LecteurUI& ui() { return g_lecteur_ui; }
 
 bool popup_ouvert() { return ui().popup != nullptr && !lv_obj_has_flag(ui().popup, LV_OBJ_FLAG_HIDDEN); }
-
-// Page Playlists montrée : tab5_musique.cpp tient la page, ce fichier les noms.
-bool page_playlists() { return s_np > 0 && musique_page_playlists(); }
 
 void copier(char* dst, size_t cap, const Champ& c) { texte_ha_copier(dst, cap, c.p, c.n); }
 
@@ -349,8 +331,8 @@ void peindre_puces() {
     }
 }
 
-// Pages Pièces et Bibliothèque (ADR-0067, tab5_musique.cpp) : rien du morceau, la page
-// prend la carte. Le cadre de la pochette est le parent de sa note.
+// Pages Playlists, Pièces et Bibliothèque (ADR-0067, ADR-0068, tab5_musique.cpp) : rien du
+// morceau, la page prend la carte. Le cadre de la pochette est le parent de sa note.
 void masquer_morceau() {
     const LecteurUI& u = ui();
     if (u.pochette_vide != nullptr) ui_hidden(lv_obj_get_parent(u.pochette_vide), true);
@@ -359,75 +341,32 @@ void masquer_morceau() {
     for (lv_obj_t* o : u.puce) ui_hidden(o, true);
 }
 
-void taille(lv_obj_t* o, int32_t w, int32_t h);  // plus bas, avec le lecteur compact
-
-// Grille de la page Playlists : un bouton par nom poussé (une colonne jusqu'à
-// kGrilleLignes, deux au-delà, rangés par lignes), la dernière demandée en accent.
-void peindre_playlists() {
-    const LecteurUI& u = ui();
-    const bool montre = page_playlists();
-    ui_hidden(u.playlists, !montre);
-    if (!montre) return;
-    const int colonnes = s_np > kGrilleLignes ? 2 : 1;
-    const int32_t w = (kGrilleL - (colonnes - 1) * kGrilleEcart) / colonnes;
-    const int32_t h = (kGrilleH - (kGrilleLignes - 1) * kGrilleEcart) / kGrilleLignes;
-    const int32_t nom_l = w - kPlNomX - kPlMargeD;
-    for (int i = 0; i < kLecteurPlaylists; i++) {
-        const bool visible = i < s_np;
-        ui_hidden(u.playlist[i], !visible);
-        if (!visible || u.playlist[i] == nullptr) continue;
-        const int ligne = colonnes == 2 ? i / 2 : i;
-        const int col = colonnes == 2 ? i % 2 : 0;
-        ui_x(u.playlist[i], col * (w + kGrilleEcart));
-        ui_y(u.playlist[i], ligne * (h + kGrilleEcart));
-        taille(u.playlist[i], w, h);
-        if (u.playlist_nom[i] != nullptr) lv_obj_set_width(u.playlist_nom[i], nom_l);
-        if (s_playlists[i][0] != '\0') {
-            texte_ha_coupe(u.playlist_nom[i], s_playlists[i], nom_l);
-        } else {
-            // Un nom vide garde sa place : « Playlist N », jamais un lien.
-            char n[4];
-            std::snprintf(n, sizeof(n), "%d", i + 1);
-            texte_ha_coupe(u.playlist_nom[i], tr_fill("Playlist {n}", {{"n", n}}).c_str(), nom_l);
-        }
-    }
-    const bool en_cours = s_pl_lancee >= 0 && esphome::millis() - s_pl_lancee_ms < kPlaylistEnCoursMs;
-    choix_peindre(u.playlist, s_np, en_cours ? s_pl_lancee : -1);
-}
-
 void peindre_popup() {
     const LecteurUI& u = ui();
     if (u.popup == nullptr) return;
     // En-tête : le lecteur, l'application qu'il montre et, avec plusieurs pages (ADR-0067,
     // ADR-0068, tab5_musique.cpp), leurs noms contre la croix ; la pastille et le nom se
     // rangent à leur gauche, la puce « + n » d'un groupe après le nom (retraits nuls sans
-    // eux). Sans la place d'un nom lisible, la pastille de l'application s'efface.
+    // eux). Sans la place d'un nom lisible, la pastille de l'application s'efface ; hors de
+    // la page Lecture aussi (10/11/2026, demande d'Axel) : à côté des noms des pages, elle
+    // passait pour un onglet de plus, et elle ne dit rien des autres pages.
     const int32_t fin = musique_onglets_peindre();
     const int32_t retrait = kLecteurAppFinX - fin + musique_entete_reserve();
-    const bool app = s_e.app[0] != '\0' && allume() && kNomL - retrait >= kNomMinL;
+    const bool app = s_e.app[0] != '\0' && allume() && musique_page_lecture() && kNomL - retrait >= kNomMinL;
     ui_hidden(u.app, !app);
     ui_x(u.app, fin - kLecteurCarteL);  // alignée en haut à droite : x compté depuis le bord droit
     if (app) texte_ha_coupe(u.app_texte, s_e.app, kAppL);
     const char* nom = s_e.nom[0] != '\0' ? s_e.nom : tr("Musique");
     texte_ha_coupe(u.nom, nom, (app ? kNomL : kNomSeulL) - retrait);
     musique_entete_peindre(u.nom);
-    // Page Playlists (ADR-0068) : la grille à la place du morceau, la pochette et les
-    // pastilles restent. Pages Pièces et Bibliothèque (ADR-0067) : la page prend la carte.
-    peindre_playlists();
-    const bool playlists = page_playlists();
-    if (!playlists && !musique_page_lecture()) {
+    // Pages Playlists (ADR-0068, grille de pochettes depuis le 10/11/2026), Pièces et
+    // Bibliothèque (ADR-0067) : la page prend la carte.
+    if (!musique_page_lecture()) {
         masquer_morceau();
         musique_lecture_peindre(false);
         return;
     }
     if (u.pochette_vide != nullptr) ui_hidden(lv_obj_get_parent(u.pochette_vide), false);
-    if (playlists) {
-        for (lv_obj_t* o : {u.message, u.conseil, u.titre, u.artiste, u.album, u.lecture, u.btn[LECTEUR_BTN_ALLUMER]})
-            ui_hidden(o, true);
-        peindre_puces();
-        musique_lecture_peindre(false);
-        return;
-    }
 
     const char* msg = message();
     const bool morceau = msg[0] == '\0';
@@ -662,11 +601,6 @@ void lecteur_tic() {
     if (ui().mini != nullptr && !lv_obj_has_flag(ui().mini, LV_OBJ_FLAG_HIDDEN) && !mini_visible()) peindre_mini();
     if (popup_ouvert() && allume() && en_lecture()) peindre_position();
     if (s_zone_montre && en_lecture()) peindre_zone_position();
-    // La playlist demandée quitte l'accent après kPlaylistEnCoursMs.
-    if (s_pl_lancee >= 0 && esphome::millis() - s_pl_lancee_ms >= kPlaylistEnCoursMs) {
-        s_pl_lancee = -1;
-        if (popup_ouvert()) peindre_playlists();
-    }
 }
 
 void lecteur_image_prete(const lv_image_dsc_t* dsc) {
@@ -799,26 +733,24 @@ void lecteur_playlists_recu(const char* valeur, size_t n) {
     }
     const bool change = nb != s_np;
     s_np = nb;
-    if (s_pl_lancee >= s_np) s_pl_lancee = -1;
     if (change) ESP_LOGI(kTag, "%d playlist(s) connue(s)", s_np);
-    musique_pages_revoir();  // plus de playlist : la page Playlists s'en va
+    // Plus de playlist : la page Playlists s'en va ; montrée sans Music Assistant : sa grille
+    // reprend les noms.
+    musique_playlists_revoir();
     // Poussée avec tous les états : repeint seulement ouvert (lecteur_ouvrir repeint à l'ouverture).
     if (popup_ouvert()) peindre_popup();
 }
 
 int lecteur_playlists_nb() { return s_np; }
 
+const char* lecteur_playlist_nom(int i) { return i >= 0 && i < s_np ? s_playlists[i] : ""; }
+
 void lecteur_playlist(int i) {
-    if (ui_appui_glisse() || i < 0 || i >= s_np) return;
+    if (i < 0 || i >= s_np) return;
     char v[12];  // un int entier : aucune troncature possible (-Wformat-truncation)
     std::snprintf(v, sizeof(v), "%d", i);
     // « -1 » : le lecteur montré (ADR-0050) ; seul l'index part, le blueprint garde le lien.
     if (ui().envoyer != nullptr) ui().envoyer("playlist", "-1", v);
-    s_pl_lancee = i;
-    s_pl_lancee_ms = esphome::millis();
-    peindre_playlists();  // le bouton touché en accent tout de suite
-    musique_retour_lecture();
-    ui_mark_activity();
 }
 
 void lecteur_rejouer_theme() {

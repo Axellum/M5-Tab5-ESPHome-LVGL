@@ -1,11 +1,14 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file musique_element.yaml
-# @role Un élément de la grille de la page Bibliothèque du popup Musique (ADR-0067,
-#       musique_calques.yaml, 10 fois : kMusiqueElements, 5 × 2) : la pochette (ou l'icône
-#       de son genre), le nom, la 2e ligne. Toucher : jouer (titre, radio, épisode, livre),
-#       ouvrir (artiste, album, playlist, podcast) ou choisir (une source) ; appui long : la
-#       roue (maintenant, à la suite, en fin de file, radio, ouvrir ; ADR-0036).
+# @role Un élément de la grille des pages Bibliothèque et Playlists du popup Musique
+#       (ADR-0067, ADR-0068 ; musique_calques.yaml, 10 fois : kMusiqueElements, 5 × 2) : la
+#       pochette (ou l'icône de son genre), le nom, la 2e ligne. Bibliothèque — toucher :
+#       jouer (titre, radio, épisode, livre), ouvrir (artiste, album, playlist, podcast) ou
+#       choisir (une source) ; appui long : la roue (maintenant, à la suite, en fin de file,
+#       radio, ouvrir ; ADR-0036). Playlists (10/11/2026) — toucher : jouer la playlist
+#       (Music Assistant) ou envoyer son rang (blueprint) ; sur cette page, un nom trop long
+#       prend deux lignes à la place de la 2e (tab5_musique.cpp, nom_lignes).
 # @architecture_constraint Place, textes, glyphe (glyphe_element : MDI_CODE_TARGETS, règle 7),
 #       image et accent du cadre : tab5_musique.cpp (peindre_element). La pochette (image
 #       musique_image_${n}, musique_pochette.yaml : 160 × 160) est montrée à sa taille,

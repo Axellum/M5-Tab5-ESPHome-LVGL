@@ -591,6 +591,46 @@ def test_parcourir_chaque_categorie(vue, genre, titre):
     assert _envoi(appels) == (f"{vue}|{titre}|0|0|0", "")
 
 
+def _playlists(n, favori=True):
+    return [{"media_type": "playlist", "uri": f"ytmusic://playlist/PL{i}", "name": f"Playlist {i}", "version": "",
+             "image": f"https://lh3.googleusercontent.com/p{i}=w544-h544-l90-rj", "favorite": favori}
+            for i in range(n)]
+
+
+def test_parcourir_les_playlists_favorites_de_la_page_playlists():
+    """Page Playlists (ADR-0068, 10/11/2026) : « pl|f|page » demande les playlists FAVORITES
+    de Music Assistant, dix par page, et répond par la vue plf ; « pl|page » (la catégorie
+    de la Bibliothèque) garde toutes les playlists."""
+    rep = _bibliotheque({"playlist": _playlists(12)})
+    appels, _ = _commande(maison_ma(), "parcourir", "-1", "pl|f|0", rep)
+    assert appels[0] == ("music_assistant.get_library", None,
+                         {"config_entry_id": ENTREE_MA, "media_type": "playlist", "favorite": True,
+                          "limit": 11, "offset": 0})
+    contexte, elements = _envoi(appels)
+    assert contexte == "plf|Playlists favorites|0|1|0"
+    lignes = [e.split("|") for e in elements.split(";")]
+    assert len(lignes) == 10
+    assert lignes[0] == ["Playlist 0", "", "p", "ytmusic://playlist/PL0",
+                         "https://lh3.googleusercontent.com/p0=w160-h160-l90-rj"]
+    appels, _ = _commande(maison_ma(), "parcourir", "-1", "pl|f|1", rep)
+    assert appels[0][2]["offset"] == 10 and _envoi(appels)[0] == "plf|Playlists favorites|1|0|0"
+    # La catégorie de la Bibliothèque : sans filtre, vue pl.
+    appels, _ = _commande(maison_ma(), "parcourir", "-1", "pl|0", rep)
+    assert "favorite" not in appels[0][2] and _envoi(appels)[0] == "pl|Playlists|0|1|0"
+
+
+def test_playlists_favorites_music_assistant_muet_ou_absent():
+    def panne(*_):
+        raise Echec
+    assert _envoi(_commande(maison_ma(), "parcourir", "-1", "pl|f|0", panne)[0]) == (
+        "err|Music Assistant ne répond pas.|0|0|0", "")
+    appels, _ = _commande(petite_maison(), "parcourir", "-1", "pl|f|0")
+    assert _envoi(appels) == ("err|Music Assistant n'est pas installé.|0|0|0", "")
+    # Aucune favorite : une liste vide (la tablette dit « Aucune playlist favorite… »).
+    assert _envoi(_commande(maison_ma(), "parcourir", "-1", "pl|f|0", _bibliotheque({"playlist": []}))[0]) == (
+        "plf|Playlists favorites|0|0|0", "")
+
+
 def test_parcourir_les_favoris_de_tous_les_genres():
     albums = [{"media_type": "album", "uri": "library://album/1", "name": "Album | un", "version": "Live",
                "artists": [{"name": "A; B"}, {"name": "C"}],

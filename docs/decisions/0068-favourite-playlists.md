@@ -1,6 +1,6 @@
 # ADR-0068: Favourite playlists in the music popup — names pushed by the blueprint, links kept in Home Assistant, played on an Apple TV through the YouTube app
 
-**Status:** Proposed (2026-10-18, asked for by the author; not tried on a tablet when written). Extends the music popup of [ADR-0050](0050-music-player.md).
+**Status:** Proposed (2026-10-18, asked for by the author; not tried on a tablet when written). Extends the music popup of [ADR-0050](0050-music-player.md). Updated on 2026-11-10: the page is the library's grid of covers, Music Assistant's favourites when it is there (section below).
 **Date:** 2026-10-18
 
 ## Context
@@ -41,3 +41,22 @@ Verified on the author's Apple TV 4K (tvOS, `apple_tv` integration / pyatv) on 2
 - Three screen texts in six languages (« lecteur|Lecture », « Playlists », « Playlist {n} »); the `playlist-music` glyph (F0CB8) in `mdi_font_32`.
 - The off-device render captures the page names on « Lecture » and the Playlists page (`musique-avec-playlists`, `musique-playlists`); the demo has no music player and pushes none.
 - Not checked on a tablet when written: the page names next to a long player name and an application chip, the swipe on the cover, the grid on the 7B, the whole chain from a tap to the Apple TV (`tests/test_playlists.py` renders the blueprint and the script's templates; the sequence's timings come from the author's Apple TV, not from this script running).
+
+## Update — 2026-11-10: a grid of covers, Music Assistant's favourites first
+
+Asked for by the author on 2026-11-10, after looking at the page on the 7B: eight text buttons in the right half and an empty lower half, names cut at about fifteen characters, while « Bibliothèque » shows the same kind of thing as a grid of covers. His decision:
+
+- **The Playlists page is the library's grid** ([ADR-0067](0067-hifi-music-assistant.md)): the same ten `musique_element.yaml` tiles (5 × 2, cover or the kind's icon, name, second line), the same ten `online_image` covers downloaded one at a time — one tile and one download queue for both pages (code rule 5). `tab5_musique.cpp` keeps which page the grid holds (`s_grille`); going from one page to the other asks for the list again (a cover whose URL does not change stays). The cover and the player chips no longer stay on this page: it takes the card, like Pièces and Bibliothèque. `lecteur_playlist.yaml`, its grid and its glyph in `mdi_font_32` are gone; `tab5_lecteur.cpp` keeps the blueprint's names and sends the rank.
+- **With Music Assistant** (`ma` = 1 in `tab5_maj_musique_pieces`): the page shows Music Assistant's **favourite playlists** (in practice the author's YouTube Music favourites), with their covers, ten per page with the arrows. The tablet asks with the existing event `esphome.tab5_musique`, `parcourir`, `valeur` = `pl|f|<page>`; Home Assistant calls `music_assistant.get_library` (`media_type: playlist`, `favorite: true`, eleven asked for ten shown) and answers with `tab5_maj_musique_liste`, view **`plf`** (`contexte` = `plf|Playlists favorites|page|suite|0`). A tap sends `jouer` `m|<ref>` as a tap in the library does: Music Assistant plays it on the shown player, a group included; a long press opens the wheel without « Ouvrir ». The page exists with Music Assistant even with no favourite: it says « Aucune playlist favorite dans Music Assistant ». With Music Assistant the blueprint's list is not shown.
+- **Without Music Assistant**: the blueprint's names (up to eight) in the same grid, the `playlist-music` icon in place of a cover, « Playlist » as second line; a tap sends the rank as before (`esphome.tab5_lecteur`, `playlist`), the Apple TV chain of the decision above is unchanged.
+- **Kept**: the touched tile in the accent colour for 30 s (`kPlaylistEnCoursMs`, now kept by the ref, « #rank » for the blueprint), the return to « Lecture » 600 ms after the tap. On this page a name too long for one line takes two lines (LVGL's « … » at a fixed height of two lines) in place of the second line; « Bibliothèque » keeps one line of name, its second line (the artist) matters more. The first line of the page says what a tap does, dimmed like the hint of « Pièces ».
+- **The application chip** of the header (« Spotify »…) shows on « Lecture » only: next to the page names it read as one more tab, and it says nothing about the other pages.
+
+Contract: no action, variable or event added (`contrat/contrat.yaml` unchanged): one more view code (`plf`) and one more form of `parcourir`'s value (`pl|f|page`). Both orders work:
+
+- **new firmware, older Home Assistant files**: `pl|f|page` falls into the older « pl » category branch, whose page is the last field: Home Assistant answers with every playlist of Music Assistant (view `pl`), which the tablet accepts for this page — not only the favourites until the files are updated. Without Music Assistant nothing changes on the HA side;
+- **older firmware, new files**: the older firmware never sends `pl|f|…` nor reads `plf`; the « pl » category branch is unchanged.
+
+Rejected: a key added to `playlists` in `tab5_maj_emplacements` (the blueprint would have to call Music Assistant on every push of every state); a new action `tab5_maj_playlists` (a contract change for what `tab5_maj_musique_liste` already carries); a second set of tiles or images for this page (rule 5, and ten more 50 KiB covers in PSRAM); the blueprint's list as a fallback when Music Assistant has no favourite (not asked for; possible later).
+
+Not checked on a tablet nor on a real Home Assistant when written: the off-device render (`musique-playlists`, `musique-playlists-ma`, `musique-playlists-ma-chargement`, both boards) and `tests/test_musique_ha.py` / `tests/test_playlists.py` are the proof; the covers of real YouTube Music playlists through Music Assistant, the 30 s accent and the 600 ms return are to be seen on the 7B.

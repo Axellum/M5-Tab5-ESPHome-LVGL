@@ -37,7 +37,8 @@
 #           fonctions v/m/o/g/s/t, nom 40 et titre 60 caractères).
 #       tab5_maj_musique_liste(contexte, elements) :
 #         contexte = « vue|titre|page|suite|retour » (vue fav pl alb art rad pod rec det
-#           src ou err, titre = la phrase à montrer pour err) ;
+#           src plf ou err, titre = la phrase à montrer pour err ; plf = les playlists
+#           favorites de la page Playlists, demandées par « parcourir » pl|f|page) ;
 #         elements = 10 au plus, « nom|sous|genre|ref|image » (ref = URI Music Assistant,
 #           ou l'index d'une source ; image petite : proxy size=160, googleusercontent
 #           =w160-h160 ; dernier champ).
@@ -258,7 +259,7 @@ script:
       piece:
         description: "Index dans la liste des pièces poussée, ou « -1 » (le lecteur montré)"
       valeur:
-        description: "vue|page (parcourir), ref|page (detail), mode|ref (jouer), 0 à 100 (volume), page (sources), index (source)"
+        description: "vue|page ou pl|f|page, les playlists favorites (parcourir), ref|page (detail), mode|ref (jouer), 0 à 100 (volume), page (sources), index (source)"
       appareil:
         description: "device_id de la tablette qui a demandé (réponse des listes)"
     sequence:
@@ -314,6 +315,46 @@ script:
                     appareil: "{{ d }}"
                     contexte: "{{ err_absent }}"
                     elements: ""
+
+          # Page Playlists de la tablette (ADR-0068, 10/11/2026) : les playlists FAVORITES de
+          # Music Assistant (« pl|f|page »), dix par page, vue plf. Avant la branche des
+          # catégories, qui prendrait aussi « pl » : un HA plus ancien que ce fichier y répond
+          # par toutes les playlists (vue pl), que la tablette montre aussi.
+          - conditions: "{{ a == 'parcourir' and ma and champs | count == 3 and champs[0] == 'pl' and champs[1] == 'f' }}"
+            sequence:
+              - action: music_assistant.get_library
+                continue_on_error: true
+                data:
+                  config_entry_id: "{{ config }}"
+                  media_type: playlist
+                  favorite: true
+                  limit: 11
+                  offset: "{{ 10 * page }}"
+                response_variable: bibliotheque
+              - variables:
+                  lus: >-
+                    {{ bibliotheque['items'] if bibliotheque is defined and bibliotheque is mapping
+                       and bibliotheque['items'] is defined and bibliotheque['items'] is sequence else none }}
+                  elements: >-
+                    {%- from 'tab5_musique.jinja' import tab5_musique_item -%}
+                    {%- set ns = namespace(l=[]) -%}
+                    {%- for it in (lus or [])[:10] -%}
+                      {%- set el = tab5_musique_item(it) -%}
+                      {%- if el -%}{%- set ns.l = ns.l + [el] -%}{%- endif -%}
+                    {%- endfor -%}
+                    {{ ns.l | join(';') }}
+                  contexte: >-
+                    {%- if lus is none -%}{{ err_muet }}
+                    {%- else -%}plf|Playlists favorites|{{ page }}|{{ '1' if lus | count > 10 else '0' }}|0
+                    {%- endif -%}
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_musique_liste_envoyer
+                data:
+                  variables:
+                    appareil: "{{ d }}"
+                    contexte: "{{ contexte }}"
+                    elements: "{{ '' if lus is none else elements }}"
 
           # Une catégorie de la bibliothèque, dix par page (onze demandés : le onzième dit
           # qu'il y a une suite).
