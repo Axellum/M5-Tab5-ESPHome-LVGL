@@ -20,6 +20,13 @@
  *       (UIColor.X) et les styles de rôle du YAML, jamais une couleur écrite ici.
  *       Géométrie des onglets = celle des quatre noms des Réglages (x 318, 528, 738, 948
  *       pour quatre pages : reglages_popup.yaml, tests/test_pages_popup.py compare).
+ *       Titre court (`titre_court`, popup Énergie) : à cinq pages ou plus, sur une carte plus
+ *       étroite que celle du Tab5, la bande commence à x 196 (celle du Réveil) au lieu de
+ *       318. Les noms ne rétrécissent pas avec la carte, la bande si : sur la 7B, cinq noms
+ *       à 318 ne laissaient que 116 px par onglet, « Aujourd'hui » (110 px) et « Production »
+ *       (104 px) y étaient coupés (« Aujourd'… », vu au rendu du 09/11/2026) ; à 196, 133 px
+ *       (117 px pour le nom, le plus large des sept langues en demande 113). Sur le Tab5 et
+ *       à quatre pages ou moins : rien ne bouge.
  * @ai_warning [AI-WARNING] Le geste s'arrête au popup : LV_OBJ_FLAG_GESTURE_BUBBLE retiré
  *       (pages_brancher). Sans ça, LVGL le remonte jusqu'à page_main, dont le on_gesture
  *       change les prévisions ou la pièce derrière le popup (handle_swipe_gesture,
@@ -47,10 +54,14 @@ constexpr int32_t kOngletEcart = 10;
 constexpr int32_t kOngletL = 200;
 constexpr int32_t kOngletMarge = 8;
 
-// Largeur d'un onglet de n pages, sur la carte du Tab5.
-int32_t largeur_tab5(int n) {
+// La carte est plus étroite que celle du Tab5 (la 7B) : places et largeurs des onglets y sont
+// ramenées du rapport des deux zones (onglet_echelle), pas le texte des noms.
+constexpr bool kCarteEtroite = onglet_echelle(kOngletsZoneTab5) < kOngletsZoneTab5;
+
+// Largeur d'un onglet de n pages, sur la carte du Tab5, la bande commençant à `debut`.
+int32_t largeur_tab5(int n, int32_t debut) {
     if (n < 1) return kOngletL;
-    return std::min(kOngletL, (kOngletsFinTab5 - kOngletsDebut - (n - 1) * kOngletEcart) / n);
+    return std::min(kOngletL, (kOngletsFinTab5 - debut - (n - 1) * kOngletEcart) / n);
 }
 
 // LV_EVENT_GESTURE du popup (pages_brancher). LVGL l'émet pendant l'appui, dès que le
@@ -109,12 +120,16 @@ void choix_peindre(lv_obj_t* const* boutons, int n, int actif) {
     }
 }
 
-int32_t pages_onglet_largeur(int n) { return onglet_echelle(largeur_tab5(n)); }
+int32_t pages_onglet_largeur(int n) { return onglet_echelle(largeur_tab5(n, kOngletsDebut)); }
 
 void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante,
-                   const char* const* suffixes) {
+                   const char* const* suffixes, bool titre_court) {
     const bool montres = n >= 2;
-    const int32_t w5 = largeur_tab5(n);
+    // Titre court sur une carte étroite : la bande reprend la place que la mise à l'échelle
+    // lui prenait à gauche (jusqu'à x 196 du Tab5, comme le Réveil). Ne joue qu'à cinq
+    // pages ou plus : jusqu'à quatre, les onglets sont déjà à 200 px.
+    const int32_t debut = titre_court && kCarteEtroite ? kOngletsDebutTab5 : kOngletsDebut;
+    const int32_t w5 = largeur_tab5(n, debut);
     const int32_t w = onglet_echelle(w5);
     for (int i = 0; i < max; i++) {
         lv_obj_t* const b = onglets[i];
