@@ -126,6 +126,8 @@ NON_MONTREES = {
     # images à tirer du rendu de la PR, puis citées.
     "musique-avec-playlists": "musique montre la même fenêtre ; les noms des pages sont décrits dans music.md",
     "musique-playlists": "page Playlists, décrite dans music.md ; image à tirer du rendu",
+    "musique-playlists-ma": "page Playlists avec Music Assistant, décrite dans music.md ; image à tirer du rendu",
+    "musique-playlists-ma-chargement": "musique-playlists-ma montre la même page ; « Chargement... » est décrit",
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     # Tuile − / + pièce par pièce (14/10/2026, discussion #278) : écrans de vérification,
     # réunis par tools/rendu/planche_reglables.py ; la règle est décrite dans home.md.
@@ -190,9 +192,9 @@ NON_MONTREES = {
     "musique-sources": "musique-bibliotheque montre la même grille ; les sources sont décrites dans music.md",
     # Les quatre pages ensemble (ADR-0067 et ADR-0068) : écrans de vérification des noms.
     "musique-quatre-pages": "musique-ma montre la même fenêtre ; les quatre pages sont décrites dans music.md",
-    "musique-quatre-pages-playlists": "musique-playlists montre la même page ; les quatre noms sont décrits",
+    "musique-quatre-pages-playlists": "musique-playlists-ma montre la même page ; les quatre noms sont décrits",
     "musique-quatre-pages-pieces": "musique-pieces montre la même page ; les quatre noms sont décrits",
-    "musique-quatre-pages-retour": "musique-playlists montre la même page ; vérification du retour depuis Pièces",
+    "musique-quatre-pages-retour": "musique-playlists-ma montre la même page ; vérification du retour depuis Pièces",
     # Popup Suivi (ADR-0054, 10/10/2026), décrit dans tracking.md : images à tirer du rendu
     # de la PR, puis citées.
     "suivi-vide": "suivi montre la même fenêtre ; l'attente de Home Assistant est décrite dans tracking.md",

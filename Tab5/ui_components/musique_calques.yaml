@@ -7,7 +7,9 @@
 #       Lecture, Playlists, Pièces, Bibliothèque), la puce « + n » après le nom du lecteur
 #       quand il mène un groupe, la ligne « À suivre » sous l'album, la page Pièces (une carte
 #       par lecteur, musique_piece.yaml ×8) et la page Bibliothèque (catégories,
-#       musique_categorie.yaml ×7 ; grille de musique_element.yaml ×10).
+#       musique_categorie.yaml ×7 ; grille de musique_element.yaml ×10). La page Playlists
+#       (ADR-0068, 10/11/2026) montre la MÊME grille (musique_biblio), sans catégories :
+#       une seule tuile et une seule file de pochettes pour les deux pages (règle 5).
 # @architecture_constraint Un calque transparent, NON cliquable, de la taille de la carte :
 #       un toucher hors de ses widgets passe à la page Lecture dessous (lv_indev_search_obj
 #       ignore un objet non cliquable), un glissement remonte au popup (tab5_pages.cpp). Mêmes

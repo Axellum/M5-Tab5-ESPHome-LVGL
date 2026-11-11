@@ -1463,6 +1463,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "lecteur|Lecture": "Çalıyor"
 "Playlists": "Çalma listeleri"
 "Playlist {n}": "Çalma listesi {n}"
+# Page Playlists en grille de pochettes (ADR-0068, 10/11/2026).
+"Playlist": "Çalma listesi"
+"Aucune playlist favorite dans Music Assistant": "Music Assistant'ta favori çalma listesi yok"
+"Toucher : lire · Appui long : plus de choix": "Dokun: çal · Uzun bas: daha fazla"
+"Toucher : lancer la playlist": "Dokun: çalma listesini başlat"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Kameralar"
 "Aucune caméra choisie": "Kamera seçilmedi"

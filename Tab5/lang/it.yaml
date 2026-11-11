@@ -1468,6 +1468,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "lecteur|Lecture": "In ascolto"
 "Playlists": "Playlist"
 "Playlist {n}": "Playlist {n}"
+# Page Playlists en grille de pochettes (ADR-0068, 10/11/2026).
+"Playlist": "Playlist"
+"Aucune playlist favorite dans Music Assistant": "Nessuna playlist preferita in Music Assistant"
+"Toucher : lire · Appui long : plus de choix": "Tocca: riproduci · Tieni premuto: altro"
+"Toucher : lancer la playlist": "Tocca: avvia la playlist"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Telecamere"
 "Aucune caméra choisie": "Nessuna telecamera scelta"

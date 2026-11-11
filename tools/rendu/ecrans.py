@@ -1035,6 +1035,22 @@ MUSIQUE_FAVORIS = Service("tab5_maj_musique_liste", (
                  "Jazz du dimanche|Playlist|p|ytmusic://playlist/PLx|;"
                  "Radio Nova|Radio|d|library://radio/5|"),
 ))
+# Page Playlists avec Music Assistant (ADR-0068, 10/11/2026) : la réponse à « parcourir »
+# pl|f|0, au format de packages/tab5_musique.yaml (vue plf, playlists favorites). Huit
+# playlists, pochettes demandées (le rendu ne télécharge rien : l'icône playlist reste), une
+# 2e ligne vide (Music Assistant n'en donne pas : « Playlist »), deux noms longs sur deux
+# lignes, une page suivante.
+MUSIQUE_PLAYLISTS_MA = Service("tab5_maj_musique_liste", (
+    ("contexte", "plf|Playlists favorites|0|1|0"),
+    ("elements", "Chill du soir||p|ytmusic://playlist/PLchill|https://lh3.googleusercontent.com/a=w160-h160;"
+                 "Jazz du dimanche||p|ytmusic://playlist/PLjazz|https://lh3.googleusercontent.com/b=w160-h160;"
+                 "Rock des années 80||p|ytmusic://playlist/PLrock|;"
+                 "Les grands classiques de la chanson française||p|ytmusic://playlist/PLchanson|;"
+                 "Réveil en douceur||p|ytmusic://playlist/PLreveil|;"
+                 "Cuisine en musique|Axel|p|library://playlist/4|;"
+                 "Mes titres préférés de l'été dernier||p|ytmusic://playlist/LM|;"
+                 "Focus||p|ytmusic://playlist/PLfocus|"),
+))
 # Les sources d'une pièce (sa roue → Source), avec le bouton retour.
 MUSIQUE_SOURCES = Service("tab5_maj_musique_liste", (
     ("contexte", "src|Salon · sources|0|0|1"),
@@ -1060,7 +1076,8 @@ PLAYLISTS = Service("tab5_maj_emplacements", (
     ("payload", "playlists|Jazz du dimanche|Rock des années 80|Cuisine en musique|Chill du soir|"
                 "Réveil en douceur|Les grands classiques de la chanson française;"),))
 PLAYLISTS_AUCUNE = Service("tab5_maj_emplacements", (("payload", "playlists|;"),))
-# Page « Playlists » : un glissement vers la gauche parti du milieu de la pochette (rien
+# Page « Playlists » (sans Music Assistant, la grille des noms du blueprint depuis le
+# 10/11/2026) : un glissement vers la gauche parti du milieu de la pochette (rien
 # n'y est touchable ; le geste remonte au popup, tab5_pages.cpp). Parti de x 540, ramené
 # sur la 7B (vers_carte.py) il tombait à x 433, hors de la pochette (427) : la page ne
 # changeait pas (capture « doublon » du rendu 1024×600, 18/10/2026).
@@ -1716,23 +1733,34 @@ ECRANS: tuple[Ecran, ...] = (
     # ses favoris, les sources d'une pièce, la petite installation sans Music Assistant.
     Ecran("musique-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music")),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
-    Ecran("musique-pieces", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE),
+    # Avec Music Assistant, la page Playlists (ses favorites, ADR-0068) vient avant Pièces
+    # (10/11/2026) : un glissement de plus pour Pièces et Bibliothèque.
+    Ecran("musique-playlists-ma-chargement",
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-playlists-ma",
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PLAYLISTS_MA),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-pieces",
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-bibliotheque-chargement",
-          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE,
+           MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-bibliotheque",
           (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE,
-           MUSIQUE_FAVORIS),
+           MUSIQUE_PAGE_SUIVANTE, MUSIQUE_FAVORIS),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-sources",
-          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, Long(*MUSIQUE_SALON_ICONE),
-           MUSIQUE_SOURCE, MUSIQUE_SOURCES),
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE,
+           Long(*MUSIQUE_SALON_ICONE), MUSIQUE_SOURCE, MUSIQUE_SOURCES),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-pieces-sans-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_SANS_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
-    # Playlists favorites (ADR-0068) : les noms des pages contre la croix sur la page Lecture,
-    # puis la page Playlists (deux colonnes de boutons).
+    # Playlists favorites du blueprint, sans Music Assistant (ADR-0068) : les noms des pages
+    # contre la croix sur la page Lecture, puis la page Playlists (la grille de pochettes,
+    # l'icône playlist, depuis le 10/11/2026).
     Ecran("musique-avec-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Music")),
           (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Music"), PLAYLISTS_PAGE),
@@ -1741,17 +1769,20 @@ ECRANS: tuple[Ecran, ...] = (
     # noms sur la ligne du titre de la page Lecture, puis Playlists et Pièces par glissements.
     Ecran("musique-quatre-pages", (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music")),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    # Avec Music Assistant, la page Playlists montre ses favorites (la liste du blueprint
+    # attend) : la réponse poussée juste après le glissement.
     Ecran("musique-quatre-pages-playlists",
-          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE,
+           MUSIQUE_PLAYLISTS_MA),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-quatre-pages-pieces",
           (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE,
-           MUSIQUE_PAGE_SUIVANTE),
+           MUSIQUE_PLAYLISTS_MA, MUSIQUE_PAGE_SUIVANTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
-    # Retour sur Playlists depuis Pièces, qui avait masqué la pochette et les pastilles.
+    # Retour sur Playlists depuis Pièces : la grille gardée, sans nouvelle demande.
     Ecran("musique-quatre-pages-retour",
           (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Music"), MUSIQUE_PAGE_SUIVANTE,
-           MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_PRECEDENTE),
+           MUSIQUE_PLAYLISTS_MA, MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_PRECEDENTE),
           (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
     # Lecteur compact dans la zone à gauche de l'horloge (ADR-0051, lot 2) : en pause (la

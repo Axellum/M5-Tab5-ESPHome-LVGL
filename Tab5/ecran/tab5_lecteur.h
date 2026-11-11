@@ -45,7 +45,6 @@ enum LecteurCurseur : int {
     LECTEUR_CURSEUR_VOLUME = 1,
 };
 constexpr int kLecteurPuces = 6;  // = kLecteursMax (tab5_parse.h), une pastille par lecteur
-constexpr int kLecteurPlaylists = 8;  // = kPlaylistsMax (tab5_parse.h), un bouton par playlist
 
 // Widgets posés par le script tab5_lecteur_lier (tab5-lecteur.yaml) avant la première
 // réception ou ouverture : id() n'existe que dans une lambda YAML.
@@ -76,11 +75,6 @@ struct LecteurUI {
     lv_obj_t* puce[kLecteurPuces] = {};           // lecteur_puce_N
     lv_obj_t* puce_icone[kLecteurPuces] = {};     // lecteur_puce_icone_N
     lv_obj_t* puce_nom[kLecteurPuces] = {};       // lecteur_puce_nom_N
-    // Page « Playlists » (ADR-0068) : la grille de la colonne de droite (lecteur_playlist.yaml) ;
-    // les noms des pages sont ceux de tab5_musique.cpp (musique_onglet_N).
-    lv_obj_t* playlists = nullptr;                // lecteur_playlists (la grille)
-    lv_obj_t* playlist[kLecteurPlaylists] = {};   // lecteur_pl_N (bouton ; son nom = 1er enfant)
-    lv_obj_t* playlist_nom[kLecteurPlaylists] = {};  // lecteur_pl_nom_N
     // Mini-barre de l'accueil (lecteur_mini.yaml), par-dessus le cadre « Ok Nabu ».
     lv_obj_t* mini = nullptr;                     // lecteur_mini
     lv_obj_t* mini_pochette = nullptr;            // lecteur_mini_img
@@ -134,11 +128,9 @@ void lecteur_curseur(int curseur, bool relache);
 void lecteur_puce(int i);
 // Playlists favorites (ADR-0068) : clé « playlists|nom|… » de tab5_maj_emplacements
 // (tab5_zones.cpp), lue par playlists_lire() (tab5_parse.h, section 16). Les noms seuls :
-// les liens restent dans le blueprint. Vide : pas de page Playlists.
+// les liens restent dans le blueprint. Vide (et sans Music Assistant) : pas de page
+// Playlists ; sa grille est à tab5_musique.cpp (10/11/2026).
 void lecteur_playlists_recu(const char* valeur, size_t n);
-// Bouton de la playlist i : événement esphome.tab5_lecteur (action « playlist », lecteur
-// « -1 », valeur « i ») ; le bouton passe en accent, puis le popup revient à la page Lecture.
-void lecteur_playlist(int i);
 // Thèmes (ADR-0029) : couleurs posées d'ici (pastille active, aléatoire et répétition
 // actifs). Appelé par theme_rejouer_ui() (tab5_theme.cpp).
 void lecteur_rejouer_theme();
