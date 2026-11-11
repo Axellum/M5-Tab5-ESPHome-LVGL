@@ -327,8 +327,10 @@ jobs:
   # (ni `needs`, ni artefact « rendu-captures-* » que `comparer` réunit).
   rendu-7b:
     runs-on: ubuntu-latest
-    # Compilation (~2 à 4 min) + scènes et ~200 écrans en une passe (~20 min pour une langue).
-    timeout-minutes: 40
+    # Compilation (~2 min) + scènes et écrans en une passe : 255 écrans et ~38 min le 11/11/2026
+    # (~13 s par écran), d'où des annulations à 40 min sur main (5feea9e2, 7004ad1a, 56e3cdc6).
+    # Marge pour une cinquantaine d'écrans de plus ; au-delà, partager les écrans entre plusieurs tâches.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
