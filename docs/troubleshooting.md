@@ -8,37 +8,41 @@ This is a log of real symptoms hit on this exact device/firmware, with the confi
 
 Format: **Symptom → Root cause → Fix**. Entries are chronological, most recent last within each topic isn't guaranteed — read the whole thing, it's short.
 
+Each incident says whether it applies to **any ESPHome + LVGL screen** (11 of the 20: Home Assistant side, ESPHome's API, LVGL schema or build) or is **specific to the Tab5 / ESP32-P4** (9 of the 20: the Tab5's hardware, the P4's Wi-Fi co-processor, this project's « Tab5 » integration). Building your own screen from this project: [Start your own screen from this project](reuse.md).
+
 ---
 
 ### Find your symptom
 
 Pick the line that looks like what you see; each one links to the incident, with its root cause and fix.
 
-| Symptom | Incident |
-|---|---|
-| Display stays black after a reboot (OTA, crash); a power cycle fixes it | [Black screen after a software reboot (not a power cycle)](#black-screen-after-a-software-reboot-not-a-power-cycle) |
-| Device online, clock working, but the weather, planning and forecast cards never update | [Weather / planning / climate data missing, but the device is online](#weather--planning--climate-data-missing-but-the-device-is-online) |
-| Voice pipeline says speech-to-text is missing or broken; many « entity already exists » lines in the Home Assistant log | [STT/TTS broken, dozens of "entity already exists — ignoring" log lines](#stttts-broken-dozens-of-entity-already-exists--ignoring-log-lines) |
-| Tapping the screen does nothing, as if the touch controller were dead | [Touch "not working" but the touchscreen is actually detecting presses fine](#touch-not-working-but-the-touchscreen-is-actually-detecting-presses-fine) |
-| Planning, weather and climate still not showing after the fixes above | [A calendar/weather push silently breaks the rest of the same automation](#a-calendarweather-push-silently-breaks-the-rest-of-the-same-automation) |
-| Daily forecast icons gone while the hourly cards update, and the automation reports success | [Daily weather icons gone, hourly forecast fine, automation reports success (2026-09-18)](#daily-weather-icons-gone-hourly-forecast-fine-automation-reports-success-2026-09-18) |
-| `esphome compile` fails with `[pressed] is an invalid option for [style_definitions]` | [ESPHome `pressed:` style rejected when placed in a shared `style_definitions`](#esphome-pressed-style-rejected-when-placed-in-a-shared-style_definitions) |
-| The device sometimes refuses new API connections (Home Assistant, logs, OTA) | [ESPHome API connections exhausted (device drops connections under otherwise normal use)](#esphome-api-connections-exhausted-device-drops-connections-under-otherwise-normal-use) |
-| The tablet reboots by itself every 15–20 minutes while Home Assistant is down | [Device reboots on its own every ~15–20 min while Home Assistant is unreachable](#device-reboots-on-its-own-every-1520-min-while-home-assistant-is-unreachable) |
-| Black screen, no entities, no API after an OTA that said « OTA successful » | [Black screen + device off the network after an OTA — the Wi-Fi co-processor never came up](#black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up) |
-| Waveshare 7B restarts every ~17 s after a software reboot and never reaches Wi-Fi | [Waveshare 7B: boot loop after a software reboot, Wi-Fi link down (2026-10-16)](#waveshare-7b-boot-loop-after-a-software-reboot-wi-fi-link-down-2026-10-16) |
-| `Tab5 Uptime` stays `unavailable` after updating the firmware | [`Tab5 Uptime` stuck at `unavailable` after the update to the boot-time firmware (2026-09-26)](#tab5-uptime-stuck-at-unavailable-after-the-update-to-the-boot-time-firmware-2026-09-26) |
-| A short press on the power button reboots the tablet and Home Assistant sends a crash notification | [Crash alert after a press on the power button (2026-10-06)](#crash-alert-after-a-press-on-the-power-button-2026-10-06) |
-| Adding Tab5 to HACS fails with « Repository not found », or its box is empty | [Adding Tab5 to HACS: « Repository not found », or an empty box (2026-10-07)](#adding-tab5-to-hacs--repository-not-found--or-an-empty-box-2026-10-07) |
-| HACS: « Download failed - 400 » or « Got more than 8190 bytes when reading » | [HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)](#hacs--download-failed---400---got-more-than-8190-bytes-when-reading--2026-10-24) |
-| The Tab5 integration is downloaded in HACS but nothing happens | [Tab5 integration (HACS): downloaded, but nothing happens](#tab5-integration-hacs-downloaded-but-nothing-happens) |
-| A message whose title starts with « Tab5 » appears in Settings → System → Repairs | [Tab5 integration (HACS): a message in Repairs](#tab5-integration-hacs-a-message-in-repairs) |
-| A tablet or a 7B reinstalled with an erase stays unavailable in Home Assistant | [Home Assistant no longer connects after a reinstall with erase (2026-10-19)](#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19) |
-| A faint continuous hiss from a tablet without a battery | [Faint continuous hiss, on a tablet without a battery (2026-10-08)](#faint-continuous-hiss-on-a-tablet-without-a-battery-2026-10-08) |
-| Your own build fails on ESPHome 2026.10.0 with « was not declared in this scope » | [The build fails with ESPHome 2026.10.0: « was not declared in this scope » (2026-10-21)](#the-build-fails-with-esphome-2026100--was-not-declared-in-this-scope--2026-10-21) |
-| Something looks like a bug but may be intended (for example forecast pagination that does not wrap) | [False positives worth knowing about (don't "fix" these again)](#false-positives-worth-knowing-about-dont-fix-these-again) |
+| Symptom | Applies to | Incident |
+|---|---|---|
+| Display stays black after a reboot (OTA, crash); a power cycle fixes it | Tab5 / P4 | [Black screen after a software reboot (not a power cycle)](#black-screen-after-a-software-reboot-not-a-power-cycle) |
+| Device online, clock working, but the weather, planning and forecast cards never update | Any screen | [Weather / planning / climate data missing, but the device is online](#weather--planning--climate-data-missing-but-the-device-is-online) |
+| Voice pipeline says speech-to-text is missing or broken; many « entity already exists » lines in the Home Assistant log | Any screen | [STT/TTS broken, dozens of "entity already exists — ignoring" log lines](#stttts-broken-dozens-of-entity-already-exists--ignoring-log-lines) |
+| Tapping the screen does nothing, as if the touch controller were dead | Any screen | [Touch "not working" but the touchscreen is actually detecting presses fine](#touch-not-working-but-the-touchscreen-is-actually-detecting-presses-fine) |
+| Planning, weather and climate still not showing after the fixes above | Any screen | [A calendar/weather push silently breaks the rest of the same automation](#a-calendarweather-push-silently-breaks-the-rest-of-the-same-automation) |
+| Daily forecast icons gone while the hourly cards update, and the automation reports success | Any screen | [Daily weather icons gone, hourly forecast fine, automation reports success (2026-09-18)](#daily-weather-icons-gone-hourly-forecast-fine-automation-reports-success-2026-09-18) |
+| `esphome compile` fails with `[pressed] is an invalid option for [style_definitions]` | Any screen | [ESPHome `pressed:` style rejected when placed in a shared `style_definitions`](#esphome-pressed-style-rejected-when-placed-in-a-shared-style_definitions) |
+| The device sometimes refuses new API connections (Home Assistant, logs, OTA) | Any screen | [ESPHome API connections exhausted (device drops connections under otherwise normal use)](#esphome-api-connections-exhausted-device-drops-connections-under-otherwise-normal-use) |
+| The tablet reboots by itself every 15–20 minutes while Home Assistant is down | Any screen | [Device reboots on its own every ~15–20 min while Home Assistant is unreachable](#device-reboots-on-its-own-every-1520-min-while-home-assistant-is-unreachable) |
+| Black screen, no entities, no API after an OTA that said « OTA successful » | Tab5 / P4 | [Black screen + device off the network after an OTA — the Wi-Fi co-processor never came up](#black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up) |
+| Waveshare 7B restarts every ~17 s after a software reboot and never reaches Wi-Fi | Tab5 / P4 | [Waveshare 7B: boot loop after a software reboot, Wi-Fi link down (2026-10-16)](#waveshare-7b-boot-loop-after-a-software-reboot-wi-fi-link-down-2026-10-16) |
+| `Tab5 Uptime` stays `unavailable` after updating the firmware | Any screen | [`Tab5 Uptime` stuck at `unavailable` after the update to the boot-time firmware (2026-09-26)](#tab5-uptime-stuck-at-unavailable-after-the-update-to-the-boot-time-firmware-2026-09-26) |
+| A short press on the power button reboots the tablet and Home Assistant sends a crash notification | Tab5 / P4 | [Crash alert after a press on the power button (2026-10-06)](#crash-alert-after-a-press-on-the-power-button-2026-10-06) |
+| Adding Tab5 to HACS fails with « Repository not found », or its box is empty | Tab5 / P4 | [Adding Tab5 to HACS: « Repository not found », or an empty box (2026-10-07)](#adding-tab5-to-hacs--repository-not-found--or-an-empty-box-2026-10-07) |
+| HACS: « Download failed - 400 » or « Got more than 8190 bytes when reading » | Tab5 / P4 | [HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)](#hacs--download-failed---400---got-more-than-8190-bytes-when-reading--2026-10-24) |
+| The Tab5 integration is downloaded in HACS but nothing happens | Tab5 / P4 | [Tab5 integration (HACS): downloaded, but nothing happens](#tab5-integration-hacs-downloaded-but-nothing-happens) |
+| A message whose title starts with « Tab5 » appears in Settings → System → Repairs | Tab5 / P4 | [Tab5 integration (HACS): a message in Repairs](#tab5-integration-hacs-a-message-in-repairs) |
+| A tablet or a 7B reinstalled with an erase stays unavailable in Home Assistant | Any screen | [Home Assistant no longer connects after a reinstall with erase (2026-10-19)](#home-assistant-no-longer-connects-after-a-reinstall-with-erase-2026-10-19) |
+| A faint continuous hiss from a tablet without a battery | Tab5 / P4 | [Faint continuous hiss, on a tablet without a battery (2026-10-08)](#faint-continuous-hiss-on-a-tablet-without-a-battery-2026-10-08) |
+| Your own build fails on ESPHome 2026.10.0 with « was not declared in this scope » | Any screen | [The build fails with ESPHome 2026.10.0: « was not declared in this scope » (2026-10-21)](#the-build-fails-with-esphome-2026100--was-not-declared-in-this-scope--2026-10-21) |
+| Something looks like a bug but may be intended (for example forecast pagination that does not wrap) | — | [False positives worth knowing about (don't "fix" these again)](#false-positives-worth-knowing-about-dont-fix-these-again) |
 
 ### Black screen after a software reboot (not a power cycle)
+
+**Applies to:** specific to the Tab5 / ESP32-P4 (the display reset goes through the Tab5's I/O expander).
 
 **Symptom:** device reboots (OTA, crash, `api.reboot`), display stays black afterward. A power cycle (unplug/replug) fixes it; a soft reboot alone does not, or does so unreliably.
 
@@ -49,6 +53,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 ---
 
 ### Weather / planning / climate data missing, but the device is online
+
+**Applies to:** any ESPHome + LVGL screen (Home Assistant side: pushes gated by a shared flag, whatever the screen).
 
 **Symptom:** the device shows a healthy Wi-Fi/API connection (diagnostics entities look fine, uptime climbing), but the weather, planning, and forecast cards never update — while the clock and a couple of directly-mirrored sensors keep working, which makes the failure look partial and confusing.
 
@@ -62,6 +68,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 
 ### STT/TTS broken, dozens of "entity already exists — ignoring" log lines
 
+**Applies to:** any ESPHome + LVGL screen (Home Assistant side (two instances mirrored into each other), whatever the screen).
+
 **Symptom:** voice pipeline reports a missing/broken speech-to-text provider despite the underlying service responding correctly when tested directly. Home Assistant logs show many `does not generate unique IDs ... already exists - ignoring` warnings across automation/sensor/climate/calendar entities.
 
 **Root cause:** a `remote_homeassistant`-style integration was mirroring an entire second Home Assistant instance's entities into this one. ID collisions silently shadowed the real STT/TTS entities the voice pipeline depended on. This only reproduces in a **dual Home Assistant instance** setup — not relevant if you run a single HA instance.
@@ -71,6 +79,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 ---
 
 ### Touch "not working" but the touchscreen is actually detecting presses fine
+
+**Applies to:** any ESPHome + LVGL screen (any ESPHome device that calls Home Assistant actions).
 
 **Symptom:** tapping the screen does nothing; looks like a dead touch controller.
 
@@ -84,6 +94,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 
 ### A calendar/weather push silently breaks the rest of the same automation
 
+**Applies to:** any ESPHome + LVGL screen (a Home Assistant automation that pushes data to a screen).
+
 **Symptom:** after fixing the two issues above, planning/weather/climate were *still* not showing up on screen — a distinct bug from the ones above.
 
 **Root cause:** the automation called `calendar.get_events` with `start_date_time: "{{ now() }}"` — a raw Jinja `now()` datetime object including microseconds, which Home Assistant's schema silently rejected. Because the calendar call was one step among several sequential actions in the same automation, the validation failure aborted everything after it — including unrelated weather and forecast pushes further down the same automation.
@@ -93,6 +105,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 ---
 
 ### Daily weather icons gone, hourly forecast fine, automation reports success (2026-09-18)
+
+**Applies to:** any ESPHome + LVGL screen (the Jinja template of a push, whatever the screen).
 
 **Symptom:** the five daily forecast cards lost their weather icons (and kept stale data after a reboot) while the hourly cards kept updating. Home Assistant had all the data: the weather entity was fine and `weather.get_forecasts` returned 15 daily and 67 hourly entries. The push automation showed no error.
 
@@ -109,6 +123,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 
 ### ESPHome `pressed:` style rejected when placed in a shared `style_definitions`
 
+**Applies to:** any ESPHome + LVGL screen (ESPHome's LVGL schema).
+
 **Symptom:** `esphome compile` fails with `[pressed] is an invalid option for [style_definitions]` after trying to centralize a button's pressed-state styling.
 
 **Root cause:** confirmed by reading ESPHome's own LVGL component source (`defines.py` / `widgets/__init__.py` / `styles.py`) rather than guessing — the `pressed:` state key is only valid on the widget itself, not inside a reusable `style_definitions:` block.
@@ -121,6 +137,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 
 ### ESPHome API connections exhausted (device drops connections under otherwise normal use)
 
+**Applies to:** any ESPHome + LVGL screen (ESPHome's native API, on any device).
+
 **Symptom:** device intermittently fails to accept new API connections (from HA, from `esphome logs`, from OTA) for no obvious reason.
 
 **Root cause:** the ESPHome native API only allows a small, fixed number of simultaneous connections (8). Leftover `esphome` CLI processes from earlier debugging sessions (e.g. `esphome logs` left running in a forgotten terminal) each hold one connection open indefinitely.
@@ -131,6 +149,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 
 ### Device reboots on its own every ~15–20 min while Home Assistant is unreachable
 
+**Applies to:** any ESPHome + LVGL screen (ESPHome's `api: reboot_timeout`, on any device).
+
 **Symptom:** Home Assistant is down (or slow to start), the Tab5 is still on Wi-Fi and shows its last known state, yet it reboots by itself roughly every 15–20 minutes. Nothing in the logs looks like a crash: each boot is clean and `safe_mode` reports `Boot seems successful`.
 
 **Root cause:** not a crash — `api: reboot_timeout:` in `tab5-api-logic.yaml`. ESPHome reboots the device when **no API client has been connected** for that long, and the counter restarts on every connection, even a brief one. With the original 15 min, an HA server that takes a while to come up produces a reboot cycle slightly longer than the timeout itself (timeout + boot + reconnection attempts). The `wifi:` component has its own separate `reboot_timeout`, which is *not* involved here since Wi-Fi was fine.
@@ -140,6 +160,8 @@ Pick the line that looks like what you see; each one links to the incident, with
 ---
 
 ### Black screen + device off the network after an OTA — the Wi-Fi co-processor never came up
+
+**Applies to:** specific to the Tab5 / ESP32-P4 (the ESP32-P4 has no radio: Wi-Fi comes from its ESP32-C6 co-processor (`esp32_hosted`)).
 
 **Symptom:** an OTA reports `OTA successful`, the device reboots, and then: black screen, no Home Assistant entities, no API (`esphome logs --device <ip>` times out on port 6053). Rebooting it again changes nothing. Confusingly, the IP still answers `ping` — that is a *different* device that picked up the lease, exactly like the 2026-08-01 DHCP mix-up.
 
@@ -167,6 +189,8 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ### Waveshare 7B: boot loop after a software reboot, Wi-Fi link down (2026-10-16)
 
+**Applies to:** specific to the Tab5 / ESP32-P4 (the ESP32-P4's software reset and its link to the C6 (Waveshare 7B)).
+
 **Symptom:** after a reboot from Home Assistant (« Restart »), an OTA or any software reboot, the board restarts every ~17 s, never reaches Wi-Fi, and after 10 boots ESPHome enters safe mode (frozen screen). Rebooting again does not help.
 
 **What the serial console shows** (COM port of the board, `tools/capture_serie.py --mac …`, no reset): each boot gets past `ESP-Hosted link not yet up` (harmless, printed on every boot), then the SDIO reads from the C6 time out and the P4 restarts by itself, `rst:0xc (SW_CPU_RESET)`, with no panic:
@@ -187,6 +211,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### `Tab5 Uptime` stuck at `unavailable` after the update to the boot-time firmware (2026-09-26)
 
+**Applies to:** any ESPHome + LVGL screen (Home Assistant keeps the old unit of an ESPHome sensor whose class changes).
+
 **Symptom:** after flashing a firmware from 2026-09-26 or later over an older one, every entity comes back except `Tab5 Uptime`, which stays `unavailable`. The Home Assistant log shows `ValueError: Sensor sensor.…_tab5_uptime has a unit of measurement and thus indicating it has a numeric value; however, it has the non-numeric device class: timestamp`.
 
 **Root cause:** Home Assistant, not the firmware. `Tab5 Uptime` changed from seconds (`s`) to a boot timestamp without a unit, under the same name, so the same entity. On reconnection, HA's ESPHome integration updates the existing entity in place and only copies the unit when the new one is not empty (`homeassistant/components/esphome/sensor.py`, `_on_static_info_update`): the old `s` sticks, and HA refuses to write a timestamp state that carries a unit.
@@ -196,6 +222,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 ---
 
 ### Crash alert after a press on the power button (2026-10-06)
+
+**Applies to:** specific to the Tab5 / ESP32-P4 (the Tab5's power button resets the chip).
 
 **Symptom:** a short press on the power button reboots the tablet in about 10 s, then Home Assistant sends « Tab5 : journal du démarrage (plantage (chien de garde)) » to the phone. The journal has only the usual boot lines (ESP-Hosted « not yet up », touch polling, Wi-Fi associating), no `esp32.crash` line. Meanwhile `Restart reason` shows `Reboot request from esphome.ota`, although the last update was hours earlier. Reported in discussion #278 (tablet with a battery, 3.7.0-rc.2), reproduced the same day on a tablet powered by USB.
 
@@ -207,6 +235,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### Adding Tab5 to HACS: « Repository not found », or an empty box (2026-10-07)
 
+**Applies to:** specific to the Tab5 / ESP32-P4 (this project's « Tab5 » integration for HACS).
+
 **Symptom:** adding the repository to HACS, by the « Open Tab5 in HACS » link or by *Custom repositories*, fails with « Repository not found » (« Dépôt introuvable » in French). Or the box that HACS opens through the link shows a title only (« Confirm? »), with no text.
 
 **Root cause:** HACS checks a repository on its latest full release, even with beta versions switched on, and only the releases from 3.7.0 on carry the integration: before 3.7.0 was published (7 October 2026), HACS refused this repository (tried that day with 3.6.0 as the latest full release). The empty box comes from HACS: on a first load through the link, its texts are not loaded yet (seen with HACS 2.0.5).
@@ -216,6 +246,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 ---
 
 ### HACS: « Download failed - 400 », « Got more than 8190 bytes when reading » (2026-10-24)
+
+**Applies to:** specific to the Tab5 / ESP32-P4 (the download of this project's « Tab5 » integration (the fault, on GitHub's side, hit every HACS integration)).
 
 **Symptom:** on the Tab5 page of HACS, *Download* (or an update) fails; the Home Assistant log shows « Download failed - 400 » and « Got more than 8190 bytes when reading ». Reported on the Home Assistant forum on 24 October 2026. **Solved since 24 October 2026** (below).
 
@@ -229,6 +261,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### Tab5 integration (HACS): downloaded, but nothing happens
 
+**Applies to:** specific to the Tab5 / ESP32-P4 (this project's « Tab5 » integration).
+
 **Symptom:** the « Tab5 » repository is downloaded in HACS (its version shows there), but nothing comes from it: no notification « Tab5: Home Assistant files », nothing in *Settings → System → Repairs* (not even « Tab5: switch the entities to their English names » after a 3.9.0 update, the tablet's entities keeping their French names), nothing from it in the log.
 
 **Root cause:** HACS only downloads the integration. As long as it is not added in *Settings → Devices & services*, Home Assistant never starts it, so it can do nothing and say nothing. The tablet itself is listed there too, under ESPHome, which makes it easy to think the integration is already added (seen on 28 October 2026).
@@ -238,6 +272,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 ---
 
 ### Tab5 integration (HACS): a message in Repairs
+
+**Applies to:** specific to the Tab5 / ESP32-P4 (this project's « Tab5 » integration).
 
 **Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → System → Repairs* shows a message whose title starts with « Tab5 ».
 
@@ -257,6 +293,8 @@ To go back to older files by hand: [putting older files back](installation/updat
 ---
 
 ### Home Assistant no longer connects after a reinstall with erase (2026-10-19)
+
+**Applies to:** any ESPHome + LVGL screen (any ESPHome device whose API key Home Assistant provided, once its memory is erased).
 
 **Symptom:** a tablet or a Waveshare 7B that Home Assistant already knew is installed again from the [install page](installation/flash.md) with an erase (« Erase device » ticked after *Install*, or « Erase User Data »). It starts and joins the Wi-Fi once you set it again, but stays unavailable in Home Assistant, even after a restart of the tablet. *Settings → Devices & services* shows it at the top, under « Discovered », with a red border and a *Reconfigure* button; *Settings → System → Repairs* says « Authentication expired for M5Stack Tab5 Home Assistant HMI ». Seen on the author's 7B on 2026-10-19 (3.9.0-rc.6 installed from the page).
 
@@ -280,6 +318,8 @@ More than 30 minutes since the tablet's start: restart it first (a short press o
 
 ### Faint continuous hiss, on a tablet without a battery (2026-10-08)
 
+**Applies to:** specific to the Tab5 / ESP32-P4 (the Tab5's battery charger).
+
 **Symptom:** a very faint, continuous hiss from the tablet. Muting the microphone or turning the volume down changes nothing. Heard on the author's tablet, which has no battery and runs on a PC's USB port.
 
 **What it is not** (tried one after the other from Home Assistant, on 2026-10-08):
@@ -297,6 +337,8 @@ More than 30 minutes since the tablet's start: restart it first (a short press o
 ---
 
 ### The build fails with ESPHome 2026.10.0: « was not declared in this scope » (2026-10-21)
+
+**Applies to:** any ESPHome + LVGL screen (ESPHome 2026.10.0, `esphome: includes:` and lambdas, on any device).
 
 **Symptom:** you compile the firmware yourself with ESPHome 2026.10.0 and the build stops on `main.cpp` with errors such as `'journal_reset_reason' was not declared in this scope`, `'tr' was not declared in this scope` or `'g_alarm_cfg' was not declared in this scope` (13 errors on `main`, 2026-10-21). The same commit builds with 2026.9.x. The published firmware is not affected: it is built with a fixed ESPHome version (`ESPHOME_PUBLICATION` in `.github/workflows/publication.yml`), not with the latest one.
 
@@ -332,35 +374,39 @@ Journal d'incidents réels rencontrés sur ce firmware précis, avec la cause ra
 
 Format : **Symptôme → Cause racine → Correctif**.
 
+Chaque incident dit s'il vaut pour **tout écran ESPHome + LVGL** (11 sur 20 : côté Home Assistant, API, schéma LVGL ou compilation d'ESPHome) ou s'il est **propre au Tab5 / à l'ESP32-P4** (9 sur 20 : matériel du Tab5, co-processeur Wi-Fi du P4, intégration « Tab5 » de ce projet). Pour bâtir votre propre écran à partir de ce projet : [Partir de ce projet pour son propre écran](reuse.md#version-française).
+
 ### Retrouver votre symptôme
 
 Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incident, avec sa cause racine et son correctif.
 
-| Symptôme | Incident |
-|---|---|
-| L'écran reste noir après un redémarrage (OTA, plantage) ; une coupure d'alimentation le répare | [Écran noir après un reboot logiciel (pas une coupure d'alimentation)](#écran-noir-après-un-reboot-logiciel-pas-une-coupure-dalimentation) |
-| L'appareil est en ligne et l'horloge marche, mais les cartes météo, planning et prévisions ne se mettent jamais à jour | [Météo / planning / clim absents alors que l'appareil est en ligne](#météo--planning--clim-absents-alors-que-lappareil-est-en-ligne) |
-| Le pipeline vocal dit que la reconnaissance vocale est absente ou cassée ; beaucoup de lignes « entity already exists » dans le journal de Home Assistant | [STT/TTS cassé, dizaines de logs "entity already exists — ignoring"](#stttts-cassé-dizaines-de-logs-entity-already-exists--ignoring) |
-| Toucher l'écran ne fait rien, comme si le contrôleur tactile était mort | [Tactile "mort" alors que le contrôleur détecte bien les appuis](#tactile-mort-alors-que-le-contrôleur-détecte-bien-les-appuis) |
-| Planning, météo et clim toujours absents après les correctifs ci-dessus | [Un push calendrier/météo casse silencieusement le reste de la même automation](#un-push-calendriermétéo-casse-silencieusement-le-reste-de-la-même-automation) |
-| Les icônes des prévisions journalières ont disparu alors que les cartes horaires se mettent à jour, et l'automation indique un succès | [Icônes météo des jours disparues, horaire intact, automation « réussie » (18/09/2026)](#icônes-météo-des-jours-disparues-horaire-intact-automation--réussie--18092026) |
-| `esphome compile` échoue avec `[pressed] is an invalid option for [style_definitions]` | [`pressed:` LVGL refusé dans un `style_definitions` partagé](#pressed-lvgl-refusé-dans-un-style_definitions-partagé) |
-| L'appareil refuse parfois de nouvelles connexions à l'API (Home Assistant, journaux, OTA) | [Connexions API ESPHome épuisées](#connexions-api-esphome-épuisées) |
-| La tablette redémarre toute seule toutes les 15 à 20 minutes quand Home Assistant est injoignable | [L'appareil redémarre tout seul toutes les ~15-20 min quand Home Assistant est injoignable](#lappareil-redémarre-tout-seul-toutes-les-15-20-min-quand-home-assistant-est-injoignable) |
-| Écran noir, aucune entité, aucune API après une OTA qui annonçait « OTA successful » | [Écran noir + appareil absent du réseau après une OTA — le co-processeur WiFi n'est pas remonté](#écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté) |
-| La Waveshare 7B redémarre toutes les ~17 s après un redémarrage logiciel et n'atteint jamais le Wi-Fi | [Waveshare 7B : boucle de redémarrages après un redémarrage logiciel, lien Wi-Fi absent (16/10/2026)](#waveshare-7b--boucle-de-redémarrages-après-un-redémarrage-logiciel-lien-wi-fi-absent-16102026) |
-| `Tab5 Uptime` reste `unavailable` après la mise à jour du firmware | [`Tab5 Uptime` bloqué à `unavailable` après la mise à jour vers le firmware à heure de démarrage (26/09/2026)](#tab5-uptime-bloqué-à-unavailable-après-la-mise-à-jour-vers-le-firmware-à-heure-de-démarrage-26092026) |
-| Un appui bref sur le bouton d'alimentation redémarre la tablette et Home Assistant envoie une notification de plantage | [Alerte de plantage après un appui sur le bouton d'alimentation (06/10/2026)](#alerte-de-plantage-après-un-appui-sur-le-bouton-dalimentation-06102026) |
-| L'ajout de Tab5 dans HACS échoue avec « Dépôt introuvable », ou sa boîte est vide | [Ajout de Tab5 dans HACS : « Dépôt introuvable », ou une boîte vide (07/10/2026)](#ajout-de-tab5-dans-hacs---dépôt-introuvable--ou-une-boîte-vide-07102026) |
-| HACS : « Download failed - 400 » ou « Got more than 8190 bytes when reading » | [HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)](#hacs---download-failed---400---got-more-than-8190-bytes-when-reading--24102026) |
-| L'intégration Tab5 est téléchargée dans HACS mais rien ne se passe | [Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe](#intégration-tab5-hacs--téléchargée-mais-rien-ne-se-passe) |
-| Un message dont le titre commence par « Tab5 » apparaît dans les Corrections de Home Assistant | [Intégration Tab5 (HACS) : un message dans Corrections](#intégration-tab5-hacs--un-message-dans-corrections) |
-| Une tablette ou une 7B réinstallée avec effacement reste indisponible dans Home Assistant | [Home Assistant ne se reconnecte plus après une réinstallation avec effacement (19/10/2026)](#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026) |
-| Un léger souffle continu sort d'une tablette sans batterie | [Léger souffle continu, sur une tablette sans batterie (08/10/2026)](#léger-souffle-continu-sur-une-tablette-sans-batterie-08102026) |
-| Votre propre compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » | [La compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » (21/10/2026)](#la-compilation-échoue-avec-esphome-2026100---was-not-declared-in-this-scope--21102026) |
-| Quelque chose ressemble à un bug mais est voulu (par exemple la pagination des prévisions qui ne boucle pas) | [Faux positifs à connaître (ne pas re-"corriger")](#faux-positifs-à-connaître-ne-pas-re-corriger) |
+| Symptôme | Vaut pour | Incident |
+|---|---|---|
+| L'écran reste noir après un redémarrage (OTA, plantage) ; une coupure d'alimentation le répare | Tab5 / P4 | [Écran noir après un reboot logiciel (pas une coupure d'alimentation)](#écran-noir-après-un-reboot-logiciel-pas-une-coupure-dalimentation) |
+| L'appareil est en ligne et l'horloge marche, mais les cartes météo, planning et prévisions ne se mettent jamais à jour | Tout écran | [Météo / planning / clim absents alors que l'appareil est en ligne](#météo--planning--clim-absents-alors-que-lappareil-est-en-ligne) |
+| Le pipeline vocal dit que la reconnaissance vocale est absente ou cassée ; beaucoup de lignes « entity already exists » dans le journal de Home Assistant | Tout écran | [STT/TTS cassé, dizaines de logs "entity already exists — ignoring"](#stttts-cassé-dizaines-de-logs-entity-already-exists--ignoring) |
+| Toucher l'écran ne fait rien, comme si le contrôleur tactile était mort | Tout écran | [Tactile "mort" alors que le contrôleur détecte bien les appuis](#tactile-mort-alors-que-le-contrôleur-détecte-bien-les-appuis) |
+| Planning, météo et clim toujours absents après les correctifs ci-dessus | Tout écran | [Un push calendrier/météo casse silencieusement le reste de la même automation](#un-push-calendriermétéo-casse-silencieusement-le-reste-de-la-même-automation) |
+| Les icônes des prévisions journalières ont disparu alors que les cartes horaires se mettent à jour, et l'automation indique un succès | Tout écran | [Icônes météo des jours disparues, horaire intact, automation « réussie » (18/09/2026)](#icônes-météo-des-jours-disparues-horaire-intact-automation--réussie--18092026) |
+| `esphome compile` échoue avec `[pressed] is an invalid option for [style_definitions]` | Tout écran | [`pressed:` LVGL refusé dans un `style_definitions` partagé](#pressed-lvgl-refusé-dans-un-style_definitions-partagé) |
+| L'appareil refuse parfois de nouvelles connexions à l'API (Home Assistant, journaux, OTA) | Tout écran | [Connexions API ESPHome épuisées](#connexions-api-esphome-épuisées) |
+| La tablette redémarre toute seule toutes les 15 à 20 minutes quand Home Assistant est injoignable | Tout écran | [L'appareil redémarre tout seul toutes les ~15-20 min quand Home Assistant est injoignable](#lappareil-redémarre-tout-seul-toutes-les-15-20-min-quand-home-assistant-est-injoignable) |
+| Écran noir, aucune entité, aucune API après une OTA qui annonçait « OTA successful » | Tab5 / P4 | [Écran noir + appareil absent du réseau après une OTA — le co-processeur WiFi n'est pas remonté](#écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté) |
+| La Waveshare 7B redémarre toutes les ~17 s après un redémarrage logiciel et n'atteint jamais le Wi-Fi | Tab5 / P4 | [Waveshare 7B : boucle de redémarrages après un redémarrage logiciel, lien Wi-Fi absent (16/10/2026)](#waveshare-7b--boucle-de-redémarrages-après-un-redémarrage-logiciel-lien-wi-fi-absent-16102026) |
+| `Tab5 Uptime` reste `unavailable` après la mise à jour du firmware | Tout écran | [`Tab5 Uptime` bloqué à `unavailable` après la mise à jour vers le firmware à heure de démarrage (26/09/2026)](#tab5-uptime-bloqué-à-unavailable-après-la-mise-à-jour-vers-le-firmware-à-heure-de-démarrage-26092026) |
+| Un appui bref sur le bouton d'alimentation redémarre la tablette et Home Assistant envoie une notification de plantage | Tab5 / P4 | [Alerte de plantage après un appui sur le bouton d'alimentation (06/10/2026)](#alerte-de-plantage-après-un-appui-sur-le-bouton-dalimentation-06102026) |
+| L'ajout de Tab5 dans HACS échoue avec « Dépôt introuvable », ou sa boîte est vide | Tab5 / P4 | [Ajout de Tab5 dans HACS : « Dépôt introuvable », ou une boîte vide (07/10/2026)](#ajout-de-tab5-dans-hacs---dépôt-introuvable--ou-une-boîte-vide-07102026) |
+| HACS : « Download failed - 400 » ou « Got more than 8190 bytes when reading » | Tab5 / P4 | [HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)](#hacs---download-failed---400---got-more-than-8190-bytes-when-reading--24102026) |
+| L'intégration Tab5 est téléchargée dans HACS mais rien ne se passe | Tab5 / P4 | [Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe](#intégration-tab5-hacs--téléchargée-mais-rien-ne-se-passe) |
+| Un message dont le titre commence par « Tab5 » apparaît dans les Corrections de Home Assistant | Tab5 / P4 | [Intégration Tab5 (HACS) : un message dans Corrections](#intégration-tab5-hacs--un-message-dans-corrections) |
+| Une tablette ou une 7B réinstallée avec effacement reste indisponible dans Home Assistant | Tout écran | [Home Assistant ne se reconnecte plus après une réinstallation avec effacement (19/10/2026)](#home-assistant-ne-se-reconnecte-plus-après-une-réinstallation-avec-effacement-19102026) |
+| Un léger souffle continu sort d'une tablette sans batterie | Tab5 / P4 | [Léger souffle continu, sur une tablette sans batterie (08/10/2026)](#léger-souffle-continu-sur-une-tablette-sans-batterie-08102026) |
+| Votre propre compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » | Tout écran | [La compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » (21/10/2026)](#la-compilation-échoue-avec-esphome-2026100---was-not-declared-in-this-scope--21102026) |
+| Quelque chose ressemble à un bug mais est voulu (par exemple la pagination des prévisions qui ne boucle pas) | — | [Faux positifs à connaître (ne pas re-"corriger")](#faux-positifs-à-connaître-ne-pas-re-corriger) |
 
 ### Écran noir après un reboot logiciel (pas une coupure d'alimentation)
+
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (le reset de l'écran passe par l'expandeur d'E/S du Tab5).
 
 **Symptôme :** après un reboot (OTA, crash, `api.reboot`), l'écran reste noir. Un cycle d'alimentation (débranché/rebranché) corrige le problème ; un reboot logiciel seul non, ou pas de façon fiable.
 
@@ -369,6 +415,8 @@ Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incide
 **Correctif :** un `delay(1000)` bloquant a été ajouté dans `on_boot: priority: 700` (`tab5-hardware.yaml`), juste avant la séquence de reset écran. Cause racine confirmée le 06/07/2026 après 5 tests de reboot en direct. Marqué `[AI-WARNING]` dans le fichier — **ne pas retirer ce délai** sans re-tester sur plusieurs reboots. Depuis le 17/10/2026, sa durée vient de la carte (`carte_attente_ecran_ms`, [ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md)) : 1 s sur le Tab5, aucune sur la Waveshare 7B, dont le reset de l'écran est une broche du P4 lui-même.
 
 ### Météo / planning / clim absents alors que l'appareil est en ligne
+
+**Vaut pour :** tout écran ESPHome + LVGL (côté Home Assistant : des poussées suspendues à un drapeau partagé, quel que soit l'écran).
 
 **Symptôme :** l'appareil affiche une connexion Wi-Fi/API saine, mais les cartes météo/planning/prévisions ne se mettent jamais à jour.
 
@@ -380,6 +428,8 @@ Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incide
 
 ### STT/TTS cassé, dizaines de logs "entity already exists — ignoring"
 
+**Vaut pour :** tout écran ESPHome + LVGL (côté Home Assistant (deux instances dupliquées l'une dans l'autre), quel que soit l'écran).
+
 **Symptôme :** pipeline vocal en échec malgré un service STT sain testé directement. Logs HA pleins d'avertissements de collision d'ID.
 
 **Cause racine :** une intégration type `remote_homeassistant` dupliquait toute une seconde instance HA dans celle-ci — collisions d'ID masquant les vraies entités STT/TTS. Ne se reproduit que dans un setup à **double instance HA**.
@@ -387,6 +437,8 @@ Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incide
 **Correctif :** désactiver l'intégration de duplication, redémarrage HA complet.
 
 ### Tactile "mort" alors que le contrôleur détecte bien les appuis
+
+**Vaut pour :** tout écran ESPHome + LVGL (tout appareil ESPHome qui appelle des actions de Home Assistant).
 
 **Symptôme :** taper sur l'écran ne fait rien.
 
@@ -398,11 +450,15 @@ Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incide
 
 ### Un push calendrier/météo casse silencieusement le reste de la même automation
 
+**Vaut pour :** tout écran ESPHome + LVGL (une automatisation de Home Assistant qui pousse des données vers un écran).
+
 **Cause racine :** `calendar.get_events` avec `start_date_time: "{{ now() }}"` (datetime brut avec microsecondes) — échec de validation silencieux qui interrompait toute la suite de l'automation.
 
 **Correctif :** `"{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"`, plus `continue_on_error: true` sur chaque action de push + gardes `is defined`.
 
 ### Icônes météo des jours disparues, horaire intact, automation « réussie » (18/09/2026)
+
+**Vaut pour :** tout écran ESPHome + LVGL (le gabarit Jinja d'une poussée, quel que soit l'écran).
 
 **Symptôme :** les 5 cartes journalières perdent leurs icônes (et gardent des données périmées après un reboot) alors que l'horaire se met à jour. HA a toutes les données, l'automation de push ne signale aucune erreur.
 
@@ -414,17 +470,23 @@ Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incide
 
 ### `pressed:` LVGL refusé dans un `style_definitions` partagé
 
+**Vaut pour :** tout écran ESPHome + LVGL (le schéma LVGL d'ESPHome).
+
 **Cause racine :** limitation confirmée dans le code source du composant LVGL d'ESPHome — `pressed:` n'est valide que sur le widget lui-même.
 
 **Correctif :** le partager sur le widget par `pressed: { styles: style_x }` (version anglaise ci-dessus ; l'ancien conseil « le répéter sur chaque bouton » était faux). Un bouton verre cliquable de rayon 18 n'a besoin de rien : `apply_pressed_scale_to_tree()` (`tab5_anim.cpp`) lui pose l'appui, et les `pressed:` qui le répétaient sont retirés depuis le 01/10/2026.
 
 ### Connexions API ESPHome épuisées
 
+**Vaut pour :** tout écran ESPHome + LVGL (l'API native d'ESPHome, sur tout appareil).
+
 **Cause racine :** l'API native n'autorise que 8 connexions simultanées ; des process `esphome` CLI orphelins (sessions de debug oubliées) en occupent chacun une indéfiniment.
 
 **Correctif :** fermer les sessions CLI une fois terminées ; vérifier les process `esphome` orphelins avant de soupçonner l'appareil.
 
 ### L'appareil redémarre tout seul toutes les ~15-20 min quand Home Assistant est injoignable
+
+**Vaut pour :** tout écran ESPHome + LVGL (le `api: reboot_timeout` d'ESPHome, sur tout appareil).
 
 **Symptôme :** HA est tombé (ou met longtemps à démarrer), le Tab5 est toujours sur le WiFi et affiche son dernier état connu, mais il redémarre seul toutes les 15-20 minutes environ. Aucun plantage dans les logs : chaque boot est propre et `safe_mode` annonce `Boot seems successful`.
 
@@ -433,6 +495,8 @@ Prenez la ligne qui ressemble à ce que vous voyez ; chacune renvoie à l'incide
 **Correctif :** porté à `60min` le 01/08/2026 — une panne ou une maintenance HA d'une heure ne fait plus cycler la tablette, qui reste utile sans HA (horloge, arcade, console diag, dernière météo affichée), tout en gardant le filet anti-« zombie » de l'audit F-04. **Ne pas** mettre `0s` sans relire cet audit : une pile API figée laisserait alors l'appareil en ligne mais muet jusqu'à une coupure d'alimentation manuelle.
 
 ### Écran noir + appareil absent du réseau après une OTA — le co-processeur WiFi n'est pas remonté
+
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (l'ESP32-P4 n'a pas de radio : le Wi-Fi vient de son co-processeur ESP32-C6 (`esp32_hosted`)).
 
 **Symptôme :** une OTA annonce `OTA successful`, l'appareil redémarre, et ensuite : écran noir, aucune entité côté Home Assistant, pas d'API (`esphome logs --device <ip>` part en timeout sur le port 6053). Le rebooter à nouveau ne change rien. Trompeur : l'IP répond toujours au `ping` — c'est un *autre* appareil qui a récupéré le bail, exactement comme la confusion DHCP du 01/08/2026.
 
@@ -458,6 +522,8 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 
 ### Waveshare 7B : boucle de redémarrages après un redémarrage logiciel, lien Wi-Fi absent (16/10/2026)
 
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (le reset logiciel de l'ESP32-P4 et son lien avec le C6 (Waveshare 7B)).
+
 **Symptôme :** après un redémarrage depuis Home Assistant (« Restart » ; « Redémarrage Système » avant la migration des entités), une OTA ou tout redémarrage logiciel, la carte redémarre toutes les ~17 s, n'atteint jamais le Wi-Fi, et au bout de 10 démarrages ESPHome passe en mode sans échec (écran figé). La redémarrer encore n'y change rien.
 
 **Ce que montre la console série** (port COM de la carte, `tools/capture_serie.py --mac …`, sans reset) : chaque démarrage passe `ESP-Hosted link not yet up` (sans conséquence, écrit à chaque démarrage), puis les lectures SDIO du C6 partent en timeout et le P4 redémarre de lui-même, `rst:0xc (SW_CPU_RESET)`, sans panique :
@@ -478,6 +544,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### `Tab5 Uptime` bloqué à `unavailable` après la mise à jour vers le firmware à heure de démarrage (26/09/2026)
 
+**Vaut pour :** tout écran ESPHome + LVGL (Home Assistant garde l'ancienne unité d'un capteur ESPHome dont la classe change).
+
 **Symptôme :** après le flash d'un firmware du 26/09/2026 ou plus récent par-dessus un plus ancien, toutes les entités reviennent sauf `Tab5 Uptime`, qui reste `unavailable`. Le journal de Home Assistant montre `ValueError: Sensor sensor.…_tab5_uptime has a unit of measurement and thus indicating it has a numeric value; however, it has the non-numeric device class: timestamp`.
 
 **Cause racine :** Home Assistant, pas le firmware. `Tab5 Uptime` est passé de secondes (`s`) à une heure de démarrage sans unité, sous le même nom, donc la même entité. À la reconnexion, l'intégration ESPHome de HA met à jour l'entité existante sur place et ne recopie l'unité que si la nouvelle n'est pas vide (`homeassistant/components/esphome/sensor.py`, `_on_static_info_update`) : l'ancien `s` reste, et HA refuse d'écrire un état horodaté qui porte une unité.
@@ -485,6 +553,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 **Correctif :** recharger une fois l'intégration ESPHome de l'appareil (Paramètres → Appareils et services → ESPHome → l'appareil → ⋮ → Recharger), ou redémarrer Home Assistant. L'entité est reconstruite depuis la description de l'appareil, sans unité. Fait le 26/09/2026 à 21:39.
 
 ### Alerte de plantage après un appui sur le bouton d'alimentation (06/10/2026)
+
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (le bouton d'alimentation du Tab5 réinitialise la puce).
 
 **Symptôme :** un appui court sur le bouton d'alimentation redémarre la tablette en ~10 s, puis Home Assistant envoie « Tab5 : journal du démarrage (plantage (chien de garde)) » sur le téléphone. Le journal ne contient que les lignes habituelles du démarrage (ESP-Hosted « not yet up », tactile, Wi-Fi qui s'associe), aucune ligne `esp32.crash`. En même temps, `Restart reason` affiche `Reboot request from esphome.ota`, alors que la dernière mise à jour date de plusieurs heures. Signalé dans la discussion #278 (tablette avec batterie, 3.7.0-rc.2), reproduit le même jour sur une tablette alimentée par l'USB.
 
@@ -494,6 +564,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### Ajout de Tab5 dans HACS : « Dépôt introuvable », ou une boîte vide (07/10/2026)
 
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (l'intégration « Tab5 » de ce projet, pour HACS).
+
 **Symptôme :** l'ajout du dépôt dans HACS, par le lien « Ouvrir Tab5 dans HACS » ou par *Custom repositories*, échoue avec « Dépôt introuvable » (« Repository not found » en anglais). Ou la boîte que HACS ouvre par le lien n'affiche qu'un titre (« Confirmer ? »), sans texte.
 
 **Cause racine :** HACS vérifie un dépôt sur sa dernière release complète, même avec les versions bêta activées, et seules les releases depuis la 3.7.0 portent l'intégration : avant la publication de la 3.7.0 (7 octobre 2026), HACS refusait ce dépôt (essayé ce jour-là, avec la 3.6.0 comme dernière release complète). La boîte vide vient de HACS : au premier chargement par le lien, ses textes ne sont pas encore chargés (vu avec HACS 2.0.5).
@@ -501,6 +573,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 **Correctif :** « Dépôt introuvable » : vérifier sur la [page des releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) que la release marquée *Latest* est la 3.7.0 ou plus récente et, pour un ajout à la main, que le type est **Integration** ; puis réessayer. Boîte vide : recharger la page, la boîte revient avec ses textes, *Ajouter* à droite. Sans HACS, l'archive copiée à la main marche comme avant ([parties A à C](installation/home-assistant-files.md#a-télécharger-et-décompresser)).
 
 ### HACS : « Download failed - 400 », « Got more than 8190 bytes when reading » (24/10/2026)
+
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (le téléchargement de l'intégration « Tab5 » de ce projet (la panne, côté GitHub, touchait toute intégration HACS)).
 
 **Symptôme :** sur la page de Tab5 dans HACS, *Download* (ou une mise à jour) échoue ; le journal de Home Assistant montre « Download failed - 400 » et « Got more than 8190 bytes when reading ». Signalé sur le forum Home Assistant le 24 octobre 2026. **Résolu depuis le 24 octobre 2026** (plus bas).
 
@@ -512,6 +586,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 
 ### Intégration Tab5 (HACS) : téléchargée, mais rien ne se passe
 
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (l'intégration « Tab5 » de ce projet).
+
 **Symptôme :** le dépôt « Tab5 » est téléchargé dans HACS (sa version y apparaît), mais rien n'en vient : pas de notification « Tab5 : fichiers Home Assistant », rien dans *Paramètres → Système → Corrections* (pas même « Tab5: switch the entities to their English names » après une mise à jour vers la 3.9.0, les entités de la tablette gardant leurs noms français), rien d'elle dans le journal.
 
 **Cause racine :** HACS ne fait que télécharger l'intégration. Tant qu'elle n'est pas ajoutée dans *Paramètres → Appareils et services*, Home Assistant ne la démarre jamais : elle ne peut rien faire ni rien dire. La tablette elle-même y figure aussi, sous ESPHome, ce qui laisse facilement croire que l'intégration est déjà ajoutée (vu le 28 octobre 2026).
@@ -519,6 +595,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 **Correctif :** *Paramètres → Appareils et services* : cherchez la carte « Tab5 — fichiers HA · HA files ». Si elle n'y est pas, *Ajouter une intégration → Tab5* ([étape 5 de l'installation par HACS](installation/home-assistant-files.md#avec-hacs)). Elle démarre tout de suite : les fichiers de sa version sont posés et ses corrections apparaissent.
 
 ### Intégration Tab5 (HACS) : un message dans Corrections
+
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (l'intégration « Tab5 » de ce projet).
 
 **Symptôme :** après une mise à jour de l'intégration « Tab5 — fichiers HA · HA files » et un redémarrage, *Paramètres → Système → Corrections* montre un message dont le titre commence par « Tab5 ».
 
@@ -536,6 +614,8 @@ rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
 Pour revenir à la main à des fichiers plus anciens : [remettre des fichiers plus anciens](installation/updates.md#remettre-à-la-main-des-fichiers-plus-anciens).
 
 ### Home Assistant ne se reconnecte plus après une réinstallation avec effacement (19/10/2026)
+
+**Vaut pour :** tout écran ESPHome + LVGL (tout appareil ESPHome dont Home Assistant a fourni la clé d'API, une fois sa mémoire effacée).
 
 **Symptôme :** une tablette ou une Waveshare 7B que Home Assistant connaissait déjà est réinstallée depuis la [page d'installation](installation/flash.md#version-française) avec effacement (« Erase device » coché après *Install*, ou « Erase User Data »). Elle démarre et rejoint le Wi-Fi une fois celui-ci redonné, mais reste indisponible dans Home Assistant, même après un redémarrage de la tablette. *Paramètres → Appareils et services* la montre en haut, sous « Découvertes », cadre rouge et bouton *Reconfigurer* ; *Paramètres → Système → Corrections* dit « L'authentification a expiré pour M5Stack Tab5 Home Assistant HMI ». Vu sur la 7B de l'auteur le 19/10/2026 (3.9.0-rc.6 installée depuis la page).
 
@@ -557,6 +637,8 @@ Plus de 30 minutes depuis le démarrage de la tablette : redémarrez-la d'abord 
 
 ### Léger souffle continu, sur une tablette sans batterie (08/10/2026)
 
+**Vaut pour :** propre au Tab5 / à l’ESP32-P4 (le chargeur de batterie du Tab5).
+
 **Symptôme :** un très léger souffle, continu, sort de la tablette. Couper le micro ou baisser le volume n'y change rien. Entendu sur la tablette de l'auteur, qui n'a pas de batterie et tourne sur un port USB de PC.
 
 **Ce que ce n'est pas** (essayé l'un après l'autre depuis Home Assistant, le 08/10/2026) :
@@ -572,6 +654,8 @@ Plus de 30 minutes depuis le démarrage de la tablette : redémarrez-la d'abord 
 **Contournement de la 3.6.0 à la dernière version publiée :** aucun de simple, désolé. Ces versions n'ont pas d'entité pour couper le chargeur, et le haut-parleur, le micro ou le volume n'y sont pour rien. Une batterie montée donne au chargeur quelque chose à charger (on n'a pas vérifié si une tablette avec batterie souffle aussi). Sinon, attendre la prochaine version.
 
 ### La compilation échoue avec ESPHome 2026.10.0 : « was not declared in this scope » (21/10/2026)
+
+**Vaut pour :** tout écran ESPHome + LVGL (ESPHome 2026.10.0, `esphome: includes:` et les lambdas, sur tout appareil).
 
 **Symptôme :** vous compilez le firmware vous-même avec ESPHome 2026.10.0, et la compilation s'arrête sur `main.cpp` avec des erreurs comme `'journal_reset_reason' was not declared in this scope`, `'tr' was not declared in this scope` ou `'g_alarm_cfg' was not declared in this scope` (13 erreurs sur `main`, le 21/10/2026). Le même commit compile avec la 2026.9.x. Le firmware publié n'est pas touché : il est compilé avec une version d'ESPHome figée (`ESPHOME_PUBLICATION` dans `.github/workflows/publication.yml`), pas avec la dernière.
 
