@@ -24,6 +24,7 @@ Firmware that turns the M5Stack Tab5 into a Home Assistant wall screen, built wi
 | fix something that went wrong | [Known incidents](troubleshooting.md), then [Debugging](debugging.md) |
 | plan my own project on these screens: specs, pins, power | [Hardware](hardware.md), [Tab5 pinout](tab5-pinout.md), [Tab5 battery and power](tab5-battery.md), [Waveshare 7B board](waveshare-7b.md) |
 | understand how it is built | [Architecture](architecture.md), [Design decisions](decisions/README.md) |
+| build my own ESPHome + LVGL screen from this project | [Start your own screen from this project](reuse.md) |
 
 The source code, the issues and the discussions are on [GitHub](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL).
 
@@ -53,5 +54,6 @@ Un firmware qui fait de la M5Stack Tab5 un écran mural Home Assistant, construi
 | réparer ce qui ne marche pas | [Incidents connus](troubleshooting.md#version-française), puis [Diagnostiquer](debugging.md#version-française) |
 | préparer mon propre projet sur ces écrans : fiche technique, broches, alimentation | [Matériel](hardware.md#version-française), [Brochage du Tab5](tab5-pinout.md#version-française), [Batterie et alimentation du Tab5](tab5-battery.md#version-française), [Carte Waveshare 7B](waveshare-7b.md#version-française) |
 | comprendre comment il est fait | [Architecture](architecture.md#version-française), [Décisions d'architecture](decisions/README.md) (en anglais) |
+| bâtir mon propre écran ESPHome + LVGL à partir de ce projet | [Partir de ce projet pour son propre écran](reuse.md#version-française) |
 
 Le code source, les tickets et les discussions sont sur [GitHub](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL).

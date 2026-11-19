@@ -402,6 +402,16 @@
       description:
         en: "How the M5Stack Tab5 Home Assistant firmware is built: one ESPHome entry file, YAML packages by concern, native LVGL, data pushed in, events sent back."
         fr: "Comment est construit le firmware du M5Stack Tab5 pour Home Assistant : un fichier ESPHome d'entrée, des packages YAML, LVGL natif, données poussées."
+    - en: Start your own screen
+      fr: Partir de ce projet
+      page: docs/reuse.md
+      h1_fr: Partir de ce projet pour son propre écran ESPHome
+      titre_onglet:
+        en: "Your own ESPHome + LVGL screen from the Tab5 project"
+        fr: "Son propre écran ESPHome + LVGL à partir du projet Tab5"
+      description:
+        en: "What to reuse for your own ESP32 + LVGL Home Assistant screen: code rules, design decisions, incidents, AI method; how the 7B was added; what is P4-only."
+        fr: "Que réutiliser pour son écran ESP32 + LVGL pour Home Assistant : règles de code, décisions, incidents, méthode IA ; l'ajout de la 7B ; le propre au P4."
     - en: Screen internals
       fr: "Écrans : détails techniques"
       page: docs/screens_internals.md
