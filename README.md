@@ -77,7 +77,7 @@ What the screen was first made for: seeing at a glance whether rain is coming be
 ![M5Stack Tab5 screen in English: nine rain bars for the next hour and the sentence Moderate rain in 10 min, the date in orange](docs/images/site/pluie-dans-l-heure-en.png)
 
 - **9 bars, the whole next hour**: one every 5 minutes for half an hour, then one every 10 minutes. The taller and darker the bar, the heavier the rain. The sentence is written by the tablet, in its language, and counts the minutes down by itself.
-- Source, chosen in Home Assistant: Météo-France in France; the Buienradar, DWD or Met.no radars; OpenWeatherMap; Open-Meteo everywhere, with no key, used by itself when there is no Météo-France; or none, and the panel goes away ([weather providers](docs/installation/weather.md)).
+- Source, chosen in Home Assistant: Météo-France in France, directly or at your GPS point through Vigie (5-min steps); the Buienradar, DWD or Met.no radars; OpenWeatherMap; Open-Meteo everywhere, with no key, used by itself when there is no Météo-France; or none, and the panel goes away ([weather providers](docs/installation/weather.md)).
 
 ![M5Stack Tab5 screen in English with two weather warning icons, a yellow thunderstorm and an orange rain-flood, and the date in orange](docs/images/site/vigilances-en.png)
 
@@ -310,7 +310,7 @@ Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuv
 ![Écran de la M5Stack Tab5 en français : neuf barres de pluie pour l'heure qui vient et la phrase Pluie modérée dans 10 mn, la date en orange](docs/images/site/pluie-dans-l-heure.png)
 
 - **9 barres, toute l'heure qui vient** : une toutes les 5 minutes pendant une demi-heure, puis une toutes les 10 minutes. Plus la barre est haute et foncée, plus la pluie est forte. La phrase est écrite par la tablette, dans sa langue, et décompte les minutes toute seule.
-- Source, choisie dans Home Assistant : Météo-France en France ; les radars Buienradar, DWD ou Met.no ; OpenWeatherMap ; Open-Meteo partout, sans clé, pris tout seul quand il n'y a pas Météo-France ; ou aucune, et le panneau disparaît ([fournisseurs météo](docs/installation/weather.md#version-française)).
+- Source, choisie dans Home Assistant : Météo-France en France, directement ou au point GPS par Vigie (pas de 5 min) ; les radars Buienradar, DWD ou Met.no ; OpenWeatherMap ; Open-Meteo partout, sans clé, pris tout seul quand il n'y a pas Météo-France ; ou aucune, et le panneau disparaît ([fournisseurs météo](docs/installation/weather.md#version-française)).
 
 ![Écran de la M5Stack Tab5 en français avec deux icônes de vigilance, orages en jaune et pluie-inondation en orange, et la date en orange](docs/images/site/vigilances.png)
 

@@ -25,7 +25,8 @@
 #         intégration officielle n'expose une série exploitable en barres : depuis le
 #         29/09/2026, quatre services SANS CLÉ sont interrogés directement par
 #         `rest_command.tab5_pluie` (radars Buienradar, DWD par Bright Sky, Met.no ;
-#         modèle Open-Meteo), aux coordonnées de zone.home ;
+#         modèle Open-Meteo), aux coordonnées de zone.home ; depuis le 22/11/2026 aussi
+#         Vigie (PIAF de Météo-France au point GPS, 12 pas de 5 min, France métropolitaine) ;
 #       - vigilances : Météo-France (`sensor.<dept>_weather_alert`, 9 phénomènes),
 #         MeteoAlarm (39 pays européens, `binary_sensor`, UNE seule alerte : la
 #         bibliothèque s'arrête à la première ; `on` seulement si elle n'a pas expiré),
@@ -72,6 +73,7 @@ input_select:
     icon: mdi:weather-pouring
     options:
       - "Météo-France"
+      - "Vigie"
       - "OpenWeatherMap"
       - "Buienradar"
       - "DWD"
@@ -113,7 +115,13 @@ input_text:
 #     exigé, CC BY 4.0 ;
 #   - Open-Meteo : partout, mais un MODÈLE et non le radar, au pas de 15 min (vrai pas
 #     de 15 min en Europe centrale et en Amérique du Nord, interpolé ailleurs) ; usage
-#     non commercial, CC BY 4.0.
+#     non commercial, CC BY 4.0 ;
+#   - Vigie (22/11/2026, https://vigie.auxfilsdesidees.fr, API ouverte du même auteur) :
+#     la prévision immédiate PIAF de Météo-France lue sur sa grille de 0,01° (~1 km),
+#     `rain_nowcast.rate_5m_mm_h` = 12 intensités (mm/h) de 5 min à partir du début des
+#     5 min en cours (`server_utc` arrondi à 300 s) ; France métropolitaine seulement,
+#     ailleurs ce champ est nul (« pas de données »). Comme l'ancienne API de Météo-France
+#     (5 min la première demi-heure, 10 min la seconde), mais au point GPS, pas à la commune.
 rest_command:
   tab5_pluie:
     url: >-
@@ -124,6 +132,8 @@ rest_command:
         https://api.brightsky.dev/radar?lat={{ la }}&lon={{ lo }}&distance=0&format=plain&date={{ (utcnow() - timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M') }}
       {%- elif source == 'Met.no' -%}
         https://api.met.no/weatherapi/nowcast/2.0/complete?lat={{ la }}&lon={{ lo }}
+      {%- elif source == 'Vigie' -%}
+        https://vigie.auxfilsdesidees.fr/v1/point?lat={{ la }}&lon={{ lo }}
       {%- else -%}
         https://api.open-meteo.com/v1/forecast?latitude={{ la }}&longitude={{ lo }}&minutely_15=precipitation&forecast_minutely_15=6&timeformat=unixtime
       {%- endif -%}
@@ -307,7 +317,7 @@ template:
       - if:
           - condition: template
             value_template: >-
-              {{ source in ['Buienradar', 'DWD', 'Met.no', 'Open-Meteo'] and lat is number and lon is number }}
+              {{ source in ['Buienradar', 'DWD', 'Met.no', 'Open-Meteo', 'Vigie'] and lat is number and lon is number }}
         then:
           - action: rest_command.tab5_pluie
             data:
@@ -327,7 +337,9 @@ template:
       #   - Met.no (Nowcast 2.0) : `precipitation_rate` en mm/h par 5 min, seulement si
       #     `radar_coverage` = ok ;
       #   - Open-Meteo : `minutely_15.precipitation` = mm tombés dans les 15 min
-      #     PRÉCÉDANT l'heure donnée (epoch, timeformat=unixtime).
+      #     PRÉCÉDANT l'heure donnée (epoch, timeformat=unixtime) ;
+      #   - Vigie : `rain_nowcast.rate_5m_mm_h` en mm/h, 12 pas de 5 min depuis le début
+      #     des 5 min en cours (`server_utc` // 300 × 300) ; nul hors de France : rien.
       - variables:
           serie: >-
             {%- set ns = namespace(l=[]) -%}
@@ -369,6 +381,14 @@ template:
                   {%- set mm = (p[loop.index0] if loop.index0 < p | length else 0) | float(0) -%}
                   {%- set ns.l = ns.l + [[(t | int(0)) - 900, 15, mm * 4]] -%}
                 {%- endfor -%}
+              {%- elif source == 'Vigie' and c is mapping -%}
+                {%- set r = (c.get('rain_nowcast') or {}).get('rate_5m_mm_h') -%}
+                {%- set t0 = ((c.get('server_utc') | int(0)) // 300) * 300 -%}
+                {%- if r is iterable and r is not string and r is not mapping and t0 > 0 -%}
+                  {%- for v in r -%}
+                    {%- set ns.l = ns.l + [[t0 + 300 * loop.index0, 5, v | float(0)]] -%}
+                  {%- endfor -%}
+                {%- endif -%}
               {%- endif -%}
             {%- endif -%}
             {{ ns.l if ns.l else none }}
@@ -387,7 +407,7 @@ template:
         state: >
           {% if source == 'none' %}
             @-
-          {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo'] %}
+          {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo', 'Vigie'] %}
             {# Série commune (variables des actions). Seuils en mm/h : < 0,1 sec,
                < 2,5 faible, < 7,6 modérée, < 50 forte, au-delà très forte (classes
                usuelles « light / moderate / heavy / violent »). #}
@@ -456,7 +476,7 @@ template:
               {% set fc = state_attr(mf_pluie, '1_hour_forecast') %}
               {% set cles = ['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '35 min', '45 min', '55 min'] %}
               {% for k in cles %}{% set ns.r = ns.r ~ loop.index0 ~ '|' ~ fc.get(k, 'Inconnu') ~ ';' %}{% endfor %}
-            {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo']
+            {% elif source in ['OpenWeatherMap', 'Buienradar', 'DWD', 'Met.no', 'Open-Meteo', 'Vigie']
                     and serie is defined and serie is not none %}
               {% set bornes = [0, 5, 10, 15, 20, 25, 35, 45, 55, 60] %}
               {% set maintenant = now().timestamp() %}

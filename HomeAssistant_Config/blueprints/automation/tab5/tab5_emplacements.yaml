@@ -2165,6 +2165,8 @@ blueprint:
                   value: liste
                 - label: Météo-France
                   value: Météo-France
+                - label: Vigie (Météo-France au point GPS, France · at your GPS point, France)
+                  value: Vigie
                 - label: OpenWeatherMap
                   value: OpenWeatherMap
                 - label: Buienradar (Pays-Bas, Belgique · Netherlands, Belgium)
