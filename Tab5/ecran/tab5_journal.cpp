@@ -489,7 +489,9 @@ bool ha_evenement_envoyer(const char* evenement) {
     auto* api = esphome::api::global_api_server;
     if (api == nullptr) return false;
     esphome::api::HomeassistantActionRequest evt;
-    evt.service = esphome::StringRef(evenement);
+    // Type du champ selon ESPHome : StringRef jusqu'à 2026.10, ProgmemStringRef (constructeur
+    // explicite depuis un StringRef) depuis 2026.11 (esphome#20425). decltype couvre les deux.
+    evt.service = decltype(evt.service)(esphome::StringRef(evenement));
     evt.is_event = true;
     bool envoye = false;
     for (const auto& client : api->active_clients()) {
