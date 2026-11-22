@@ -469,7 +469,8 @@ def rendre_styles(styles: Path = STYLES, connus: set[str] | None = None) -> list
     un lv_obj_report_style_change parcourt les ~1 600 objets de l'écran, et chacun
     recalculait la mise en page de tous les descendants de ses porteurs (3,2 s de boucle
     bloquée pour 69 appels, mesuré le 07/10/2026). Une couleur ne change ni la taille ni
-    la zone de dessin, et LVGL la lit au dessin (LV_OBJ_STYLE_CACHE à 0) : un seul
+    la zone de dessin, et LVGL la lit au dessin (LV_OBJ_STYLE_CACHE ne garde que les
+    propriétés posées, pas leurs valeurs ; ces couleurs le sont toujours) : un seul
     redessin de l'écran suffit. Les formes (theme_formes) et les polices (theme_polices),
     qui changent la géométrie, rafraîchissent ensuite leurs objets elles-mêmes."""
     lvgl = _styles_yaml(styles)["lvgl"]

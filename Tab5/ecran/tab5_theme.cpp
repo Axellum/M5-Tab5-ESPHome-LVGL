@@ -2425,17 +2425,17 @@ static void poser_forme(lv_style_t* const styles[], const Forme& f) {
 // - SHADOW_WIDTH (drapeau EXT_DRAW_UPDATE) : la zone de dessin hors cadre est recalculée
 //   en entier (ombre et contour : largeurs, décalages, étalement, opacités).
 // Aucune propriété de forme n'est héritée : pas de cascade vers les enfants. Rayon,
-// couleurs et dégradés sont lus au dessin (LV_OBJ_STYLE_CACHE à 0, garde
-// ci-dessous) ; l'écran entier est redessiné par tab5_theme_repeindre. Preuve : même
+// couleurs et dégradés sont lus au dessin ; l'écran entier est redessiné par
+// tab5_theme_repeindre. LV_OBJ_STYLE_CACHE (à 1 depuis ESPHome 2026.11 / LVGL 9.6, posé par
+// ESPHome dans lv_conf.h) ne garde pas les valeurs, seulement, par objet, quels groupes de
+// 8 propriétés ses styles posent : une propriété AJOUTÉE à un style déjà porté serait
+// ignorée au dessin. theme_formes() remet donc ces groupes sur les porteurs
+// (marquer_ajouts, sans parcours quand aucun thème n'ajoute rien). Preuve : même
 // géométrie qu'avec les 12 appels sur 5 thèmes (empreinte des coordonnées, 07/10/2026),
 // et les tâches « clair » et « galerie » du rendu hors tablette (rendu-host.yml) comparent
 // la bascule à chaud au démarrage à froid, au pixel près. Depuis le 17/10/2026, seuls les
 // porteurs d'un style dont une propriété géométrique a changé sont rafraîchis (aucun pour
 // Clair ↔ Sombre d'un même thème, sauf Béton brut).
-#if LV_OBJ_STYLE_CACHE
-#error "theme_formes et tab5_theme_repeindre supposent LV_OBJ_STYLE_CACHE à 0 (couleurs lues au dessin)"
-#endif
-
 struct PorteursFormes {
     lv_style_t* const* styles;
     int n;
@@ -2453,6 +2453,32 @@ static lv_obj_tree_walk_res_t rafraichir_porteur(lv_obj_t* o, void* donnees) {
     }
     return LV_OBJ_TREE_WALK_NEXT;
 }
+
+#if LV_OBJ_STYLE_CACHE
+// Groupe d'une propriété dans le cache de LVGL : STYLE_PROP_SHIFTED de lv_obj_style.c
+// (privée, recopiée ; LVGL 9.6).
+static constexpr uint32_t groupe_cache(lv_style_prop_t prop) {
+    return uint32_t{1} << (prop >> 3);
+}
+
+struct AjoutsFormes {
+    lv_style_t* const* styles;
+    const uint32_t* groupes;  // groupes ajoutés, un masque par style
+};
+
+// Sur chaque porteur d'un style qui a gagné une propriété, le groupe de celle-ci est marqué
+// « posé » (main et autres parties : un groupe de trop ne coûte qu'une recherche).
+static lv_obj_tree_walk_res_t marquer_porteur(lv_obj_t* o, void* donnees) {
+    const auto* a = static_cast<const AjoutsFormes*>(donnees);
+    uint32_t masque = 0;
+    for (uint32_t i = 0; i < o->style_cnt; i++)
+        for (int k = 0; k < kStylesFormes; k++)
+            if (o->styles[i].style == a->styles[k]) masque |= a->groupes[k];
+    o->style_main_prop_is_set |= masque;
+    o->style_other_prop_is_set |= masque;
+    return LV_OBJ_TREE_WALK_NEXT;
+}
+#endif
 
 // Ce que rafraichir_porteur() fait recalculer : mise en page (BORDER_WIDTH) et zone de dessin
 // hors cadre (ombre, contour), plus BORDER_SIDE, sans drapeau mais qui déplace le contenu.
@@ -2489,12 +2515,28 @@ void theme_formes(lv_style_t* const styles[], int n) {
     const int rangee = s_theme * 2 + (s_clair ? 1 : 0);
     for (int i = kFormesDebut[rangee]; i < kFormesDebut[rangee + 1]; i++) poser_forme(styles, kFormes[i]);
     bool change[kStylesFormes] = {};
+#if LV_OBJ_STYLE_CACHE
+    uint32_t ajouts[kStylesFormes] = {};
+    bool ajout = false;
+#endif
     for (int i = 0; i < kNbFormesDefaut; i++) {
         const Forme& f = kFormesDefaut[i];
-        if (!forme_geometrie(f.prop)) continue;
         const ValeurForme apres = lire_forme(styles, f);
+#if LV_OBJ_STYLE_CACHE
+        if (apres.res == LV_STYLE_RES_FOUND && avant[i].res != LV_STYLE_RES_FOUND) {
+            ajouts[f.style] |= groupe_cache(f.prop);
+            ajout = true;
+        }
+#endif
+        if (!forme_geometrie(f.prop)) continue;
         if (apres.res != avant[i].res || apres.num != avant[i].num) change[f.style] = true;
     }
+#if LV_OBJ_STYLE_CACHE
+    if (ajout) {
+        AjoutsFormes a{styles, ajouts};
+        lv_obj_tree_walk(nullptr, marquer_porteur, &a);
+    }
+#endif
     lv_style_t* changes[kStylesFormes];
     int nb = 0;
     for (int k = 0; k < kStylesFormes; k++)
