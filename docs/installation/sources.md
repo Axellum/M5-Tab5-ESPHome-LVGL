@@ -19,7 +19,7 @@ Each list has an English name (« Tab5 · work calendar »; « Tab5 · agenda de
 | List | What it drives | Chosen by default |
 |---|---|---|
 | Tab5 · forecast source | forecasts and current weather (any `weather.*`) | the Météo-France city, otherwise the first weather entity |
-| Tab5 · next-hour rain source | rain card: Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo or None | Météo-France; without the Météo-France integration, Open-Meteo is used |
+| Tab5 · next-hour rain source | rain card: Météo-France, Vigie, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo or None | Météo-France; without the Météo-France integration, Open-Meteo is used |
 | Tab5 · weather warnings source | warning icons: Météo-France, MeteoAlarm, DWD, CAP Alerts or None | Météo-France; without the Météo-France integration, no icons (as Aucune) |
 | Tab5 · work calendar | work events: planning, rest days and the **alarm time** (which events: [see below](#which-events-are-work)) | nothing |
 | Tab5 · appointments calendar | calendar popup, appointment reminders, morning briefing | nothing |
@@ -68,7 +68,7 @@ Chaque liste porte un nom anglais (« Tab5 · work calendar » ; « Tab5 · agen
 | Liste | Ce qu'elle règle | Choix par défaut |
 |---|---|---|
 | Tab5 · forecast source | prévisions et météo du moment (n'importe quelle entité `weather.*`) | la ville Météo-France, sinon la première entité météo |
-| Tab5 · next-hour rain source | carte pluie : Météo-France, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo ou None | Météo-France ; sans l'intégration Météo-France, Open-Meteo prend le relais |
+| Tab5 · next-hour rain source | carte pluie : Météo-France, Vigie, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo ou None | Météo-France ; sans l'intégration Météo-France, Open-Meteo prend le relais |
 | Tab5 · weather warnings source | icônes de vigilance : Météo-France, MeteoAlarm, DWD, CAP Alerts ou None | Météo-France ; sans l'intégration Météo-France, aucune icône (comme Aucune) |
 | Tab5 · work calendar | événements de travail : planning, jours de repos et **heure du réveil** (lesquels : [voir plus bas](#quels-événements-sont-du-travail)) | rien |
 | Tab5 · appointments calendar | popup calendrier, rappels de rendez-vous, briefing du matin | rien |
