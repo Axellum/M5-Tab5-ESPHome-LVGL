@@ -82,7 +82,7 @@ What the screen was first made for: seeing at a glance whether rain is coming be
 ![M5Stack Tab5 screen in English with two weather warning icons, a yellow thunderstorm and an orange rain-flood, and the date in orange](docs/images/site/vigilances-en.png)
 
 - **One icon per warning in force**, up to 4, each in the colour of its own level. The date under the clock takes the colour of the day's overall level.
-- Source: Météo-France for your department; elsewhere MeteoAlarm, the DWD or CAP Alerts. Apart from Météo-France, the warnings were only tried with simulated data.
+- Source: Météo-France for your department; the official warnings gathered by the Vigie integration; elsewhere MeteoAlarm, the DWD or CAP Alerts. Apart from Météo-France, the warnings were only tried with simulated data.
 
 ## Before you start
 
@@ -315,7 +315,7 @@ Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuv
 ![Écran de la M5Stack Tab5 en français avec deux icônes de vigilance, orages en jaune et pluie-inondation en orange, et la date en orange](docs/images/site/vigilances.png)
 
 - **Une icône par vigilance en cours**, 4 au plus, chacune de la couleur de son niveau. La date sous l'horloge prend la couleur du niveau global de la journée.
-- Source : Météo-France pour votre département ; ailleurs MeteoAlarm, le DWD ou CAP Alerts. Hors Météo-France, les vigilances n'ont été essayées qu'avec des données simulées.
+- Source : Météo-France pour votre département ; les vigilances officielles rassemblées par l'intégration Vigie ; ailleurs MeteoAlarm, le DWD ou CAP Alerts. Hors Météo-France, les vigilances n'ont été essayées qu'avec des données simulées.
 
 ## Avant de commencer
 

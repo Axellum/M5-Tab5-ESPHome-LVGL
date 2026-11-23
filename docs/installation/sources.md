@@ -20,7 +20,7 @@ Each list has an English name (« Tab5 · work calendar »; « Tab5 · agenda de
 |---|---|---|
 | Tab5 · forecast source | forecasts and current weather (any `weather.*`) | the Météo-France city, otherwise the first weather entity |
 | Tab5 · next-hour rain source | rain card: Météo-France, Vigie, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo or None | Météo-France; without the Météo-France integration, Open-Meteo is used |
-| Tab5 · weather warnings source | warning icons: Météo-France, MeteoAlarm, DWD, CAP Alerts or None | Météo-France; without the Météo-France integration, no icons (as Aucune) |
+| Tab5 · weather warnings source | warning icons: Météo-France, Vigie, MeteoAlarm, DWD, CAP Alerts or None | Météo-France; without the Météo-France integration, no icons (as Aucune) |
 | Tab5 · work calendar | work events: planning, rest days and the **alarm time** (which events: [see below](#which-events-are-work)) | nothing |
 | Tab5 · appointments calendar | calendar popup, appointment reminders, morning briefing | nothing |
 | Tab5 · birthdays calendar | birthdays in the calendar popup | the only calendar named « anniversaires » (or birthday…) |
@@ -35,7 +35,7 @@ Each list has an English name (« Tab5 · work calendar »; « Tab5 · agenda de
 
 Outside France, or for another rain or warning source: [weather providers](weather.md). The weather sources can also be set in the blueprint of step 6 (its « Météo · Weather » section): filled, it writes its choice into these lists and wins over them.
 
-The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) and the tablet's entities (screen, alarm, microphone…) are found by themselves: the tablet by its device model, whatever you named it.
+The weather providers' own entities (Météo-France rain and warning sensors, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts, Vigie) and the tablet's entities (screen, alarm, microphone…) are found by themselves: the tablet by its device model, whatever you named it.
 
 ## Which events are work
 
@@ -69,7 +69,7 @@ Chaque liste porte un nom anglais (« Tab5 · work calendar » ; « Tab5 · agen
 |---|---|---|
 | Tab5 · forecast source | prévisions et météo du moment (n'importe quelle entité `weather.*`) | la ville Météo-France, sinon la première entité météo |
 | Tab5 · next-hour rain source | carte pluie : Météo-France, Vigie, OpenWeatherMap, Buienradar, DWD, Met.no, Open-Meteo ou None | Météo-France ; sans l'intégration Météo-France, Open-Meteo prend le relais |
-| Tab5 · weather warnings source | icônes de vigilance : Météo-France, MeteoAlarm, DWD, CAP Alerts ou None | Météo-France ; sans l'intégration Météo-France, aucune icône (comme Aucune) |
+| Tab5 · weather warnings source | icônes de vigilance : Météo-France, Vigie, MeteoAlarm, DWD, CAP Alerts ou None | Météo-France ; sans l'intégration Météo-France, aucune icône (comme Aucune) |
 | Tab5 · work calendar | événements de travail : planning, jours de repos et **heure du réveil** (lesquels : [voir plus bas](#quels-événements-sont-du-travail)) | rien |
 | Tab5 · appointments calendar | popup calendrier, rappels de rendez-vous, briefing du matin | rien |
 | Tab5 · birthdays calendar | anniversaires du popup calendrier | le seul agenda nommé « anniversaires » (ou birthday…) |
@@ -84,7 +84,7 @@ Chaque liste porte un nom anglais (« Tab5 · work calendar » ; « Tab5 · agen
 
 Hors de France, ou pour une autre source de pluie ou de vigilances : [fournisseurs météo](weather.md#version-française). Les sources météo se règlent aussi dans le blueprint de l'étape 6 (sa section « Météo · Weather ») : remplie, elle écrit son choix dans ces listes et prime sur elles.
 
-Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts) et celles de la tablette (écran, réveil, micro…) sont trouvées seules : la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
+Les entités des fournisseurs météo (capteurs de pluie et de vigilance Météo-France, OpenWeatherMap, MeteoAlarm, DWD, CAP Alerts, Vigie) et celles de la tablette (écran, réveil, micro…) sont trouvées seules : la tablette par le modèle de son appareil, quel que soit le nom que vous lui avez donné.
 
 ## Quels événements sont du travail
 
