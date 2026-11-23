@@ -14,9 +14,10 @@
 #       (sensor.ville_ci_next_rain) et le seul `*_weather_alert` :
 #         weather.ville_ci, sensor.ville_ci_next_rain, sensor.99_weather_alert,
 #         sensor.serre_ci_temperature, sensor.pot_ci_1 à 3, sensor.telephone_ci_batterie ;
-#       les vigilances DWD et CAP Alerts sont reconnues à leurs attributs (attribution
-#       « Data provided by DWD », incident_platform_version) : capteurs
-#       sensor.ville_ci_niveau_d_alerte_actuel / _anticipee et sensor.cap_ci_*.
+#       les vigilances DWD, CAP Alerts et Vigie sont reconnues à leurs attributs (attribution
+#       « Data provided by DWD », incident_platform_version, by_phenomenon + by_family) :
+#       capteurs sensor.ville_ci_niveau_d_alerte_actuel / _anticipee, sensor.cap_ci_* et
+#       sensor.vigie_ci_niveau_maximal.
 #       Lumières, clim, volet, TV, télécommande et température de la pièce viennent de
 #       l'intégration demo (tools/installation_ha/configuration.yaml).
 # @ai_instruction Les formes imitent celles des vraies intégrations lues par les
@@ -212,6 +213,28 @@ template:
           event: "Gefahreninformation"
           headline: "Fumes from fire"
           parameters: "{{ {'bbk_channel': 'mowas'} }}"
+
+  # Vigilances Vigie, forme du capteur « niveau maximal » de l'intégration vigie
+  # (dépôt Axellum/vigie-api, v0.7.0 : sensor.py VigieMaxLevelSensor, models.py
+  # build_attributes) : orages orange et vagues-submersion jaune en cours, une vigilance
+  # « other » jaune (sans case). Sans l'intégration, reconnu à by_phenomenon et by_family.
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: "Vigie CI Niveau maximal"
+        unique_id: ci_vigie_niveau_maximal
+        state: "orange"
+        attributes:
+          count: "{{ 3 }}"
+          by_phenomenon: "{{ {'coastal': 'yellow', 'other': 'yellow', 'thunderstorm': 'orange'} }}"
+          by_family: "{{ {'coastal': 'yellow', 'other': 'yellow', 'thunderstorm': 'orange'} }}"
+          sources: "{{ [{'source': 'meteofrance', 'country': 'FR', 'status': 'ok'}] }}"
+          not_matchable: "{{ 0 }}"
+          server_time: "{{ now().replace(microsecond=0).isoformat() }}"
+          omitted: "{{ 0 }}"
 
   - sensor:
       # Vigilance, forme de Météo-France (sensor.<département>_weather_alert) : jaune orages.

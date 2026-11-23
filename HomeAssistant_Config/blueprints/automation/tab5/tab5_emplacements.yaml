@@ -2197,6 +2197,8 @@ blueprint:
                   value: liste
                 - label: Météo-France
                   value: Météo-France
+                - label: Vigie (intégration Vigie · Vigie integration)
+                  value: Vigie
                 - label: MeteoAlarm
                   value: MeteoAlarm
                 - label: DWD (Allemagne · Germany)

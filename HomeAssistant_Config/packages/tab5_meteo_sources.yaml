@@ -33,7 +33,10 @@
 #         DWD (Allemagne, intégration `dwd_weather_warnings`, toutes les alertes de la
 #         région) ou CAP Alerts (intégration HACS `cap_alerts` : MeteoAlarm, NWS,
 #         Canada, services nationaux de l'OMM ; une entité par alerte). Ces deux-là
-#         sont lus par la macro de custom_templates/tab5_vigilance.jinja (29/09/2026).
+#         sont lus par la macro de custom_templates/tab5_vigilance.jinja (29/09/2026),
+#         comme Vigie depuis le 23/11/2026 (intégration `vigie` du dépôt
+#         Axellum/vigie-api, v0.7.0 : son capteur « niveau maximal », état none / yellow
+#         / orange / red, attribut `by_phenomenon` = le niveau de chaque phénomène).
 # @detection Depuis le 28/09/2026 (ADR-0024), plus de placeholder : les entités de
 #       chaque fournisseur sont TROUVÉES par `sensor.tab5_sources_meteo` (capteur à
 #       déclencheurs, plus bas) : Météo-France = la ville de l'entité météo choisie
@@ -46,7 +49,11 @@
 #       absente du registre des entités et d'integration_entities()) ; DWD = les
 #       capteurs de l'intégration (la macro lit la première région et écarte les
 #       préavis) ; CAP Alerts = tous les capteurs de l'intégration (la macro garde ceux
-#       qui portent incident_platform_version, donc les alertes).
+#       qui portent incident_platform_version, donc les alertes) ; Vigie = le capteur
+#       « niveau maximal » du lieu de l'entité météo choisie si elle est de Vigie, sinon
+#       du premier lieu, reconnu à ses options (none, yellow, orange, red : gardées
+#       même indisponible) ou à `by_phenomenon`, jamais à son identifiant (qui suit la
+#       langue de HA : `_niveau_maximal` en français).
 #       Sans ces intégrations (données de test du CI), les mêmes formes sont
 #       reconnues à leurs attributs.
 #       Une source choisie sans entité donne « pas de données » (pluie) ou aucune
@@ -85,6 +92,7 @@ input_select:
     icon: mdi:alert-outline
     options:
       - "Météo-France"
+      - "Vigie"
       - "MeteoAlarm"
       - "DWD"
       - "CAP Alerts"
@@ -202,6 +210,23 @@ template:
         {%- set l = integration_entities('cap_alerts') | select('match', 'sensor[.]') | list -%}
         {{ l if l else (states.sensor | selectattr('attributes.incident_platform_version', 'defined')
                         | map(attribute='entity_id') | list) }}
+      # Vigie (23/11/2026) : un appareil par lieu surveillé, qui porte aussi son entité
+      # météo. Le capteur « niveau maximal » est le seul de l'intégration aux options
+      # none / yellow / orange / red (la préalerte expérimentale : none / watch / strong /
+      # severe) ; les options restent dans ses attributs quand il est indisponible.
+      vigie: >-
+        {%- set v = integration_entities('vigie') -%}
+        {%- set lieu = device_entities(device_id(meteo)) if meteo and meteo in v else [] -%}
+        {%- set l = (lieu + v) | select('match', 'sensor[.]') | list -%}
+        {%- set l = l if l else (states.sensor | selectattr('attributes.by_phenomenon', 'defined')
+                                 | selectattr('attributes.by_family', 'defined')
+                                 | map(attribute='entity_id') | list) -%}
+        {%- set ns = namespace(e='') -%}
+        {%- for e in l if not ns.e and ((state_attr(e, 'options') or []) | list == ['none', 'yellow', 'orange', 'red']
+                                         or state_attr(e, 'by_phenomenon') is mapping) -%}
+          {%- set ns.e = e -%}
+        {%- endfor -%}
+        {{ ns.e }}
     sensor:
       - name: "Tab5 · weather sources"
         unique_id: tab5_sources_meteo
@@ -212,7 +237,7 @@ template:
         state: >-
           {%- set l = (['Météo-France'] if mf_ville else []) + (['OpenWeatherMap'] if owm_meteos else [])
                       + (['MeteoAlarm'] if meteoalarm else []) + (['DWD'] if dwd else [])
-                      + (['CAP Alerts'] if cap else []) -%}
+                      + (['CAP Alerts'] if cap else []) + (['Vigie'] if vigie else []) -%}
           {{ l | join(', ') if l else 'none' }}
         attributes:
           meteo: "{{ meteo }}"
@@ -239,6 +264,7 @@ template:
           meteoalarm: "{{ meteoalarm }}"
           dwd: "{{ dwd }}"
           cap: "{{ cap }}"
+          vigie: "{{ vigie }}"
 
   # Relevé de la pluie Météo-France : change à chaque mise à jour du capteur
   # (état et `forecast_time_ref`, toutes les 5 min) et déclenche le capteur de pluie
@@ -499,7 +525,7 @@ template:
 
   # ──────────────────────────────────────────────────────────────────────────
   # Vigilances — capteur ordinaire : il se recalcule dès qu'une entité lue change.
-  # DWD et CAP Alerts passent par la macro tab5_vigilance (custom_templates/), qui
+  # DWD, CAP Alerts et Vigie passent par la macro tab5_vigilance (custom_templates/), qui
   # rend « global|11 cases » ; l'import est DANS leur branche, pour que Météo-France et
   # MeteoAlarm marchent sans le fichier.
   # ──────────────────────────────────────────────────────────────────────────
@@ -522,10 +548,11 @@ template:
                la carte HACS MeteoalarmCard. #}
             {% set n = (state_attr(alerte, 'awareness_level') | string).split(';')[0] | int(0) %}
             {{ 'Rouge' if n >= 4 else 'Orange' if n == 3 else 'Jaune' }}
-          {% elif source in ['DWD', 'CAP Alerts'] %}
+          {% elif source in ['DWD', 'CAP Alerts', 'Vigie'] %}
             {% from 'tab5_vigilance.jinja' import tab5_vigilance %}
             {{ tab5_vigilance(source, state_attr('sensor.tab5_sources_meteo', 'dwd') or [],
-                              state_attr('sensor.tab5_sources_meteo', 'cap') or []).split('|')[0] }}
+                              state_attr('sensor.tab5_sources_meteo', 'cap') or [],
+                              state_attr('sensor.tab5_sources_meteo', 'vigie') or '').split('|')[0] }}
           {% else %}
             Vert
           {% endif %}
@@ -559,10 +586,11 @@ template:
                 {% set ns.l = ns.l[:i] + [niveau] + ns.l[i + 1:] %}
               {% endif %}
               {{ ns.l | join('|') }}
-            {% elif source in ['DWD', 'CAP Alerts'] %}
+            {% elif source in ['DWD', 'CAP Alerts', 'Vigie'] %}
               {% from 'tab5_vigilance.jinja' import tab5_vigilance %}
               {{ tab5_vigilance(source, state_attr('sensor.tab5_sources_meteo', 'dwd') or [],
-                                state_attr('sensor.tab5_sources_meteo', 'cap') or []).split('|')[1:] | join('|') }}
+                                state_attr('sensor.tab5_sources_meteo', 'cap') or [],
+                                state_attr('sensor.tab5_sources_meteo', 'vigie') or '').split('|')[1:] | join('|') }}
             {% else %}
               {{ (['Vert'] * 11) | join('|') }}
             {% endif %}

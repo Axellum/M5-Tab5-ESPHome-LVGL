@@ -1,9 +1,9 @@
 {#-
-  Vigilances DWD et CAP Alerts du Tab5, importées par packages/tab5_meteo_sources.yaml
+  Vigilances DWD, CAP Alerts et Vigie du Tab5, importées par packages/tab5_meteo_sources.yaml
   (capteur « Tab5 Weather warnings ») :
     {% from 'tab5_vigilance.jinja' import tab5_vigilance %}
 
-  tab5_vigilance(source, dwd, cap) rend 12 champs séparés par « | » : le niveau
+  tab5_vigilance(source, dwd, cap, vigie) rend 12 champs séparés par « | » : le niveau
   global, puis les 11 cases du Tab5 (vent, inondation, orages, pluie-inondation,
   neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard,
   feux de forêt), chacun Vert, Jaune, Orange ou Rouge. L'état du capteur prend le
@@ -37,12 +37,23 @@
     ces trois canaux ne comptent que si la catégorie CAP de l'alerte est « Met ». Le
     canal est lu dans parameters.bbk_channel, la catégorie dans `category` (« Met,
     Safety » quand il y en a plusieurs).
+  - source « Vigie » (23/11/2026) : `vigie` = le capteur « niveau maximal » de
+    l'intégration vigie (dépôt Axellum/vigie-api, custom_components/vigie, v0.7.0 :
+    sensor.py VigieMaxLevelSensor, models.py build_attributes). État none, yellow,
+    orange ou red (inconnu quand l'API ne peut pas le dire) ; attribut `by_phenomenon`
+    = le niveau le plus fort de chaque phénomène des vigilances en cours ou annoncées
+    (« none » pour un vert), par les phénomènes de l'API (app/models/vigilance.py) :
+    wind, flood (crues), thunderstorm, rain (pluie-inondation), snow-ice, cold,
+    coastal (vagues-submersion), heat, avalanche, fog et fire ont chacun leur case ;
+    other ne fait que monter le niveau global. Vigie choisit elle-même les vigilances
+    comptées : pas de fenêtre de 24 h ici. Indisponible ou inconnu : tout vert, comme
+    un capteur Météo-France absent.
 
   Déploiement : ce fichier va dans config/custom_templates/ de Home Assistant, puis
-  homeassistant.reload_custom_templates (ou redémarrage). Seules les sources DWD et
-  CAP Alerts l'importent : sans lui, Météo-France et MeteoAlarm marchent encore.
+  homeassistant.reload_custom_templates (ou redémarrage). Seules les sources DWD,
+  CAP Alerts et Vigie l'importent : sans lui, Météo-France et MeteoAlarm marchent encore.
 -#}
-{%- macro tab5_vigilance(source, dwd, cap) -%}
+{%- macro tab5_vigilance(source, dwd, cap, vigie='') -%}
   {%- set mots = ['Vert', 'Jaune', 'Orange', 'Rouge'] -%}
   {%- set ns = namespace(g=0, l=[0] * 11) -%}
   {%- set t = now().timestamp() -%}
@@ -113,6 +124,20 @@
         {%- if c >= 0 -%}
           {%- set ns.l = ns.l[:c] + [[ns.l[c], n] | max] + ns.l[c + 1:] -%}
         {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- elif source == 'Vigie' and vigie -%}
+    {%- set rangs = {'none': 0, 'green': 0, 'yellow': 1, 'orange': 2, 'red': 3} -%}
+    {%- set cases = {'wind': 0, 'flood': 1, 'thunderstorm': 2, 'rain': 3, 'snow-ice': 4, 'cold': 5,
+                     'coastal': 6, 'heat': 7, 'avalanche': 8, 'fog': 9, 'fire': 10} -%}
+    {%- set ns.g = rangs.get(states(vigie), 0) -%}
+    {%- set p = state_attr(vigie, 'by_phenomenon') -%}
+    {%- for ph, niveau in (p.items() if p is mapping else []) -%}
+      {%- set n = rangs.get(niveau, 0) -%}
+      {%- set ns.g = [ns.g, n] | max -%}
+      {%- set c = cases.get(ph, -1) -%}
+      {%- if c >= 0 -%}
+        {%- set ns.l = ns.l[:c] + [[ns.l[c], n] | max] + ns.l[c + 1:] -%}
       {%- endif -%}
     {%- endfor -%}
   {%- endif -%}

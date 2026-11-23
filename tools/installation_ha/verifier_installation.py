@@ -11,8 +11,8 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
         1. créer le compte (onboarding), fuseau Europe/Paris ; un agenda de travail
            (Calendrier local) ; les listes « Tab5 · … » réglées à la souris (SOURCES,
            plus aucun placeholder à remplir, ADR-0024) et ce qu'en déduisent les
-           packages ; chaque source de vigilances (VIGILANCES : DWD et CAP Alerts par
-           la macro de custom_templates/, Aucune, puis Météo-France) et ce qu'en tire
+           packages ; chaque source de vigilances (VIGILANCES : DWD, CAP Alerts et Vigie
+           par la macro de custom_templates/, Aucune, puis Météo-France) et ce qu'en tire
            « Tab5 Weather warnings » ; la pluie dans l'heure d'Open-Meteo, service sans clé
            appelé par rest_command (PLUIE_SANS_CLE), puis retour à Météo-France ; le
            blueprint est déjà dans config/ (preparer_config.py) ;
@@ -115,6 +115,7 @@ DEDUITS = {
     ("sensor.tab5_meteo", "entite"): "weather.ville_ci",
     ("sensor.tab5_sources_meteo", "mf_pluie"): "sensor.ville_ci_next_rain",
     ("sensor.tab5_sources_meteo", "mf_vigilance"): "sensor.99_weather_alert",
+    ("sensor.tab5_sources_meteo", "vigie"): "sensor.vigie_ci_niveau_maximal",
 }
 # Vigilances DWD et CAP Alerts (listes : l'ordre des états n'est pas garanti, comparées
 # triées) puis ce que « Tab5 Weather warnings » en tire pour chaque source de la liste « Tab5 · weather warnings source » (packages/tab5_meteo_sources.yaml et la macro de
@@ -134,6 +135,7 @@ VIGILANCES = (
     #  neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard, feux)
     ("DWD", "Orange", "Orange|Vert|Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert"),
     ("CAP Alerts", "Orange", "Orange|Jaune|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Jaune|Vert"),
+    ("Vigie", "Orange", "Vert|Vert|Orange|Vert|Vert|Vert|Jaune|Vert|Vert|Vert|Vert"),
     ("None", "Vert", "|".join(["Vert"] * 11)),
     ("Météo-France", "Jaune", "Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert"),
 )
@@ -918,7 +920,7 @@ async def choisir_sources(ha: HA, rapport: Rapport) -> None:
 async def verifier_vigilances(ha: HA, rapport: Rapport) -> None:
     """Les vigilances DWD et CAP Alerts trouvées (DEDUITS_LISTES), puis chaque source de
     VIGILANCES choisie comme à la souris et ce qu'en tire « Tab5 Weather warnings » (état et
-    `phenomenes`). DWD et CAP Alerts passent par la macro importée de custom_templates/ :
+    `phenomenes`). DWD, CAP Alerts et Vigie passent par la macro importée de custom_templates/ :
     c'est aussi la preuve que l'import marche dans un HA neuf."""
     for (entity_id, attribut), attendu in DEDUITS_LISTES.items():
         fin = time.monotonic() + 30
