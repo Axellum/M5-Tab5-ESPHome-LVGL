@@ -195,11 +195,34 @@ def test_vigie_hors_de_france_quatre_pas_de_15_min():
     assert _serie("Open-Meteo", om) == serie
 
 
-def _vigie(rate=None, quarts=None, status=200, t=None):
-    """Réponse de rest_command pour Vigie (forme réelle de /v1/point)."""
+def _vigie(rate=None, quarts=None, status=200, t=None, debut=None):
+    """Réponse de rest_command pour Vigie (forme réelle de /v1/point ; `debut` =
+    `rain_nowcast.start_utc`, absent des réponses d'avant le 24/11/2026)."""
     t = int(MAINTENANT.timestamp()) + 120 if t is None else t
-    return {"status": status, "content": {"server_utc": t, "rain_nowcast": {
-        "interval_minutes": 15, "rate_5m_mm_h": rate, "mm_per_step": quarts}}}
+    nowcast = {"interval_minutes": 15, "rate_5m_mm_h": rate, "mm_per_step": quarts}
+    if debut is not None:
+        nowcast["start_utc"] = debut
+    return {"status": status, "content": {"server_utc": t, "rain_nowcast": nowcast}}
+
+
+def test_vigie_quinze_minutes_datees_par_start_utc():
+    """Vigie garde la réponse d'Open-Meteo 15 min sans la caler sur les quarts d'heure
+    (constaté le 24/11/2026 sur Tokyo, doc de vigie-api#123) : à 12 h 02, sa copie peut dater
+    de 11 h 58, ses pas partant alors de 11 h 30 et non de 11 h 45. `start_utc` donne ce début ;
+    sans lui, la règle de `server_utc` reste ; une valeur folle (à plus d'une heure) est ignorée."""
+    debut = int(MAINTENANT.timestamp())  # 12 h 00
+    quarts = [0.0, 0.5, 2.0, 0.0]
+    attendu = [[debut - 1800, 15, 0.0], [debut - 900, 15, 2.0], [debut, 15, 8.0], [debut + 900, 15, 0.0]]
+    assert _serie("Vigie", _vigie(None, quarts, debut=debut - 1800)) == attendu
+    assert _serie("Vigie", _vigie(None, quarts, debut=debut - 900)) == _serie("Vigie", _vigie(None, quarts))
+    regle = _serie("Vigie", _vigie(None, quarts))
+    assert regle[0][0] == debut - 900, regle
+    for fou in (0, None, debut - 7200, debut + 7200):
+        assert _serie("Vigie", _vigie(None, quarts, debut=fou)) == regle, fou
+    # Le début ne joue que sur les pas de 15 min : les 12 pas de 5 min (PIAF) restent sur
+    # les 5 min en cours de `server_utc`, et le repli ne change pas.
+    assert _serie("Vigie", _vigie([0.0] * 12, debut=debut - 1800))[0][0] == debut
+    assert not _repli_appele("Vigie", _vigie(None, quarts, debut=debut - 1800))
 
 
 def _open_meteo(mm):

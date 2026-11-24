@@ -138,7 +138,9 @@ input_text:
 #     Vigie lit chez sa propre instance d'Open-Meteo, l'API publique en secours (ADR 0039
 #     de vigie-api) : la même donnée que la source Open-Meteo d'ici, donc datée pareil
 #     (lu le 24/11/2026 : les heures d'Open-Meteo partent du quart d'heure en cours, chaque
-#     valeur = les 15 min PRÉCÉDENTES ; Vigie n'en donne pas l'heure, d'où `server_utc`).
+#     valeur = les 15 min PRÉCÉDENTES). Vigie garde cette réponse 15 min, sans la caler sur
+#     les quarts d'heure : son heure de début est `rain_nowcast.start_utc` (epoch) quand
+#     Vigie la donne ; sans elle, on la déduit de `server_utc`, au risque d'un quart d'heure.
 rest_command:
   tab5_pluie:
     url: >-
@@ -400,9 +402,10 @@ template:
       #     PRÉCÉDANT l'heure donnée (epoch, timeformat=unixtime) ;
       #   - Vigie : `rain_nowcast.rate_5m_mm_h` en mm/h, 12 pas de 5 min depuis le début
       #     des 5 min en cours (`server_utc` // 300 × 300) ; nul hors de France, alors
-      #     `rain_nowcast.mm_per_step` : 4 sommes de 15 min (mm) d'Open-Meteo, datées comme
-      #     la source Open-Meteo (`server_utc` // 900 × 900, chaque valeur = le quart
-      #     d'heure qui précède) ; ni l'un ni l'autre : rien (« pas de données »).
+      #     `rain_nowcast.mm_per_step` : 4 sommes de 15 min (mm) d'Open-Meteo, la 1re
+      #     commençant à `rain_nowcast.start_utc` ; sans lui (ancien Vigie), au quart
+      #     d'heure qui précède celui de `server_utc` (règle d'Open-Meteo, mais la copie de
+      #     Vigie peut avoir un quart d'heure de retard) ; ni l'un ni l'autre : rien.
       - variables:
           serie: >-
             {%- set ns = namespace(l=[]) -%}
@@ -456,8 +459,12 @@ template:
                     {%- set ns.l = ns.l + [[(t // 300) * 300 + 300 * loop.index0, 5, v | float(0)]] -%}
                   {%- endfor -%}
                 {%- elif q is iterable and q is not string and q is not mapping and q | length > 0 and t > 0 -%}
+                  {#- Début du 1er pas : `start_utc` de Vigie quand il le donne (à moins d'une heure de
+                      `server_utc`), sinon le quart d'heure qui précède celui de `server_utc`. -#}
+                  {%- set s = (c.get('rain_nowcast') or {}).get('start_utc') | int(0) -%}
+                  {%- set s = s if s > 0 and (s - t) | abs <= 3600 else (t // 900) * 900 - 900 -%}
                   {%- for mm in q -%}
-                    {%- set ns.l = ns.l + [[(t // 900) * 900 + 900 * loop.index0 - 900, 15, (mm | float(0)) * 4]] -%}
+                    {%- set ns.l = ns.l + [[s + 900 * loop.index0, 15, (mm | float(0)) * 4]] -%}
                   {%- endfor -%}
                 {%- endif -%}
               {%- endif -%}
