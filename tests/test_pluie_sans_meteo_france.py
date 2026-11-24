@@ -84,7 +84,8 @@ def test_carte_pluie_remplie_par_vigie_sans_meteo_france():
     debut = int(MAINTENANT.timestamp()) + 600
     # Série commune [début, durée en min, mm/h] : 3 mm/h dans 10 min, pluie modérée.
     serie = [[debut - 900, 15, 0.0], [debut, 15, 3.0]]
-    variables = {"source": source, "mf_pluie": "", "serie": serie}
+    variables = {"source": source, "mf_pluie": "", "serie": serie,
+                 "source_lue": _source_lue(source, serie)}
     assert _rendre(capteur["state"], **variables) == f"@2,{debut}"
     barres = _rendre(capteur["attributes"]["barres"], **variables)
     assert barres.startswith("0|0;1|0;2|2;"), barres
@@ -93,20 +94,55 @@ def test_carte_pluie_remplie_par_vigie_sans_meteo_france():
     assert _rendre(capteur["state"], source=source, mf_pluie="", serie=None) == "@-1,0"
 
 
-def _serie(source, rep):
-    """La variable `serie` des actions du capteur, rendue avec une réponse de rest_command."""
+def _actions_pluie():
     with open(PAQUET, encoding="utf-8") as f:
         paquet = yaml.safe_load(f)
     for bloc in paquet["template"]:
         if any(c.get("unique_id") == "tab5_pluie_dans_l_heure" for c in bloc.get("sensor", [])):
-            modele = next(a["variables"]["serie"] for a in bloc["actions"] if "variables" in a)
-            break
+            return bloc["actions"]
+    raise AssertionError("actions du capteur de pluie introuvables")
+
+
+def _env_ha():
     env = ImmutableSandboxedEnvironment(undefined=jinja2.Undefined)
     env.filters["float"] = lambda v, d=0.0: float(v) if v is not None else d
     env.filters["int"] = lambda v, d=0: int(v) if v is not None else d
     env.globals.update(now=lambda: MAINTENANT)
-    rendu = env.from_string(modele).render(source=source, rep=rep, owm_meteo="").strip()
+    return env
+
+
+def _sans_absents(**variables):
+    """Une variable à None est absente, comme une réponse de rest_command en erreur
+    (continue_on_error : `response_variable` n'est pas posée)."""
+    return {k: v for k, v in variables.items() if v is not None}
+
+
+def _serie(source, rep, rep_repli=None):
+    """La variable `serie` des actions du capteur, rendue avec une réponse de rest_command
+    (et celle du repli Open-Meteo de Vigie quand il a été appelé)."""
+    modele = next(a["variables"]["serie"] for a in _actions_pluie() if "variables" in a)
+    rendu = _env_ha().from_string(modele).render(
+        **_sans_absents(source=source, rep=rep, rep_repli=rep_repli, owm_meteo="")).strip()
     return None if rendu == "None" else yaml.safe_load(rendu)  # HA relit « None » comme None
+
+
+def _source_lue(source, serie, rep_repli=None):
+    """La variable `source_lue` (attribut `source` du capteur)."""
+    modele = next(a["variables"]["source_lue"] for a in _actions_pluie() if "variables" in a)
+    return _env_ha().from_string(modele).render(
+        serie=serie, **_sans_absents(source=source, rep_repli=rep_repli)).strip()  # serie à None reste définie
+
+
+def _repli_appele(source, rep, lat=35.68, lon=139.69):
+    """La condition du repli Open-Meteo de Vigie (l'action dont la réponse est `rep_repli`)."""
+    for action in _actions_pluie():
+        suite = action.get("then") or []
+        if any(a.get("response_variable") == "rep_repli" for a in suite):
+            assert suite[0]["data"]["source"] == "Open-Meteo", suite
+            modele = action["if"][0]["value_template"]
+            rendu = _env_ha().from_string(modele).render(**_sans_absents(source=source, rep=rep, lat=lat, lon=lon))
+            return rendu.strip() == "True"
+    raise AssertionError("repli Open-Meteo introuvable")
 
 
 def test_vigie_douze_pas_de_5_min_en_barres_5_puis_10_min():
@@ -157,3 +193,60 @@ def test_vigie_hors_de_france_quatre_pas_de_15_min():
     om = {"status": 200, "content": {"minutely_15": {
         "time": [debut, debut + 900, debut + 1800, debut + 2700], "precipitation": [0.0, 0.5, 2.0, 0.0]}}}
     assert _serie("Open-Meteo", om) == serie
+
+
+def _vigie(rate=None, quarts=None, status=200, t=None):
+    """Réponse de rest_command pour Vigie (forme réelle de /v1/point)."""
+    t = int(MAINTENANT.timestamp()) + 120 if t is None else t
+    return {"status": status, "content": {"server_utc": t, "rain_nowcast": {
+        "interval_minutes": 15, "rate_5m_mm_h": rate, "mm_per_step": quarts}}}
+
+
+def _open_meteo(mm):
+    debut = int(MAINTENANT.timestamp())
+    return {"status": 200, "content": {"minutely_15": {
+        "time": [debut + 900 * i for i in range(len(mm))], "precipitation": mm}}}
+
+
+def test_repli_open_meteo_seulement_quand_vigie_manque():
+    """Repli (24/11/2026, ADR-0085) : un second appel, à Open-Meteo, seulement quand Vigie ne
+    répond pas (`rep` absent : délai dépassé, erreur réseau), répond autre chose que 200, ou
+    n'a ni pas de 5 min ni pas de 15 min. Jamais pour les autres sources, ni sans domicile."""
+    assert _repli_appele("Vigie", None)                                   # muette
+    assert _repli_appele("Vigie", _vigie([0.0] * 12, status=503))        # en panne
+    assert _repli_appele("Vigie", _vigie())                               # ni l'un ni l'autre
+    assert _repli_appele("Vigie", _vigie([], []))                          # listes vides
+    assert _repli_appele("Vigie", _vigie([0.0] * 12, t=0))                # sans heure
+    assert _repli_appele("Vigie", {"status": 200, "content": "<html>"})  # pas du JSON
+    assert not _repli_appele("Vigie", _vigie([0.0] * 12))                 # France : PIAF
+    assert not _repli_appele("Vigie", _vigie(None, [0.0, 0.5, 2.0, 0.0]))  # ailleurs : 15 min
+    assert not _repli_appele("Vigie", _vigie([], [0.0, 0.5, 2.0, 0.0]))
+    assert not _repli_appele("Open-Meteo", None)
+    assert not _repli_appele("Met.no", {"status": 500, "content": ""})
+    assert not _repli_appele("Vigie", None, lat=None)
+
+
+def test_repli_open_meteo_remplit_la_carte_et_le_dit():
+    """Vigie muette, Open-Meteo répond : la série est celle de la source Open-Meteo et
+    l'attribut `source` dit « Open-Meteo » ; muet aussi : pas de données, `source` = Vigie."""
+    _, capteur = _capteur_pluie()
+    om = _open_meteo([0.0, 0.5, 2.0, 0.0])
+    serie = _serie("Vigie", None, rep_repli=om)
+    assert serie == _serie("Open-Meteo", om) and serie, serie
+    assert _source_lue("Vigie", serie, rep_repli=om) == "Open-Meteo"
+    variables = {"source": "Vigie", "mf_pluie": "", "serie": serie, "source_lue": "Open-Meteo"}
+    assert _rendre(capteur["state"], **variables) == "@1,0"
+    assert _rendre(capteur["attributes"]["source"], **variables) == "Open-Meteo"
+    # Le repli a répondu, mais mal (Open-Meteo en panne) : rien, et la source reste Vigie.
+    panne = {"status": 502, "content": ""}
+    assert _serie("Vigie", _vigie(), rep_repli=panne) is None
+    assert _source_lue("Vigie", None, rep_repli=panne) == "Vigie"
+    # Sans repli : la source effective, telle quelle.
+    assert _source_lue("Vigie", [[0, 5, 0.0]]) == "Vigie"
+    assert _source_lue("Buienradar", None) == "Buienradar"
+
+
+def test_vigie_liste_de_5_min_vide_lit_les_15_min():
+    """Une liste de pas de 5 min vide ne cache plus les pas de 15 min (même règle que le repli)."""
+    serie = _serie("Vigie", _vigie([], [0.0, 0.5, 2.0, 0.0]))
+    assert serie == _serie("Vigie", _vigie(None, [0.0, 0.5, 2.0, 0.0])) and len(serie) == 4, serie

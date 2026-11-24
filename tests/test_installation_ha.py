@@ -534,6 +534,18 @@ def test_pluie_sans_cle_essais_puis_non_jugee(monkeypatch):
     assert sondes == [_URL_VIGIE] and "TimeoutError" in rapport.lignes[0][1]
     assert rapport.reussi
 
+    # Vigie muette mais son repli Open-Meteo (ADR-0085) a rempli la carte : ce relevé n'est
+    # pas celui de Vigie (3 essais quand même), non jugée, et le message dit que le repli a servi.
+    repli = {"state": "@0,0", "attributes": {"source": "Open-Meteo", "barres": barres}}
+    choix, rapport = jouer([repli, repli, repli], muet)
+    assert choix == ["Vigie", "None", "Vigie", "None", "Vigie", "Météo-France"]
+    assert rapport.lignes[0][0] is None and "NON JUGÉE" in rapport.lignes[0][1]
+    assert "le repli Open-Meteo a pris le relais : relevé @0,0, 9 barres" in rapport.lignes[0][1]
+    assert rapport.reussi
+    # Repli servi alors que Vigie a répondu (aucune trace au journal) : la lecture de Vigie est à revoir.
+    choix, rapport = jouer([repli, repli, repli], [])
+    assert rapport.lignes[0][0] is False and "source 'Open-Meteo'" in rapport.lignes[0][1]
+
     for journal in ([], autre_muet):
         choix, rapport = jouer([vide, vide, vide], journal)
         assert rapport.lignes[0][0] is False and "le service a répondu" in rapport.lignes[0][1]
