@@ -417,12 +417,14 @@ def test_classer_le_journal():
 
 _URL_OPEN_METEO = ("https://api.open-meteo.com/v1/forecast?latitude=32.87&longitude=117.23"
                    "&minutely_15=precipitation&forecast_minutely_15=6&timeformat=unixtime")
+_URL_VIGIE = "https://vigie.auxfilsdesidees.fr/v1/point?lat=32.87&lon=117.23"
 
 
-def test_appels_open_meteo_sans_reponse():
+def test_appels_sans_reponse():
     """CI de main du 23/11/2026 : Open-Meteo muet depuis le runner (« Timeout when calling
     resource », HA 2026.10.4). Délai dépassé, erreur réseau, HTTP 429 ou 5xx comptent ; un 400
-    (URL fausse, notre faute), un autre service ou une ligne d'avant le contrôle, non."""
+    (URL fausse, notre faute), un autre service ou une ligne d'avant le contrôle, non. Chaque
+    source est jugée par son hôte : un Vigie muet ne compte pas pour Open-Meteo."""
     import datetime as dt
     url = _URL_OPEN_METEO
     prefixe = ("ERROR (MainThread) [homeassistant.helpers.script.trigger_update_coordinator] Trigger Update "
@@ -437,28 +439,45 @@ def test_appels_open_meteo_sans_reponse():
         f"2026-11-23 07:45:02.000 WARNING (MainThread) [homeassistant.components.rest_command] "
         f"Error. Url: {url}. Status code 400. Payload: b''\n"
         f'2026-11-23 07:45:03.000 {prefixe}Timeout when calling resource "https://api.met.no/weatherapi/nowcast/2.0/complete"\n'
+        f'2026-11-23 07:45:04.000 {prefixe}Timeout when calling resource "{_URL_VIGIE}"\n'
     )
     entrees = verifier.lignes_du_journal(journal)
-    assert len(entrees) == 6
-    assert verifier.appels_open_meteo_sans_reponse(entrees, 0) == (4, url)
+    assert len(entrees) == 7
+    om, vigie = "api.open-meteo.com", "vigie.auxfilsdesidees.fr"
+    assert verifier.appels_sans_reponse(entrees, 0, om) == (4, url)
     # 07:43:59 à Paris (heure d'hiver) = 06:43:59 UTC : avant le contrôle, ne compte pas.
     depuis = dt.datetime(2026, 11, 23, 6, 44, tzinfo=dt.timezone.utc).timestamp()
-    assert verifier.appels_open_meteo_sans_reponse(entrees, depuis) == (3, url)
-    assert verifier.appels_open_meteo_sans_reponse(entrees[4:], 0) == (0, None)
+    assert verifier.appels_sans_reponse(entrees, depuis, om) == (3, url)
+    assert verifier.appels_sans_reponse(entrees[4:6], 0, om) == (0, None)
+    assert verifier.appels_sans_reponse(entrees, 0, vigie) == (1, _URL_VIGIE)
+
+
+def test_sources_de_pluie_essayees_en_vrai():
+    """La CI essaie d'abord Vigie, la source d'un HA sans Météo-France (ADR-0084), puis
+    Open-Meteo ; chaque hôte jugé « muet » est bien celui qu'appelle rest_command.tab5_pluie."""
+    assert [s for s, _ in verifier.PLUIES_SANS_CLE] == ["Vigie", "Open-Meteo"]
+    url = yaml.load(_lire("HomeAssistant_Config", "packages", "tab5_meteo_sources.yaml"),
+                    Loader=_Chargeur)["rest_command"]["tab5_pluie"]["url"]
+    for source, hote in verifier.PLUIES_SANS_CLE:
+        assert f"https://{hote}/" in url, (source, hote)
 
 
 def test_pluie_sans_cle_essais_puis_non_jugee(monkeypatch):
-    """verifier_pluie_sans_cle avec un faux HA : relevé au 2e essai = réussi ; service muet
-    d'après le journal de HA = « non jugé », le job reste vert ; pas de relevé alors que le
-    service a répondu, ou relevé lu avec de fausses barres = échec."""
+    """verifier_pluie_sans_cle avec un faux HA, sur Vigie : relevé au 2e essai = réussi ;
+    service muet d'après le journal de HA = « non jugé », le job reste vert ; pas de relevé
+    alors que le service a répondu (un autre hôte muet ne compte pas), ou relevé lu avec de
+    fausses barres = échec."""
     import asyncio
     import time
 
+    source, hote = "Vigie", "vigie.auxfilsdesidees.fr"
     barres = "".join(f"{i}|0;" for i in range(9))
-    sec = {"state": "@0,0", "attributes": {"source": "Open-Meteo", "barres": barres}}
-    vide = {"state": "@-1,0", "attributes": {"source": "Open-Meteo", "barres": barres}}
+    sec = {"state": "@0,0", "attributes": {"source": source, "barres": barres}}
+    vide = {"state": "@-1,0", "attributes": {"source": source, "barres": barres}}
     muet = [{"quand": time.time() + 60, "niveau": "ERROR", "logger": "x",
-             "message": f'Timeout when calling resource "{_URL_OPEN_METEO}"'}]
+             "message": f'Timeout when calling resource "{_URL_VIGIE}"'}]
+    autre_muet = [{"quand": time.time() + 60, "niveau": "ERROR", "logger": "x",
+                   "message": f'Timeout when calling resource "{_URL_OPEN_METEO}"'}]
 
     class FauxHA:
         def __init__(self):
@@ -490,7 +509,7 @@ def test_pluie_sans_cle_essais_puis_non_jugee(monkeypatch):
     def jouer(releves, journal):
         suite = iter(releves)
 
-        async def attendre(_ha, _delai):
+        async def attendre(_ha, _source, _delai):
             return next(suite)
 
         async def lire(_ha):
@@ -499,29 +518,30 @@ def test_pluie_sans_cle_essais_puis_non_jugee(monkeypatch):
         monkeypatch.setattr(verifier, "attendre_releve_pluie", attendre)
         monkeypatch.setattr(verifier, "lire_journal", lire)
         ha, rapport = FauxHA(), verifier.Rapport()
-        asyncio.run(verifier.verifier_pluie_sans_cle(ha, rapport))
+        asyncio.run(verifier.verifier_pluie_sans_cle(ha, rapport, source, hote))
         return ha.choix, rapport
 
     choix, rapport = jouer([vide, sec], [])
-    assert choix == ["Open-Meteo", "None", "Open-Meteo", "Météo-France"]
-    assert rapport.lignes[0] == (True, "pluie « Open-Meteo » (rest_command, sans clé) : relevé @0,0, 9 barres "
+    assert choix == ["Vigie", "None", "Vigie", "Météo-France"]
+    assert rapport.lignes[0] == (True, "pluie « Vigie » (rest_command, sans clé) : relevé @0,0, 9 barres "
                                        "(essai 2 sur 3)")
     assert rapport.reussi
 
     choix, rapport = jouer([vide, vide, vide], muet)
-    assert choix == ["Open-Meteo", "None", "Open-Meteo", "None", "Open-Meteo", "Météo-France"]
+    assert choix == ["Vigie", "None", "Vigie", "None", "Vigie", "Météo-France"]
     assert rapport.lignes[0][0] is None and "NON JUGÉE" in rapport.lignes[0][1]
     assert "1 appel(s)" in rapport.lignes[0][1] and "3 essais" in rapport.lignes[0][1]
-    assert sondes == [_URL_OPEN_METEO] and "TimeoutError" in rapport.lignes[0][1]
+    assert sondes == [_URL_VIGIE] and "TimeoutError" in rapport.lignes[0][1]
     assert rapport.reussi
 
-    choix, rapport = jouer([vide, vide, vide], [])
-    assert rapport.lignes[0][0] is False and "le service a répondu" in rapport.lignes[0][1]
-    assert not rapport.reussi
+    for journal in ([], autre_muet):
+        choix, rapport = jouer([vide, vide, vide], journal)
+        assert rapport.lignes[0][0] is False and "le service a répondu" in rapport.lignes[0][1]
+        assert not rapport.reussi
 
-    fausses = {"state": "@0,0", "attributes": {"source": "Open-Meteo", "barres": "0|0;"}}
+    fausses = {"state": "@0,0", "attributes": {"source": source, "barres": "0|0;"}}
     choix, rapport = jouer([fausses], muet)
-    assert choix == ["Open-Meteo", "Météo-France"]
+    assert choix == ["Vigie", "Météo-France"]
     assert rapport.lignes[0][0] is False and not rapport.reussi
 
 

@@ -13,9 +13,10 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
            plus aucun placeholder à remplir, ADR-0024) et ce qu'en déduisent les
            packages ; chaque source de vigilances (VIGILANCES : DWD, CAP Alerts et Vigie
            par la macro de custom_templates/, Aucune, puis Météo-France) et ce qu'en tire
-           « Tab5 Weather warnings » ; la pluie dans l'heure d'Open-Meteo, service sans clé
-           appelé par rest_command (PLUIE_SANS_CLE, jusqu'à 3 essais, « non jugée » si le
-           journal de HA montre que le service n'a pas répondu), puis retour à Météo-France ; le
+           « Tab5 Weather warnings » ; la pluie dans l'heure de Vigie (la source d'un HA sans
+           Météo-France, ADR-0084) puis d'Open-Meteo, services sans clé appelés par
+           rest_command (PLUIES_SANS_CLE, jusqu'à 3 essais, « non jugée » si le journal de HA
+           montre que le service n'a pas répondu), puis retour à Météo-France ; le
            blueprint est déjà dans config/ (preparer_config.py) ;
         2. ajouter la tablette (ESPHome, hôte + port). L'option « Autoriser l'appareil
            à effectuer des actions Home Assistant » n'est plus une étape (ADR-0025) :
@@ -140,10 +141,13 @@ VIGILANCES = (
     ("None", "Vert", "|".join(["Vert"] * 11)),
     ("Météo-France", "Jaune", "Vert|Vert|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert"),
 )
-# Pluie dans l'heure par un service sans clé (rest_command.tab5_pluie) : Open-Meteo, le
-# seul qui couvre le domicile par défaut d'un HA neuf où qu'il soit. Le code doit être
-# un vrai relevé (sec ou pluie), pas « pas de données » (@-1). Dépend du réseau du
-# runner et du service : le job n'est pas requis.
+# Pluie dans l'heure par les services sans clé (rest_command.tab5_pluie), essayés pour de vrai
+# dans cet ordre (option de la liste, hôte appelé) : Vigie, la source d'un HA sans
+# Météo-France depuis le 24/11/2026 (ADR-0084), qui couvre le domicile par défaut d'un HA neuf
+# où qu'il soit (hors de France, le modèle Open-Meteo servi par Vigie : le chemin essayé ici,
+# le domicile par défaut étant en Chine) ; puis Open-Meteo appelé directement, la source
+# d'avant, toujours proposée. Le code doit être un vrai relevé (sec ou pluie), pas « pas de
+# données » (@-1). Dépend du réseau du runner et du service : le job n'est pas requis.
 #
 # Open-Meteo injoignable depuis le runner (CI de main du 10/11/2026 et du 23/11/2026 : seul
 # contrôle rouge, « Timeout when calling resource "https://api.open-meteo.com/…" » à chaque
@@ -154,14 +158,21 @@ VIGILANCES = (
 # de réponse du service. Messages de rest_command (HA 2026.10.4, strings.json et
 # __init__.py) : délai dépassé, erreur réseau, ou réponse HTTP en erreur (WARNING « Error.
 # Url: … Status code N ») dont seuls 429 et 5xx comptent : un 400 dirait une URL fausse, donc
-# notre faute, et reste un échec, comme une réponse reçue mais mal lue.
+# notre faute, et reste un échec, comme une réponse reçue mais mal lue. Même règle pour
+# Vigie, par son hôte (motif_sans_reponse).
 LISTE_PLUIE = "input_select.tab5_source_pluie"
-PLUIE_SANS_CLE = "Open-Meteo"
+PLUIES_SANS_CLE = (("Vigie", "vigie.auxfilsdesidees.fr"), ("Open-Meteo", "api.open-meteo.com"))
 CODE_RELEVE = re.compile(r"^@[0-4],\d+$")
 TENTATIVES_PLUIE = 3
-APPEL_SANS_REPONSE = re.compile(
-    r'(?:Timeout|Client error occurred) when calling resource "(https://api\.open-meteo\.com/[^"]*)"'
-    r"|Error\. Url: (https://api\.open-meteo\.com/\S*)\. Status code (?:429|5\d\d)\b")
+
+
+def motif_sans_reponse(hote: str) -> re.Pattern:
+    """Ligne du journal de HA d'un appel de rest_command à `hote` resté sans réponse
+    exploitable du service : délai dépassé, erreur réseau, HTTP 429 ou 5xx (groupe 1 ou 2 :
+    l'URL appelée)."""
+    h = re.escape(hote)
+    return re.compile(rf'(?:Timeout|Client error occurred) when calling resource "(https://{h}/[^"]*)"'
+                      rf"|Error\. Url: (https://{h}/\S*)\. Status code (?:429|5\d\d)\b")
 
 # Automatisation créée depuis le blueprint (étape 4, point 6) et ses entrées : des
 # entités de l'intégration demo et de donnees_test.yaml. Pots 4 et 5 laissés vides :
@@ -973,15 +984,16 @@ async def verifier_vigilances(ha: HA, rapport: Rapport) -> None:
                          f"source {attributs.get('source')!r}")
 
 
-def appels_open_meteo_sans_reponse(entrees: list[dict], depuis: float) -> tuple[int, str | None]:
-    """(nombre, une URL) des appels de rest_command.tab5_pluie à Open-Meteo restés sans
+def appels_sans_reponse(entrees: list[dict], depuis: float, hote: str) -> tuple[int, str | None]:
+    """(nombre, une URL) des appels de rest_command.tab5_pluie à `hote` restés sans
     réponse exploitable du service (délai dépassé, erreur réseau, HTTP 429 ou 5xx), dans
     les entrées du journal de HA (lignes_du_journal) datées de `depuis` (epoch) ou après."""
+    motif = motif_sans_reponse(hote)
     nombre, url = 0, None
     for entree in entrees:
         if entree["quand"] < depuis:
             continue
-        for m in APPEL_SANS_REPONSE.finditer(entree["message"]):
+        for m in motif.finditer(entree["message"]):
             nombre += 1
             url = url or m.group(1) or m.group(2)
     return nombre, url
@@ -1007,30 +1019,30 @@ async def sonder(url: str) -> str:
     return await asyncio.to_thread(appel)
 
 
-async def attendre_releve_pluie(ha: HA, delai: float) -> dict:
-    """État de sensor.tab5_pluie_dans_l_heure dès qu'il porte un relevé de PLUIE_SANS_CLE,
+async def attendre_releve_pluie(ha: HA, source: str, delai: float) -> dict:
+    """État de sensor.tab5_pluie_dans_l_heure dès qu'il porte un relevé de `source`,
     sinon le dernier lu au bout de `delai` secondes."""
     fin = time.monotonic() + delai
     etat: dict = {}
     while time.monotonic() < fin:
         etat = (await ha.etats()).get("sensor.tab5_pluie_dans_l_heure") or {}
         attributs = etat.get("attributes") or {}
-        if attributs.get("source") == PLUIE_SANS_CLE and CODE_RELEVE.match(etat.get("state") or ""):
+        if attributs.get("source") == source and CODE_RELEVE.match(etat.get("state") or ""):
             break
         await asyncio.sleep(1)
     return etat
 
 
-async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport) -> None:
-    """« Tab5 · next-hour rain source » sur PLUIE_SANS_CLE : le capteur à
+async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport, source: str, hote: str) -> None:
+    """« Tab5 · next-hour rain source » sur `source` (PLUIES_SANS_CLE) : le capteur à
     déclencheurs appelle rest_command.tab5_pluie aux coordonnées de zone.home et en tire
     un relevé et 9 barres ; puis retour à Météo-France (données de test), avant l'ajout
     de la tablette. Jusqu'à TENTATIVES_PLUIE essais ; « non jugé » (pas d'échec) si le
-    journal de HA montre que le service n'a pas répondu (voir APPEL_SANS_REPONSE)."""
+    journal de HA montre que `hote` n'a pas répondu (motif_sans_reponse)."""
     avant = ((await ha.etats()).get("sensor.tab5_pluie_dans_l_heure") or {}).get("state")
     debut = time.time()
-    await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": PLUIE_SANS_CLE})
-    etat = await attendre_releve_pluie(ha, 45)
+    await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": source})
+    etat = await attendre_releve_pluie(ha, source, 45)
     essai = 1
     while not CODE_RELEVE.match(etat.get("state") or "") and essai < TENTATIVES_PLUIE:
         # La liste sur « None » (aucun appel) puis de nouveau sur la source : seul le capteur
@@ -1038,20 +1050,20 @@ async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport) -> None:
         essai += 1
         await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": "None"})
         await asyncio.sleep(2)
-        await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": PLUIE_SANS_CLE})
-        etat = await attendre_releve_pluie(ha, 30)
+        await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": source})
+        etat = await attendre_releve_pluie(ha, source, 30)
     attributs = etat.get("attributes") or {}
     barres = [b for b in (attributs.get("barres") or "").split(";") if b]
     code_lu = CODE_RELEVE.match(etat.get("state") or "") is not None
     releve = code_lu and len(barres) == 9
-    texte = f"pluie « {PLUIE_SANS_CLE} » (rest_command, sans clé) : relevé {etat.get('state')}, 9 barres"
+    texte = f"pluie « {source} » (rest_command, sans clé) : relevé {etat.get('state')}, 9 barres"
     # Un relevé lu = le service a répondu : des barres fausses restent notre faute, journal ou
     # pas. Marge de 2 s : le journal est daté à la milliseconde par l'horloge du même hôte.
-    sans_reponse, url = (0, None) if code_lu else appels_open_meteo_sans_reponse(await lire_journal(ha), debut - 2)
+    sans_reponse, url = (0, None) if code_lu else appels_sans_reponse(await lire_journal(ha), debut - 2, hote)
     if releve:
         rapport.ok(texte + (f" (essai {essai} sur {TENTATIVES_PLUIE})" if essai > 1 else ""))
     elif sans_reponse:
-        rapport.avertir(f"pluie « {PLUIE_SANS_CLE} » NON JUGÉE : le service n'a pas répondu à HA "
+        rapport.avertir(f"pluie « {source} » NON JUGÉE : le service n'a pas répondu à HA "
                         f"({sans_reponse} appel(s) de rest_command sans réponse en {essai} essais, journal de HA : "
                         "délai dépassé, erreur réseau, HTTP 429 ou 5xx) ; le runner lui-même : "
                         + (await sonder(url) if url else "pas d'URL relevée"))
@@ -2181,7 +2193,8 @@ async def scenario(args, rapport: Rapport) -> None:
             await creer_agenda(ha, rapport)
             await choisir_sources(ha, rapport)
             await verifier_vigilances(ha, rapport)
-            await verifier_pluie_sans_cle(ha, rapport)
+            for source, hote in PLUIES_SANS_CLE:
+                await verifier_pluie_sans_cle(ha, rapport, source, hote)
             await verifier_blueprint(ha, rapport)
 
             # 4 : ajout de la tablette dans sa fenêtre d'appairage (plus d'option « actions
