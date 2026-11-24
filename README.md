@@ -43,7 +43,7 @@
 - **Seven languages, down to the details.** French, English, German, Dutch, Spanish, Italian and Turkish, switched from Home Assistant: menus, games, dates, the texts Home Assistant sends and the spoken alarm briefing. Translated by an AI; the author only checked the French ([translations](docs/translations.md)).
 - **Twenty-one themes, light or dark.** Colours, shapes and the fonts of the clock change at once, without a restart, from Home Assistant or the tablet's console; « Auto » turns light at sunrise and dark at sunset ([themes](docs/installation/settings.md#theme-light-or-dark)).
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
-- **Lots of notes and tests.** 82 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome. All written with AI, and tried on real screens one at a time.
+- **Lots of notes and tests.** 83 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome. All written with AI, and tried on real screens one at a time.
 - **Runs on the ST7123 and ST7121 revisions of the Tab5**, builds for the original ILI9881C, and runs on the 7-inch [Waveshare ESP32-P4 7B](docs/waveshare-7b.md).
 
 ## What it does
@@ -77,7 +77,7 @@ What the screen was first made for: seeing at a glance whether rain is coming be
 ![M5Stack Tab5 screen in English: nine rain bars for the next hour and the sentence Moderate rain in 10 min, the date in orange](docs/images/site/pluie-dans-l-heure-en.png)
 
 - **9 bars, the whole next hour**: one every 5 minutes for half an hour, then one every 10 minutes. The taller and darker the bar, the heavier the rain. The sentence is written by the tablet, in its language, and counts the minutes down by itself.
-- Source, chosen in Home Assistant: Météo-France in France, directly or at your GPS point through Vigie (5-min steps); the Buienradar, DWD or Met.no radars; OpenWeatherMap; Open-Meteo everywhere, with no key, used by itself when there is no Météo-France; or none, and the panel goes away ([weather providers](docs/installation/weather.md)).
+- Source, chosen in Home Assistant: Météo-France in France, directly; Vigie everywhere, with no key (Météo-France at your GPS point in France, in 5-min steps, the Open-Meteo model elsewhere), used by itself when there is no Météo-France; the Buienradar, DWD or Met.no radars; OpenWeatherMap; Open-Meteo directly; or none, and the panel goes away ([weather providers](docs/installation/weather.md)).
 
 ![M5Stack Tab5 screen in English with two weather warning icons, a yellow thunderstorm and an orange rain-flood, and the date in orange](docs/images/site/vigilances-en.png)
 
@@ -90,7 +90,7 @@ What the screen was first made for: seeing at a glance whether rain is coming be
 - Home Assistant 2026.8 or later. A ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0** (2026.9.1 for the Waveshare).
 - The screen speaks French, English, German, Dutch, Spanish, Italian or Turkish, switched from Home Assistant — all written by an AI like the rest of the project; the author checked the French, the others are not reviewed yet. Only the quiz questions stay in French ([translations](docs/translations.md)).
 - The layout started from the author's home. You pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen. The tiles at the bottom are rooms; the other zones have a single place each: the climate card, the TV, the phone, two temperatures, up to 5 plants ([adapt to your home](docs/installation/adapt-to-your-home.md)).
-- The rain graph and the warnings are made for France first (Météo-France); elsewhere the rain comes from Open-Meteo by itself, and other services are picked in Home Assistant ([weather providers](docs/installation/weather.md)).
+- The rain graph and the warnings are made for France first (Météo-France); elsewhere the rain comes from Vigie (the Open-Meteo model) by itself, and other services are picked in Home Assistant ([weather providers](docs/installation/weather.md)).
 
 ## Quick start
 
@@ -276,7 +276,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **Sept langues, jusque dans les détails.** Français, anglais, allemand, néerlandais, espagnol, italien et turc, au choix depuis Home Assistant : menus, jeux, dates, textes envoyés par Home Assistant et briefing parlé du réveil. Traduites par une IA ; l'auteur n'a relu que le français ([traductions](docs/translations.md#version-française)).
 - **Vingt et un thèmes, clairs ou sombres.** Couleurs, formes et polices de l'horloge changent aussitôt, sans redémarrer, depuis Home Assistant ou la console de la tablette ; « Auto » passe en clair au lever du soleil et en sombre à son coucher ([thèmes](docs/installation/settings.md#thème-clair-ou-sombre)).
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
-- **Beaucoup de notes et de tests.** 82 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome. Le tout écrit avec l'IA, et essayé sur de vrais écrans, un à la fois.
+- **Beaucoup de notes et de tests.** 83 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome. Le tout écrit avec l'IA, et essayé sur de vrais écrans, un à la fois.
 - **Tourne sur les révisions ST7123 et ST7121 du Tab5**, compile pour l'ILI9881C d'origine, et tourne sur la [Waveshare ESP32-P4 7B](docs/waveshare-7b.md#version-française) de 7 pouces.
 
 ## Ce que ça fait
@@ -310,7 +310,7 @@ Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuv
 ![Écran de la M5Stack Tab5 en français : neuf barres de pluie pour l'heure qui vient et la phrase Pluie modérée dans 10 mn, la date en orange](docs/images/site/pluie-dans-l-heure.png)
 
 - **9 barres, toute l'heure qui vient** : une toutes les 5 minutes pendant une demi-heure, puis une toutes les 10 minutes. Plus la barre est haute et foncée, plus la pluie est forte. La phrase est écrite par la tablette, dans sa langue, et décompte les minutes toute seule.
-- Source, choisie dans Home Assistant : Météo-France en France, directement ou au point GPS par Vigie (pas de 5 min) ; les radars Buienradar, DWD ou Met.no ; OpenWeatherMap ; Open-Meteo partout, sans clé, pris tout seul quand il n'y a pas Météo-France ; ou aucune, et le panneau disparaît ([fournisseurs météo](docs/installation/weather.md#version-française)).
+- Source, choisie dans Home Assistant : Météo-France en France, directement ; Vigie partout, sans clé (Météo-France au point GPS en France, au pas de 5 min, le modèle Open-Meteo ailleurs), pris tout seul quand il n'y a pas Météo-France ; les radars Buienradar, DWD ou Met.no ; OpenWeatherMap ; Open-Meteo en direct ; ou aucune, et le panneau disparaît ([fournisseurs météo](docs/installation/weather.md#version-française)).
 
 ![Écran de la M5Stack Tab5 en français avec deux icônes de vigilance, orages en jaune et pluie-inondation en orange, et la date en orange](docs/images/site/vigilances.png)
 
@@ -323,7 +323,7 @@ Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuv
 - Home Assistant 2026.8 ou plus récent. Un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0** (2026.9.1 pour la Waveshare).
 - L'écran parle français, anglais, allemand, néerlandais, espagnol, italien ou turc, au choix depuis Home Assistant — toutes écrites par une IA comme le reste du projet ; l'auteur a relu le français, les autres ne sont pas encore relues. Seules les questions du quiz restent en français ([traductions](docs/translations.md#version-française)).
 - La disposition est partie de la maison de l'auteur. Vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran. Les tuiles du bas sont des pièces ; les autres zones ont une seule place chacune : la carte clim, la TV, le téléphone, deux températures, jusqu'à 5 plantes ([adapter à sa maison](docs/installation/adapt-to-your-home.md#version-française)).
-- Le graphe de pluie et les vigilances sont d'abord faits pour la France (Météo-France) ; ailleurs, la pluie vient toute seule d'Open-Meteo, et d'autres services se choisissent dans Home Assistant ([fournisseurs météo](docs/installation/weather.md#version-française)).
+- Le graphe de pluie et les vigilances sont d'abord faits pour la France (Météo-France) ; ailleurs, la pluie vient toute seule de Vigie (le modèle Open-Meteo), et d'autres services se choisissent dans Home Assistant ([fournisseurs météo](docs/installation/weather.md#version-française)).
 
 ## Démarrage rapide
 

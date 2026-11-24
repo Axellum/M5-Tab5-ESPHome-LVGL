@@ -2,8 +2,9 @@
 """Pluie dans l'heure sans Météo-France (02/10/2026, discussion #278 : un utilisateur en
 Turquie n'avait rien sur la carte pluie). Météo-France est le premier choix de la liste
 « Tab5 · next-hour rain source », donc celui d'une installation neuve ; sans
-capteur de pluie Météo-France, la source effective devient Open-Meteo, seul service qui
-répond partout.
+capteur de pluie Météo-France, la source effective devient Vigie (Open-Meteo jusqu'au
+24/11/2026, ADR-0084), qui répond partout : la PIAF de Météo-France en France, le modèle
+Open-Meteo ailleurs.
 
 Les vrais modèles de packages/tab5_meteo_sources.yaml sont rendus ici avec jinja2 et de
 faux états : la variable `source`, puis l'état, les barres et l'attribut `source` du
@@ -47,8 +48,8 @@ def _source(choix, mf_pluie):
     return _rendre(variables["source"], choix=choix, mf_pluie=mf_pluie)
 
 
-def test_meteo_france_sans_capteur_passe_sur_open_meteo():
-    assert _source("Météo-France", "") == "Open-Meteo"
+def test_meteo_france_sans_capteur_passe_sur_vigie():
+    assert _source("Météo-France", "") == "Vigie"
 
 
 def test_meteo_france_avec_capteur_reste_meteo_france():
@@ -77,7 +78,7 @@ def test_les_modeles_lisent_la_source_effective_pas_la_liste():
         assert LISTE not in modele, f"{nom} relit la liste au lieu de la variable `source`"
 
 
-def test_carte_pluie_remplie_par_open_meteo_sans_meteo_france():
+def test_carte_pluie_remplie_par_vigie_sans_meteo_france():
     _, capteur = _capteur_pluie()
     source = _source("Météo-France", "")
     debut = int(MAINTENANT.timestamp()) + 600
@@ -87,8 +88,8 @@ def test_carte_pluie_remplie_par_open_meteo_sans_meteo_france():
     assert _rendre(capteur["state"], **variables) == f"@2,{debut}"
     barres = _rendre(capteur["attributes"]["barres"], **variables)
     assert barres.startswith("0|0;1|0;2|2;"), barres
-    assert _rendre(capteur["attributes"]["source"], **variables) == "Open-Meteo"
-    # Pas de réponse d'Open-Meteo : « pas de données », plus la carte masquée (@-).
+    assert _rendre(capteur["attributes"]["source"], **variables) == "Vigie"
+    # Pas de réponse de Vigie : « pas de données », plus la carte masquée (@-).
     assert _rendre(capteur["state"], source=source, mf_pluie="", serie=None) == "@-1,0"
 
 
@@ -127,7 +128,32 @@ def test_vigie_douze_pas_de_5_min_en_barres_5_puis_10_min():
     assert _rendre(capteur["state"], **variables) == f"@1,{debut + 300}"
     barres = _rendre(capteur["attributes"]["barres"], **variables)
     assert barres == "0|0;1|1;2|0;3|0;4|0;5|0;6|3;7|0;8|0;", barres
-    # Hors de France, Vigie rend `rate_5m_mm_h` nul : pas de données, jamais « temps sec ».
+    # Ni pas de 5 min ni pas de 15 min : pas de données, jamais « temps sec ».
     rep["content"]["rain_nowcast"]["rate_5m_mm_h"] = None
     assert _serie("Vigie", rep) is None
     assert _rendre(capteur["state"], source="Vigie", mf_pluie="", serie=None) == "@-1,0"
+
+
+def test_vigie_hors_de_france_quatre_pas_de_15_min():
+    """Hors de France (24/11/2026, ADR-0084), Vigie rend `rate_5m_mm_h` nul et
+    `mm_per_step` = 4 sommes de 15 min (mm) du modèle Open-Meteo, sans leur heure (forme
+    réelle de /v1/point, Tokyo, lue le 24/11/2026). Datées comme la source Open-Meteo : les
+    heures d'Open-Meteo partent du quart d'heure en cours (`server_utc` // 900 × 900) et
+    chaque valeur est la pluie des 15 min qui précèdent."""
+    _, capteur = _capteur_pluie()
+    t = int(MAINTENANT.timestamp()) + 120  # 12 h 02 : le quart d'heure en cours a commencé à 12 h 00
+    rep = {"status": 200, "content": {"server_utc": t, "rain_nowcast": {
+        "interval_minutes": 15, "rate_5m_mm_h": None, "mm_per_step": [0.0, 0.5, 2.0, 0.0]}}}
+    serie = _serie("Vigie", rep)
+    debut = int(MAINTENANT.timestamp())
+    assert serie == [[debut - 900, 15, 0.0], [debut, 15, 2.0], [debut + 900, 15, 8.0],
+                     [debut + 1800, 15, 0.0]], serie
+    variables = {"source": "Vigie", "mf_pluie": "", "serie": serie}
+    # 2 mm/h de 12 h 00 à 12 h 15 : pluie faible en cours ; 8 mm/h de 12 h 15 à 12 h 30 : forte.
+    assert _rendre(capteur["state"], **variables) == "@1,0"
+    barres = _rendre(capteur["attributes"]["barres"], **variables)
+    assert barres == "0|1;1|1;2|1;3|3;4|3;5|3;6|0;7|0;8|0;", barres
+    # Même série que la source Open-Meteo pour la même pluie : l'écran ne change pas.
+    om = {"status": 200, "content": {"minutely_15": {
+        "time": [debut, debut + 900, debut + 1800, debut + 2700], "precipitation": [0.0, 0.5, 2.0, 0.0]}}}
+    assert _serie("Open-Meteo", om) == serie
