@@ -2150,12 +2150,13 @@ blueprint:
         meteo_pluie:
           name: Pluie dans l'heure · Next-hour rain
           description: >-
-            Sans Météo-France dans Home Assistant, « Météo-France » donne Open-Meteo, qui répond
-            partout sans clé.
+            Sans Météo-France dans Home Assistant, « Météo-France » donne Vigie, qui répond
+            partout sans clé (Météo-France au point GPS en France, le modèle Open-Meteo ailleurs).
 
 
-            Without Météo-France in Home Assistant, « Météo-France » gives Open-Meteo, which
-            answers everywhere without a key.
+            Without Météo-France in Home Assistant, « Météo-France » gives Vigie, which answers
+            everywhere without a key (Météo-France at your GPS point in France, the Open-Meteo
+            model elsewhere).
           default: liste
           selector:
             select:
@@ -2165,7 +2166,7 @@ blueprint:
                   value: liste
                 - label: Météo-France
                   value: Météo-France
-                - label: Vigie (Météo-France au point GPS, France · at your GPS point, France)
+                - label: Vigie (partout ; Météo-France au point GPS en France · everywhere; Météo-France at your GPS point in France)
                   value: Vigie
                 - label: OpenWeatherMap
                   value: OpenWeatherMap

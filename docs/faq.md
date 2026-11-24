@@ -66,7 +66,7 @@ In Home Assistant, with the mouse, and without flashing again. Your sources (wea
 
 ### Where does the weather come from?
 
-You pick the source in Home Assistant. For the rain in the next hour: Météo-France in France (directly, or at your GPS point through Vigie), the Buienradar, DWD or Met.no radars, OpenWeatherMap, or Open-Meteo, which works everywhere with no key. Weather warnings come from Météo-France, the Vigie integration, MeteoAlarm, the DWD or CAP Alerts; apart from Météo-France, they were only tried with simulated data ([weather providers](installation/weather.md)).
+You pick the source in Home Assistant. For the rain in the next hour: Météo-France in France (directly), Vigie, which works everywhere with no key and is used when Home Assistant has no Météo-France (Météo-France at your GPS point in France, the Open-Meteo model elsewhere), the Buienradar, DWD or Met.no radars, OpenWeatherMap, or Open-Meteo directly, also everywhere with no key. Weather warnings come from Météo-France, the Vigie integration, MeteoAlarm, the DWD or CAP Alerts; apart from Météo-France, they were only tried with simulated data ([weather providers](installation/weather.md)).
 
 ## On the screen
 
@@ -164,7 +164,7 @@ Dans Home Assistant, à la souris, sans reflasher. Vos sources (météo, agendas
 
 ### D'où vient la météo ?
 
-Vous choisissez la source dans Home Assistant. Pour la pluie dans l'heure : Météo-France en France (directement, ou au point GPS par Vigie), les radars Buienradar, DWD ou Met.no, OpenWeatherMap, ou Open-Meteo, qui marche partout sans clé. Les vigilances viennent de Météo-France, de l'intégration Vigie, de MeteoAlarm, du DWD ou de CAP Alerts ; hors Météo-France, elles n'ont été essayées qu'avec des données simulées ([fournisseurs météo](installation/weather.md#version-française)).
+Vous choisissez la source dans Home Assistant. Pour la pluie dans l'heure : Météo-France en France (directement), Vigie, qui marche partout sans clé et sert quand Home Assistant n'a pas Météo-France (Météo-France au point GPS en France, le modèle Open-Meteo ailleurs), les radars Buienradar, DWD ou Met.no, OpenWeatherMap, ou Open-Meteo en direct, lui aussi partout sans clé. Les vigilances viennent de Météo-France, de l'intégration Vigie, de MeteoAlarm, du DWD ou de CAP Alerts ; hors Météo-France, elles n'ont été essayées qu'avec des données simulées ([fournisseurs météo](installation/weather.md#version-française)).
 
 ## À l'écran
 

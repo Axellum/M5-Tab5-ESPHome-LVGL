@@ -164,7 +164,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_meteo_icones_nuit.py` | `tests/` | Rendu | Icônes de nuit des prévisions heure par heure (Met.no : `partlycloudy` de nuit) : modèle de HA (`is_daytime`, `sun.sun`) contre un calcul indépendant. |
 | `test_meteo_repli.py` | `tests/` | Rendu | Repli de la météo (08/10/2026) : source choisie indisponible, une autre prend le relais (connue, puis n'importe laquelle), retour tout seul, rien ne part sans aucune météo ; vrais modèles des packages et de `tab5_meteo.jinja`. |
 | `test_meteo_sans_meteo_france.py` | `tests/` | Rendu | Chaîne météo rendue sans Météo-France (Met.no seul), avec les vrais modèles des packages. |
-| `test_pluie_sans_meteo_france.py` | `tests/` | Rendu | Pluie dans l'heure sans Météo-France : la source effective devient Open-Meteo. |
+| `test_pluie_sans_meteo_france.py` | `tests/` | Rendu | Pluie dans l'heure sans Météo-France : la source effective devient Vigie (PIAF en France, modèle Open-Meteo ailleurs, ADR-0084). |
 | `test_polices_themes.py` | `tests/` | Contenu | Polices d'affichage des thèmes : géométrie de l'horloge recalculée depuis les métriques de `Tab5/themes/_polices.yaml`. |
 | `test_poussee_pluie.py` | `tests/` | Contenu | Pluie dans l'heure par la poussée légère, plus par la chaîne complète (PERF-3, HA-16 du 07/10/2026). |
 | `test_premier_demarrage.py` | `tests/` | Contenu | Premier démarrage après une installation par l'USB : « First boot after install » n'est pas un redémarrage inattendu. |

@@ -26,7 +26,8 @@
 #         29/09/2026, quatre services SANS CLÉ sont interrogés directement par
 #         `rest_command.tab5_pluie` (radars Buienradar, DWD par Bright Sky, Met.no ;
 #         modèle Open-Meteo), aux coordonnées de zone.home ; depuis le 22/11/2026 aussi
-#         Vigie (PIAF de Météo-France au point GPS, 12 pas de 5 min, France métropolitaine) ;
+#         Vigie (PIAF de Météo-France au point GPS, 12 pas de 5 min, France métropolitaine ;
+#         depuis le 24/11/2026 partout : ailleurs, ses 4 pas de 15 min du modèle Open-Meteo) ;
 #       - vigilances : Météo-France (`sensor.<dept>_weather_alert`, 9 phénomènes),
 #         MeteoAlarm (39 pays européens, `binary_sensor`, UNE seule alerte : la
 #         bibliothèque s'arrête à la première ; `on` seulement si elle n'a pas expiré),
@@ -61,9 +62,10 @@
 #       rien à trouver : hors de leur zone, elles donnent « pas de données ».
 # @defaut Météo-France est le premier choix des deux listes, donc celui d'une
 #       installation neuve. Sans capteur de pluie Météo-France, la pluie laissée sur
-#       Météo-France passe sur Open-Meteo, seul service qui répond partout (variable
-#       `source` du capteur de pluie ; 02/10/2026, retour d'un utilisateur en Turquie,
-#       discussion #278). Les vigilances laissées sur Météo-France sans l'intégration
+#       Météo-France passe sur Vigie (variable `source` du capteur de pluie ; 02/10/2026,
+#       retour d'un utilisateur en Turquie, discussion #278 : Open-Meteo jusqu'au
+#       24/11/2026, puis Vigie, ADR-0084 : la PIAF de Météo-France en France, le modèle
+#       Open-Meteo ailleurs, par la même API). Les vigilances laissées sur Météo-France sans l'intégration
 #       restent toutes vertes, comme « None ». La liste garde le choix de
 #       l'utilisateur : Météo-France ajouté plus tard reprend la main tout seul.
 # @install `homeassistant: packages: !include_dir_named packages`, puis ce fichier
@@ -110,7 +112,7 @@ input_text:
     icon: mdi:weather-partly-cloudy
     max: 255
 
-# Pluie dans l'heure des sources radar sans clé (29/09/2026), appelée par « Tab5 Rain in the next hour » seulement quand l'une d'elles est choisie (Open-Meteo aussi quand la
+# Pluie dans l'heure des sources radar sans clé (29/09/2026), appelée par « Tab5 Rain in the next hour » seulement quand l'une d'elles est choisie (Vigie aussi quand la
 # liste est restée sur Météo-France sans l'intégration, voir @defaut). Coordonnées du domicile
 # (zone.home) arrondies à 0,01° (~1 km, la maille des radars), envoyées au seul
 # service choisi. Réponses vérifiées le 29/09/2026 :
@@ -127,9 +129,14 @@ input_text:
 #   - Vigie (22/11/2026, https://vigie.auxfilsdesidees.fr, API ouverte du même auteur) :
 #     la prévision immédiate PIAF de Météo-France lue sur sa grille de 0,01° (~1 km),
 #     `rain_nowcast.rate_5m_mm_h` = 12 intensités (mm/h) de 5 min à partir du début des
-#     5 min en cours (`server_utc` arrondi à 300 s) ; France métropolitaine seulement,
-#     ailleurs ce champ est nul (« pas de données »). Comme l'ancienne API de Météo-France
-#     (5 min la première demi-heure, 10 min la seconde), mais au point GPS, pas à la commune.
+#     5 min en cours (`server_utc` arrondi à 300 s) ; France métropolitaine seulement.
+#     Comme l'ancienne API de Météo-France (5 min la première demi-heure, 10 min la
+#     seconde), mais au point GPS, pas à la commune. Ailleurs (24/11/2026), ce champ est nul
+#     et `rain_nowcast.mm_per_step` donne 4 pas de 15 min (mm) du modèle Open-Meteo, que
+#     Vigie lit chez sa propre instance d'Open-Meteo, l'API publique en secours (ADR 0039
+#     de vigie-api) : la même donnée que la source Open-Meteo d'ici, donc datée pareil
+#     (lu le 24/11/2026 : les heures d'Open-Meteo partent du quart d'heure en cours, chaque
+#     valeur = les 15 min PRÉCÉDENTES ; Vigie n'en donne pas l'heure, d'où `server_utc`).
 rest_command:
   tab5_pluie:
     url: >-
@@ -312,12 +319,12 @@ template:
       mf_pluie: "{{ state_attr('sensor.tab5_sources_meteo', 'mf_pluie') or '' }}"
       owm_meteo: "{{ state_attr('sensor.tab5_sources_meteo', 'owm') or '' }}"
       # Source effective, lue par les actions ET par les modèles du capteur (jamais la
-      # liste elle-même) : Météo-France sans capteur de pluie → Open-Meteo (@defaut).
+      # liste elle-même) : Météo-France sans capteur de pluie → Vigie (@defaut).
       # « None » de la liste (« Aucune » avant le 24/10/2026) → « none » : HA relirait un
       # rendu « None » comme le None de Python (Template._parse_result).
       source: >-
         {%- set choix = states('input_select.tab5_source_pluie') -%}
-        {{ 'Open-Meteo' if choix == 'Météo-France' and mf_pluie == '' else 'none' if choix in ['None', 'Aucune'] else choix }}
+        {{ 'Vigie' if choix == 'Météo-France' and mf_pluie == '' else 'none' if choix in ['None', 'Aucune'] else choix }}
       lat: "{{ state_attr('zone.home', 'latitude') }}"
       lon: "{{ state_attr('zone.home', 'longitude') }}"
     actions:
@@ -365,7 +372,10 @@ template:
       #   - Open-Meteo : `minutely_15.precipitation` = mm tombés dans les 15 min
       #     PRÉCÉDANT l'heure donnée (epoch, timeformat=unixtime) ;
       #   - Vigie : `rain_nowcast.rate_5m_mm_h` en mm/h, 12 pas de 5 min depuis le début
-      #     des 5 min en cours (`server_utc` // 300 × 300) ; nul hors de France : rien.
+      #     des 5 min en cours (`server_utc` // 300 × 300) ; nul hors de France, alors
+      #     `rain_nowcast.mm_per_step` : 4 sommes de 15 min (mm) d'Open-Meteo, datées comme
+      #     la source Open-Meteo (`server_utc` // 900 × 900, chaque valeur = le quart
+      #     d'heure qui précède) ; ni l'un ni l'autre : rien (« pas de données »).
       - variables:
           serie: >-
             {%- set ns = namespace(l=[]) -%}
@@ -409,10 +419,15 @@ template:
                 {%- endfor -%}
               {%- elif source == 'Vigie' and c is mapping -%}
                 {%- set r = (c.get('rain_nowcast') or {}).get('rate_5m_mm_h') -%}
-                {%- set t0 = ((c.get('server_utc') | int(0)) // 300) * 300 -%}
-                {%- if r is iterable and r is not string and r is not mapping and t0 > 0 -%}
+                {%- set q = (c.get('rain_nowcast') or {}).get('mm_per_step') -%}
+                {%- set t = c.get('server_utc') | int(0) -%}
+                {%- if r is iterable and r is not string and r is not mapping and t > 0 -%}
                   {%- for v in r -%}
-                    {%- set ns.l = ns.l + [[t0 + 300 * loop.index0, 5, v | float(0)]] -%}
+                    {%- set ns.l = ns.l + [[(t // 300) * 300 + 300 * loop.index0, 5, v | float(0)]] -%}
+                  {%- endfor -%}
+                {%- elif q is iterable and q is not string and q is not mapping and t > 0 -%}
+                  {%- for mm in q -%}
+                    {%- set ns.l = ns.l + [[(t // 900) * 900 + 900 * loop.index0 - 900, 15, (mm | float(0)) * 4]] -%}
                   {%- endfor -%}
                 {%- endif -%}
               {%- endif -%}
@@ -467,8 +482,8 @@ template:
             {% set niv = {'Temps sec': 0, 'Pluie faible': 1, 'Pluie modérée': 2, 'Pluie forte': 3,
                           'Pluie très forte': 4, 'Pluie trés forte': 4} %}
             {% if ent == '' %}
-              {# Sans capteur de pluie Météo-France, la source effective est Open-Meteo
-                 (@defaut, 02/10/2026) : branche gardée pour un état inattendu de la
+              {# Sans capteur de pluie Météo-France, la source effective est Vigie
+                 (@defaut, 02/10/2026 puis 24/11/2026) : branche gardée pour un état inattendu de la
                  liste. Aucune source, comme « None » — et non « temps sec » (lot 5b). #}
               @-
             {% elif not has_value(ent) %}
@@ -494,7 +509,7 @@ template:
           # 9 barres « idx|intensité; » (idx 0..8 = 0, 5, 10, 15, 20, 25, 35, 45,
           # 55 min). Météo-France : ses libellés, tels quels. Autres sources : niveau
           # 0 à 4, le plus fort des points qui touchent la fenêtre (mêmes seuils que
-          # l'état ; un point de 15 min d'Open-Meteo couvre trois barres). Aucune
+          # l'état ; un point de 15 min d'Open-Meteo, ou de Vigie hors de France, couvre trois barres). Aucune
           # source ou pas de données : 9 barres vides (le panneau Pluie ne tourne pas).
           barres: >
             {% set ns = namespace(r='') %}
@@ -519,7 +534,7 @@ template:
               {% for i in range(9) %}{% set ns.r = ns.r ~ i ~ '|0;' %}{% endfor %}
             {% endif %}
             {{ ns.r }}
-          # Source effective : « Open-Meteo » quand la liste, restée sur Météo-France,
+          # Source effective : « Vigie » quand la liste, restée sur Météo-France,
           # n'a pas de capteur Météo-France à lire.
           source: "{{ source }}"
 
