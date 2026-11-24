@@ -1,0 +1,3 @@
+### Modifié
+
+- **Pluie dans l'heure : repli sur Open-Meteo quand Vigie ne donne rien** : quand Vigie ne répond pas, répond en erreur ou n'a pas de pluie à donner, Home Assistant demande à Open-Meteo en direct dans les mêmes 5 min ; la carte pluie reste remplie (le même modèle hors de France, le modèle mondial au lieu de la prévision immédiate de Météo-France en France) et l'attribut `source` du capteur dit « Open-Meteo ». Seulement pour Vigie ; les coordonnées du domicile, arrondies à 0,01°, partent alors aussi chez Open-Meteo ([ADR-0085](docs/decisions/0085-vigie-rain-open-meteo-fallback.md), [fournisseurs météo](docs/installation/weather.md)).

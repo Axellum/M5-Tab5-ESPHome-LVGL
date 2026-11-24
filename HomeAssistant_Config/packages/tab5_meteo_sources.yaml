@@ -65,7 +65,9 @@
 #       Météo-France passe sur Vigie (variable `source` du capteur de pluie ; 02/10/2026,
 #       retour d'un utilisateur en Turquie, discussion #278 : Open-Meteo jusqu'au
 #       24/11/2026, puis Vigie, ADR-0084 : la PIAF de Météo-France en France, le modèle
-#       Open-Meteo ailleurs, par la même API). Les vigilances laissées sur Météo-France sans l'intégration
+#       Open-Meteo ailleurs, par la même API). Vigie muette ou sans pluie à donner :
+#       repli sur Open-Meteo en direct (ADR-0085), attribut `source` = « Open-Meteo ».
+#       Les vigilances laissées sur Météo-France sans l'intégration
 #       restent toutes vertes, comme « None ». La liste garde le choix de
 #       l'utilisateur : Météo-France ajouté plus tard reprend la main tout seul.
 # @install `homeassistant: packages: !include_dir_named packages`, puis ce fichier
@@ -359,6 +361,31 @@ template:
               lon: "{{ lon }}"
             response_variable: rep
             continue_on_error: true
+      # Repli de Vigie sur Open-Meteo en direct (24/11/2026, ADR-0085) : quand Vigie ne
+      # répond pas (délai dépassé, erreur réseau : `rep` indéfini), répond autre chose que
+      # 200, ou n'a ni les pas de 5 min ni ceux de 15 min. Même condition que la lecture de
+      # Vigie plus bas (une liste non vide et `server_utc`). Hors de France, la même donnée
+      # (le modèle Open-Meteo) ; en France, le modèle à la place de la PIAF. Un appel de plus
+      # seulement quand Vigie a manqué ; Open-Meteo muet aussi : « pas de données ».
+      - if:
+          - condition: template
+            value_template: >-
+              {%- set c = rep.get('content') if rep is defined and rep is mapping and rep.get('status') == 200 else none -%}
+              {%- set n = c.get('rain_nowcast') if c is mapping and c.get('rain_nowcast') is mapping else {} -%}
+              {%- set ok = namespace(v=false) -%}
+              {%- for v in [n.get('rate_5m_mm_h'), n.get('mm_per_step')] -%}
+                {%- if v is iterable and v is not string and v is not mapping and v | length > 0 -%}{%- set ok.v = true -%}{%- endif -%}
+              {%- endfor -%}
+              {{ source == 'Vigie' and lat is number and lon is number
+                 and not (ok.v and (c.get('server_utc') | int(0)) > 0) }}
+        then:
+          - action: rest_command.tab5_pluie
+            data:
+              source: "Open-Meteo"
+              lat: "{{ lat }}"
+              lon: "{{ lon }}"
+            response_variable: rep_repli
+            continue_on_error: true
       # Série commune : [début (epoch), durée (min), intensité (mm/h)] par point ;
       # none = pas de réponse exploitable. Unités d'origine :
       #   - OpenWeatherMap : points à la minute, `precipitation` en mm/h ; réponse d'une
@@ -379,14 +406,17 @@ template:
       - variables:
           serie: >-
             {%- set ns = namespace(l=[]) -%}
-            {%- if source == 'OpenWeatherMap' -%}
+            {#- Réponse lue : celle du repli Open-Meteo quand il a été appelé, sinon celle de la source. -#}
+            {%- set src = 'Open-Meteo' if rep_repli is defined else source -%}
+            {%- set rep = rep_repli if rep_repli is defined else rep -%}
+            {%- if src == 'OpenWeatherMap' -%}
               {%- set r = (owm.get(owm_meteo, owm) if owm is defined and owm is mapping else {}) -%}
               {%- for e in (r.get('forecast', []) if r is mapping else []) -%}
                 {%- set ns.l = ns.l + [[as_timestamp(e.get('datetime'), 0) | int(0), 1, e.get('precipitation') | float(0)]] -%}
               {%- endfor -%}
             {%- elif rep is defined and rep is mapping and rep.get('status') == 200 -%}
               {%- set c = rep.get('content') -%}
-              {%- if source == 'Buienradar' and c is string -%}
+              {%- if src == 'Buienradar' and c is string -%}
                 {%- set n0 = now().replace(second=0, microsecond=0) -%}
                 {%- for ligne in c.split('\n') if '|' in ligne -%}
                   {%- set v = ligne.split('|')[0] | trim | int(-1) -%}
@@ -398,34 +428,34 @@ template:
                                            (10 ** ((v - 109) / 32)) if v > 0 else 0]] -%}
                   {%- endif -%}
                 {%- endfor -%}
-              {%- elif source == 'DWD' and c is mapping -%}
+              {%- elif src == 'DWD' and c is mapping -%}
                 {%- for x in c.get('radar', []) -%}
                   {%- set v = x.get('precipitation_5', 0) -%}
                   {%- set v = (v | first | first) if v is iterable and v is not string else v -%}
                   {%- set ns.l = ns.l + [[as_timestamp(x.get('timestamp'), 0) | int(0), 5, (v | float(0)) * 0.12]] -%}
                 {%- endfor -%}
-              {%- elif source == 'Met.no' and c is mapping
+              {%- elif src == 'Met.no' and c is mapping
                     and (c.get('properties') or {}).get('meta', {}).get('radar_coverage') == 'ok' -%}
                 {%- for x in c.get('properties', {}).get('timeseries', []) -%}
                   {%- set d = ((x.get('data') or {}).get('instant') or {}).get('details') or {} -%}
                   {%- set ns.l = ns.l + [[as_timestamp(x.get('time'), 0) | int(0), 5, d.get('precipitation_rate', 0) | float(0)]] -%}
                 {%- endfor -%}
-              {%- elif source == 'Open-Meteo' and c is mapping -%}
+              {%- elif src == 'Open-Meteo' and c is mapping -%}
                 {%- set m = c.get('minutely_15') or {} -%}
                 {%- set p = m.get('precipitation') or [] -%}
                 {%- for t in m.get('time') or [] -%}
                   {%- set mm = (p[loop.index0] if loop.index0 < p | length else 0) | float(0) -%}
                   {%- set ns.l = ns.l + [[(t | int(0)) - 900, 15, mm * 4]] -%}
                 {%- endfor -%}
-              {%- elif source == 'Vigie' and c is mapping -%}
+              {%- elif src == 'Vigie' and c is mapping -%}
                 {%- set r = (c.get('rain_nowcast') or {}).get('rate_5m_mm_h') -%}
                 {%- set q = (c.get('rain_nowcast') or {}).get('mm_per_step') -%}
                 {%- set t = c.get('server_utc') | int(0) -%}
-                {%- if r is iterable and r is not string and r is not mapping and t > 0 -%}
+                {%- if r is iterable and r is not string and r is not mapping and r | length > 0 and t > 0 -%}
                   {%- for v in r -%}
                     {%- set ns.l = ns.l + [[(t // 300) * 300 + 300 * loop.index0, 5, v | float(0)]] -%}
                   {%- endfor -%}
-                {%- elif q is iterable and q is not string and q is not mapping and t > 0 -%}
+                {%- elif q is iterable and q is not string and q is not mapping and q | length > 0 and t > 0 -%}
                   {%- for mm in q -%}
                     {%- set ns.l = ns.l + [[(t // 900) * 900 + 900 * loop.index0 - 900, 15, (mm | float(0)) * 4]] -%}
                   {%- endfor -%}
@@ -433,6 +463,9 @@ template:
               {%- endif -%}
             {%- endif -%}
             {{ ns.l if ns.l else none }}
+          # Source vraiment lue, pour l'attribut `source` : « Open-Meteo » quand le repli de
+          # Vigie a donné la série, sinon la source effective.
+          source_lue: "{{ 'Open-Meteo' if rep_repli is defined and serie is not none else source }}"
     sensor:
       - name: "Tab5 Rain in the next hour"
         unique_id: tab5_pluie_dans_l_heure
@@ -534,9 +567,10 @@ template:
               {% for i in range(9) %}{% set ns.r = ns.r ~ i ~ '|0;' %}{% endfor %}
             {% endif %}
             {{ ns.r }}
-          # Source effective : « Vigie » quand la liste, restée sur Météo-France,
-          # n'a pas de capteur Météo-France à lire.
-          source: "{{ source }}"
+          # Source vraiment lue : « Vigie » quand la liste, restée sur Météo-France,
+          # n'a pas de capteur Météo-France à lire ; « Open-Meteo » quand Vigie a
+          # manqué et que son repli a répondu (ADR-0085).
+          source: "{{ source_lue }}"
 
   # ──────────────────────────────────────────────────────────────────────────
   # Vigilances — capteur ordinaire : il se recalcule dès qu'une entité lue change.
