@@ -131,7 +131,7 @@ input_text:
 #   - Vigie (22/11/2026, https://vigie.auxfilsdesidees.fr, API ouverte du même auteur) :
 #     la prévision immédiate PIAF de Météo-France lue sur sa grille de 0,01° (~1 km),
 #     `rain_nowcast.rate_5m_mm_h` = 12 intensités (mm/h) de 5 min à partir du début des
-#     5 min en cours (`server_utc` arrondi à 300 s) ; France métropolitaine seulement.
+#     5 min en cours à la collecte (`start_utc`) ; France métropolitaine seulement.
 #     Comme l'ancienne API de Météo-France (5 min la première demi-heure, 10 min la
 #     seconde), mais au point GPS, pas à la commune. Ailleurs (24/11/2026), ce champ est nul
 #     et `rain_nowcast.mm_per_step` donne 4 pas de 15 min (mm) du modèle Open-Meteo, que
@@ -139,8 +139,9 @@ input_text:
 #     de vigie-api) : la même donnée que la source Open-Meteo d'ici, donc datée pareil
 #     (lu le 24/11/2026 : les heures d'Open-Meteo partent du quart d'heure en cours, chaque
 #     valeur = les 15 min PRÉCÉDENTES). Vigie garde cette réponse 15 min, sans la caler sur
-#     les quarts d'heure : son heure de début est `rain_nowcast.start_utc` (epoch) quand
-#     Vigie la donne ; sans elle, on la déduit de `server_utc`, au risque d'un quart d'heure.
+#     les quarts d'heure : le début du 1er pas (de 5 comme de 15 min) est
+#     `rain_nowcast.start_utc` (epoch) quand Vigie le donne ; sans lui, on le déduit de
+#     `server_utc`, au risque d'un quart d'heure.
 rest_command:
   tab5_pluie:
     url: >-
@@ -400,12 +401,12 @@ template:
       #     `radar_coverage` = ok ;
       #   - Open-Meteo : `minutely_15.precipitation` = mm tombés dans les 15 min
       #     PRÉCÉDANT l'heure donnée (epoch, timeformat=unixtime) ;
-      #   - Vigie : `rain_nowcast.rate_5m_mm_h` en mm/h, 12 pas de 5 min depuis le début
-      #     des 5 min en cours (`server_utc` // 300 × 300) ; nul hors de France, alors
-      #     `rain_nowcast.mm_per_step` : 4 sommes de 15 min (mm) d'Open-Meteo, la 1re
-      #     commençant à `rain_nowcast.start_utc` ; sans lui (ancien Vigie), au quart
-      #     d'heure qui précède celui de `server_utc` (règle d'Open-Meteo, mais la copie de
-      #     Vigie peut avoir un quart d'heure de retard) ; ni l'un ni l'autre : rien.
+      #   - Vigie : `rain_nowcast.rate_5m_mm_h` en mm/h, 12 pas de 5 min ; nul hors de
+      #     France, alors `rain_nowcast.mm_per_step` : 4 sommes de 15 min (mm) d'Open-Meteo ;
+      #     le 1er pas de l'un comme de l'autre commence à `rain_nowcast.start_utc`. Sans lui
+      #     (Vigie d'avant le 24/11/2026) : 5 min en cours de `server_utc`, ou le quart
+      #     d'heure qui précède le sien (règle d'Open-Meteo ; la copie de Vigie peut avoir
+      #     un quart d'heure de retard) ; ni l'un ni l'autre, ou que des pas finis : rien.
       - variables:
           serie: >-
             {%- set ns = namespace(l=[]) -%}
@@ -451,21 +452,30 @@ template:
                   {%- set ns.l = ns.l + [[(t | int(0)) - 900, 15, mm * 4]] -%}
                 {%- endfor -%}
               {%- elif src == 'Vigie' and c is mapping -%}
-                {%- set r = (c.get('rain_nowcast') or {}).get('rate_5m_mm_h') -%}
-                {%- set q = (c.get('rain_nowcast') or {}).get('mm_per_step') -%}
+                {%- set n = c.get('rain_nowcast') or {} -%}
+                {%- set r = n.get('rate_5m_mm_h') -%}
+                {%- set q = n.get('mm_per_step') -%}
                 {%- set t = c.get('server_utc') | int(0) -%}
+                {#- Début du 1er pas, de 5 comme de 15 min : `start_utc` de Vigie (24/11/2026). Souvent
+                    passé (15 à 45 min avec Open-Meteo, copie gardée 15 min) ; jamais plus d'un quart
+                    d'heure après `server_utc`. Absent (ancien Vigie) ou nul : déduit de `server_utc`. -#}
+                {%- set s = n.get('start_utc') | int(0) -%}
+                {%- set s = s if s > 0 and s <= t + 900 else 0 -%}
                 {%- if r is iterable and r is not string and r is not mapping and r | length > 0 and t > 0 -%}
+                  {%- set d = s if s > 0 else (t // 300) * 300 -%}
                   {%- for v in r -%}
-                    {%- set ns.l = ns.l + [[(t // 300) * 300 + 300 * loop.index0, 5, v | float(0)]] -%}
+                    {%- set ns.l = ns.l + [[d + 300 * loop.index0, 5, v | float(0)]] -%}
                   {%- endfor -%}
                 {%- elif q is iterable and q is not string and q is not mapping and q | length > 0 and t > 0 -%}
-                  {#- Début du 1er pas : `start_utc` de Vigie quand il le donne (à moins d'une heure de
-                      `server_utc`), sinon le quart d'heure qui précède celui de `server_utc`. -#}
-                  {%- set s = (c.get('rain_nowcast') or {}).get('start_utc') | int(0) -%}
-                  {%- set s = s if s > 0 and (s - t) | abs <= 3600 else (t // 900) * 900 - 900 -%}
+                  {%- set d = s if s > 0 else (t // 900) * 900 - 900 -%}
                   {%- for mm in q -%}
-                    {%- set ns.l = ns.l + [[s + 900 * loop.index0, 15, (mm | float(0)) * 4]] -%}
+                    {%- set ns.l = ns.l + [[d + 900 * loop.index0, 15, (mm | float(0)) * 4]] -%}
                   {%- endfor -%}
+                {%- endif -%}
+                {#- Copie si vieille qu'aucun pas ne finit après `server_utc` : pas de données, jamais
+                    « temps sec ». -#}
+                {%- if ns.l and ns.l[-1][0] + ns.l[-1][1] * 60 <= t -%}
+                  {%- set ns.l = [] -%}
                 {%- endif -%}
               {%- endif -%}
             {%- endif -%}
