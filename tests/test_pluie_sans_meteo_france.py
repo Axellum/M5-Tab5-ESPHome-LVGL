@@ -195,11 +195,45 @@ def test_vigie_hors_de_france_quatre_pas_de_15_min():
     assert _serie("Open-Meteo", om) == serie
 
 
-def _vigie(rate=None, quarts=None, status=200, t=None):
-    """Réponse de rest_command pour Vigie (forme réelle de /v1/point)."""
+def _vigie(rate=None, quarts=None, status=200, t=None, debut=None):
+    """Réponse de rest_command pour Vigie (forme réelle de /v1/point ; `debut` =
+    `rain_nowcast.start_utc`, absent des réponses d'avant le 24/11/2026)."""
     t = int(MAINTENANT.timestamp()) + 120 if t is None else t
-    return {"status": status, "content": {"server_utc": t, "rain_nowcast": {
-        "interval_minutes": 15, "rate_5m_mm_h": rate, "mm_per_step": quarts}}}
+    nowcast = {"interval_minutes": 15, "rate_5m_mm_h": rate, "mm_per_step": quarts}
+    if debut is not None:
+        nowcast["start_utc"] = debut
+    return {"status": status, "content": {"server_utc": t, "rain_nowcast": nowcast}}
+
+
+def test_vigie_pas_dates_par_start_utc():
+    """Vigie garde la réponse d'Open-Meteo 15 min sans la caler sur les quarts d'heure
+    (constaté le 24/11/2026 sur Tokyo, doc de vigie-api#123) : à 12 h 02, sa copie peut dater
+    de 11 h 58, ses pas partant alors de 11 h 30 et non de 11 h 45. `rain_nowcast.start_utc`
+    (contrat de vigie-api, 24/11/2026) donne ce début, pour les pas de 15 min comme pour les
+    12 pas de 5 min (PIAF : la frontière de 5 min à la collecte). Absent, nul ou plus d'un
+    quart d'heure dans le futur : la règle de `server_utc`. Une copie dont tous les pas sont
+    finis : pas de données, jamais « temps sec »."""
+    _, capteur = _capteur_pluie()
+    debut = int(MAINTENANT.timestamp())  # 12 h 00 ; server_utc = 12 h 02
+    quarts = [0.0, 0.5, 2.0, 0.0]
+    attendu = [[debut - 1800, 15, 0.0], [debut - 900, 15, 2.0], [debut, 15, 8.0], [debut + 900, 15, 0.0]]
+    serie = _serie("Vigie", _vigie(None, quarts, debut=debut - 1800))
+    assert serie == attendu, serie
+    # Les pas finis ne comptent pas : 8 mm/h de 12 h 00 à 12 h 15, forte, en cours.
+    assert _rendre(capteur["state"], source="Vigie", mf_pluie="", serie=serie) == "@3,0"
+    assert _serie("Vigie", _vigie(None, quarts, debut=debut - 900)) == _serie("Vigie", _vigie(None, quarts))
+    regle = _serie("Vigie", _vigie(None, quarts))
+    assert regle[0][0] == debut - 900, regle
+    for fou in (0, None, debut + 7200):
+        assert _serie("Vigie", _vigie(None, quarts, debut=fou)) == regle, fou
+    # Copie d'une heure : ses quatre pas sont finis à 12 h 02.
+    assert _serie("Vigie", _vigie(None, quarts, debut=debut - 3600)) is None
+    # Pas de 5 min (PIAF) : même début ; sans lui, les 5 min en cours de `server_utc`.
+    piaf = _serie("Vigie", _vigie([0.0] * 12, debut=debut - 300))
+    assert piaf[0] == [debut - 300, 5, 0.0] and piaf[-1][0] == debut + 3000, piaf
+    assert _serie("Vigie", _vigie([0.0] * 12))[0][0] == debut
+    # Le repli ne regarde pas le début.
+    assert not _repli_appele("Vigie", _vigie(None, quarts, debut=debut - 1800))
 
 
 def _open_meteo(mm):
