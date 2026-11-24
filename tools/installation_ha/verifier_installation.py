@@ -984,6 +984,14 @@ async def verifier_vigilances(ha: HA, rapport: Rapport) -> None:
                          f"source {attributs.get('source')!r}")
 
 
+def releve_de(etat: dict, source: str) -> bool:
+    """L'état du capteur de pluie porte un relevé venu de `source` elle-même : celui du repli
+    Open-Meteo de Vigie (attribut `source` = « Open-Meteo », ADR-0085) dit au contraire que
+    Vigie a manqué."""
+    return ((etat.get("attributes") or {}).get("source") == source
+            and CODE_RELEVE.match(etat.get("state") or "") is not None)
+
+
 def appels_sans_reponse(entrees: list[dict], depuis: float, hote: str) -> tuple[int, str | None]:
     """(nombre, une URL) des appels de rest_command.tab5_pluie à `hote` restés sans
     réponse exploitable du service (délai dépassé, erreur réseau, HTTP 429 ou 5xx), dans
@@ -1044,7 +1052,7 @@ async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport, source: str, hote: s
     await ha.post("/api/services/input_select/select_option", {"entity_id": LISTE_PLUIE, "option": source})
     etat = await attendre_releve_pluie(ha, source, 45)
     essai = 1
-    while not CODE_RELEVE.match(etat.get("state") or "") and essai < TENTATIVES_PLUIE:
+    while not releve_de(etat, source) and essai < TENTATIVES_PLUIE:
         # La liste sur « None » (aucun appel) puis de nouveau sur la source : seul le capteur
         # de pluie se relance (event_template_reloaded relancerait ceux de cinq autres packages).
         essai += 1
@@ -1054,7 +1062,7 @@ async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport, source: str, hote: s
         etat = await attendre_releve_pluie(ha, source, 30)
     attributs = etat.get("attributes") or {}
     barres = [b for b in (attributs.get("barres") or "").split(";") if b]
-    code_lu = CODE_RELEVE.match(etat.get("state") or "") is not None
+    code_lu = releve_de(etat, source)
     releve = code_lu and len(barres) == 9
     texte = f"pluie « {source} » (rest_command, sans clé) : relevé {etat.get('state')}, 9 barres"
     # Un relevé lu = le service a répondu : des barres fausses restent notre faute, journal ou
@@ -1063,10 +1071,13 @@ async def verifier_pluie_sans_cle(ha: HA, rapport: Rapport, source: str, hote: s
     if releve:
         rapport.ok(texte + (f" (essai {essai} sur {TENTATIVES_PLUIE})" if essai > 1 else ""))
     elif sans_reponse:
+        # Le repli de Vigie (ADR-0085) a pu remplir la carte malgré tout : on le dit.
+        repli = (f" ; le repli {attributs.get('source')} a pris le relais : relevé {etat.get('state')}, "
+                 f"{len(barres)} barres" if CODE_RELEVE.match(etat.get("state") or "") else "")
         rapport.avertir(f"pluie « {source} » NON JUGÉE : le service n'a pas répondu à HA "
                         f"({sans_reponse} appel(s) de rest_command sans réponse en {essai} essais, journal de HA : "
                         "délai dépassé, erreur réseau, HTTP 429 ou 5xx) ; le runner lui-même : "
-                        + (await sonder(url) if url else "pas d'URL relevée"))
+                        + (await sonder(url) if url else "pas d'URL relevée") + repli)
     else:
         rapport.echec(f"{texte} — état {etat.get('state')!r}, barres {attributs.get('barres')!r}, "
                       f"source {attributs.get('source')!r} après {essai} essais ; le service a répondu "
