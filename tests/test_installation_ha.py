@@ -415,6 +415,116 @@ def test_classer_le_journal():
     assert autres == 1
 
 
+_URL_OPEN_METEO = ("https://api.open-meteo.com/v1/forecast?latitude=32.87&longitude=117.23"
+                   "&minutely_15=precipitation&forecast_minutely_15=6&timeformat=unixtime")
+
+
+def test_appels_open_meteo_sans_reponse():
+    """CI de main du 23/11/2026 : Open-Meteo muet depuis le runner (« Timeout when calling
+    resource », HA 2026.10.4). Délai dépassé, erreur réseau, HTTP 429 ou 5xx comptent ; un 400
+    (URL fausse, notre faute), un autre service ou une ligne d'avant le contrôle, non."""
+    import datetime as dt
+    url = _URL_OPEN_METEO
+    prefixe = ("ERROR (MainThread) [homeassistant.helpers.script.trigger_update_coordinator] Trigger Update "
+               "Coordinator: If at step 2: Error executing script. Error for call_service at pos 1: ")
+    journal = (
+        f'\x1b[31m2026-11-23 07:43:59.150 {prefixe}Timeout when calling resource "{url}"\x1b[0m\n'
+        f'2026-11-23 07:44:46.841+01:00 {prefixe}Client error occurred when calling resource "{url}"\n'
+        f"2026-11-23 07:45:00.000 WARNING (MainThread) [homeassistant.components.rest_command] "
+        f"Error. Url: {url}. Status code 503. Payload: b''\n"
+        f"2026-11-23 07:45:01.000 WARNING (MainThread) [homeassistant.components.rest_command] "
+        f"Error. Url: {url}. Status code 429. Payload: b''\n"
+        f"2026-11-23 07:45:02.000 WARNING (MainThread) [homeassistant.components.rest_command] "
+        f"Error. Url: {url}. Status code 400. Payload: b''\n"
+        f'2026-11-23 07:45:03.000 {prefixe}Timeout when calling resource "https://api.met.no/weatherapi/nowcast/2.0/complete"\n'
+    )
+    entrees = verifier.lignes_du_journal(journal)
+    assert len(entrees) == 6
+    assert verifier.appels_open_meteo_sans_reponse(entrees, 0) == (4, url)
+    # 07:43:59 à Paris (heure d'hiver) = 06:43:59 UTC : avant le contrôle, ne compte pas.
+    depuis = dt.datetime(2026, 11, 23, 6, 44, tzinfo=dt.timezone.utc).timestamp()
+    assert verifier.appels_open_meteo_sans_reponse(entrees, depuis) == (3, url)
+    assert verifier.appels_open_meteo_sans_reponse(entrees[4:], 0) == (0, None)
+
+
+def test_pluie_sans_cle_essais_puis_non_jugee(monkeypatch):
+    """verifier_pluie_sans_cle avec un faux HA : relevé au 2e essai = réussi ; service muet
+    d'après le journal de HA = « non jugé », le job reste vert ; pas de relevé alors que le
+    service a répondu, ou relevé lu avec de fausses barres = échec."""
+    import asyncio
+    import time
+
+    barres = "".join(f"{i}|0;" for i in range(9))
+    sec = {"state": "@0,0", "attributes": {"source": "Open-Meteo", "barres": barres}}
+    vide = {"state": "@-1,0", "attributes": {"source": "Open-Meteo", "barres": barres}}
+    muet = [{"quand": time.time() + 60, "niveau": "ERROR", "logger": "x",
+             "message": f'Timeout when calling resource "{_URL_OPEN_METEO}"'}]
+
+    class FauxHA:
+        def __init__(self):
+            self.choix: list[str] = []
+
+        async def etats(self):
+            return {"sensor.tab5_pluie_dans_l_heure": {"state": "@1,5"}}
+
+        async def post(self, chemin, donnees=None):
+            if chemin.endswith("/select_option"):
+                self.choix.append(donnees["option"])
+
+    async def sans_pause(_):
+        return None
+
+    async def retour(*_):
+        return "@1,5"
+
+    sondes: list[str] = []
+
+    async def sonder(url):
+        sondes.append(url)
+        return "TimeoutError après 15 s"
+
+    monkeypatch.setattr(verifier.asyncio, "sleep", sans_pause)
+    monkeypatch.setattr(verifier, "attendre_attribut", retour)
+    monkeypatch.setattr(verifier, "sonder", sonder)
+
+    def jouer(releves, journal):
+        suite = iter(releves)
+
+        async def attendre(_ha, _delai):
+            return next(suite)
+
+        async def lire(_ha):
+            return journal
+
+        monkeypatch.setattr(verifier, "attendre_releve_pluie", attendre)
+        monkeypatch.setattr(verifier, "lire_journal", lire)
+        ha, rapport = FauxHA(), verifier.Rapport()
+        asyncio.run(verifier.verifier_pluie_sans_cle(ha, rapport))
+        return ha.choix, rapport
+
+    choix, rapport = jouer([vide, sec], [])
+    assert choix == ["Open-Meteo", "None", "Open-Meteo", "Météo-France"]
+    assert rapport.lignes[0] == (True, "pluie « Open-Meteo » (rest_command, sans clé) : relevé @0,0, 9 barres "
+                                       "(essai 2 sur 3)")
+    assert rapport.reussi
+
+    choix, rapport = jouer([vide, vide, vide], muet)
+    assert choix == ["Open-Meteo", "None", "Open-Meteo", "None", "Open-Meteo", "Météo-France"]
+    assert rapport.lignes[0][0] is None and "NON JUGÉE" in rapport.lignes[0][1]
+    assert "1 appel(s)" in rapport.lignes[0][1] and "3 essais" in rapport.lignes[0][1]
+    assert sondes == [_URL_OPEN_METEO] and "TimeoutError" in rapport.lignes[0][1]
+    assert rapport.reussi
+
+    choix, rapport = jouer([vide, vide, vide], [])
+    assert rapport.lignes[0][0] is False and "le service a répondu" in rapport.lignes[0][1]
+    assert not rapport.reussi
+
+    fausses = {"state": "@0,0", "attributes": {"source": "Open-Meteo", "barres": "0|0;"}}
+    choix, rapport = jouer([fausses], muet)
+    assert choix == ["Open-Meteo", "Météo-France"]
+    assert rapport.lignes[0][0] is False and not rapport.reussi
+
+
 def test_la_tablette_virtuelle_porte_le_modele_de_la_vraie():
     """Les packages et le blueprint reconnaissent la tablette par le modèle de l'appareil
     (bloc `project:`), pas par son nom : la tablette virtuelle doit porter le même."""
