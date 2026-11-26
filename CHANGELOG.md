@@ -59,16 +59,20 @@ Ce qu'apporte chaque fichier Home Assistant :
 - Le tableau de bord (facultatif) : le refaire une dernière fois à la main lui donne le marqueur ; les
   mises à jour suivantes se feront en un clic dans *Paramètres → Système → Corrections*.
 
-**Mesures de la version** : taille du firmware lue dans la compilation de la CI (Tab5, ST7123) :
-MESURES_A_REMPLIR. Draw Max, Loop Time et RAM libre sur la tablette : non remesurés pour cette version.
+**Mesures de la version** : taille du firmware lue dans la compilation `build` de la CI (Tab5 ST7123,
+image `esphome:latest` du jour) : flash 5 233 736 octets (64,4 %), RAM statique 259 583 octets
+(58,3 %), contre 5 140 136 et 263 336 pour la 3.9.1 (+91 Kio de flash, −3,7 Kio de RAM). Les deux
+compilations n'ont pas été faites avec la même version d'ESPHome : l'écart mêle le code et l'outil.
+Les binaires publiés sont compilés avec ESPHome 2026.9.0 (Tab5) et 2026.9.1 (7B). Draw Max, Loop Time et RAM libre sur la
+tablette : non remesurés pour cette version.
 
 **Problèmes connus** :
 - Les voitures n'ont jamais été essayées avec une vraie voiture : la maison de l'auteur n'en a pas.
   Toutes leurs pages sont vérifiées avec les données de la démo (`demo_pusher.py --voitures`, « Tesla
   2023 » et « Tesla 2025 »), les tests, le fuzzer et le rendu hors tablette.
 - La build publiée n'a pas été installée sur une tablette avant la publication. Le Tab5 ST7121 de
-  l'auteur tourne depuis le 11/11 la `main` de ce jour-là (la rc.1, plus les onglets de la 7B et les
-  playlists) ; depuis, seule #635 (compatibilité avec ESPHome 2026.11 : lien C6, journal, cache des
+  l'auteur tourne depuis le 12/11 la `main` du 11/11 (la rc.1, plus les onglets de la 7B et les
+  playlists ; démarrage du 12/11 à 7 h 26 relu dans Home Assistant le 26/11) ; depuis, seule #635 (compatibilité avec ESPHome 2026.11 : lien C6, journal, cache des
   styles des thèmes) a changé le firmware, sans avoir été vue sur un écran. Le ST7123, l'ILI9881C et la
   Waveshare 7B ne sont pas essayés pour cette version.
 - La vidéo de la caméra : la cadence a été mesurée sur le flux de Home Assistant depuis un PC ; sur la
