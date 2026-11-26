@@ -6,8 +6,84 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.1).
 
+## [3.10.0] — 2026-11-26
+
+De `v3.9.1` à aujourd'hui : trente-trois pull requests (#608 → #641, sans #610, fermée), dont une de
+pré-release ([v3.10.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.10.0-rc.1)
+le 10/11, #629), cinq de documentation, et celle de la release ; aucune de Dependabot. Dix-huit jours
+après la 3.9.1. Le gros de la version : les voitures électriques dans le popup Énergie (page « Flux »,
+nouvelle page « Charges », consommation du jour sur « Aujourd'hui », bilan du mois sur « Bilan ») et un
+nouveau popup « Voitures » à quatre pages (Aperçu, Charge, Trajets, État) ; la pluie dans l'heure et
+les vigilances par Vigie, avec un repli sur Open-Meteo pour la pluie ; la vidéo de la caméra montrée en
+grand ; le tableau de bord mis à jour en un clic par l'intégration ; la page « Playlists » en
+pochettes ; la compilation avec ESPHome 2026.11.
+
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.1).
+
+**À faire en mettant à jour depuis la 3.9.1** (contrat HA ↔ firmware : le firmware d'abord).
+
+*Avec l'intégration* (« Tab5 — fichiers HA · HA files » dans Paramètres → Mises à jour) :
+- Mises à jour → Tab5 → Installer, puis redémarrer Home Assistant (apporte `blueprints/automation/tab5/tab5_emplacements.yaml`, `custom_templates/tab5_dashboard.jinja`, `custom_templates/tab5_tablette.jinja`, `custom_templates/tab5_vigilance.jinja`, `packages/tab5_energie.yaml`, `packages/tab5_meteo_sources.yaml` +16) — requis.
+- Recharger le YAML — fait par l'intégration.
+- Firmware : enchaîné par l'intégration si « Mettre ensuite la tablette à jour » est coché ; sinon entité « Firmware » de la tablette → Installer (78 fichier(s) de firmware et les traductions) — requis.
+- Tableau de bord (étape 7 du guide, une dernière fois : il portera ensuite le marqueur qui permet la mise à jour en un clic) — facultatif.
+- Gestes : 2 pour le requis, 2 avec le recommandé, 5 avec tout (facultatif compris).
+
+*À la main* (`tab5_home_assistant.zip`) :
+- Télécharger `tab5_home_assistant.zip` et copier ses dossiers dans `config/` (apporte `blueprints/automation/tab5/tab5_emplacements.yaml`, `custom_templates/tab5_dashboard.jinja`, `custom_templates/tab5_tablette.jinja`, `custom_templates/tab5_vigilance.jinja`, `packages/tab5_energie.yaml`, `packages/tab5_meteo_sources.yaml` +2) — requis.
+- Recharger : Outils de développement → YAML → Toute la configuration YAML, puis l'action `homeassistant.reload_custom_templates` (ou redémarrer Home Assistant) — requis.
+- Blueprint importé depuis son adresse : l'importer de nouveau — facultatif.
+- Firmware : entité « Firmware » de la tablette → Installer (78 fichier(s) de firmware et les traductions) — requis.
+- Tableau de bord (étape 7 du guide) — facultatif.
+- Gestes : 5 pour le requis, 5 avec le recommandé, 9 avec tout (facultatif compris).
+
+`tab5_hacs.zip` n'est pas à télécharger : c'est le fichier que lit HACS.
+Le détail des étapes : `docs/installation/updates.md`.
+
+Ce qu'apporte chaque fichier Home Assistant :
+- `blueprints/automation/tab5/tab5_emplacements.yaml` : la section « Énergie : voitures » (capteurs de
+  chaque voiture, compteur kilométrique, pneus, températures, serrure, Sentinelle, logiciel), la case
+  « Vidéo de la caméra en grand » et les destinataires recalculés après la connexion de l'écran.
+- `custom_templates/tab5_dashboard.jinja` : le marqueur qui permet ensuite de mettre le tableau de bord
+  à jour en un clic.
+- `custom_templates/tab5_tablette.jinja` : la poussée de connexion attend que l'écran ait publié ses
+  actions (pots, températures, clim et tuiles ne manquent plus après un redémarrage de l'écran).
+- `custom_templates/tab5_vigilance.jinja` et `packages/tab5_meteo_sources.yaml` : la source « Vigie »
+  pour la pluie dans l'heure et les vigilances, et le repli de la pluie sur Open-Meteo.
+- `packages/tab5_energie.yaml` : envoie les voitures à l'écran (Flux, charges, journée, trajets, état,
+  bilan du mois) ; il n'envoie rien sans voiture choisie dans le blueprint.
+- `packages/tab5_musique.yaml` : la page « Playlists » en pochettes, les favorites de Music Assistant
+  d'abord.
+- `packages/tab5_voitures.yaml` (nouveau) : l'analyse des charges des voitures par le recorder ; il ne
+  sert que si vous avez une voiture électrique.
+- Le tableau de bord (facultatif) : le refaire une dernière fois à la main lui donne le marqueur ; les
+  mises à jour suivantes se feront en un clic dans *Paramètres → Système → Corrections*.
+
+**Mesures de la version** : taille du firmware lue dans la compilation de la CI (Tab5, ST7123) :
+MESURES_A_REMPLIR. Draw Max, Loop Time et RAM libre sur la tablette : non remesurés pour cette version.
+
+**Problèmes connus** :
+- Les voitures n'ont jamais été essayées avec une vraie voiture : la maison de l'auteur n'en a pas.
+  Toutes leurs pages sont vérifiées avec les données de la démo (`demo_pusher.py --voitures`, « Tesla
+  2023 » et « Tesla 2025 »), les tests, le fuzzer et le rendu hors tablette.
+- La build publiée n'a pas été installée sur une tablette avant la publication. Le Tab5 ST7121 de
+  l'auteur tourne depuis le 11/11 la `main` de ce jour-là (la rc.1, plus les onglets de la 7B et les
+  playlists) ; depuis, seule #635 (compatibilité avec ESPHome 2026.11 : lien C6, journal, cache des
+  styles des thèmes) a changé le firmware, sans avoir été vue sur un écran. Le ST7123, l'ILI9881C et la
+  Waveshare 7B ne sont pas essayés pour cette version.
+- La vidéo de la caméra : la cadence a été mesurée sur le flux de Home Assistant depuis un PC ; sur la
+  tablette, une seule mesure, faite avant le réglage de la caméra (1,5 à 1,7 image par seconde).
+- La source « Vigie » est un service en ligne tenu par l'auteur, sur un seul serveur. Quand il ne
+  répond pas, la pluie dans l'heure retombe sur Open-Meteo ; les vigilances n'ont pas de repli.
+- Jeux absents par défaut sur la 7B (pas d'IMU, écrans pas adaptés).
+- Les codes lus par la tablette et les packages, le libellé « Tab5 · alerte », les descriptions
+  des scripts et les notifications restent en français.
+
 ### Ajouté
 
+- **Vigilances par Vigie** : nouvelle source « Vigie » dans la liste « Tab5 · weather warnings source » (et dans le blueprint). Avec l'intégration Home Assistant de [Vigie](https://vigie.auxfilsdesidees.fr) installée, son capteur « niveau maximal » est trouvé seul (le lieu de l'entité météo choisie, sinon le premier), sans capteur au format de Météo-France : son état donne le niveau global, son attribut `by_phenomenon` les cases de l'écran (vent, inondation, orages, pluie-inondation, neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard, feux de forêt). Il faut le `custom_templates/tab5_vigilance.jinja` de cette version ([fournisseurs météo](docs/installation/weather.md)).
+- **Pluie dans l'heure au point GPS, par Vigie** : nouvelle source « Vigie » dans la liste « Tab5 · next-hour rain source » (et dans le blueprint). Home Assistant lit toutes les 5 min, aux coordonnées du domicile, la prévision immédiate PIAF de Météo-France servie par [Vigie](https://vigie.auxfilsdesidees.fr) : 12 pas de 5 min sur une grille d'environ 1 km, sans clé ni intégration. Les 9 barres de l'écran sont celles de l'ancienne API Météo-France (5 min la première demi-heure, 10 min la seconde). France métropolitaine seulement ; ailleurs, « pas de données » ([fournisseurs météo](docs/installation/weather.md)).
+- **Documentation : partir de ce projet pour son propre écran ESPHome** : une page bilingue ([`docs/reuse.md`](docs/reuse.md)) pour qui veut un tableau de bord Home Assistant sur un écran ESP32 + LVGL avec ESPHome : ce qui se réutilise (règles de code, ADR utiles hors Tab5, dépannage, méthode `AGENTS.md` / `[AI-CONTEXT]`), comment la Waveshare 7B a été ajoutée (ADR-0061 et suivantes, substitution `tab5_carte`), ce qui est propre à l'ESP32-P4 et au Tab5, et pour l'ESP32-S3 seulement ce que disent les sources officielles (le reste « non vérifié »). Dans le menu du site et dans `docs/README.md`.
 - **Le bilan du mois des voitures, bouton « Voitures » de la page « Bilan »** ([ADR-0080](docs/decisions/0080-cars-month-balance.md)) : la page « Bilan » du popup Énergie ne disait rien des voitures. Quand Home Assistant en envoie le bilan, un quatrième bouton « Voitures » apparaît à côté de Heures / Jours / Mois (les quatre font alors 110 px, au lieu de 150 px pour trois, et commencent au même endroit : le titre du mois ne bouge pas) ; il remplace le graphique par un panneau. À gauche, les voitures ensemble : un anneau « x % de la maison » partagé entre la voiture 1 et la voiture 2, les kWh chargés ce mois-ci, la part du soleil (et ses kWh), les kWh venus du réseau. À droite, une carte par voiture : ses kWh en grand, une barre « part du soleil » sur le réseau, les kWh du réseau, puis les km parcourus et les kWh/100 km. **Sans voiture ni bilan reçu, la page est identique au pixel** (comparé image par image à `main` par le rendu hors tablette). Rien n'est dessiné sur la 7B. Contrat 1.8.0 : service `tab5_maj_voiture_bilan` (`vue` = `mois_civil`, `debut` = le 1er du mois, `payload` = onze champs, cinq par voiture puis la part de la maison), reçu par le firmware ; **mettre le firmware à jour avant** les fichiers Home Assistant (`script.tab5_energie` l'appelle avec `continue_on_error`, mais un ancien firmware n'a pas ce service).
 - **Rien d'inventé** : les km et les kWh/100 km n'existent qu'avec un odomètre choisi dans le blueprint (sinon « -- ») ; le second est l'énergie chargée divisée par les km, écrit avec un « ~ » et une note sous le panneau — une estimation, jamais une consommation mesurée. Pas de montant en euros (l'analyse n'a pas de prix) : les kWh achetés au réseau à la place.
 - **Côté Home Assistant** : `script.tab5_energie` pousse `bilan_debut` et `bilan` de la réponse de `script.tab5_voitures_analyse` (déjà calculés par l'ADR-0074) à l'ouverture du popup puis toutes les 5 minutes au plus, sans entité réelle dans le fichier public (ADR-0024).
@@ -42,6 +118,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Modifié
 
+- **Pluie dans l'heure : repli sur Open-Meteo quand Vigie ne donne rien** : quand Vigie ne répond pas, répond en erreur ou n'a pas de pluie à donner, Home Assistant demande à Open-Meteo en direct dans les mêmes 5 min ; la carte pluie reste remplie (le même modèle hors de France, le modèle mondial au lieu de la prévision immédiate de Météo-France en France) et l'attribut `source` du capteur dit « Open-Meteo ». Seulement pour Vigie ; les coordonnées du domicile, arrondies à 0,01°, partent alors aussi chez Open-Meteo ([ADR-0085](docs/decisions/0085-vigie-rain-open-meteo-fallback.md), [fournisseurs météo](docs/installation/weather.md)).
+- **Pluie dans l'heure par Vigie, partout et par défaut** : la source « Vigie » répond maintenant hors de France aussi (le modèle Open-Meteo au pas de 15 min, servi par [Vigie](https://vigie.auxfilsdesidees.fr) ; en France métropolitaine, toujours la PIAF de Météo-France au pas de 5 min). Quand la liste « Tab5 · next-hour rain source » est restée sur Météo-France et que Home Assistant n'a pas de capteur de pluie Météo-France, c'est Vigie qui sert, et plus Open-Meteo en direct : en France, la carte pluie reçoit la PIAF au point GPS sans rien régler ; ailleurs, la même pluie qu'avant. Les coordonnées du domicile, arrondies à 0,01°, partent alors vers le serveur de Vigie ; « None » ou une autre source l'évite, Open-Meteo reste au choix. La CI d'installation à neuf essaie la pluie par Vigie puis par Open-Meteo ([ADR-0084](docs/decisions/0084-vigie-default-rain-source.md), [fournisseurs météo](docs/installation/weather.md)).
+- **Documentation, partir de ce projet : l'ESP32-S3 sans MIPI-DSI ni JPEG matériel** ([`docs/reuse.md`](docs/reuse.md)) : les deux « non vérifié » sont remplacés par ce que déclare ESP-IDF v5.5.5 (`soc_caps.h` du S3 et du P4 : `SOC_MIPI_DSI_SUPPORTED` et `SOC_JPEG_CODEC_SUPPORTED` déclarés pour le P4, absents pour le S3), avec les liens et la date de lecture.
+- **Dépannage : chaque incident dit à quoi il s'applique** ([`docs/troubleshooting.md`](docs/troubleshooting.md)) : « tout écran ESPHome + LVGL » (11 sur 20) ou « propre au Tab5 / à l'ESP32-P4 » (9 sur 20), en anglais et en français, aussi dans une colonne du tableau des symptômes. Titres et ancres inchangés.
+- **Musique : la page « Playlists » devient une grille de pochettes, comme la Bibliothèque** ([ADR-0068](docs/decisions/0068-favourite-playlists.md), mise à jour du 10/11/2026, demande d'Axel). Plus de boutons texte dans la moitié droite ni de moitié basse vide : la même grille de 5 × 2 que « Bibliothèque » (pochette, nom, « Playlist » dessous), une seule tuile et une seule file de pochettes pour les deux pages. Avec Music Assistant, ce sont ses **playlists favorites** (vos favoris YouTube Music, par exemple) avec leurs pochettes, dix par page : un tap la joue par Music Assistant sur le lecteur affiché (un groupe de pièces aussi), un appui long ouvre la roue Lire / À la suite / En fin de file / Radio. Sans Music Assistant, rien ne change à l'usage : les playlists du blueprint, avec l'icône de playlist, un tap les lance sur l'Apple TV. La pochette touchée reste en couleur 30 s et la fenêtre revient à « Lecture » 600 ms après ; un nom trop long prend deux lignes au lieu d'être coupé à une quinzaine de lettres. La pastille de l'application (« Spotify »…) ne s'affiche plus que sur la page « Lecture » : à côté des noms des pages, elle passait pour un onglet. Contrat inchangé (aucune action ni variable) : une nouvelle forme de la valeur de « parcourir » (`pl|f|page`) et une nouvelle vue (`plf`) ; avec les fichiers HA d'avant, le nouveau firmware montre toutes les playlists de Music Assistant, et l'ancien firmware ne demande jamais `plf`. Vérifié par le rendu hors tablette (Tab5 et 7B) et les tests, pas encore sur l'écran.
 - **Le réseau en violet sur la page « Flux » et sur la page « Charges »** : « on ne reconnaît pas le soleil et le réseau », le réseau était jaune-orange, presque comme le soleil. Il a maintenant sa propre couleur, un violet, sur le Flux (le cercle du réseau, ses traits vers la maison, la batterie et les voitures, sa part dans les anneaux) et sur la barre de chaque ligne de « Charges » et sa légende ; le soleil reste jaune, la batterie garde la sienne. Un rôle de plus dans la palette (`POWER_GRID`), avec une valeur dans chacun des 21 thèmes, clair et sombre : le même violet partout où il se distingue du soleil, de la batterie, de la charge et de la maison, une teinte voisine sinon (écart de couleur d'au moins 30, [ADR-0077](docs/decisions/0077-charges-page.md)).
 - **Vidéo des caméras : ce qui fixe la cadence, mesuré** ([ADR-0073](docs/decisions/0073-cameras-video.md), [notice Caméras](docs/notice/cameras.md)) : la vidéo a été essayée sur le Tab5 de l'auteur avec une caméra ESPHome (M5Stack AtomS3R-CAM). La tablette décode une image en 3 à 4 ms et suit la source : la cadence est celle de la caméra, qui fabrique chaque JPEG avec sa puce. Deux réglages du fichier ESPHome de la caméra (tampon d'envoi TCP `CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "32768"` et `frame_buffer_count: 2`) ont fait passer 1,4-1,5 à 2,5-2,8 images par seconde, et une image plus petite va plus loin (`CIF` 6,0-6,3, `QVGA` 8,9-9,3). Mesures prises depuis un PC sur le flux de Home Assistant, une seule caméra sur un seul réseau ; la tablette n'a pas été remesurée après le changement. Documentation seulement : aucun changement du firmware ni de Home Assistant.
 - **Documentation des mises à jour, relue après le tableau de bord en un clic** : [`updates.md`](docs/installation/updates.md) et [`dashboard.md`](docs/installation/dashboard.md) disent que la réparation du tableau de bord arrive avec la release qui suit la 3.9.1 (elle n'est pas dans la 3.9.1) et que tout tableau fait avec les fichiers de la 3.9.1 ou plus anciens est à refaire à la main une dernière fois ; [`home-assistant-files.md`](docs/installation/home-assistant-files.md) dit que HACS est intégré sous le nom de Marketplace dans Home Assistant 2026.11, où ces étapes ne sont pas essayées. À la sortie de cette release, remplacer « la release qui suit la 3.9.1 » par son numéro.
@@ -50,6 +131,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Corrigé
 
+- **Pluie dans l'heure par Vigie, hors de France : plus de quart d'heure de décalage** : Vigie garde la réponse d'Open-Meteo 15 min sans la caler sur les quarts d'heure, et la tablette datait ses quatre pas de 15 min d'après l'heure de la réponse ; la pluie pouvait s'afficher un quart d'heure trop tard. Home Assistant lit maintenant l'heure de début que Vigie donne (`rain_nowcast.start_utc`, pour les pas de 15 min comme pour les pas de 5 min de Météo-France), garde l'ancienne règle pour une réponse qui ne l'a pas, et affiche « pas de données » plutôt que « temps sec » quand tous les pas d'une copie trop vieille sont passés ([ADR-0084](docs/decisions/0084-vigie-default-rain-source.md)).
+- **ESPHome 2026.11** : le firmware compile de nouveau avec ESPHome 2026.11.0 (Tab5 et Waveshare 7B), sans changer le plancher `min_version: 2026.9.0`. Le journal du lien avec le co-processeur Wi-Fi suit ESP-Hosted 3.x (événements reçus par la boucle d'ESP-IDF : la raison du redémarrage du C6 n'est plus notée quand il démarre avant le firmware) ; les événements envoyés à Home Assistant suivent le nouveau type de chaîne de l'API ; le changement de thème tient compte du cache de styles que LVGL 9.6 active ([ADR-0029](docs/decisions/0029-themes-palette.md)).
+- **Les cinq onglets du popup Énergie tiennent sur la 7B** : avec la page « Charges », la bande d'onglets coupait « Aujourd'hui » et « Production » (« Aujourd'… », « Producti… ») sur la Waveshare 7B. À partir de cinq onglets sur une carte plus étroite que le Tab5, la bande commence juste après le titre : 133 px par onglet au lieu de 116, les noms entiers dans les sept langues. Le Tab5, les popups à quatre onglets ou moins et les autres popups gardent leur mise en page, [ADR-0077](docs/decisions/0077-charges-page.md).
+- **Documentation : la notice « Énergie » décrit enfin les voitures électriques.** Elle disait « jusqu'à quatre pages » et ne parlait ni de la page Charges, ni des voitures du Flux, ni de la consommation empilée d'Aujourd'hui, ni du bouton Voitures du Bilan, ni de la fenêtre Voitures (Aperçu, Charge, Trajets, État) : tout est maintenant dans `docs/notice/energy.md` (anglais et français, cinq pages), avec une ligne « Voitures » dans le tableau de `docs/notice/README.md`. La page « Adapter à votre maison » gagne une section « Voitures électriques (facultatif) » : la section « Énergie : voitures » du blueprint, le package `tab5_voitures.yaml` (il n'appelle jamais la voiture), les capteurs désactivés par défaut chez Tesla (pneus, compteur kilométrique) et l'ordre de mise à jour. Décrit d'après les ADR 0074 à 0083 et le blueprint ; les captures d'écran ne sont pas encore ajoutées, et les écrans n'ont été vérifiés qu'avec les données de démonstration.
 - **La page « Charges » ne reste plus vide quand il y a beaucoup de capteurs** ([ADR-0074](docs/decisions/0074-car-charges-analysis.md), [ADR-0077](docs/decisions/0077-charges-page.md)) : `script.tab5_voitures_analyse` répondait HTTP 500 (« Template output exceeded maximum size of 262144 characters ») dès que les statistiques de 5 minutes des capteurs choisis (voitures, panneaux solaires, maison) dépassaient la limite de sortie d'un gabarit de Home Assistant, ce que trois capteurs sur les dix jours que HA garde suffisaient à faire. Les créneaux ne sont plus rendus d'un gabarit à l'autre : un seul gabarit lit la réponse du recorder et ne rend que les six dernières charges de chaque voiture et quelques sommes, si bien que la taille de la sortie ne dépend plus ni du nombre de capteurs ni de l'historique. Mêmes opérations dans le même ordre, mêmes chiffres : `tests/test_voitures.py` compare quatre foyers denses (17 400 lignes) à la référence sous une garde de 262 144 caractères par gabarit. Aucun changement de contrat ni de firmware.
 - **Pots, températures, clim et tuiles absents après le redémarrage d'un écran** : la poussée de connexion
   partait parfois vers une autre carte, hors ligne (« Not connected to tab5-ha-hmi »), et tout ce
