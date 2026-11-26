@@ -1,3 +1,0 @@
-### Ajouté
-
-- **Vigilances par Vigie** : nouvelle source « Vigie » dans la liste « Tab5 · weather warnings source » (et dans le blueprint). Avec l'intégration Home Assistant de [Vigie](https://vigie.auxfilsdesidees.fr) installée, son capteur « niveau maximal » est trouvé seul (le lieu de l'entité météo choisie, sinon le premier), sans capteur au format de Météo-France : son état donne le niveau global, son attribut `by_phenomenon` les cases de l'écran (vent, inondation, orages, pluie-inondation, neige-verglas, grand froid, vagues-submersion, canicule, avalanches, brouillard, feux de forêt). Il faut le `custom_templates/tab5_vigilance.jinja` de cette version ([fournisseurs météo](docs/installation/weather.md)).

@@ -1,3 +1,0 @@
-### Ajouté
-
-- **Pluie dans l'heure au point GPS, par Vigie** : nouvelle source « Vigie » dans la liste « Tab5 · next-hour rain source » (et dans le blueprint). Home Assistant lit toutes les 5 min, aux coordonnées du domicile, la prévision immédiate PIAF de Météo-France servie par [Vigie](https://vigie.auxfilsdesidees.fr) : 12 pas de 5 min sur une grille d'environ 1 km, sans clé ni intégration. Les 9 barres de l'écran sont celles de l'ancienne API Météo-France (5 min la première demi-heure, 10 min la seconde). France métropolitaine seulement ; ailleurs, « pas de données » ([fournisseurs météo](docs/installation/weather.md)).
