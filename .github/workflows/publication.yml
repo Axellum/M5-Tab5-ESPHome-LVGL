@@ -49,7 +49,7 @@ env:
   # après un essai sur la tablette ; jamais sous `min_version` (test_publication.py).
   ESPHOME_PUBLICATION: "2026.9.0"
   # Les autres cartes (ADR-0061) : la 7B exige 2026.9.1 (static_assert de
-  # Tab5/ecran/carte_7b_version.h), la version qui tourne sur la carte de l'auteur. Le
+  # Tab5/ecran/carte_7b_version.h), la version qui a tourné sur la carte de l'auteur. Le
   # Tab5 garde ESPHOME_PUBLICATION : ses binaires ne changent pas.
   ESPHOME_PUBLICATION_CARTES: "2026.9.1"
   # Variantes publiées (tools/publication/preparer.py, VARIANTES) : les révisions d'écran

@@ -7,7 +7,7 @@
 #       Prise en charge depuis la 3.9.0 : compilée par la CI (job build-carte-7b) et
 #       publiée avec les releases ; écran, tactile et rétroéclairage essayés sur une
 #       vraie carte le 14/10/2026 (essais/waveshare-p4-7b.yaml), l'écran de l'auteur
-#       depuis ; l'accueil et les popups suivent sa taille, les jeux non (ADR-0065).
+#       jusqu'au 07/11/2026 ; l'accueil et les popups suivent sa taille, les jeux non (ADR-0065).
 # @architecture_constraint Remplace carte-tab5.yaml, donc tab5-hardware.yaml et
 #       ecran-<révision>.yaml, qu'elle ne charge pas. Principe : les autres packages
 #       nomment le matériel par ses id ; cette carte fournit LES MÊMES id.
