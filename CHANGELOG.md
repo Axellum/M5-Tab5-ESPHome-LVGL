@@ -16,7 +16,8 @@ nouvelle page « Charges », consommation du jour sur « Aujourd'hui », bilan d
 nouveau popup « Voitures » à quatre pages (Aperçu, Charge, Trajets, État) ; la pluie dans l'heure et
 les vigilances par Vigie, avec un repli sur Open-Meteo pour la pluie ; la vidéo de la caméra montrée en
 grand ; le tableau de bord mis à jour en un clic par l'intégration ; la page « Playlists » en
-pochettes ; la compilation avec ESPHome 2026.11.
+pochettes ; la compilation avec ESPHome 2026.11. **La partie voitures (Tesla) n'est pas testée** avec une
+vraie voiture : l'auteur attend les retours des utilisateurs pour la compléter ou la modifier au besoin.
 
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.1).
 
@@ -67,9 +68,10 @@ Les binaires publiés sont compilés avec ESPHome 2026.9.0 (Tab5) et 2026.9.1 (7
 tablette : non remesurés pour cette version.
 
 **Problèmes connus** :
-- Les voitures n'ont jamais été essayées avec une vraie voiture : la maison de l'auteur n'en a pas.
-  Toutes leurs pages sont vérifiées avec les données de la démo (`demo_pusher.py --voitures`, « Tesla
-  2023 » et « Tesla 2025 »), les tests, le fuzzer et le rendu hors tablette.
+- **La partie voitures (Tesla) n'est pas testée** : la maison de l'auteur n'a pas de voiture
+  électrique. Toutes ses pages sont vérifiées avec les données de la démo (`demo_pusher.py
+  --voitures`, « Tesla 2023 » et « Tesla 2025 »), les tests, le fuzzer et le rendu hors tablette.
+  L'auteur attend les retours des utilisateurs pour la compléter ou la modifier au besoin.
 - La build publiée n'a pas été installée sur une tablette avant la publication. Le Tab5 ST7121 de
   l'auteur tourne depuis le 12/11 la `main` du 11/11 (la rc.1, plus les onglets de la 7B et les
   playlists ; démarrage du 12/11 à 7 h 26 relu dans Home Assistant le 26/11) ; depuis, seule #635 (compatibilité avec ESPHome 2026.11 : lien C6, journal, cache des
