@@ -29,7 +29,7 @@
 
 *▶ [Watch the 2-minute presentation on YouTube](https://youtu.be/75hMN49qWFM) — English texts on screen, subtitles in seven languages.*
 
-**[▶ Video (2 min)](https://youtu.be/75hMN49qWFM)** · **[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
+**[▶ Video (2 min)](https://youtu.be/75hMN49qWFM)** · **[Try it in your browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/demo/)** · **[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
 > *A personal project exploring what's possible when AI writes all the code. Built with Antigravity, DeepSeek, MiniMax, Z.ai, Claude, and Cursor — not a single line typed by hand. I am more the architect than the author.*
 
@@ -262,7 +262,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 *▶ [Voir la présentation de 2 minutes sur YouTube](https://youtu.be/75hMN49qWFM) — textes à l'écran en anglais, sous-titres en sept langues dont le français.*
 
-**[▶ Vidéo (2 min)](https://youtu.be/75hMN49qWFM)** · **[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
+**[▶ Vidéo (2 min)](https://youtu.be/75hMN49qWFM)** · **[L'essayer dans le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/demo/)** · **[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
 > *Un projet personnel pour voir ce que donne l'IA quand elle écrit tout le code. Construit avec Antigravity, DeepSeek, MiniMax, Z.ai, Claude et Cursor — pas une ligne tapée à la main. J'en suis plus l'architecte que l'auteur.*
 

@@ -99,6 +99,9 @@
     - en: Install from the browser
       fr: Installer depuis le navigateur
       lien: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/
+    - en: Try it in your browser
+      fr: L'essayer dans le navigateur
+      lien: https://axellum.github.io/M5-Tab5-ESPHome-LVGL/demo/
     - en: Installation guide
       fr: Guide d'installation
       page: docs/installation/README.md
