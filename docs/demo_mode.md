@@ -8,6 +8,8 @@
 
 The full install (see [`installation.md`](installation/README.md)) assumes you already run Home Assistant with a weather integration, Google Calendar, a climate entity, BLE plant sensors... That's a lot to set up just to see whether the dashboard is worth the effort.
 
+To see the screen with no tablet at all, the [web demo](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/demo/) runs its interface in the browser, with a simulated Home Assistant.
+
 The firmware is **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.md)): it never asks Home Assistant for anything, it only reacts to ESPHome native API calls. That means anything that can speak the ESPHome API protocol can drive the screen — including a small script that isn't Home Assistant at all.
 
 `tools/demo/demo_pusher.py` does exactly that: it connects to your flashed Tab5 with [`aioesphomeapi`](https://github.com/esphome/aioesphomeapi) (the same library Home Assistant's own ESPHome integration uses) and pushes rotating synthetic scenes — weather, forecast, climate, planning, plant moisture, weather alerts. No Home Assistant install, no entity mapping, no account created anywhere. Stop the script with `Ctrl+C` and there is nothing left to clean up except the flashed device itself.
@@ -92,6 +94,8 @@ Source of the exact payload contract: `Tab5/paquets/tab5-api-logic.yaml` and `Ta
 ## Pourquoi ce mode existe
 
 L'installation complète (voir [`installation.md`](installation/README.md)) suppose que vous avez déjà Home Assistant avec une intégration météo, Google Calendar, une entité climatisation, des capteurs BLE plantes... Beaucoup de travail juste pour voir si le tableau de bord vaut le coup.
+
+Pour voir l'écran sans tablette du tout, la [démo web](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/demo/) fait tourner son interface dans le navigateur, avec un Home Assistant simulé.
 
 Le firmware est **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.md)) : il ne demande jamais rien à Home Assistant, il réagit seulement aux appels de l'API native ESPHome. N'importe quel client qui parle ce protocole peut donc piloter l'écran — y compris un petit script qui n'est pas du tout Home Assistant.
 
