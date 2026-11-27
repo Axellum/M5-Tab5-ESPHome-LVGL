@@ -448,7 +448,8 @@ def test_site_deploye_sans_compiler():
     assert job["environment"]["name"] == "github-pages"
     publication = yaml.safe_load((REPO / ".github" / "workflows" / "publication.yml").read_text(encoding="utf-8"))
     appel = publication["jobs"]["pages"]
-    assert appel["uses"] == "./.github/workflows/site.yml" and appel["needs"] == "release"
+    # Le site attend aussi la démo web (ADR-0086), sans en dépendre : tests/test_demo_web.py.
+    assert appel["uses"] == "./.github/workflows/site.yml" and "release" in appel["needs"]
     assert appel["permissions"] == job["permissions"]
 
 
