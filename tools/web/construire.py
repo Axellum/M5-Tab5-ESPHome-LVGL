@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""tools/web/construire.py — Démo web (essai, étape 0) : compile la tablette virtuelle
-(tab5-rendu-host.yaml) en WebAssembly avec emscripten.
+"""tools/web/construire.py — Démo web (essai) : compile la tablette virtuelle
+(tab5-rendu-host.yaml) en WebAssembly avec emscripten, puis écrit demo.json (la maison
+de la démo, exporter_demo.py) pour le Home Assistant simulé de la page.
 
 1. Les sources C++ sont celles qu'ESPHome génère pour la plateforme host :
        python -m esphome -s rendu_nom tab5-web compile --only-generate tab5-rendu-host.yaml
@@ -50,7 +51,9 @@ SODIUM_PORT = ["version.c", "ed25519_ref10_hinit.c", "x25519_m15.c"]
 
 # Fonctions de web_main.cpp appelées par la page.
 EXPORTS = ["_main", "_web_image", "_web_largeur", "_web_hauteur", "_web_version", "_web_toucher",
-           "_web_duree_max_ms", "_malloc", "_free"]
+           "_web_duree_max_ms", "_web_actions", "_web_action", "_malloc", "_free"]
+# Envoi d'un événement ou d'une action à HA (web_main.cpp le passe à la page).
+ENVOI_HA = "_ZN7esphome3api9APIServer25send_homeassistant_actionERKNS0_26HomeassistantActionRequestE"
 
 
 def drapeaux_platformio(build: Path) -> list[str]:
@@ -196,8 +199,8 @@ def main() -> int:
     liens = opt + [
         "-sALLOW_MEMORY_GROWTH=1", "-sINITIAL_MEMORY=134217728", "-sSTACK_SIZE=4194304",
         "-sENVIRONMENT=web", f"-sEXPORTED_FUNCTIONS={','.join(EXPORTS)}",
-        "-sEXPORTED_RUNTIME_METHODS=HEAPU8,ccall,cwrap",
-        "-Wl,--wrap=socket", "-Wl,--wrap=nanosleep",
+        "-sEXPORTED_RUNTIME_METHODS=HEAPU8,ccall,cwrap,UTF8ToString",
+        "-Wl,--wrap=socket", "-Wl,--wrap=nanosleep", f"-Wl,--wrap={ENVOI_HA}",
     ]
     if args.debug:
         liens += ["-sASSERTIONS=1"]
@@ -212,7 +215,9 @@ def main() -> int:
     shutil.copy2(Path(__file__).with_name("index.html"), args.sortie / "index.html")
     taille = (args.sortie / "tab5.wasm").stat().st_size
     print(f"lien : {time.monotonic() - debut:.0f} s ; tab5.wasm = {taille / 1e6:.1f} Mo")
-    return 0
+    # La maison de la démo, que le Home Assistant simulé de la page pousse (étape 1).
+    return subprocess.run([sys.executable, str(Path(__file__).with_name("exporter_demo.py")),
+                           "--sortie", str(args.sortie / "demo.json")]).returncode
 
 
 if __name__ == "__main__":

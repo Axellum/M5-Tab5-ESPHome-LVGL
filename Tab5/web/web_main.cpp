@@ -7,8 +7,12 @@
  *       d'ESPHome : le script l'ajoute au build, à côté des sources générées.
  *       - main() : celui du host d'ESPHome (components/host/core.cpp, compilé sous un
  *         autre nom) tourne `while (1) loop();`, ce qu'un navigateur ne permet pas.
- *         Ici, setup() puis un loop() par image du navigateur
- *         (emscripten_set_main_loop, requestAnimationFrame).
+ *         Ici, setup() puis un loop() toutes les 16 ms (emscripten_set_main_loop sur
+ *         une minuterie, EM_TIMING_SETTIMEOUT). Pas sur requestAnimationFrame : quand
+ *         la page n'est pas peinte (volet masqué, onglet caché), il tombe à 1 image/s,
+ *         la boucle aussi, et chaque appui dure plus d'une seconde pour LVGL, donc
+ *         devient un appui long (vu le 27/11/2026 : roue d'actions au lieu de basculer).
+ *         La page peint de son côté (requestAnimationFrame).
  *       - Image : le flush de LVGL est enveloppé ; chaque zone dessinée est copiée,
  *         en coordonnées LOGIQUES (paysage 1280×720 sur le Tab5, avant la rotation
  *         logicielle d'ESPHome), dans un tampon RGBA que la page affiche tel quel.
@@ -32,11 +36,25 @@
 #include <ctime>
 
 #include "esphome.h"
+#include "esphome/components/api/api_server.h"
+#include "esphome/components/api/user_services.h"
 #include "lvgl_private.h"
 #include "rendu_doigt.h"
 
+#include <array>
+#include <span>
+#include <string>
+#include <vector>
+
 void setup();
 void loop();
+
+// Événement de la tablette vers la page (le faux Home Assistant) : JSON
+// {"service": …, "event": true|false, "data": {clé: valeur}}. La page le traite après
+// le tour de boucle (setTimeout), jamais pendant : pas de réentrance dans le firmware.
+EM_JS(void, web_vers_page, (const char* json), {
+    if (Module.surEvenement) Module.surEvenement(UTF8ToString(json));
+});
 
 namespace {
 
@@ -100,6 +118,27 @@ void web_doigt_lire(lv_indev_t* indev, lv_indev_data_t* data) {
     }
 }
 
+void json_texte(std::string& sortie, const char* s, size_t n) {
+    sortie += '"';
+    for (size_t i = 0; i < n; i++) {
+        const char c = s[i];
+        if (c == '"' || c == '\\') {
+            sortie += '\\';
+            sortie += c;
+        } else if (static_cast<unsigned char>(c) < 0x20) {
+            char u[8];
+            snprintf(u, sizeof u, "\\u%04x", c);
+            sortie += u;
+        } else {
+            sortie += c;
+        }
+    }
+    sortie += '"';
+}
+
+// Tampon de encode_list_service_response (seul l'ESP8266 s'en sert).
+std::array<char, 1024> g_brouillon{};
+
 void web_tour() {
     // Le flush d'ESPHome est posé au setup() du composant LVGL : on l'enveloppe une
     // fois qu'il existe.
@@ -143,6 +182,104 @@ int __wrap_nanosleep(const struct timespec*, struct timespec* reste) {
     return 0;
 }
 
+// Événements et actions que la tablette envoie à HA (homeassistant.event: des
+// packages) : APIServer::send_homeassistant_action, enveloppé au lien
+// (--wrap, construire.py) pour tous les appels faits hors de api_server.cpp. Sans
+// client, l'original ne ferait que journaliser « dropped ».
+void __wrap__ZN7esphome3api9APIServer25send_homeassistant_actionERKNS0_26HomeassistantActionRequestE(
+    esphome::api::APIServer*, const esphome::api::HomeassistantActionRequest& appel) {
+    std::string json = "{\"service\":";
+    json_texte(json, appel.service.c_str(), appel.service.size());
+    json += appel.is_event ? ",\"event\":true,\"data\":{" : ",\"event\":false,\"data\":{";
+    bool premier = true;
+    for (const auto* liste : {&appel.data, &appel.data_template}) {
+        for (const auto& kv : *liste) {
+            if (!premier) json += ',';
+            premier = false;
+            json_texte(json, kv.key.c_str(), kv.key.size());
+            json += ':';
+            json_texte(json, kv.value.c_str(), kv.value.size());
+        }
+    }
+    json += "}}";
+    web_vers_page(json.c_str());
+}
+
+// Actions de l'API (celles que Home Assistant appelle) : [{"n": nom, "a": [[variable,
+// type]…]}], type 0 bool, 1 entier, 2 nombre, 3 texte (enums::ServiceArgType).
+EMSCRIPTEN_KEEPALIVE const char* web_actions() {
+    static std::string json;
+    json = "[";
+    auto* api = esphome::api::global_api_server;
+    if (api != nullptr) {
+        bool premier = true;
+        for (auto* service : api->get_user_services()) {
+            auto r = service->encode_list_service_response(std::span<char>(g_brouillon));
+            if (!premier) json += ',';
+            premier = false;
+            json += "{\"n\":";
+            json_texte(json, r.name.c_str(), r.name.size());
+            json += ",\"a\":[";
+            for (size_t i = 0; i < r.args.size(); i++) {
+                if (i) json += ',';
+                json += '[';
+                json_texte(json, r.args[i].name.c_str(), r.args[i].name.size());
+                json += ',' + std::to_string(static_cast<int>(r.args[i].type)) + ']';
+            }
+            json += "]}";
+        }
+    }
+    json += ']';
+    return json.c_str();
+}
+
+// Appelle l'action `nom` comme Home Assistant : `valeurs` = les valeurs des variables
+// dans l'ordre déclaré (web_actions), séparées par \x1f, converties selon leur type.
+// 0 : exécutée ; -1 : nombre de valeurs faux ; -2 : refusée ; -3 : action inconnue.
+EMSCRIPTEN_KEEPALIVE int32_t web_action(const char* nom, const char* valeurs) {
+    auto* api = esphome::api::global_api_server;
+    if (api == nullptr) return -3;
+    for (auto* service : api->get_user_services()) {
+        auto r = service->encode_list_service_response(std::span<char>(g_brouillon));
+        if (!(r.name == nom)) continue;
+        std::vector<std::string> champs;
+        if (r.args.size() > 0) {
+            const char* debut = valeurs;
+            for (const char* p = valeurs;; p++) {
+                if (*p == '\x1f' || *p == '\0') {
+                    champs.emplace_back(debut, static_cast<size_t>(p - debut));
+                    if (*p == '\0') break;
+                    debut = p + 1;
+                }
+            }
+        }
+        if (champs.size() != r.args.size()) return -1;
+        esphome::api::ExecuteServiceRequest req;
+        req.key = r.key;
+        req.args.init(champs.size());
+        for (size_t i = 0; i < champs.size(); i++) {
+            auto& a = req.args.emplace_back();
+            const std::string& v = champs[i];
+            switch (r.args[i].type) {
+                case esphome::api::enums::SERVICE_ARG_TYPE_BOOL:
+                    a.bool_ = (v == "true" || v == "1" || v == "on");
+                    break;
+                case esphome::api::enums::SERVICE_ARG_TYPE_INT:
+                    a.int_ = static_cast<int32_t>(strtol(v.c_str(), nullptr, 10));
+                    break;
+                case esphome::api::enums::SERVICE_ARG_TYPE_FLOAT:
+                    a.float_ = strtof(v.c_str(), nullptr);
+                    break;
+                default:
+                    a.string_ = esphome::StringRef(v.c_str(), v.size());
+                    break;
+            }
+        }
+        return service->execute_service(req) ? 0 : -2;
+    }
+    return -3;
+}
+
 EMSCRIPTEN_KEEPALIVE uint8_t* web_image() { return g_rgba; }
 EMSCRIPTEN_KEEPALIVE int32_t web_largeur() { return g_largeur; }
 EMSCRIPTEN_KEEPALIVE int32_t web_hauteur() { return g_hauteur; }
@@ -177,5 +314,6 @@ int main() {
     esphome::host::setup_preferences();
     setup();
     emscripten_set_main_loop(web_tour, 0, false);
+    emscripten_set_main_loop_timing(EM_TIMING_SETTIMEOUT, 16);
     return 0;
 }
