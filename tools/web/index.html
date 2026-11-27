@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tab5 dans le navigateur</title>
+<!-- Démo web, essai (étape 0) : le firmware de la tablette virtuelle compilé en
+     WebAssembly (tools/web/construire.py). L'image vient du flush de LVGL, la souris ou
+     le doigt passent par le doigt virtuel des captures (Tab5/web/web_main.cpp). -->
+<style>
+  :root { --fond: #0f1115; --texte: #c9ced6; --cadre: #2a2f38; }
+  html, body { margin: 0; height: 100%; background: var(--fond); color: var(--texte);
+               font: 15px/1.4 system-ui, sans-serif; }
+  main { min-height: 100%; display: flex; flex-direction: column; align-items: center;
+         justify-content: center; gap: 12px; padding: 16px; box-sizing: border-box; }
+  .tablette { width: min(100%, 1280px); aspect-ratio: 1280 / 720; border: 14px solid #000;
+              border-radius: 22px; box-shadow: 0 0 0 1px var(--cadre); background: #000; }
+  canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: pointer;
+           image-rendering: auto; }
+  #etat { min-height: 1.4em; opacity: .8; }
+</style>
+</head>
+<body>
+<main>
+  <div class="tablette"><canvas id="ecran" width="1280" height="720"></canvas></div>
+  <div id="etat">Chargement du firmware…</div>
+</main>
+<script>
+const canvas = document.getElementById('ecran');
+const ctx = canvas.getContext('2d');
+const etat = document.getElementById('etat');
+let version = -1, image = null;
+
+var Module = {
+  print: (t) => console.log(t),
+  printErr: (t) => console.warn(t),
+  onRuntimeInitialized() {
+    etat.textContent = '';
+    requestAnimationFrame(peindre);
+  },
+};
+
+function peindre() {
+  const v = Module._web_version();
+  if (v !== version) {
+    version = v;
+    const l = Module._web_largeur(), h = Module._web_hauteur(), p = Module._web_image();
+    if (p && l && h) {
+      if (canvas.width !== l || canvas.height !== h) {
+        canvas.width = l; canvas.height = h;
+        canvas.parentElement.style.aspectRatio = `${l} / ${h}`;
+      }
+      if (!image || image.width !== l || image.height !== h) image = new ImageData(l, h);
+      image.data.set(Module.HEAPU8.subarray(p, p + l * h * 4));
+      ctx.putImageData(image, 0, 0);
+    }
+  }
+  requestAnimationFrame(peindre);
+}
+
+// Coordonnées logiques de l'écran (celles de LVGL), quelle que soit la taille affichée.
+function point(e) {
+  const r = canvas.getBoundingClientRect();
+  return [Math.round((e.clientX - r.left) * canvas.width / r.width),
+          Math.round((e.clientY - r.top) * canvas.height / r.height)];
+}
+let appuye = false;
+canvas.addEventListener('pointerdown', (e) => {
+  appuye = true; canvas.setPointerCapture(e.pointerId);
+  const [x, y] = point(e); Module._web_toucher(x, y, 1);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!appuye) return;
+  const [x, y] = point(e); Module._web_toucher(x, y, 1);
+});
+const lever = (e) => {
+  if (!appuye) return;
+  appuye = false;
+  const [x, y] = point(e); Module._web_toucher(x, y, 0);
+};
+canvas.addEventListener('pointerup', lever);
+canvas.addEventListener('pointercancel', lever);
+</script>
+<script src="tab5.js"></script>
+</body>
+</html>
