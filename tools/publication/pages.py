@@ -8,6 +8,9 @@ remplace donc jamais la version stable.
 
     <site>/index.html                 renvoi vers en/ ou fr/ (dossier web/)
     <site>/install/index.html         la page de flashage
+    <site>/demo/                      la démo web (web/demo/index.html, ADR-0086) et, de
+                                      tab5-demo-web.zip de la release stable, tab5.js,
+                                      tab5.wasm et demo.json ; sans archive, pas de demo/
     <site>/en/, <site>/fr/, 404.html  la documentation (docs/, tools/site/construire.py, ADR-0030)
     <site>/images/                    image de partage, sous un nom parlant (IMAGES)
     <site>/sitemap.xml                pages et images, pour les moteurs de recherche
@@ -41,6 +44,7 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 from urllib.parse import urljoin
 from xml.sax.saxutils import escape
@@ -51,6 +55,9 @@ TAG =re.compile(r"^v(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.]+))?$")
 MAJEURE_MINI = 3  # premières releases avec des binaires (lot 6c)
 SITE = "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/"
 RACINE = Path(__file__).resolve().parents[2]
+# Démo web (ADR-0086) : l'archive jointe à chaque release par demo-web.yml et son contenu.
+DEMO_ARCHIVE = "tab5-demo-web.zip"
+DEMO_FICHIERS = ("demo.json", "tab5.js", "tab5.wasm")
 # Écrit par tools/site/construire.py à côté de en/ et fr/ (SOURCES_DES_PAGES) : lu, pas publié.
 SOURCES_DES_PAGES = "sources.json"
 
@@ -209,6 +216,26 @@ def plan_du_site(site: Path, dates: dict[str, str] | None = None) -> str:
     return "\n".join(lignes) + "\n"
 
 
+def demo_web(assets: Path, stable: str | None, page: Path) -> str:
+    """La démo web (ADR-0086) dans `page` (demo/ du site, où web/ a mis index.html) : le
+    firmware de l'archive de la release stable. Sans archive, `page` est retirée : la page
+    sans son firmware montrerait un écran vide. Renvoie la ligne du résumé."""
+    if not page.is_dir():
+        return "démo web : pas de page (web/demo/)"
+    archive = assets / stable / DEMO_ARCHIVE if stable else None
+    if archive is None or not archive.is_file():
+        shutil.rmtree(page)
+        return f"démo web : absente ({stable or 'pas de stable'} sans {DEMO_ARCHIVE}), pas de demo/"
+    with zipfile.ZipFile(archive) as z:
+        noms = sorted(z.namelist())
+        if noms != sorted(DEMO_FICHIERS):
+            raise SystemExit(f"{stable}/{DEMO_ARCHIVE} : {noms} au lieu de {sorted(DEMO_FICHIERS)}")
+        for nom in DEMO_FICHIERS:
+            (page / nom).write_bytes(z.read(nom))
+    taille = (page / "tab5.wasm").stat().st_size
+    return f"démo web : celle de {stable} (tab5.wasm {taille / 1e6:.1f} Mo)"
+
+
 def assembler(web: Path, assets: Path, stable: str | None, beta: str | None, sortie: Path,
               images: Path | None = None, doc: Path | None = None) -> dict:
     """Écrit le site complet dans `sortie` ; renvoie le contenu de versions.json.
@@ -242,6 +269,7 @@ def assembler(web: Path, assets: Path, stable: str | None, beta: str | None, sor
                 shutil.copytree(doc / nom, sortie / nom)
             else:
                 shutil.copyfile(doc / nom, sortie / nom)
+    print(demo_web(assets, stable, sortie / "demo"))
     versions = {canal: _canal(assets, tag, sortie / canal) if tag else None
                 for canal, tag in (("stable", stable), ("beta", beta))}
     (sortie / "versions.json").write_text(json.dumps(versions, indent=2) + "\n", encoding="utf-8")

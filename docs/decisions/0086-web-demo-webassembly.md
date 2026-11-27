@@ -1,0 +1,23 @@
+# ADR-0086: A web demo: the firmware's interface in WebAssembly, next to a simulated Home Assistant
+
+**Status:** Accepted (2026-11-27, the author's choice: « Oui, essai WebAssembly », then « Oui, étape 1 » and « Oui, étape 2 »).
+**Date:** 2026-11-27
+
+## Context
+
+Someone who wonders whether the screen suits them could only look at screenshots and videos, or flash a tablet and push the demo house to it ([demo mode](../demo_mode.md)). The author saw online demos of other Home Assistant cards that run in the page with made-up data, and asked for the same for the Tab5, "linked to HA". Three ways were weighed: a demo made of screenshots (no interaction), a real Home Assistant left open on the author's server (cost, security, upkeep), and the firmware itself in the browser. The off-device render ([ADR-0021](0021-host-render-stubs.md), `tab5-rendu-host.yaml`) already builds the whole interface for ESPHome's `host` platform, with the hardware stubbed out.
+
+## Decision
+
+- **The firmware of the virtual tablet, compiled to WebAssembly by emscripten.** `tools/web/construire.py` compiles the sources ESPHome generates for `tab5-rendu-host.yaml` (`compile --only-generate`), LVGL, noise-c and libsodium (the libraries of the generated `platformio.ini`), plus `Tab5/web/web_main.cpp`: a 16 ms timer loop instead of `while (1) loop();` (not `requestAnimationFrame`, which drops to 1 Hz in a hidden page and turns every tap into a long press), LVGL's flush copied to an RGBA buffer the page paints, the render's virtual finger for mouse and touch. No firmware source changes; link-time wraps only: `socket` (no network), `nanosleep` (no blocking), `time` (the demo clock), `exit` (a restart reloads the page with the saved settings), and `APIServer::send_homeassistant_action` (the screen's `esphome.tab5_*` events go to the page).
+- **Home Assistant is simulated in JavaScript, both ways, with the demo house.** `tools/web/exporter_demo.py` plays the demo (`tools/demo/demo_pusher.py`) against a dry-run tablet and writes `demo.json`; the page calls the firmware's API actions like the blueprint does, keeps the state of each tile, and answers the screen's events (toggle, brightness, cover, scene, climate, the − / + tile, zones, energy, temperature history). No copy of the demo: a contract change reaches the page at the next export.
+- **A fixed demo time**, the moment of the CI render's screenshots (16 June 2026, 7:45 am, Paris time): the export and the tablet's clock start there, then the clock runs. Forecast hours, day names, energy dates and curves stay consistent without porting the Python generators to JavaScript, and `demo.json` does not depend on the day it is built.
+- **Built in CI for each release, never by the site.** `.github/workflows/demo-web.yml` (emscripten pinned, ESPHome at `min_version`) builds the demo, tries it in Chromium (`tools/web/essai_navigateur.py`: files loaded, actions read, no refused action, clock, a lamp toggled from the screen, a drawn screen) and attaches `tab5-demo-web.zip` (`tab5.js`, `tab5.wasm`, `demo.json`) to the release; `publication.yml` calls it, and it runs by hand for a tag. The site keeps building without compiling anything ([ADR-0022](0022-published-firmware-pages-channels.md)): `site.yml` downloads the stable release's archive and `pages.py` puts it under `demo/`, next to the page `web/demo/index.html`, which comes from the default branch like the install page. No archive, no `demo/`.
+
+## Consequences
+
+- One more public page, `/demo/`, in English and French; the screen starts in French, its own settings switch its language (the page keeps the settings across the restart, for the tab's lifetime).
+- About 1.3 MB of compressed WebAssembly to download; one more CI job per release (a few minutes, emscripten and PlatformIO cached). A failed demo does not block the release or the site: the site goes without `demo/`, the red cross stays on the `demo` job.
+- Not in the demo: voice, cameras, music, calendar and updates (they need a real Home Assistant or the hardware); the API icon stays grey (no real connection).
+- The page's JavaScript must call only functions the firmware exports: `tests/test_demo_web.py` checks the page, `construire.py` and `web_main.cpp` against each other, the demo time against the render's, and the site with and without the archive.
+- **Verified** on the author's PC (27/11/2026): built locally with emscripten 7.0.1, tried in the desktop app's browser (screen and panel both ways, the screen switched to English by its own settings and back on after its restart) and in headless Chromium (`essai_navigateur.py`). **Not verified** before the first CI run: the build on GitHub's runner; phones, Firefox and Safari.

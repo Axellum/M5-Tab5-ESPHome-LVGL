@@ -1,0 +1,146 @@
+name: Démo web (la tablette en WebAssembly)
+
+# ADR-0086. Compile la tablette virtuelle (tab5-rendu-host.yaml) en WebAssembly avec
+# emscripten (tools/web/construire.py), l'essaie dans Chromium (tools/web/essai_navigateur.py)
+# puis joint tab5-demo-web.zip (tab5.js, tab5.wasm, demo.json) à la release : site.yml le
+# pose sous demo/ du site, à côté de la page web/demo/index.html, pour la release stable.
+# Lancé :
+#   - par publication.yml, à la publication d'une release ;
+#   - à la main pour un tag (workflow_dispatch) : une release publiée avant la démo, ou
+#     une démo à refaire ; le site la prend à son déploiement suivant ;
+#   - sur une PR qui touche la démo : compilée et essayée, rien n'est joint (artefact).
+# Pour un tag, le firmware vient du tag et la couche web (Tab5/web, tools/web, web/demo)
+# du commit du workflow, comme les outils de publication.yml : un ancien tag ne l'a pas.
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag de la release à laquelle joindre la démo, par exemple v3.10.0
+        required: true
+  pull_request:
+    paths:
+      - 'Tab5/web/**'
+      - 'tools/web/**'
+      - 'web/demo/**'
+      - '.github/workflows/demo-web.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write  # gh release upload, pour un tag seulement
+    env:
+      TAG: ${{ inputs.tag }}
+      # emscripten FIGÉ : la version essayée sur le PC de l'auteur (27/11/2026). À relever
+      # volontairement, en essayant la page (tools/web/essai_navigateur.py).
+      EMSDK_VERSION: "7.0.1"
+    steps:
+      - name: Sources (le tag, ou la PR)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.tag || github.sha }}
+          path: src
+      - name: Couche web et outils du commit du workflow
+        if: ${{ inputs.tag }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: outils-workflow
+          sparse-checkout: |
+            Tab5/web
+            tools/web
+            tools/ci
+            web/demo
+      - name: Couche web du workflow sur les sources du tag
+        if: ${{ inputs.tag }}
+        run: |
+          for d in Tab5/web tools/web tools/ci web/demo; do
+            rm -rf "src/$d"
+            mkdir -p "src/$(dirname "$d")"
+            cp -r "outils-workflow/$d" "src/$d"
+          done
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.13"
+      - name: Version d'ESPHome (min_version de tab5-ha-hmi.yaml)
+        id: version
+        working-directory: src
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "ESPHome $v, emscripten $EMSDK_VERSION${TAG:+, $TAG}" >> "$GITHUB_STEP_SUMMARY"
+          echo "esphome=$v" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pip
+          key: pip-demo-web-${{ steps.version.outputs.esphome }}-py3.13
+      - name: ESPHome et Playwright
+        env:
+          ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
+        run: |
+          # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
+          bash src/tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" playwright==1.63.0
+          python -m playwright install --with-deps --only-shell chromium
+      # Plateforme `native` et bibliothèques (lvgl, noise-c, libsodium) de PlatformIO.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-demo-web-${{ steps.version.outputs.esphome }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: emsdk
+          key: emsdk-${{ env.EMSDK_VERSION }}
+      - name: emscripten
+        run: |
+          if [ ! -x emsdk/emsdk ]; then
+            git clone --depth 1 --branch "$EMSDK_VERSION" https://github.com/emscripten-core/emsdk.git emsdk
+          fi
+          emsdk/emsdk install "$EMSDK_VERSION"
+          emsdk/emsdk activate "$EMSDK_VERSION"
+      - name: Sources générées par ESPHome (plateforme host) et bibliothèques
+        working-directory: src
+        # Le fuseau de l'horloge `host` est celui de la génération (le runner est en UTC) :
+        # celui de la démo (exporter_demo.py, DEPART).
+        env:
+          TZ: Europe/Paris
+        run: |
+          python -m esphome -s rendu_nom tab5-web compile --only-generate tab5-rendu-host.yaml
+          ini=$(find .esphome/build -path '*tab5-web*' -name platformio.ini | head -n 1)
+          [ -n "$ini" ] || { echo "::error::platformio.ini du build tab5-web introuvable"; exit 1; }
+          build="$PWD/$(dirname "$ini")"
+          echo "BUILD=$build" >> "$GITHUB_ENV"
+          python -m platformio pkg install -d "$build"
+      - name: Compilation en WebAssembly
+        working-directory: src
+        run: |
+          source ../emsdk/emsdk_env.sh > /dev/null
+          python tools/web/construire.py --build "$BUILD" --sortie ../sortie --sans-page
+      - name: Essai dans Chromium
+        working-directory: src
+        run: python tools/web/essai_navigateur.py --dossier ../sortie --capture ../essai/demo-web.png
+      - name: Archive tab5-demo-web.zip
+        run: |
+          (cd sortie && zip -9 -X ../tab5-demo-web.zip tab5.js tab5.wasm demo.json)
+          echo "tab5-demo-web.zip : $(du -h tab5-demo-web.zip | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ always() }}
+        with:
+          name: demo-web
+          path: |
+            tab5-demo-web.zip
+            essai/demo-web.png
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Jointe à la release
+        if: ${{ inputs.tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" tab5-demo-web.zip --clobber --repo "$GITHUB_REPOSITORY"

@@ -1,0 +1,805 @@
+<!doctype html>
+<!--
+  Démo web du Tab5, publiée sur GitHub Pages sous demo/ (tools/publication/pages.py) : le
+  firmware de la tablette virtuelle (tab5-rendu-host.yaml) compilé en WebAssembly
+  (tools/web/construire.py, Tab5/web/web_main.cpp ; .github/workflows/demo-web.yml le joint à
+  chaque release, tab5-demo-web.zip) et, à côté, un Home Assistant simulé en JavaScript avec la
+  maison de la démo (tools/web/exporter_demo.py → demo.json). La page vient de la branche par
+  défaut, tab5.js, tab5.wasm et demo.json de la release stable (comme install/ et ses firmwares).
+  HA → écran : la page appelle les actions tab5_maj_* du firmware (Module._web_action), comme le
+  blueprint ; écran → HA : les événements esphome.tab5_* arrivent dans Module.surEvenement, la
+  page change l'état de l'appareil et le repousse, comme HA. L'image vient du flush de LVGL ;
+  souris et doigt passent par le doigt virtuel. Horloge : la page la règle sur l'instant de la
+  démo (demo.json, « horloge ») avant de lancer main().
+  Textes : une paire <span lang="fr"> / <span lang="en"> (comme install/), ou t(fr, en) dans le
+  script. Le français est relu par l'auteur avant toute publication.
+-->
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M5Stack Tab5 Home Assistant screen: live demo in the browser</title>
+<meta name="description" content="Try the M5Stack Tab5 Home Assistant screen (ESPHome, LVGL) in your browser: its interface, the firmware's own code, compiled to WebAssembly, next to a simulated Home Assistant with a demo house.">
+<link rel="canonical" href="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/demo/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="M5Stack Tab5 Home Assistant screen: live demo in the browser">
+<meta property="og:description" content="The screen's interface, the firmware's own code, compiled to WebAssembly, next to a simulated Home Assistant with a demo house.">
+<meta property="og:url" content="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/demo/">
+<meta property="og:image" content="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/images/m5stack-tab5-home-assistant-screen-card.jpg">
+<meta property="og:image:alt" content="M5Stack Tab5 showing a Home Assistant screen: clock, climate, work hours and 5-day forecast">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { --fond: #0f1115; --texte: #c9ced6; --doux: #8b93a1; --cadre: #2a2f38;
+          --carte: #171a21; --carte2: #1e222b; --accent: #4fa3ff; --allume: #f2b84b;
+          --vers-ecran: #4fa3ff; --vers-ha: #f2b84b; --bord-tablette: #000; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte);
+               font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  header, main, footer { max-width: 1800px; margin: 0 auto; padding: 0 16px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+           flex-wrap: wrap; padding-top: 16px; }
+  header .accueil { color: var(--doux); text-decoration: none; }
+  header h1 { font-size: 1.45rem; margin: 2px 0 4px; }
+  header p { margin: 0; color: var(--doux); max-width: 900px; }
+  button.langue { background: none; border: 1px solid var(--cadre); color: var(--texte); border-radius: 6px;
+                  padding: 4px 10px; cursor: pointer; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; padding-top: 14px;
+         padding-bottom: 16px; align-items: start; }
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr); } }
+  .gauche { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .tablette { width: 100%; aspect-ratio: 1280 / 720; border: 14px solid var(--bord-tablette);
+              border-radius: 22px; box-shadow: 0 0 0 1px var(--cadre); background: var(--bord-tablette); }
+  @media (max-width: 600px) { .tablette { border-width: 6px; border-radius: 10px; } }
+  canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: pointer; }
+  #etat { min-height: 1.4em; color: var(--doux); }
+  .panneau { background: var(--carte); border: 1px solid var(--cadre); border-radius: 14px;
+             padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  @media (min-width: 1101px) { .panneau { position: sticky; top: 16px; max-height: calc(100vh - 32px);
+                                          overflow: auto; } }
+  .panneau h2 { font-size: 16px; margin: 0; }
+  .panneau h2 small { display: block; font-weight: normal; color: var(--doux); font-size: 13px; }
+  h3 { font-size: 14px; margin: 4px 0 0; color: var(--doux); font-weight: 600; }
+  .piece { background: var(--carte2); border-radius: 10px; padding: 8px 10px; }
+  .piece h4 { margin: 0 0 4px; font-size: 14px; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center;
+         padding: 5px 0; border-top: 1px solid var(--cadre); }
+  .app:first-of-type { border-top: 0; }
+  .app .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app .val { color: var(--doux); font-size: 12px; grid-column: 1; }
+  .app .cmd { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 6px; align-items: center; }
+  .app .large { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
+  .app .large input[type=range] { flex: 1; }
+  .app.flash { animation: flash 0.8s; }
+  @keyframes flash { from { background: rgba(242, 184, 75, .25); } to { background: transparent; } }
+  button, select, input { font: inherit; color: var(--texte); }
+  .panneau button { background: var(--cadre); border: 0; border-radius: 7px; padding: 3px 9px; cursor: pointer; }
+  .panneau button:hover { background: #363c48; }
+  select, input[type=number] { background: var(--fond); border: 1px solid var(--cadre); border-radius: 7px;
+                               padding: 2px 6px; }
+  input[type=number] { width: 76px; }
+  input[type=color] { width: 30px; height: 24px; padding: 0; border: 0; background: none; }
+  input[type=range] { accent-color: var(--accent); }
+  .bascule { appearance: none; width: 38px; height: 22px; border-radius: 11px; background: var(--cadre);
+             position: relative; cursor: pointer; margin: 0; }
+  .bascule::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+                    border-radius: 50%; background: var(--doux); transition: left .1s; }
+  .bascule:checked { background: rgba(242, 184, 75, .35); }
+  .bascule:checked::after { left: 19px; background: var(--allume); }
+  .bascule:disabled { opacity: .4; cursor: default; }
+  #journal { list-style: none; margin: 0; padding: 0; font: 12px/1.35 ui-monospace, monospace;
+             max-height: 260px; overflow: auto; background: var(--fond); border-radius: 8px; }
+  #journal li { padding: 3px 8px; border-top: 1px solid var(--carte2); word-break: break-word; }
+  #journal .heure { color: var(--doux); }
+  .ecran { color: var(--vers-ha); }
+  .ha { color: var(--vers-ecran); }
+  .legende { color: var(--doux); font-size: 12px; margin: 0; }
+  .ligne { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  footer { color: var(--doux); padding-bottom: 32px; max-width: 1100px; margin-left: 0; }
+  footer p { margin: 6px 0; }
+  html[data-lang="fr"] [lang="en"], html[data-lang="en"] [lang="fr"] { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="accueil" lang="fr" href="../fr/">← M5Stack Tab5 · Home Assistant</a><a class="accueil" lang="en" href="../en/">← M5Stack Tab5 · Home Assistant</a>
+    <h1><span lang="fr">L'écran dans le navigateur</span><span lang="en">The screen in your browser</span></h1>
+    <p lang="fr">L'interface de la tablette, le code même de son firmware (le matériel en moins), compilée en WebAssembly, avec à côté un Home Assistant simulé et la maison de la démo (des données inventées). Partagé au cas où ça aide à se faire une idée de l'écran avant de l'installer.</p>
+    <p lang="en">The tablet's interface, its firmware's own code (minus the hardware), compiled to WebAssembly, next to a simulated Home Assistant with the demo house (made-up data). Shared in case it helps to get a feel for the screen before installing it.</p>
+  </div>
+  <button class="langue" id="langue" type="button"><span lang="fr">English</span><span lang="en">Français</span></button>
+</header>
+<main>
+  <div class="gauche">
+    <div class="tablette"><canvas id="ecran" width="1280" height="720" aria-label="Tab5"></canvas></div>
+    <div id="etat"><span lang="fr">Chargement du firmware…</span><span lang="en">Loading the firmware…</span></div>
+  </div>
+  <section class="panneau" aria-label="Home Assistant">
+    <h2><span lang="fr">Home Assistant</span><span lang="en">Home Assistant</span>
+      <small lang="fr">simulé dans la page, avec la maison de la démo</small>
+      <small lang="en">simulated in the page, with the demo house</small></h2>
+    <label class="ligne"><span lang="fr">Météo</span><span lang="en">Weather</span> <select id="scene"></select></label>
+    <p class="legende" lang="fr">Touchez un appareil sur l'écran : il change ici. Changez-le ici : l'écran suit.
+      Le bouton à la maison, en haut de l'écran, montre les pièces ; glissez pour changer de pièce.</p>
+    <p class="legende" lang="en">Tap a device on the screen: it changes here. Change it here: the screen follows.
+      The house button at the top of the screen shows the rooms; swipe to change room.</p>
+    <div id="maison"></div>
+    <h3><span lang="fr">Échanges</span><span lang="en">Messages</span></h3>
+    <p class="legende"><span class="ecran">●</span> <span lang="fr">écran → HA (événement)</span><span lang="en">screen → HA (event)</span>
+      &nbsp; <span class="ha">●</span> <span lang="fr">HA → écran (action)</span><span lang="en">HA → screen (action)</span></p>
+    <ol id="journal" aria-live="polite"></ol>
+  </section>
+</main>
+<footer>
+  <p lang="fr">Ce que la démo ne fait pas : la voix, les caméras, la musique, l'agenda et les mises à jour, qui demandent un vrai Home Assistant ou la tablette. L'écran démarre en français ; la roue dentée, page Apparence, le passe dans une autre langue (la tablette redémarre). La maison de la démo, en français, vit le mardi 16 juin 2026 à partir de 7 h 45 (heure de Paris).</p>
+  <p lang="en">What the demo does not do: voice, cameras, music, calendar and updates, which need a real Home Assistant or the tablet. The screen starts in French; the gear icon, Appearance page, switches it to another language (the tablet restarts). The demo house, in French, lives on Tuesday 16 June 2026 from 7:45 am (Paris time).</p>
+  <p lang="fr"><span id="version-fr"></span><a href="../install/">Installer sur une tablette</a> · <a href="../fr/">Documentation</a> · <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">Code sur GitHub</a> (licence MIT). Fait avec l'aide d'une IA.</p>
+  <p lang="en"><span id="version-en"></span><a href="../install/">Install on a tablet</a> · <a href="../en/">Documentation</a> · <a href="https://github.com/Axellum/M5-Tab5-ESPHome-LVGL">Code on GitHub</a> (MIT licence). Made with the help of an AI.</p>
+</footer>
+<script>
+'use strict';
+const racine = document.documentElement;
+const fr = () => racine.dataset.lang === 'fr';
+const t = (texteFr, texteEn) => (fr() ? texteFr : texteEn);
+function langue(code) {
+  racine.dataset.lang = code;
+  racine.lang = code;
+  if (demo) { remplirScenes(); dessiner(); }
+}
+
+const canvas = document.getElementById('ecran');
+const ctx = canvas.getContext('2d');
+const etatPage = document.getElementById('etat');
+let version = -1, image = null;
+
+// La maison de la démo est lue AVANT de lancer le firmware : son horloge en dépend.
+const demoPret = fetch('demo.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
+// Réglages de la tablette (langue, thème…) : ESPHome host les écrit dans un fichier, que la
+// page garde le temps d'un redémarrage (sessionStorage : jusqu'à la fermeture de l'onglet).
+const DOSSIER_REGLAGES = '/home/web_user/.esphome/prefs';
+const CLE_REGLAGES = 'tab5-demo-reglages';
+function restaurerReglages() {
+  try {
+    const fichiers = JSON.parse(sessionStorage.getItem(CLE_REGLAGES) || 'null');
+    if (!fichiers) return;
+    Module.FS.mkdirTree(DOSSIER_REGLAGES);
+    for (const [nom, b64] of Object.entries(fichiers)) {
+      Module.FS.writeFile(`${DOSSIER_REGLAGES}/${nom}`, Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
+    }
+  } catch (e) { console.warn('réglages non restaurés', e); }
+}
+function garderReglages() {
+  try {
+    const fichiers = {};
+    for (const nom of Module.FS.readdir(DOSSIER_REGLAGES)) {
+      if (nom === '.' || nom === '..') continue;
+      let binaire = '';
+      for (const octet of Module.FS.readFile(`${DOSSIER_REGLAGES}/${nom}`)) binaire += String.fromCharCode(octet);
+      fichiers[nom] = btoa(binaire);
+    }
+    sessionStorage.setItem(CLE_REGLAGES, JSON.stringify(fichiers));
+  } catch (e) { console.warn('réglages non gardés', e); }
+}
+
+var Module = {
+  print: (texte) => console.log(texte),
+  printErr: (texte) => console.warn(texte),
+  // main() n'est pas lancé par tab5.js (INVOKE_RUN=0, construire.py) : ici, après l'horloge.
+  async onRuntimeInitialized() {
+    demo = await demoPret;
+    if (demo && demo.horloge) Module._web_horloge(Date.parse(demo.horloge) / 1000);
+    restaurerReglages();
+    Module.callMain([]);
+    etatPage.replaceChildren();
+    requestAnimationFrame(peindre);
+    if (demo) demarrerHa();
+    else etatPage.textContent = t('demo.json introuvable : écran sans Home Assistant.',
+                                  'demo.json not found: screen without Home Assistant.');
+  },
+  // Appelé par le firmware (web_main.cpp) PENDANT son tour de boucle : traité après.
+  surEvenement(json) { setTimeout(() => recevoir(JSON.parse(json)), 0); },
+  // La tablette redémarre (langue changée, bouton Redémarrer) : sa boucle est arrêtée.
+  surRedemarrage() {
+    garderReglages();
+    etatPage.textContent = t('La tablette redémarre…', 'The tablet is restarting…');
+    setTimeout(() => location.reload(), 400);
+  },
+};
+
+function peindre() {
+  const v = Module._web_version();
+  if (v !== version) {
+    version = v;
+    const l = Module._web_largeur(), h = Module._web_hauteur(), p = Module._web_image();
+    if (p && l && h) {
+      if (canvas.width !== l || canvas.height !== h) {
+        canvas.width = l; canvas.height = h;
+        canvas.parentElement.style.aspectRatio = `${l} / ${h}`;
+      }
+      if (!image || image.width !== l || image.height !== h) image = new ImageData(l, h);
+      image.data.set(Module.HEAPU8.subarray(p, p + l * h * 4));
+      ctx.putImageData(image, 0, 0);
+    }
+  }
+  requestAnimationFrame(peindre);
+}
+
+// Coordonnées logiques de l'écran (celles de LVGL), quelle que soit la taille affichée.
+function point(e) {
+  const r = canvas.getBoundingClientRect();
+  return [Math.round((e.clientX - r.left) * canvas.width / r.width),
+          Math.round((e.clientY - r.top) * canvas.height / r.height)];
+}
+let appuye = false;
+canvas.addEventListener('pointerdown', (e) => {
+  if (!Module._web_toucher) return;
+  appuye = true; canvas.setPointerCapture(e.pointerId);
+  const [x, y] = point(e); Module._web_toucher(x, y, 1);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!appuye) return;
+  const [x, y] = point(e); Module._web_toucher(x, y, 1);
+});
+const lever = (e) => {
+  if (!appuye) return;
+  appuye = false;
+  const [x, y] = point(e); Module._web_toucher(x, y, 0);
+};
+canvas.addEventListener('pointerup', lever);
+canvas.addEventListener('pointercancel', lever);
+
+// ---------------------------------------------------------------------------
+// Home Assistant simulé
+// ---------------------------------------------------------------------------
+let demo = null;            // demo.json
+const actions = {};         // nom -> [variables], lu dans le firmware (web_actions)
+const tuiles = {};          // tRT -> {type, nom, options, complement, etat, valeur, couleur, piece}
+const reglables = {};       // rN -> {type, nom, lien, bornes, etat, valeur}
+const climats = {};         // R -> {temperature, humidite, reglages, champs: [6]}
+let clim = null;            // clim du blueprint : {target, current, mode, preset, fan, swing}
+let sceneCourante = 0;
+const memoLum = {};         // dernière luminosité d'une lampe éteinte
+const mouvements = {};      // tRT -> minuterie d'un volet
+
+const nombre = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : NaN; };
+const echapper = (texte) => String(texte).replace(/\|/g, '/').replace(/;/g, ',');
+// Heure de la tablette (celle de la démo), en heure de Paris comme son écran.
+const maintenantTablette = () => new Date((Module._web_maintenant ? Module._web_maintenant() : Date.now() / 1000) * 1000);
+const PARIS = { timeZone: 'Europe/Paris' };
+
+function journal(sens, texte) {
+  const li = document.createElement('li');
+  const h = document.createElement('span');
+  h.className = 'heure';
+  h.textContent = maintenantTablette().toLocaleTimeString('fr-FR', PARIS) + ' ';
+  const f = document.createElement('span');
+  f.className = sens;
+  f.textContent = sens === 'ecran' ? t('écran → HA ', 'screen → HA ') : t('HA → écran ', 'HA → screen ');
+  li.append(h, f, document.createTextNode(texte));
+  const ol = document.getElementById('journal');
+  ol.prepend(li);
+  while (ol.children.length > 80) ol.lastChild.remove();
+}
+
+// File des actions vers le firmware : une par tour, jamais pendant sa boucle.
+const file = [];
+let fileActive = false;
+function appeler(nom, donnees, discret) {
+  file.push([nom, donnees, discret]);
+  if (!fileActive) { fileActive = true; setTimeout(viderFile, 0); }
+}
+function viderFile() {
+  const suivant = file.shift();
+  if (!suivant) { fileActive = false; return; }
+  const [nom, donnees, discret] = suivant;
+  const variables = actions[nom];
+  if (!variables) {
+    journal('ha', `${nom} : ${t('action absente du firmware', 'action missing from the firmware')}`);
+  } else {
+    const valeurs = variables.map((v) => String(donnees[v] ?? ''));
+    const r = Module.ccall('web_action', 'number', ['string', 'string'], [nom, valeurs.join('\x1f')]);
+    if (r !== 0) journal('ha', `${nom} : ${t('refusée', 'refused')} (${r})`);
+    else if (!discret) journal('ha', `${nom} ${resume(donnees)}`);
+  }
+  setTimeout(viderFile, 15);
+}
+function resume(donnees) {
+  const texte = Object.values(donnees).join(' ');
+  return texte.length > 90 ? texte.slice(0, 88) + '…' : texte;
+}
+
+// ---- Modèle de la maison --------------------------------------------------
+
+function initialiserMaison() {
+  for (const [r, piece] of Object.entries(demo.maison.pieces)) {
+    for (const [cle, tuile] of Object.entries(piece.tuiles)) tuiles[cle] = { ...tuile, piece: piece.nom, r: +r };
+    if (piece.climat) {
+      const c = piece.climat;
+      climats[r] = { temperature: c.temperature, humidite: c.humidite, reglages: c.reglages,
+                     champs: c.etat ? c.etat.split('|') : null };
+    }
+  }
+  for (const [cle, r] of Object.entries(demo.maison.reglables)) reglables[cle] = { ...r };
+}
+
+const ligneTuile = (cle) => {
+  const tuile = tuiles[cle];
+  return `${cle}|${echapper(tuile.etat)}|${tuile.valeur}|${tuile.couleur};`;
+};
+const ligneReglable = (cle) => `${cle}|${echapper(reglables[cle].etat)}|${reglables[cle].valeur};`;
+function lignesClimat(r) {
+  const c = climats[r];
+  let s = `p${r}|${c.temperature}|${c.humidite}|${c.champs ? 1 : 0};`;
+  if (c.champs) s += `cep${r}|${c.champs.join('|')};`;
+  return s;
+}
+
+// Un appareil de la tuile − / + qui porte la même entité qu'une tuile la suit.
+function suivreLien(cleTuile) {
+  const changes = [];
+  const tuile = tuiles[cleTuile];
+  for (const [cle, r] of Object.entries(reglables)) {
+    if (r.lien !== cleTuile) continue;
+    r.etat = tuile.etat;
+    if (r.type === 'lum') r.valeur = tuile.etat === 'on' && Number.isFinite(nombre(tuile.valeur))
+      ? String(Math.round(nombre(tuile.valeur) * 100 / 255)) : 'nan';
+    changes.push(cle);
+  }
+  return changes;
+}
+
+// Pousse l'état d'une tuile (et des appareils liés), comme le blueprint quand son entité change.
+function pousserTuile(cle) {
+  const liees = suivreLien(cle);
+  appeler('tab5_maj_emplacements', { payload: ligneTuile(cle) + liees.map(ligneReglable).join('') });
+  dessiner(cle);
+}
+function pousserReglable(cle) {
+  appeler('tab5_maj_emplacements', { payload: ligneReglable(cle) });
+  dessiner(cle);
+}
+function pousserClim() {
+  appeler('tab5_maj_clim', { ...clim });
+  // La tuile de la clim du blueprint (option m) dit la même chose (etat_tuile de la démo).
+  for (const [cle, tuile] of Object.entries(tuiles)) {
+    if (tuile.type === 'cli' && tuile.options.includes('m')) { tuile.etat = clim.mode; tuile.valeur = clim.current; pousserTuile(cle); }
+  }
+  dessiner('clim');
+}
+
+// Nom de couleur (color_name de HA) → « RRGGBB ».
+function couleurHex(nom) {
+  const c = document.createElement('canvas').getContext('2d');
+  c.fillStyle = '#000'; c.fillStyle = nom;
+  return /^#[0-9a-f]{6}$/i.test(c.fillStyle) ? c.fillStyle.slice(1).toUpperCase() : '';
+}
+
+function allumerLampe(tuile, valeur255) {
+  tuile.etat = 'on';
+  if (tuile.options.includes('d')) tuile.valeur = String(valeur255 ?? memoLum[tuile.nom] ?? 255);
+  else tuile.valeur = 'nan';
+  if (tuile.options.includes('c') && !tuile.couleur) tuile.couleur = 'FFFFFF';
+}
+function eteindreLampe(tuile) {
+  if (Number.isFinite(nombre(tuile.valeur))) memoLum[tuile.nom] = tuile.valeur;
+  tuile.etat = 'off'; tuile.valeur = 'nan';
+  if (tuile.options.includes('c')) tuile.couleur = '';
+}
+// Couleur gardée pendant l'extinction, rendue à l'allumage.
+const memoCouleur = {};
+
+const NON_SIMULE = () => t('non simulé', 'not simulated');
+
+function commandeTuile(cle, action, valeur) {
+  const tuile = tuiles[cle];
+  if (!tuile) return t('tuile inconnue', 'unknown tile');
+  if (tuile.etat === 'unavailable') return t('appareil indisponible', 'device unavailable');
+  switch (tuile.type) {
+    case 'lum': {
+      const allume = tuile.etat === 'on';
+      if (action === 'basculer') allume ? (memoCouleur[cle] = tuile.couleur, eteindreLampe(tuile))
+                                         : (allumerLampe(tuile), tuile.couleur = memoCouleur[cle] || tuile.couleur);
+      else if (action === 'allumer') allumerLampe(tuile);
+      else if (action === 'eteindre') { memoCouleur[cle] = tuile.couleur; eteindreLampe(tuile); }
+      else if (action === 'luminosite') allumerLampe(tuile, Math.max(1, Math.min(255, Math.round(nombre(valeur)))));
+      else if (action === 'luminosite_pct') allumerLampe(tuile, Math.max(1, Math.round(nombre(valeur) * 2.55)));
+      else if (action === 'couleur') { allumerLampe(tuile); tuile.couleur = couleurHex(valeur) || tuile.couleur; }
+      else return NON_SIMULE();
+      break;
+    }
+    case 'int': case 'med': {
+      const marche = !['off', 'standby', 'idle'].includes(tuile.etat);
+      if (action === 'basculer') tuile.etat = marche ? 'off' : 'on';
+      else if (action === 'allumer') tuile.etat = 'on';
+      else if (action === 'eteindre') tuile.etat = 'off';
+      else return NON_SIMULE();
+      break;
+    }
+    case 'vol':
+      if (action === 'ouvrir') return deplacerVolet(cle, 100), '';
+      if (action === 'fermer') return deplacerVolet(cle, 0), '';
+      if (action === 'arreter') return arreterVolet(cle), '';
+      if (action === 'position') return deplacerVolet(cle, Math.max(0, Math.min(100, Math.round(nombre(valeur))))), '';
+      return NON_SIMULE();
+    case 'act':
+      if (action !== 'lancer') return NON_SIMULE();
+      tuile.etat = maintenantTablette().toISOString().replace(/\.\d+Z$/, '+00:00');
+      break;
+    case 'cli':
+      if (tuile.options.includes('m')) return commandeClim(action, valeur);
+      return NON_SIMULE();
+    default:
+      return t('lecture seule', 'read only');
+  }
+  pousserTuile(cle);
+  return '';
+}
+
+// Volet : 10 % par seconde, position poussée à chaque pas, comme une entité cover qui bouge.
+function deplacerVolet(cle, cible) {
+  const tuile = tuiles[cle];
+  clearInterval(mouvements[cle]);
+  let pos = Number.isFinite(nombre(tuile.valeur)) ? nombre(tuile.valeur) : (tuile.etat === 'open' ? 100 : 0);
+  if (pos === cible) { tuile.etat = cible > 0 ? 'open' : 'closed'; pousserTuile(cle); return; }
+  const sens = cible > pos ? 1 : -1;
+  tuile.etat = sens > 0 ? 'opening' : 'closing';
+  pousserTuile(cle);
+  mouvements[cle] = setInterval(() => {
+    pos = sens > 0 ? Math.min(cible, pos + 10) : Math.max(cible, pos - 10);
+    tuile.valeur = String(pos);
+    if (pos === cible) { clearInterval(mouvements[cle]); tuile.etat = pos > 0 ? 'open' : 'closed'; }
+    pousserTuile(cle);
+  }, 1000);
+}
+function arreterVolet(cle) {
+  const tuile = tuiles[cle];
+  clearInterval(mouvements[cle]);
+  tuile.etat = nombre(tuile.valeur) > 0 ? 'open' : 'closed';
+  pousserTuile(cle);
+}
+
+// Clim du blueprint (emplacement « clim », ou la tuile qui la porte).
+function commandeClim(action, valeur) {
+  if (!clim) return t('pas de clim', 'no air conditioner');
+  if (action === 'consigne') clim.target = Math.max(16, Math.min(30, nombre(valeur))).toFixed(1);
+  else if (action === 'eteindre') clim.mode = 'off';
+  else if (action === 'mode') clim.mode = valeur;
+  else if (action === 'preset') clim.preset = valeur === 'away' ? 'eco' : 'none';
+  else if (action === 'ventilation') clim.fan = valeur === 'quiet' ? 'quiet' : 'auto';
+  else if (action === 'oscillation') clim.swing = valeur === 'swing' ? 'on' : 'off';
+  else return NON_SIMULE();
+  if (action === 'consigne' && clim.mode === 'off') clim.mode = 'cool';
+  pousserClim();
+  return '';
+}
+
+// Clim d'une pièce (cpR, ADR-0040) : « consigne|pièce|mode|préréglage|ventilation|oscillation ».
+function commandeClimPiece(r, action, valeur) {
+  const c = climats[r];
+  if (!c || !c.champs) return t('pas de clim dans la pièce', 'no air conditioner in the room');
+  const ch = c.champs;
+  if (action === 'consigne') { ch[0] = Math.max(16, Math.min(30, nombre(valeur))).toFixed(1); if (ch[2] === 'off') ch[2] = 'cool'; }
+  else if (action === 'eteindre') ch[2] = 'off';
+  else if (action === 'mode') ch[2] = valeur;
+  else if (action === 'preset') ch[3] = valeur === 'away' ? 'eco' : 'none';
+  else if (action === 'ventilation') ch[4] = valeur === 'quiet' ? 'quiet' : 'auto';
+  else if (action === 'oscillation') ch[5] = valeur === 'swing' ? 'swing' : 'stop';
+  else return NON_SIMULE();
+  appeler('tab5_maj_emplacements', { payload: lignesClimat(r) });
+  dessiner(`cp${r}`);
+  return '';
+}
+
+// Appareil de la tuile − / + (rN, ADR-0033).
+function commandeReglable(cle, action, valeur) {
+  const r = reglables[cle];
+  const [mn, mx] = r.bornes.map(nombre);
+  const v = Math.max(mn, Math.min(mx, nombre(valeur)));
+  if (r.lien && ['basculer', 'allumer', 'eteindre'].includes(action)) return commandeTuile(r.lien, action, valeur);
+  if (action === 'consigne' && r.type === 'cli') r.valeur = v.toFixed(1);
+  else if (action === 'regler' && Number.isFinite(v)) {
+    if (r.type === 'lum' && r.lien) {
+      const tuile = tuiles[r.lien];
+      if (v <= 0) eteindreLampe(tuile); else allumerLampe(tuile, Math.max(1, Math.round(v * 2.55)));
+      pousserTuile(r.lien);
+      return '';
+    }
+    r.valeur = String(Math.round(v));
+  } else return NON_SIMULE();
+  pousserReglable(cle);
+  return '';
+}
+
+function decrire(cle) {
+  if (tuiles[cle]) return `${tuiles[cle].piece} › ${tuiles[cle].nom}`;
+  if (reglables[cle]) return `${t('tuile − / +', '− / + tile')} › ${reglables[cle].nom}`;
+  const p = /^c?p(\d)$/.exec(cle);
+  if (p && demo.maison.pieces[p[1]]) return `${demo.maison.pieces[p[1]].nom}${cle[0] === 'c' ? ` › ${t('clim', 'air conditioner')}` : ''}`;
+  return cle;
+}
+
+// Événement de l'écran : ce que ferait HA (blueprint tab5_emplacements, packages).
+function recevoir(ev) {
+  const d = ev.data || {};
+  if (!ev.event) {
+    journal('ecran', `${t('action', 'action')} ${ev.service} (${t("refusée depuis l'ADR-0025", 'refused since ADR-0025')})`);
+    return;
+  }
+  const nom = ev.service.replace(/^esphome\./, '');
+  if (nom === 'tab5_action') {
+    const e = d.emplacement || '', a = d.action || '', v = d.valeur ?? '';
+    let echec;
+    if (tuiles[e]) echec = commandeTuile(e, a, v);
+    else if (reglables[e]) echec = commandeReglable(e, a, v);
+    else if (e === 'clim') echec = commandeClim(a, v);
+    else if (/^cp\d$/.test(e)) echec = commandeClimPiece(e.slice(2), a, v);
+    else if (/^p\d$/.test(e) && a === 'eteindre') {
+      for (const [cle, tuile] of Object.entries(tuiles)) {
+        if (tuile.r === +e.slice(1) && tuile.type === 'lum' && tuile.etat === 'on' && !/[ro]/.test(tuile.options)) {
+          memoCouleur[cle] = tuile.couleur; eteindreLampe(tuile); pousserTuile(cle);
+        }
+      }
+      echec = '';
+    } else echec = t('non simulé dans la démo', 'not simulated in the demo');
+    journal('ecran', `${decrire(e)} : ${a}${v !== '' ? ' ' + v : ''}${echec ? ` (${echec})` : ''}`);
+    return;
+  }
+  const texte = `${nom} ${resume(d)}`;
+  if (nom === 'tab5_zones') { journal('ecran', texte); for (const [n, x] of demo.zones) appeler(n, x); return; }
+  if (nom === 'tab5_energie') {
+    journal('ecran', texte);
+    for (const [n, x] of demo.energie[d.vue] || demo.energie.heures) appeler(n, x);
+    return;
+  }
+  if (nom === 'tab5_historique') {
+    journal('ecran', texte);
+    const r = demo.historique[`${d.cle}|${d.vue}`] || demo.historique[`${d.cle}|jour`];
+    if (r) for (const [n, x] of r) appeler(n, x);
+    return;
+  }
+  journal('ecran', `${texte} (${t('non simulé dans la démo', 'not simulated in the demo')})`);
+}
+
+// Rejoue une scène météo de la démo, comme demo_pusher : les états de la maison restent ceux
+// d'ici (une scène ne rallume pas une lampe éteinte à l'écran).
+function jouerScene(i) {
+  sceneCourante = i;
+  const scene = demo.scenes[i];
+  journal('ha', t(`scène « ${scene.nom} » (${scene.appels.length} actions)`,
+                  `scene "${scene.nom}" (${scene.appels.length} actions)`));
+  for (let [nom, donnees] of scene.appels) {
+    donnees = { ...donnees };
+    if (nom === 'tab5_maj_alerte_meteo_france') {
+      // Début de la pluie : « dans N mn » à l'heure de la tablette, pas à celle de l'export.
+      const [niveau, dans] = scene.pluie;
+      const debut = dans === null ? 0 : Math.floor(maintenantTablette() / 1000) + dans * 60;
+      donnees.payload = donnees.payload.replace(/^@-?\d+,\d+/, `@${niveau},${debut}`);
+    } else if (nom === 'tab5_maj_clim') {
+      clim = { ...donnees };
+      for (const tuile of Object.values(tuiles)) {
+        if (tuile.type === 'cli' && tuile.options.includes('m')) { tuile.etat = clim.mode; tuile.valeur = clim.current; }
+      }
+    } else if (nom === 'tab5_maj_emplacements') {
+      donnees.payload = donnees.payload.split(';').filter(Boolean).map((e) => {
+        const cle = e.split('|')[0];
+        if (tuiles[cle]) return ligneTuile(cle);
+        if (reglables[cle]) return ligneReglable(cle);
+        const cep = /^(?:cep|p)(\d)$/.exec(cle);
+        if (cep && climats[cep[1]]) return null;   // remis ensemble ci-dessous
+        return e + ';';
+      }).filter((e) => e !== null).join('') + Object.keys(climats).map(lignesClimat).join('');
+    }
+    appeler(nom, donnees, true);
+  }
+  dessiner();
+}
+
+// ---- Panneau ---------------------------------------------------------------
+
+function el(tag, attrs = {}, ...enfants) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (k === 'checked' || k === 'disabled') n[k] = v;
+    else n.setAttribute(k, v);
+  }
+  n.append(...enfants.filter((x) => x !== null && x !== undefined));
+  return n;
+}
+function bascule(cocheE, auClic, desactive) {
+  return el('input', { type: 'checkbox', class: 'bascule', checked: cocheE, disabled: !!desactive,
+                       'aria-label': t('marche / arrêt', 'on / off'), onchange: auClic });
+}
+function etatLisible(tuile) {
+  if (tuile.etat === 'unavailable') return t('indisponible', 'unavailable');
+  const v = nombre(tuile.valeur);
+  switch (tuile.type) {
+    case 'lum':
+      if (tuile.etat !== 'on') return t('éteinte', 'off');
+      return Number.isFinite(v) ? `${t('allumée', 'on')}, ${Math.round(v * 100 / 255)} %` : t('allumée', 'on');
+    case 'int': return tuile.etat === 'on' ? t('en marche', 'on') : t('arrêté', 'off');
+    case 'med': return ({ on: t('allumée', 'on'), playing: t('en lecture', 'playing'), paused: t('en pause', 'paused'),
+                          off: t('éteinte', 'off') })[tuile.etat] || tuile.etat;
+    case 'vol': return `${({ open: t('ouvert', 'open'), closed: t('fermé', 'closed'), opening: t('ouverture', 'opening'),
+                             closing: t('fermeture', 'closing') })[tuile.etat] || tuile.etat}`
+                       + (Number.isFinite(v) ? `, ${v} %` : '');
+    case 'act': {
+      const d = new Date(tuile.etat);
+      if (isNaN(d)) return t('jamais lancé', 'never run');
+      const loc = t('fr-FR', 'en-GB');
+      return t('lancé le ', 'run on ') + d.toLocaleDateString(loc, PARIS) + t(' à ', ' at ')
+        + d.toLocaleTimeString(loc, { ...PARIS, hour: '2-digit', minute: '2-digit' });
+    }
+    case 'bin': {
+      const on = tuile.etat === 'on';
+      return ({ door: on ? t('ouverte', 'open') : t('fermée', 'closed'),
+                motion: on ? t('mouvement', 'motion') : t('calme', 'clear'),
+                presence: on ? t('présent', 'home') : t('absent', 'away') })[tuile.complement]
+             || (on ? t('actif', 'on') : t('inactif', 'off'));
+    }
+    case 'cap': return `${tuile.etat} ${tuile.complement}`;
+    case 'cli': return `${tuile.etat}, ${tuile.valeur} °C ${t('dans la pièce', 'in the room')}`;
+    default: return tuile.etat;
+  }
+}
+
+function vueTuile(cle) {
+  const tuile = tuiles[cle];
+  const indispo = tuile.etat === 'unavailable';
+  const cmd = el('div', { class: 'cmd' });
+  let large = null;
+  if (tuile.type === 'lum') {
+    cmd.append(bascule(tuile.etat === 'on', () => commandeLocale(cle, 'basculer'), indispo));
+    if (tuile.etat === 'on' && tuile.options.includes('c')) {
+      cmd.append(el('input', { type: 'color', value: '#' + (tuile.couleur || 'FFFFFF'), 'aria-label': t('couleur', 'colour'),
+        onchange: (e) => { tuile.couleur = e.target.value.slice(1).toUpperCase(); pousserTuile(cle); } }));
+    }
+    if (tuile.etat === 'on' && tuile.options.includes('d')) {
+      large = el('div', { class: 'large' }, t('Luminosité', 'Brightness'),
+        el('input', { type: 'range', min: 1, max: 255, value: nombre(tuile.valeur) || 255, 'aria-label': t('luminosité', 'brightness'),
+          onchange: (e) => { tuile.valeur = e.target.value; pousserTuile(cle); } }));
+    }
+  } else if (tuile.type === 'int' || tuile.type === 'med' || tuile.type === 'bin') {
+    const marche = !['off', 'standby', 'idle', 'unavailable'].includes(tuile.etat);
+    cmd.append(bascule(marche, () => {
+      tuile.etat = marche ? 'off' : 'on';
+      pousserTuile(cle);
+    }, indispo));
+  } else if (tuile.type === 'vol') {
+    cmd.append(el('button', { onclick: () => deplacerVolet(cle, 100), title: t('Ouvrir', 'Open') }, '▲'),
+               el('button', { onclick: () => arreterVolet(cle), title: t('Arrêter', 'Stop') }, '■'),
+               el('button', { onclick: () => deplacerVolet(cle, 0), title: t('Fermer', 'Close') }, '▼'));
+    large = el('div', { class: 'large' }, t('Position', 'Position'),
+      el('input', { type: 'range', min: 0, max: 100, step: 10, value: nombre(tuile.valeur) || 0, 'aria-label': t('position', 'position'),
+        onchange: (e) => deplacerVolet(cle, +e.target.value) }));
+  } else if (tuile.type === 'act') {
+    cmd.append(el('button', { onclick: () => commandeLocale(cle, 'lancer') }, t('Lancer', 'Run')));
+  } else if (tuile.type === 'cap') {
+    cmd.append(el('input', { type: 'number', step: 'any', value: tuile.etat, 'aria-label': tuile.nom,
+      onchange: (e) => { if (e.target.value === '') return; tuile.etat = tuile.valeur = String(+e.target.value); pousserTuile(cle); } }));
+  }
+  return el('div', { class: 'app', id: `app-${cle}` },
+    el('span', { class: 'nom', title: tuile.nom }, tuile.nom), cmd, el('span', { class: 'val' }, etatLisible(tuile)), large);
+}
+
+function commandeLocale(cle, action) {
+  const echec = commandeTuile(cle, action, '');
+  if (echec) journal('ha', `${decrire(cle)} : ${echec}`);
+}
+
+function vueClimPiece(r) {
+  const c = climats[r];
+  if (!c) return null;
+  const ch = c.champs;
+  const cmd = el('div', { class: 'cmd' });
+  if (ch) {
+    cmd.append(el('button', { onclick: () => commandeClimPiece(r, 'consigne', nombre(ch[0]) - 0.5) }, '−'),
+               el('button', { onclick: () => commandeClimPiece(r, 'consigne', nombre(ch[0]) + 0.5) }, '+'),
+               selectMode(ch[2], (m) => commandeClimPiece(r, 'mode', m)));
+  }
+  const texte = `${c.temperature} °C${c.humidite ? `, ${c.humidite} %` : ''}`
+    + (ch ? ` · ${t('clim', 'air con.')} ${ch[2]}, ${t('consigne', 'target')} ${ch[0]} °C` : '');
+  return el('div', { class: 'app', id: `app-cp${r}` },
+    el('span', { class: 'nom' }, ch ? (c.reglages.split('|')[5] || t('Climat', 'Climate')) : t('Température', 'Temperature')), cmd,
+    el('span', { class: 'val' }, texte));
+}
+
+function selectMode(actuel, auChoix) {
+  const s = el('select', { 'aria-label': t('mode', 'mode'), onchange: (e) => auChoix(e.target.value) });
+  for (const m of ['off', 'cool', 'heat', 'heat_cool', 'dry', 'fan_only']) {
+    const o = el('option', { value: m }, m);
+    if (m === actuel) o.selected = true;
+    s.append(o);
+  }
+  return s;
+}
+
+function vueClim() {
+  if (!clim) return null;
+  return el('div', { class: 'piece' }, el('h4', {}, t("Clim de l'accueil", 'Home screen air conditioner')),
+    el('div', { class: 'app', id: 'app-clim' },
+      el('span', { class: 'nom' }, `${t('Consigne', 'Target')} ${clim.target} °C`),
+      el('div', { class: 'cmd' },
+        el('button', { onclick: () => commandeClim('consigne', nombre(clim.target) - 0.5) }, '−'),
+        el('button', { onclick: () => commandeClim('consigne', nombre(clim.target) + 0.5) }, '+'),
+        selectMode(clim.mode, (m) => commandeClim('mode', m))),
+      el('span', { class: 'val' }, `${clim.mode}, ${clim.current} °C ${t('dans la pièce', 'in the room')}`)));
+}
+
+function vueReglables() {
+  const bloc = el('div', { class: 'piece' }, el('h4', {}, t('Tuile − / +', '− / + tile')));
+  for (const [cle, r] of Object.entries(reglables)) {
+    const cmd = el('div', { class: 'cmd' });
+    const [mn, mx, pas] = r.bornes.map(nombre);
+    if (r.type === 'cli') {
+      cmd.append(el('button', { onclick: () => commandeReglable(cle, 'consigne', nombre(r.valeur) - pas) }, '−'),
+                 el('button', { onclick: () => commandeReglable(cle, 'consigne', nombre(r.valeur) + pas) }, '+'));
+    } else if (r.type === 'son' && Number.isFinite(nombre(r.valeur))) {
+      cmd.append(el('input', { type: 'range', min: mn, max: mx, step: pas, value: nombre(r.valeur), 'aria-label': t('volume', 'volume'),
+        onchange: (e) => commandeReglable(cle, 'regler', e.target.value) }));
+    }
+    const v = Number.isFinite(nombre(r.valeur)) ? `${r.valeur} ${r.bornes[3]}` : '--';
+    bloc.append(el('div', { class: 'app', id: `app-${cle}` }, el('span', { class: 'nom' }, r.nom), cmd,
+      el('span', { class: 'val' }, `${r.etat}, ${v}${r.lien ? ` (${t('suit', 'follows')} ${decrire(r.lien)})` : ''}`)));
+  }
+  return bloc;
+}
+
+function dessiner(cle) {
+  if (!demo || !Object.keys(actions).length) return;
+  const maison = document.getElementById('maison');
+  const defilement = maison.closest('.panneau').scrollTop;
+  maison.replaceChildren();
+  for (const [r, piece] of Object.entries(demo.maison.pieces)) {
+    const bloc = el('div', { class: 'piece' }, el('h4', {}, piece.nom));
+    for (const c of Object.keys(piece.tuiles)) bloc.append(vueTuile(c));
+    const cp = vueClimPiece(r);
+    if (cp) bloc.append(cp);
+    maison.append(bloc, ' ');
+  }
+  const c = vueClim();
+  if (c) maison.append(c);
+  maison.append(vueReglables());
+  maison.closest('.panneau').scrollTop = defilement;
+  if (cle) {
+    const n = document.getElementById(`app-${cle}`);
+    if (n) { n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash'); }
+  }
+}
+
+function remplirScenes() {
+  const choix = document.getElementById('scene');
+  choix.replaceChildren(...demo.scenes.map((s, i) => el('option', { value: i }, s.nom)));
+  choix.value = String(sceneCourante);
+}
+
+function demarrerHa() {
+  for (const s of JSON.parse(Module.UTF8ToString(Module._web_actions()))) actions[s.n] = s.a.map((a) => a[0]);
+  initialiserMaison();
+  remplirScenes();
+  document.getElementById('scene').addEventListener('change', (e) => jouerScene(+e.target.value));
+  // « Connexion » de HA : les zones, puis la première scène (définitions et états compris).
+  journal('ha', t('connexion de la tablette : zones, puis la maison', 'tablet connected: zones, then the house'));
+  for (const [n, x] of demo.zones) appeler(n, x, true);
+  jouerScene(0);
+}
+
+langue((navigator.language || 'fr').toLowerCase().startsWith('fr') ? 'fr' : 'en');
+document.getElementById('langue').addEventListener('click', () => langue(fr() ? 'en' : 'fr'));
+// Version publiée (celle de la release stable, dont vient la démo) : rien en local.
+fetch('../versions.json').then((r) => (r.ok ? r.json() : null)).then((v) => {
+  if (!v || !v.stable) return;
+  document.getElementById('version-fr').textContent = `Firmware ${v.stable.version} · `;
+  document.getElementById('version-en').textContent = `Firmware ${v.stable.version} · `;
+}).catch(() => {});
+if (typeof WebAssembly !== 'object') {
+  etatPage.textContent = t('Ce navigateur ne sait pas exécuter le WebAssembly.', 'This browser cannot run WebAssembly.');
+}
+window.fauxHa = { tuiles, reglables, climats, get clim() { return clim; }, recevoir, jouerScene, actions };
+</script>
+<script src="tab5.js"></script>
+</body>
+</html>

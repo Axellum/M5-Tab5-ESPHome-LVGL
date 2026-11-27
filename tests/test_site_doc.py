@@ -503,7 +503,10 @@ def test_pages_d_une_seule_langue_hors_du_plan_du_site_mais_en_ligne(site, plan,
         assert (sortie / copie / adresse / "index.html").is_file(), f"{p.source} : la copie reste en ligne"
         texte = (sortie / copie / adresse / "index.html").read_text(encoding="utf-8")
         assert f'<link rel="canonical" href="{construire.SITE}{p.langue}/{adresse}">' in texte, p.source
-    racine = [p for p in (REPO / "web").rglob("*.html") if not p.name.startswith("google") and p.name != "404.html"]
+    # demo/ n'est en ligne qu'avec l'archive de la démo d'une stable (pages.demo_web, ADR-0086) :
+    # assemblé ici sans release, le site n'en a pas.
+    racine = [p for p in (REPO / "web").rglob("*.html") if not p.name.startswith("google") and p.name != "404.html"
+              and p.relative_to(REPO / "web").parts[0] != "demo"]
     assert len(locs) == 2 * len(plan.pages) - len(uniques) + len(racine)
 
 
