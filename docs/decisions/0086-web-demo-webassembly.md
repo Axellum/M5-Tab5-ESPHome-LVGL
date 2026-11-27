@@ -1,4 +1,4 @@
-# ADR-0086: A web demo: the real firmware in WebAssembly, next to a simulated Home Assistant
+# ADR-0086: A web demo: the firmware's interface in WebAssembly, next to a simulated Home Assistant
 
 **Status:** Accepted (2026-11-27, the author's choice: « Oui, essai WebAssembly », then « Oui, étape 1 » and « Oui, étape 2 »).
 **Date:** 2026-11-27
