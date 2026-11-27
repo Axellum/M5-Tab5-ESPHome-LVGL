@@ -25,7 +25,9 @@ import argparse
 import concurrent.futures as cf
 import configparser
 import hashlib
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,23 +36,6 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parents[2]
 PAGE = RACINE / "web" / "demo" / "index.html"
-
-# Fichiers de libsodium que la bibliothèque esphome/libsodium compile (son library.json,
-# srcFilter, relatif à libsodium/src/libsodium) : un dossier = tout ce qu'il contient.
-SODIUM_FILTRE = [
-    "crypto_stream/salsa20", "crypto_core/salsa", "randombytes",
-    "crypto_aead/chacha20poly1305/aead_chacha20poly1305.c", "crypto_hash/crypto_hash.c",
-    "crypto_hash/sha256/cp/hash_sha256_cp.c", "crypto_hash/sha256/hash_sha256.c",
-    "crypto_hash/sha512/cp/hash_sha512_cp.c", "crypto_onetimeauth/crypto_onetimeauth.c",
-    "crypto_onetimeauth/poly1305/donna/poly1305_donna.c",
-    "crypto_onetimeauth/poly1305/onetimeauth_poly1305.c", "crypto_scalarmult/crypto_scalarmult.c",
-    "crypto_scalarmult/curve25519/ref10/x25519_ref10.c", "crypto_core/ed25519/ref10/ed25519_ref10.c",
-    "crypto_scalarmult/curve25519/scalarmult_curve25519.c", "crypto_sign/ed25519/ref10/open.c",
-    "crypto_stream/chacha20/ref/chacha20_ref.c", "crypto_stream/chacha20/stream_chacha20.c",
-    "crypto_stream/crypto_stream.c", "crypto_verify/verify.c", "sodium/codecs.c", "sodium/core.c",
-    "sodium/runtime.c", "sodium/utils.c",
-]
-SODIUM_PORT = ["version.c", "ed25519_ref10_hinit.c", "x25519_m15.c"]
 
 # Fonctions de web_main.cpp appelées par la page.
 EXPORTS = ["_main", "_web_image", "_web_largeur", "_web_hauteur", "_web_version", "_web_toucher",
@@ -91,12 +76,24 @@ def bibliotheques(build: Path) -> dict[str, Path]:
 
 
 def sources_sodium(sodium: Path) -> list[Path]:
-    base = sodium / "libsodium" / "src" / "libsodium"
+    """Fichiers que la bibliothèque esphome/libsodium compile : le srcFilter de son
+    library.json, relatif à son srcDir (un dossier = tout ce qu'il contient). Lu et non
+    recopié : celle de PlatformIO (1.10021.11, la CI) et celle du registre d'Espressif
+    (1.10021.12) n'ont pas les mêmes fichiers (port/ed25519_ref10_hinit.c, sha512…)."""
+    regles = json.loads((sodium / "library.json").read_text(encoding="utf-8"))["build"]
+    base = sodium / regles.get("srcDir", ".")
     fichiers: list[Path] = []
-    for f in SODIUM_FILTRE:
-        p = base / f
+    for regle in regles["srcFilter"]:
+        m = re.fullmatch(r"([+-])<(.+)>", regle.strip())
+        if not m or (m[1] == "-" and m[2] != "*"):
+            raise SystemExit(f"srcFilter de libsodium non pris en charge : {regle}")
+        if m[1] == "-":
+            fichiers = []
+            continue
+        p = Path(os.path.normpath(base / m[2]))
+        if not p.exists():
+            raise SystemExit(f"libsodium : {p} (srcFilter {regle}) introuvable")
         fichiers += sorted(p.rglob("*.c")) if p.is_dir() else [p]
-    fichiers += [sodium / "port" / f for f in SODIUM_PORT]
     return fichiers
 
 
