@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""tools/web/construire.py — Démo web (essai) : compile la tablette virtuelle
+"""tools/web/construire.py — Démo web : compile la tablette virtuelle
 (tab5-rendu-host.yaml) en WebAssembly avec emscripten, puis écrit demo.json (la maison
-de la démo, exporter_demo.py) pour le Home Assistant simulé de la page.
+de la démo, exporter_demo.py) pour le Home Assistant simulé de la page (web/demo/,
+publiée sur le site par tools/publication/pages.py ; la CI : .github/workflows/demo-web.yml).
 
 1. Les sources C++ sont celles qu'ESPHome génère pour la plateforme host :
        python -m esphome -s rendu_nom tab5-web compile --only-generate tab5-rendu-host.yaml
@@ -24,6 +25,7 @@ import argparse
 import concurrent.futures as cf
 import configparser
 import hashlib
+import os
 import shutil
 import subprocess
 import sys
@@ -31,6 +33,7 @@ import time
 from pathlib import Path
 
 RACINE = Path(__file__).resolve().parents[2]
+PAGE = RACINE / "web" / "demo" / "index.html"
 
 # Fichiers de libsodium que la bibliothèque esphome/libsodium compile (son library.json,
 # srcFilter, relatif à libsodium/src/libsodium) : un dossier = tout ce qu'il contient.
@@ -51,7 +54,8 @@ SODIUM_PORT = ["version.c", "ed25519_ref10_hinit.c", "x25519_m15.c"]
 
 # Fonctions de web_main.cpp appelées par la page.
 EXPORTS = ["_main", "_web_image", "_web_largeur", "_web_hauteur", "_web_version", "_web_toucher",
-           "_web_duree_max_ms", "_web_actions", "_web_action", "_malloc", "_free"]
+           "_web_duree_max_ms", "_web_actions", "_web_action", "_web_horloge", "_web_maintenant",
+           "_malloc", "_free"]
 # Envoi d'un événement ou d'une action à HA (web_main.cpp le passe à la page).
 ENVOI_HA = "_ZN7esphome3api9APIServer25send_homeassistant_actionERKNS0_26HomeassistantActionRequestE"
 
@@ -73,6 +77,17 @@ def drapeaux_platformio(build: Path) -> list[str]:
         drapeaux.append(d)
     drapeaux.append("-DLV_CONF_INCLUDE_SIMPLE")
     return drapeaux
+
+
+def bibliotheques(build: Path) -> dict[str, Path]:
+    """Dossiers de lvgl, noise-c et libsodium posés par `pio pkg install -d <build>`
+    (<build>/.pio/libdeps/<env>/<nom>) ; absents : dictionnaire vide."""
+    trouvees: dict[str, Path] = {}
+    for env in sorted((build / ".pio" / "libdeps").glob("*")):
+        for cle, nom in (("lvgl", "lvgl"), ("noise", "noise-c"), ("sodium", "libsodium")):
+            if (env / nom).is_dir():
+                trouvees.setdefault(cle, env / nom)
+    return trouvees
 
 
 def sources_sodium(sodium: Path) -> list[Path]:
@@ -140,14 +155,22 @@ def compiler(emcc: str, source: Path, objet: Path, options: list[str]) -> tuple[
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--build", type=Path, required=True)
-    ap.add_argument("--lvgl", type=Path, required=True)
-    ap.add_argument("--noise", type=Path, required=True)
-    ap.add_argument("--sodium", type=Path, required=True)
+    ap.add_argument("--lvgl", type=Path)
+    ap.add_argument("--noise", type=Path)
+    ap.add_argument("--sodium", type=Path)
     ap.add_argument("--sortie", type=Path, required=True)
     ap.add_argument("--emcc", default="emcc")
-    ap.add_argument("--jobs", type=int, default=4)
+    ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
     ap.add_argument("--debug", action="store_true", help="-O1 et assertions d'emscripten")
+    ap.add_argument("--sans-page", action="store_true",
+                    help="tab5.js, tab5.wasm et demo.json seulement (l'archive de la release)")
     args = ap.parse_args()
+    trouvees = bibliotheques(args.build)
+    for cle in ("lvgl", "noise", "sodium"):
+        if getattr(args, cle) is None:
+            if cle not in trouvees:
+                ap.error(f"--{cle} manquant et absent de {args.build / '.pio' / 'libdeps'}")
+            setattr(args, cle, trouvees[cle])
 
     emcc = args.emcc
     empp = str(Path(emcc).with_name(Path(emcc).name.replace("emcc", "em++"))) if "emcc" in Path(emcc).name else "em++"
@@ -199,8 +222,11 @@ def main() -> int:
     liens = opt + [
         "-sALLOW_MEMORY_GROWTH=1", "-sINITIAL_MEMORY=134217728", "-sSTACK_SIZE=4194304",
         "-sENVIRONMENT=web", f"-sEXPORTED_FUNCTIONS={','.join(EXPORTS)}",
-        "-sEXPORTED_RUNTIME_METHODS=HEAPU8,ccall,cwrap,UTF8ToString",
-        "-Wl,--wrap=socket", "-Wl,--wrap=nanosleep", f"-Wl,--wrap={ENVOI_HA}",
+        # La page lance main() elle-même (callMain), une fois l'horloge de la démo réglée et
+        # les réglages d'avant un redémarrage remis dans le système de fichiers (FS).
+        "-sINVOKE_RUN=0", "-sEXPORTED_RUNTIME_METHODS=HEAPU8,ccall,cwrap,UTF8ToString,callMain,FS",
+        "-Wl,--wrap=socket", "-Wl,--wrap=nanosleep", "-Wl,--wrap=time", "-Wl,--wrap=exit",
+        f"-Wl,--wrap={ENVOI_HA}",
     ]
     if args.debug:
         liens += ["-sASSERTIONS=1"]
@@ -212,7 +238,8 @@ def main() -> int:
     if proc.returncode != 0:
         print("ÉCHEC du lien\n" + proc.stderr[-6000:])
         return 1
-    shutil.copy2(Path(__file__).with_name("index.html"), args.sortie / "index.html")
+    if not args.sans_page:
+        shutil.copy2(PAGE, args.sortie / "index.html")
     taille = (args.sortie / "tab5.wasm").stat().st_size
     print(f"lien : {time.monotonic() - debut:.0f} s ; tab5.wasm = {taille / 1e6:.1f} Mo")
     # La maison de la démo, que le Home Assistant simulé de la page pousse (étape 1).

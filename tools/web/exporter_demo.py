@@ -20,10 +20,14 @@ Contenu de demo.json :
 
 @ai_instruction : les appels viennent de demo_pusher, pas d'une copie : un changement
 de contrat (tests/test_contrat.py, --dry-run) se retrouve ici au prochain export.
-Limite connue : les heures des prévisions et les noms des jours sont calculés à
-l'import de scenarios.py (_heures_depuis_maintenant, _jours_depuis_aujourdhui), de
-même que les dates de l'énergie et de l'historique : un demo.json exporté un autre jour
-montre d'autres heures. Réexporter au moment de construire la page.
+Horloge figée : scenarios.py calcule à son import les heures des prévisions et les noms
+des jours (datetime.now()), demo_pusher les dates de l'énergie et de l'historique. Ce
+script fixe donc « maintenant » à DEPART AVANT d'importer la démo (processus neuf
+seulement : une démo déjà importée garderait la vraie heure), et la page règle
+l'horloge de la tablette sur le même instant (web_horloge, champ « horloge ») : la
+maison de la démo vit ce jour-là à partir de cette heure, comme les captures du rendu
+de la CI (rendu-host.yml, DEPART). demo.json ne dépend donc ni du jour ni de la
+machine qui l'exporte.
 
 Usage : python tools/web/exporter_demo.py --sortie <dossier>/demo.json
 """
@@ -32,31 +36,43 @@ from __future__ import annotations
 import argparse
 import asyncio
 import datetime as _dt
+import importlib
 import json
 import sys
 from dataclasses import asdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-
-import demo_pusher as dp  # noqa: E402
-from scenarios import (  # noqa: E402
-    ENERGIE_VUES,
-    HISTORIQUE_CLES,
-    HISTORIQUE_VUES,
-    PIECES,
-    REGLABLES,
-    SCENES,
-    cle_tuile,
-    nom_de_la_piece,
-)
+DOSSIER_DEMO = Path(__file__).resolve().parent.parent / "demo"
+# Instant de la maison de la démo, heure de Paris : celui des captures du rendu de la CI
+# (rendu-host.yml, DEPART et TZ ; tests/test_demo_web.py les compare).
+DEPART = _dt.datetime.fromisoformat("2026-06-16T07:45:00+02:00")
 
 
-def _appels(tablette: dp._TabletteABlanc, debut: int) -> list:
+def figer_horloge(depart: _dt.datetime) -> None:
+    """datetime.now() rend désormais `depart` (heure locale sans fuseau, ou dans le
+    fuseau demandé). À appeler avant d'importer scenarios.py et demo_pusher.py."""
+    deja = {"scenarios", "demo_pusher"} & set(sys.modules)
+    if deja:
+        raise RuntimeError(f"{sorted(deja)} déjà importé : ses heures ne suivraient pas DEPART")
+    vrai = _dt.datetime
+
+    class Horloge(vrai):
+        @classmethod
+        def now(cls, tz=None):
+            return depart.astimezone(tz) if tz is not None else depart.replace(tzinfo=None)
+
+    _dt.datetime = Horloge
+
+
+def _appels(tablette, debut: int) -> list:
     return [[nom, donnees] for nom, donnees in tablette.appels[debut:]]
 
 
-def exporter() -> dict:
+def exporter(depart: _dt.datetime = DEPART) -> dict:
+    figer_horloge(depart)
+    sys.path.insert(0, str(DOSSIER_DEMO))
+    dp = importlib.import_module("demo_pusher")
+    sc = importlib.import_module("scenarios")
     services = dp.services_du_contrat(dp.lire_contrat(dp.API_LOGIC))
     tablette = dp._TabletteABlanc()
     absentes = frozenset()
@@ -65,37 +81,39 @@ def exporter() -> dict:
     zones = _appels(tablette, 0)
 
     scenes = []
-    for scene in SCENES:
+    for scene in sc.SCENES:
         debut = len(tablette.appels)
         asyncio.run(dp._pousser_scene(tablette, services, scene, absentes, attendre=dp._sans_attente))
         niveau, dans_min = scene.pluie
         scenes.append({"nom": scene.nom, "pluie": [niveau, dans_min], "appels": _appels(tablette, debut)})
 
     energie = {}
-    for vue in ENERGIE_VUES:
+    aujourd_hui = depart.date()
+    for vue in sc.ENERGIE_VUES:
         debut = len(tablette.appels)
-        asyncio.run(dp._pousser_energie(tablette, services, (vue,)))
+        asyncio.run(dp._pousser_energie(tablette, services, (vue,), aujourd_hui=aujourd_hui))
         energie[vue] = _appels(tablette, debut)
 
     historique = {}
     maintenant = _dt.datetime.now()
-    for cle in HISTORIQUE_CLES:
-        for vue in HISTORIQUE_VUES:
+    for cle in sc.HISTORIQUE_CLES:
+        for vue in sc.HISTORIQUE_VUES:
             debut = len(tablette.appels)
             asyncio.run(dp._pousser_historique(tablette, services, cle, vue, maintenant))
             historique[f"{cle}|{vue}"] = _appels(tablette, debut)
 
     pieces = {}
-    for r, piece in sorted(PIECES.items()):
+    for r, piece in sorted(sc.PIECES.items()):
         pieces[str(r)] = {
-            "nom": nom_de_la_piece(r, piece),
-            "tuiles": {cle_tuile(r, t): asdict(tuile) for t, tuile in sorted(piece.tuiles.items())},
+            "nom": sc.nom_de_la_piece(r, piece),
+            "tuiles": {sc.cle_tuile(r, t): asdict(tuile) for t, tuile in sorted(piece.tuiles.items())},
             "climat": asdict(piece.climat) if piece.climat else None,
         }
-    reglables = {f"r{n}": asdict(reglable) for n, reglable in enumerate(REGLABLES)}
+    reglables = {f"r{n}": asdict(reglable) for n, reglable in enumerate(sc.REGLABLES)}
 
     return {
-        "exporte": maintenant.isoformat(timespec="seconds"),
+        # Départ de l'horloge de la tablette (la page appelle web_horloge) : avec son fuseau.
+        "horloge": depart.isoformat(timespec="seconds"),
         "zones": zones,
         "scenes": scenes,
         "energie": energie,

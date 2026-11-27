@@ -1,7 +1,7 @@
 /**
  * [AI-CONTEXT]
  * @file Tab5/web/web_main.cpp
- * @role Démo web SEULEMENT (essai, étape 0) : la tablette virtuelle
+ * @role Démo web SEULEMENT : la tablette virtuelle
  *       (tab5-rendu-host.yaml, plateforme host d'ESPHome) compilée en WebAssembly par
  *       emscripten (tools/web/construire.py). Ce fichier n'est pas une source
  *       d'ESPHome : le script l'ajoute au build, à côté des sources générées.
@@ -18,6 +18,16 @@
  *         logicielle d'ESPHome), dans un tampon RGBA que la page affiche tel quel.
  *       - Toucher : le doigt virtuel des captures (Tab5/rendu/rendu_doigt.h), dans les
  *         mêmes coordonnées logiques.
+ *
+ *       - Redémarrage (changer la langue, bouton Redémarrer) : exit() est enveloppé
+ *         (--wrap=exit) ; la boucle s'arrête et la page se recharge avec les réglages
+ *         enregistrés (Module.surRedemarrage). Sans ça, l'exit d'emscripten ne fait que
+ *         sortir du tour de boucle et la tablette continue comme si de rien n'était.
+ *       - Horloge : la page la règle (web_horloge) sur l'instant de la maison de la
+ *         démo (tools/web/exporter_demo.py, DEPART), d'où elle avance au rythme réel :
+ *         heures des prévisions, noms des jours, dates de l'énergie et courbes restent
+ *         d'accord avec l'heure affichée. time() est enveloppé (--wrap=time) ; ESPHome
+ *         applique lui-même le fuseau compilé (heure de Paris), pas celui du navigateur.
  *
  * @architecture_constraint Pas de réseau ni de sommeil dans un navigateur :
  *       construire.py lie avec --wrap=socket (aucune socket : l'API d'ESPHome et le
@@ -54,6 +64,12 @@ void loop();
 // le tour de boucle (setTimeout), jamais pendant : pas de réentrance dans le firmware.
 EM_JS(void, web_vers_page, (const char* json), {
     if (Module.surEvenement) Module.surEvenement(UTF8ToString(json));
+});
+
+// Redémarrage demandé par le firmware (arch_restart d'ESPHome host : exit) : la page
+// garde les réglages enregistrés (langue, thème…) et se recharge.
+EM_JS(void, web_redemarrage, (int code), {
+    if (Module.surRedemarrage) Module.surRedemarrage(code);
 });
 
 namespace {
@@ -139,6 +155,11 @@ void json_texte(std::string& sortie, const char* s, size_t n) {
 // Tampon de encode_list_service_response (seul l'ESP8266 s'en sert).
 std::array<char, 1024> g_brouillon{};
 
+// Horloge de la démo : instant de départ (secondes depuis 1970, UTC ; 0 = celle du
+// navigateur) et emscripten_get_now() au moment du réglage.
+double g_horloge_s = 0;
+double g_horloge_ms = 0;
+
 void web_tour() {
     // Le flush d'ESPHome est posé au setup() du composant LVGL : on l'enveloppe une
     // fois qu'il existe.
@@ -159,6 +180,24 @@ void web_tour() {
 }  // namespace
 
 extern "C" {
+
+time_t __real_time(time_t* t);
+
+// Toute lecture de l'heure par ESPHome et le projet (RealTimeClock, tab5_time_source).
+time_t __wrap_time(time_t* t) {
+    if (g_horloge_s <= 0) return __real_time(t);
+    const auto r = static_cast<time_t>(g_horloge_s + (emscripten_get_now() - g_horloge_ms) / 1000.0);
+    if (t != nullptr) *t = r;
+    return r;
+}
+
+[[noreturn]] void __real_exit(int code);
+
+[[noreturn]] void __wrap_exit(int code) {
+    emscripten_cancel_main_loop();
+    web_redemarrage(code);
+    __real_exit(code);
+}
 
 // Pas de réseau dans la page (voir @architecture_constraint).
 int __wrap_socket(int, int, int) {
@@ -279,6 +318,17 @@ EMSCRIPTEN_KEEPALIVE int32_t web_action(const char* nom, const char* valeurs) {
     }
     return -3;
 }
+
+// Règle l'horloge de la tablette sur `epoch_s` (secondes depuis 1970, UTC), qui
+// avance ensuite au rythme réel. Appelée par la page avant le démarrage (main).
+EMSCRIPTEN_KEEPALIVE void web_horloge(double epoch_s) {
+    g_horloge_s = epoch_s;
+    g_horloge_ms = emscripten_get_now();
+}
+
+// Heure de la tablette (secondes depuis 1970) : la page en date ce qu'elle pousse
+// (début de la pluie, scène lancée).
+EMSCRIPTEN_KEEPALIVE double web_maintenant() { return static_cast<double>(__wrap_time(nullptr)); }
 
 EMSCRIPTEN_KEEPALIVE uint8_t* web_image() { return g_rgba; }
 EMSCRIPTEN_KEEPALIVE int32_t web_largeur() { return g_largeur; }
